@@ -86,6 +86,9 @@ var (
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(errorsmod.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
+
+	// ErrVMError means an error occurred in wasmvm (not in the contract itself, but in the host environment)
+	ErrVMError = errorsmod.Register(DefaultCodespace, 29, "wasmvm error")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted

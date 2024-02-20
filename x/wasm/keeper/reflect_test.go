@@ -222,7 +222,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	// when panic is triggered
 	msg := []byte(`{"panic":{}}`)
 	gotData, err := keeper.Execute(ctx, contractAddr, creator, msg, nil)
-	require.ErrorIs(t, err, types.ErrExecuteFailed)
+	require.ErrorIs(t, err, types.ErrVMError)
 	assert.Contains(t, err.Error(), "panicked at 'This page intentionally faulted'")
 	assert.Nil(t, gotData)
 }

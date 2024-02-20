@@ -1023,9 +1023,9 @@ func TestExecuteWithPanic(t *testing.T) {
 	// let's make sure we get a reasonable error, no panic/crash
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
 	require.Error(t, err)
-	require.True(t, errors.Is(err, types.ErrExecuteFailed))
+	require.True(t, errors.Is(err, types.ErrVMError))
 	// test with contains as "Display" implementation of the Wasmer "RuntimeError" is different for Mac and Linux
-	assert.Contains(t, err.Error(), "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:169:5: execute wasm contract failed")
+	assert.Contains(t, err.Error(), "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:169:5: wasmvm error")
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
@@ -1251,7 +1251,7 @@ func TestMigrate(t *testing.T) {
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
-			expErr:     types.ErrMigrationFailed,
+			expErr:     types.ErrVMError,
 		},
 		"fail when no IBC callbacks": {
 			admin:      fred,

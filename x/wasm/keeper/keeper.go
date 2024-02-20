@@ -321,7 +321,7 @@ func (k Keeper) instantiate(
 	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
-		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if res.Err != "" {
 		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, res.Err)
@@ -334,7 +334,7 @@ func (k Keeper) instantiate(
 	// check for IBC flag
 	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
 	if err != nil {
-		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
@@ -405,7 +405,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
@@ -458,7 +458,7 @@ func (k Keeper) migrate(
 	// check for IBC flag
 	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
 	case err != nil:
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
 		// prevent update to non ibc contract
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
@@ -482,7 +482,7 @@ func (k Keeper) migrate(
 	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if res.Err != "" {
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, res.Err)
@@ -547,7 +547,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
@@ -587,7 +587,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
@@ -773,7 +773,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), k.runtimeGasForContract(sdkCtx), costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if qErr != nil {
-		return nil, errorsmod.Wrap(types.ErrQueryFailed, qErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, qErr.Error())
 	}
 	if queryResult.Err != "" {
 		return nil, errorsmod.Wrap(types.ErrQueryFailed, queryResult.Err)
