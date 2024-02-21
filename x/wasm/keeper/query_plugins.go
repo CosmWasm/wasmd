@@ -179,7 +179,7 @@ func (e QueryPlugins) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, req wa
 		if err != nil {
 			return nil, err
 		}
-		// Marshalling the response here instead of inside the query
+		// Marshaling the response here instead of inside the query
 		// plugin makes sure that the response is always protobuf encoded.
 		return proto.Marshal(resp)
 	case req.Wasm != nil:
