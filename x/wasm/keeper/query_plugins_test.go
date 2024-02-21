@@ -576,7 +576,7 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	require.NoError(t, err)
 
 	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
-	accepted := keeper.AcceptedStargateQueries{
+	accepted := keeper.AcceptedQueries{
 		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
 		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
 	}

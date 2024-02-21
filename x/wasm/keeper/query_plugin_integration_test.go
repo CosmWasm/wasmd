@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -114,6 +115,58 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.Equal(t, len(expectedBalance), len(simpleBalance.Amount))
 	assert.Equal(t, simpleBalance.Amount[0].Amount, expectedBalance[0].Amount.String())
 	assert.Equal(t, simpleBalance.Amount[0].Denom, expectedBalance[0].Denom)
+}
+
+func TestReflectGrpcQuery(t *testing.T) {
+	queryPlugins := (*reflectPlugins()).Merge(&QueryPlugins{
+		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
+			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
+				return &banktypes.QueryAllBalancesResponse{
+					Balances: sdk.NewCoins(),
+				}, nil
+			}
+			return nil, errors.New("unsupported request")
+		},
+	})
+	cdc := MakeEncodingConfig(t).Codec
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(&queryPlugins))
+	keeper := keepers.WasmKeeper
+
+	creator := RandomAccountAddress(t)
+
+	// upload code
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", sdk.NewCoins())
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// now grpc query for the bank balance
+	cosmosBankQuery := banktypes.NewQueryAllBalancesRequest(creator, nil, false)
+	cosmosBankQueryBz, err := proto.Marshal(cosmosBankQuery)
+	require.NoError(t, err)
+	reflectQuery := wasmvmtypes.QueryRequest{
+		Grpc: &wasmvmtypes.GrpcQuery{
+			Path: "cosmos.bank.v1beta1.Query/AllBalances",
+			Data: cosmosBankQueryBz,
+		},
+	}
+	reflectQueryBz, err := json.Marshal(testdata.ReflectQueryMsg{
+		Chain: &testdata.ChainQuery{Request: &reflectQuery},
+	})
+	require.NoError(t, err)
+	// query the reflect contract
+	reflectRespBz, err := keeper.QuerySmart(ctx, contractAddr, reflectQueryBz)
+	require.NoError(t, err)
+	var reflectResp testdata.ChainResponse
+	mustUnmarshal(t, reflectRespBz, &reflectResp)
+	// now unmarshal the protobuf response
+	var grpcBalance banktypes.QueryAllBalancesResponse
+	err = proto.Unmarshal(reflectResp.Data, &grpcBalance)
+	require.NoError(t, err)
 }
 
 func TestReflectTotalSupplyQuery(t *testing.T) {
