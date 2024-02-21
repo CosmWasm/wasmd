@@ -215,6 +215,12 @@ func redactError(err error) error {
 	// sdk/5 is insufficient funds (on bank send)
 	// (we can theoretically redact less in the future, but this is a first step to safety)
 	codespace, code, _ := errorsmod.ABCIInfo(err, false)
+
+	// Also do not redact any errors that are coming from the contract,
+	// as they are always deterministic
+	if codespace == types.DefaultCodespace && contains(types.ContractErrorCodes, code) {
+		return err
+	}
 	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }
 

@@ -712,6 +712,32 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.Nil(t, addr)
 }
 
+func TestContractErrorRedacting(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	keepers.Faucet.Fund(ctx, creator, deposit...)
+	example := StoreHackatomExampleContract(t, ctx, keepers)
+
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    []byte{1, 2, 3}, // invalid length
+		Beneficiary: RandomAccountAddress(t),
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	em := sdk.NewEventManager()
+
+	_, _, err = keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "addr_validate errored: invalid address")
+
+	err = redactError(err)
+	// contract error should not be redacted
+	require.Contains(t, err.Error(), "addr_validate errored: invalid address")
+}
+
 func TestInstantiateWithContractDataResponse(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
