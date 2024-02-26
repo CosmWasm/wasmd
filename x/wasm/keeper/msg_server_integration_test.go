@@ -20,7 +20,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-//go:embed testdata/reflect.wasm
+//go:embed testdata/stargate_reflect.wasm
 var wasmContract []byte
 
 //go:embed testdata/hackatom.wasm

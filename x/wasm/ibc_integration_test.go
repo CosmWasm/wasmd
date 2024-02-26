@@ -194,7 +194,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
 
 			// setup chain B contracts
-			reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect.wasm").CodeID
+			reflectID := chainB.StoreCodeFile("./keeper/testdata/stargate_reflect.wasm").CodeID
 			initMsg, err := json.Marshal(wasmkeeper.IBCReflectInitMsg{ReflectCodeID: reflectID})
 			require.NoError(t, err)
 			codeID := chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID

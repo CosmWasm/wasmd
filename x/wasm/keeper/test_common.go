@@ -679,7 +679,7 @@ type ExampleInstance struct {
 	Deposit  sdk.Coins
 }
 
-// InstantiateReflectExampleContract load and instantiate the "./testdata/reflect.wasm" contract
+// InstantiateReflectExampleContract load and instantiate the "./testdata/reflect_2_0.wasm" contract
 func InstantiateReflectExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
 	example := StoreReflectContract(t, ctx, keepers)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
