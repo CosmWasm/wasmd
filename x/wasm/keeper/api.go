@@ -17,7 +17,7 @@ const (
 	// DefaultGasCostCanonicalAddress is how much SDK gas we charge to convert to a canonical address format
 	DefaultGasCostCanonicalAddress = 4
 	// DefaultGasCostValidateAddress is how much SDK gas we charge to validate an address
-	DefaultGasCostValidateAddress = 9
+	DefaultGasCostValidateAddress = DefaultGasCostHumanAddress + DefaultGasCostCanonicalAddress
 
 	// DefaultDeserializationCostPerByte The formula should be `len(data) * deserializationCostPerByte`
 	DefaultDeserializationCostPerByte = 1
@@ -54,7 +54,7 @@ func validateAddress(human string) (uint64, error) {
 	if canonicalized.String() != human {
 		return costValidate, errors.New("address not normalized")
 	}
-	return costValidate, err
+	return costValidate, nil
 }
 
 var cosmwasmAPI = wasmvm.GoAPI{
