@@ -60,7 +60,6 @@ func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *i
 	// build the complete reflect message
 	reflectSendBz := []byte(fmt.Sprintf("{\"reflect_msg\":{\"msgs\":%s}}", vmMsgs))
 
-	t.Log(string(reflectSendBz))
 	execMsg := &types.MsgExecuteContract{
 		Sender:   chain.SenderAccount.GetAddress().String(),
 		Contract: contractAddr.String(),

@@ -430,9 +430,8 @@ func TestEncoding(t *testing.T) {
 	encodingConfig := MakeEncodingConfig(t)
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			var ctx sdk.Context
 			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
-			res, err := encoder.Encode(ctx, tc.sender, "", tc.srcMsg)
+			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, err)
 				return
@@ -448,10 +447,6 @@ func TestEncodeIbcMsg(t *testing.T) {
 		addr1 = RandomAccountAddress(t)
 		addr2 = RandomAccountAddress(t)
 	)
-	valAddr := make(sdk.ValAddress, types.SDKAddrLen)
-	valAddr[0] = 12
-	valAddr2 := make(sdk.ValAddress, types.SDKAddrLen)
-	valAddr2[1] = 123
 
 	cases := map[string]struct {
 		sender             sdk.AccAddress
