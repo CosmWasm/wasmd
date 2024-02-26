@@ -122,7 +122,6 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 
 	var groupRsp group.MsgSubmitProposalResponse
 	require.NoError(t, chain.Codec.Unmarshal(execRsp.Data, &groupRsp))
-	// require.NotEmpty(t, groupRsp.ProposalId)
 
 	// and coins received
 	recipientBalance := chain.Balance(recipientAddr, sdk.DefaultBondDenom)
