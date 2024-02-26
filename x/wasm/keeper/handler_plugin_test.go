@@ -321,7 +321,8 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 			assert.Nil(t, evts)
 			require.NotNil(t, data)
-			require.Len(t, msgResponses, 0)
+			assert.Len(t, msgResponses, 1)
+			assert.Equal(t, "/cosmwasm.wasm.v1.MsgIBCSendResponse", msgResponses[0][0].TypeUrl)
 
 			expMsg := types.MsgIBCSendResponse{Sequence: 1}
 

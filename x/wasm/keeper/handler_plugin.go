@@ -197,15 +197,18 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	}
 	moduleLogger(ctx).Debug("ibc packet set", "seq", seq)
 
-	var msgResponse [][]*codectypes.Any
 	resp := &types.MsgIBCSendResponse{Sequence: seq}
 	val, err := resp.Marshal()
 	if err != nil {
 		return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
 	}
-	// TODO: fill msgResponse
+	any, err := codectypes.NewAnyWithValue(resp)
+	if err != nil {
+		return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+	}
+	msgResponses := [][]*codectypes.Any{{any}}
 
-	return nil, [][]byte{val}, msgResponse, nil
+	return nil, [][]byte{val}, msgResponses, nil
 }
 
 var _ Messenger = MessageHandlerFunc(nil)
