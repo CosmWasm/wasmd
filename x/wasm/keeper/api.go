@@ -26,7 +26,7 @@ const (
 var (
 	costHumanize            = DefaultGasCostHumanAddress * types.DefaultGasMultiplier
 	costCanonical           = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
-	costValidate            = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
+	costValidate            = DefaultGasCostValidateAddress * types.DefaultGasMultiplier
 	costJSONDeserialization = wasmvmtypes.UFraction{
 		Numerator:   DefaultDeserializationCostPerByte * types.DefaultGasMultiplier,
 		Denominator: 1,
