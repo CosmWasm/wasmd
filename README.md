@@ -28,16 +28,16 @@ Also CosmWasm 2.0 contracts remain compatible at the Wasm interface level.
 To extend the feature set over time, contracts can specify required [capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES.md) through cargo features in cosmwasm-std.
 The following table shows which of the [latest capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) are supported by certain wasmd versions.
 
-| capability   | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
-| ------------ | ------- | ------- | ------- | ------- | ---- |
-| iterator     | x       | x       | x       | x       | x    |
-| stargate     | x       | x       | x       | x       | x    |
-| staking      | x       | x       | x       | x       | x    |
-| cosmwasm_1_1 | x       | x       | x       | x       |      |
-| cosmwasm_1_2 | x       | x       | x       |         |      |
-| cosmwasm_1_3 | x       | x       |         |         |      |
-| cosmwasm_1_4 | x       |         |         |         |      |
-| cosmwasm_2_0 |         |         |         |         |      |
+| capability   | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
+| ------------ | ------- | ------- | ------- | ------- | ------- | ---- |
+| iterator     | x       | x       | x       | x       | x       | x    |
+| stargate     | x       | x       | x       | x       | x       | x    |
+| staking      | x       | x       | x       | x       | x       | x    |
+| cosmwasm_1_1 | x       | x       | x       | x       | x       |      |
+| cosmwasm_1_2 | x       | x       | x       | x       |         |      |
+| cosmwasm_1_3 | x       | x       | x       |         |         |      |
+| cosmwasm_1_4 | x       | x       |         |         |         |      |
+| cosmwasm_2_0 | x       |         |         |         |         |      |
 
 ### For node developers
 
