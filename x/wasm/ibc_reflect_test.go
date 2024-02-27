@@ -16,7 +16,7 @@ import (
 func TestIBCReflectContract(t *testing.T) {
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
-	//  chain B: stargate_reflect.wasm + ibc_reflect.wasm
+	//  chain B: reflect_1_5.wasm + ibc_reflect.wasm
 	//
 	//  Chain A "ibc_reflect_send" sends a IBC packet "on channel connect" event to chain B "ibc_reflect"
 	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
@@ -32,7 +32,7 @@ func TestIBCReflectContract(t *testing.T) {
 	codeID := chainA.StoreCodeFile("./keeper/testdata/ibc_reflect_send.wasm").CodeID
 	sendContractAddr := chainA.InstantiateContract(codeID, initMsg)
 
-	reflectID := chainB.StoreCodeFile("./keeper/testdata/stargate_reflect.wasm").CodeID
+	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect_1_5.wasm").CodeID
 	initMsg = wasmkeeper.IBCReflectInitMsg{
 		ReflectCodeID: reflectID,
 	}.GetBytes(t)

@@ -18,10 +18,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// InstantiateStargateReflectContract stores and instantiates a pre 2.0 reflect contract instance.
+// InstantiateStargateReflectContract stores and instantiates the reflect contract shipped with CosmWasm 1.5.3.
 // This instance still expects the old CosmosMsg.Stargate variant instead of the new CosmosMsg.Any.
 func InstantiateStargateReflectContract(t *testing.T, chain *ibctesting.TestChain) sdk.AccAddress {
-	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/stargate_reflect.wasm").CodeID
+	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/reflect_1_5.wasm").CodeID
 	contractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
 	require.NotEmpty(t, contractAddr)
 	return contractAddr
