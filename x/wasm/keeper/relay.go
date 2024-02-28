@@ -76,7 +76,7 @@ func (k Keeper) OnConnectChannel(
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
@@ -110,7 +110,7 @@ func (k Keeper) OnCloseChannel(
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
@@ -201,7 +201,7 @@ func (k Keeper) OnAckPacket(
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
@@ -232,7 +232,7 @@ func (k Keeper) OnTimeoutPacket(
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)

@@ -10,10 +10,6 @@ import (
 var (
 	DefaultCodespace = ModuleName
 
-	// ContractErrorCodes are the error codes for errors returned by the contract
-	// Since contract execution is deterministic, the errors are also deterministic
-	ContractErrorCodes = []uint32{InstantiateErrorCode, ExecuteErrorCode, QueryErrorCode, MigrateErrorCode}
-
 	// Note: never use code 1 for any errors - that is reserved for ErrInternal in the core cosmos sdk
 
 	// ErrCreateFailed error for wasm code that has already been uploaded or failed
@@ -23,10 +19,10 @@ var (
 	ErrAccountExists = errorsmod.Register(DefaultCodespace, 3, "contract account already exists")
 
 	// ErrInstantiateFailed error for rust instantiate contract failure
-	ErrInstantiateFailed = errorsmod.Register(DefaultCodespace, InstantiateErrorCode, "instantiate wasm contract failed")
+	ErrInstantiateFailed = errorsmod.Register(DefaultCodespace, 4, "instantiate wasm contract failed")
 
 	// ErrExecuteFailed error for rust execution contract failure
-	ErrExecuteFailed = errorsmod.Register(DefaultCodespace, ExecuteErrorCode, "execute wasm contract failed")
+	ErrExecuteFailed = errorsmod.Register(DefaultCodespace, 5, "execute wasm contract failed")
 
 	// ErrGasLimit error for out of gas
 	ErrGasLimit = errorsmod.Register(DefaultCodespace, 6, "insufficient gas")
@@ -38,13 +34,13 @@ var (
 	ErrNotFound = errorsmod.Register(DefaultCodespace, 8, "not found")
 
 	// ErrQueryFailed error for rust smart query contract failure
-	ErrQueryFailed = errorsmod.Register(DefaultCodespace, QueryErrorCode, "query wasm contract failed")
+	ErrQueryFailed = errorsmod.Register(DefaultCodespace, 9, "query wasm contract failed")
 
 	// ErrInvalidMsg error when we cannot process the error returned from the contract
 	ErrInvalidMsg = errorsmod.Register(DefaultCodespace, 10, "invalid CosmosMsg from the contract")
 
 	// ErrMigrationFailed error for rust execution contract failure
-	ErrMigrationFailed = errorsmod.Register(DefaultCodespace, MigrateErrorCode, "migrate wasm contract failed")
+	ErrMigrationFailed = errorsmod.Register(DefaultCodespace, 11, "migrate wasm contract failed")
 
 	// ErrEmpty error for empty content
 	ErrEmpty = errorsmod.Register(DefaultCodespace, 12, "empty")
@@ -93,14 +89,6 @@ var (
 
 	// ErrVMError means an error occurred in wasmvm (not in the contract itself, but in the host environment)
 	ErrVMError = errorsmod.Register(DefaultCodespace, 29, "wasmvm error")
-)
-
-// Error codes for wasm contract errors
-const (
-	InstantiateErrorCode = 4
-	ExecuteErrorCode     = 5
-	QueryErrorCode       = 9
-	MigrateErrorCode     = 11
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted
@@ -163,4 +151,33 @@ func (e WasmVMFlavouredError) Wrap(desc string) error { return errorsmod.Wrap(e,
 // It's a handy function to call Wrapf with sdk errors.
 func (e WasmVMFlavouredError) Wrapf(desc string, args ...interface{}) error {
 	return errorsmod.Wrapf(e, desc, args...)
+}
+
+// DeterministicError is a wrapper type around an error that the creator guarantees to have
+// a deterministic error message.
+// This means that the `Error()` function must always return the same string on all nodes.
+// DeterministicErrors are not redacted when returned to a contract,
+// so not upholding this guarantee can lead to consensus failures.
+type DeterministicError struct {
+	error
+}
+
+var _ error = DeterministicError{}
+
+// MarkErrorDeterministic marks an error as deterministic.
+// Make sure to only do that if the error message is deterministic between systems.
+// See [DeterministicError] for more details.
+func MarkErrorDeterministic(e error) DeterministicError {
+	return DeterministicError{error: e}
+}
+
+// Unwrap implements the built-in errors.Unwrap
+func (e DeterministicError) Unwrap() error {
+	return e.error
+}
+
+// Cause is the same as unwrap but used by ABCIInfo
+// By returning the wrapped error here, we ensure
+func (e DeterministicError) Cause() error {
+	return e.Unwrap()
 }

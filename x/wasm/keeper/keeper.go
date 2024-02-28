@@ -324,7 +324,7 @@ func (k Keeper) instantiate(
 		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if res.Err != "" {
-		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, res.Err)
+		return nil, nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrInstantiateFailed, res.Err))
 	}
 
 	// persist instance first
@@ -408,7 +408,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -485,7 +485,7 @@ func (k Keeper) migrate(
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, res.Err)
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
 	}
 	// delete old secondary index entry
 	err = k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.mustGetLastContractHistoryEntry(sdkCtx, contractAddress))
@@ -550,7 +550,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -590,7 +590,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(

@@ -209,18 +209,19 @@ func redactError(err error) error {
 		return err
 	}
 
+	// If it is a DeterministicError, we can safely return it without redaction.
+	// We only check the top level error to avoid changes in the error chain becoming
+	// consensus-breaking.
+	if _, ok := err.(types.DeterministicError); ok {
+		return err
+	}
+
 	// FIXME: do we want to hardcode some constant string mappings here as well?
 	// Or better document them? (SDK error string may change on a patch release to fix wording)
 	// sdk/11 is out of gas
 	// sdk/5 is insufficient funds (on bank send)
 	// (we can theoretically redact less in the future, but this is a first step to safety)
 	codespace, code, _ := errorsmod.ABCIInfo(err, false)
-
-	// Also do not redact any errors that are coming from the contract,
-	// as they are always deterministic
-	if codespace == types.DefaultCodespace && contains(types.ContractErrorCodes, code) {
-		return err
-	}
 	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }
 

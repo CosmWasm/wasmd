@@ -94,3 +94,19 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		t.Run(name, spec.exec)
 	}
 }
+
+func TestDeterministicError(t *testing.T) {
+	inner := ErrInstantiateFailed
+	err := MarkErrorDeterministic(inner)
+
+	// behaves like a wrapper around inner error
+	assert.Equal(t, inner.Error(), err.Error())
+	assert.Equal(t, inner, err.Cause())
+	assert.Equal(t, inner, err.Unwrap())
+
+	// also works with ABCIInfo
+	codespace, code, _ := errorsmod.ABCIInfo(err, false)
+	innerCodeSpace, innerCode, _ := errorsmod.ABCIInfo(inner, false)
+	assert.Equal(t, innerCodeSpace, codespace)
+	assert.Equal(t, innerCode, code)
+}
