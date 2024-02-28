@@ -1,0 +1,24 @@
+syntax = "proto3";
+package cosmwasm.slpp.v1;
+
+option go_package = "github.com/CosmWasm/wasmd/x/slpp/types";
+
+service Msg {
+    rpc RegisterAVS(MsgRegisterAVS) returns (MsgRegisterAVSResponse) {}
+}
+
+// AVS represents the state-ful information stored per AVS
+message AVS {
+    string contract_address = 1;
+	uint64 id = 2;
+	string sidecar_docker_image = 3;
+}
+
+// MsgRegisterAVS defines a message-type handled by the x/slpp module for ingressing a new AVS.
+message MsgRegisterAVS {
+
+}
+
+// MsgRegisterAVSResponse defines the Msg/RegisterAVS response
+message MsgRegisterAVSResponse {
+}
