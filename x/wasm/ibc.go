@@ -5,6 +5,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
@@ -324,6 +325,114 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 		return errorsmod.Wrap(err, "on timeout")
 	}
 	return nil
+}
+
+// IBCSendPacketCallback implements the IBC Callbacks ContractKeeper interface
+// see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
+func (i IBCHandler) IBCSendPacketCallback(
+	cachedCtx sdk.Context,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	packetData []byte,
+	contractAddress,
+	packetSenderAddress string,
+) error {
+	_, err := validateSender(contractAddress, packetSenderAddress)
+	if err != nil {
+		return err
+	}
+
+	// no-op, since we are not interested in this callback
+	return nil
+}
+
+// IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
+// see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
+func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
+	cachedCtx sdk.Context,
+	packet channeltypes.Packet,
+	acknowledgement []byte,
+	relayer sdk.AccAddress,
+	contractAddress,
+	packetSenderAddress string,
+) error {
+	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
+	if err != nil {
+		return err
+	}
+
+	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
+		Acknowledgement: &wasmvmtypes.IBCPacketAckMsg{
+			Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
+			OriginalPacket:  newIBCPacket(packet),
+			Relayer:         relayer.String(),
+		},
+	}
+	err = i.keeper.IBCSourceChainCallback(cachedCtx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on source chain callback ack")
+	}
+
+	return nil
+}
+
+// IBCOnTimeoutPacketCallback implements the IBC Callbacks ContractKeeper interface
+// see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
+func (i IBCHandler) IBCOnTimeoutPacketCallback(
+	cachedCtx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+	contractAddress,
+	packetSenderAddress string,
+) error {
+	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
+	if err != nil {
+		return err
+	}
+
+	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
+		Timeout: &wasmvmtypes.IBCPacketTimeoutMsg{
+			Packet:  newIBCPacket(packet),
+			Relayer: relayer.String(),
+		},
+	}
+	err = i.keeper.IBCSourceChainCallback(cachedCtx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on source chain callback timeout")
+	}
+	return nil
+}
+
+// IBCReceivePacketCallback implements the IBC Callbacks ContractKeeper interface
+// see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
+func (i IBCHandler) IBCReceivePacketCallback(
+	cachedCtx sdk.Context,
+	packet ibcexported.PacketI,
+	ack ibcexported.Acknowledgement,
+	contractAddress string,
+) error {
+	// no-op for now, but will be supported in the future
+	return nil
+}
+
+func validateSender(contractAddr string, senderAddr string) (sdk.AccAddress, error) {
+	contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "contract address")
+	}
+	senderAddress, err := sdk.AccAddressFromBech32(senderAddr)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "packet sender address")
+	}
+
+	// We only allow the contract that sent the message to receive source chain callbacks for it.
+	if !contractAddress.Equals(senderAddress) {
+		return nil, errorsmod.Wrapf(types.ErrExecuteFailed, "contract address %s does not match packet sender %s", contractAddr, senderAddress)
+	}
+
+	return contractAddress, nil
 }
 
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
