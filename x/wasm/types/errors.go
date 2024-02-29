@@ -156,6 +156,7 @@ func (e WasmVMFlavouredError) Wrapf(desc string, args ...interface{}) error {
 // DeterministicError is a wrapper type around an error that the creator guarantees to have
 // a deterministic error message.
 // This means that the `Error()` function must always return the same string on all nodes.
+// The DeterministicError has the same error message as the wrapped error.
 // DeterministicErrors are not redacted when returned to a contract,
 // so not upholding this guarantee can lead to consensus failures.
 type DeterministicError struct {
@@ -177,7 +178,8 @@ func (e DeterministicError) Unwrap() error {
 }
 
 // Cause is the same as unwrap but used by ABCIInfo
-// By returning the wrapped error here, we ensure
+// By returning the wrapped error here, we ensure that the DeterministicError inherits
+// the ABCIInfo of the wrapped error.
 func (e DeterministicError) Cause() error {
 	return e.Unwrap()
 }
