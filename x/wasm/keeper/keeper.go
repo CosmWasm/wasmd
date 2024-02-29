@@ -261,7 +261,10 @@ func (k Keeper) instantiate(
 	}
 	contractAddress := addressGenerator(ctx, codeID, codeInfo.CodeHash)
 	if k.HasContractInfo(ctx, contractAddress) {
-		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
+		// This case must only happen for instantiate2 because instantiate is based on a counter in state.
+		// So we create an instantiate2 specific error message here even though technically this function
+		// is used for both cases.
+		return nil, nil, types.ErrDuplicate.Wrap("contract address already exists, try a different combination of creator, checksum and salt")
 	}
 
 	// check account
