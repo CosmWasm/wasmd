@@ -5,7 +5,7 @@ orbs:
 executors:
   golang:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.22
 
 commands:
   make:
