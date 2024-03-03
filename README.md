@@ -116,7 +116,7 @@ your use case.
 
 ## Quick Start
 
-```
+```bash
 make install
 make test
 ```
