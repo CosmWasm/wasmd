@@ -804,7 +804,8 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 							},
 						},
 					},
-				}},
+				},
+			},
 		}, 0, nil
 	}
 
