@@ -36,7 +36,7 @@ func (s GenesisState) ValidateBasic() error {
 	}
 	for i := range s.GenMsgs {
 		if err := s.GenMsgs[i].ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "gen message: %d", i)
+			return errorsmod.Wrapf(err, "gen message: %d", i)
 		}
 	}
 	return nil
@@ -97,11 +97,16 @@ func (m GenesisState_GenMsgs) AsMsg() sdk.Msg {
 }
 
 func (m GenesisState_GenMsgs) ValidateBasic() error {
-	msg := m.AsMsg()
-	if msg == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
+	if msg := m.GetStoreCode(); msg != nil {
+		return msg.ValidateBasic()
 	}
-	return msg.ValidateBasic()
+	if msg := m.GetInstantiateContract(); msg != nil {
+		return msg.ValidateBasic()
+	}
+	if msg := m.GetExecuteContract(); msg != nil {
+		return msg.ValidateBasic()
+	}
+	return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
 }
 
 // ValidateGenesis performs basic validation of supply genesis data returning an

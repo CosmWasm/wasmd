@@ -247,7 +247,7 @@ func (k Keeper) instantiate(
 
 	initMsg, err := ioutils.CompactMsg(rawInitMsg)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to compact init msg: %s", err.Error())
+		return nil, nil, errorsmod.Wrapf(types.ErrInvalidMsg, "failed to compact init msg: %s", err.Error())
 	}
 
 	if creator == nil {
@@ -434,7 +434,7 @@ func (k Keeper) migrate(
 
 	msg, err := ioutils.CompactMsg(rawMsg)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to compact migrate msg: %s", err.Error())
+		return nil, errorsmod.Wrapf(types.ErrInvalidMsg, "failed to compact migrate msg: %s", err.Error())
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -658,25 +658,6 @@ func (k Keeper) setContractAdmin(ctx context.Context, contractAddress, caller, n
 		types.EventTypeUpdateContractAdmin,
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 		sdk.NewAttribute(types.AttributeKeyNewAdmin, newAdminStr),
-	))
-
-	return nil
-}
-
-func (k Keeper) setContractLabel(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newLabel string, authZ types.AuthorizationPolicy) error {
-	contractInfo := k.GetContractInfo(ctx, contractAddress)
-	if contractInfo == nil {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
-	}
-	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
-		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
-	}
-	contractInfo.Label = newLabel
-	k.storeContractInfo(ctx, contractAddress, contractInfo)
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeUpdateContractLabel,
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
-		sdk.NewAttribute(types.AttributeKeyNewLabel, newLabel),
 	))
 
 	return nil

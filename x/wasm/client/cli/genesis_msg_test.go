@@ -7,8 +7,14 @@ import (
 	"path"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -22,10 +28,6 @@ import (
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -646,7 +648,6 @@ func TestGetAllContracts(t *testing.T) {
 }
 
 func setupGenesis(t *testing.T, wasmGenesis types.GenesisState, myWellFundedAccount string) string {
-
 	appCodec := keeper.MakeEncodingConfig(t).Codec
 	homeDir := t.TempDir()
 
@@ -659,18 +660,15 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState, myWellFundedAcco
 	bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
 		// add a balance for the default sender account
 		Address: myWellFundedAccount,
-		Coins:   sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(10000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(10000000000))),
 	})
 	appState[banktypes.ModuleName] = appCodec.MustMarshalJSON(bankGenesis)
 	appState[stakingtypes.ModuleName] = appCodec.MustMarshalJSON(stakingtypes.DefaultGenesisState())
 
 	appStateBz, err := json.Marshal(appState)
 	require.NoError(t, err)
-	genDoc := tmtypes.GenesisDoc{
-		ChainID:  "testing",
-		AppState: appStateBz,
-	}
-	err = genutil.ExportGenesisFile(&genDoc, genFilename)
+	genDoc := genutiltypes.NewAppGenesisWithVersion("testing", appStateBz)
+	err = genutil.ExportGenesisFile(genDoc, genFilename)
 	require.NoError(t, err)
 
 	return homeDir
@@ -678,7 +676,7 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState, myWellFundedAcco
 
 func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) error {
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(homeDir)
+	cfg, err := genutiltest.CreateDefaultCometConfig(homeDir)
 	require.NoError(t, err)
 	appCodec := keeper.MakeEncodingConfig(t).Codec
 	serverCtx := server.NewContext(viper.New(), cfg, logger)

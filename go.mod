@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.16.0
+	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	google.golang.org/genproto v0.0.0-20231016165738-49dd2c1f3d0b // indirect
@@ -51,7 +51,6 @@ require (
 	github.com/cosmos/ibc-go/v8 v8.0.0
 	github.com/distribution/reference v0.5.0
 	github.com/rs/zerolog v1.31.0
-	github.com/spf13/viper v1.17.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20231012201019-e917dd12ba7a
 )
 

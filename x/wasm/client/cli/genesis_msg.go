@@ -8,17 +8,18 @@ import (
 	"errors"
 	"fmt"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/spf13/cobra"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -354,12 +355,12 @@ func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, 
 // GenesisData contains raw and unmarshalled data from the genesis file
 type GenesisData struct {
 	GenesisFile     string
-	GenDoc          *tmtypes.GenesisDoc
+	GenDoc          *genutiltypes.AppGenesis
 	AppState        map[string]json.RawMessage
 	WasmModuleState *types.GenesisState
 }
 
-func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, wasmModuleState *types.GenesisState) *GenesisData {
+func NewGenesisData(genesisFile string, genDoc *genutiltypes.AppGenesis, appState map[string]json.RawMessage, wasmModuleState *types.GenesisState) *GenesisData {
 	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, WasmModuleState: wasmModuleState}
 }
 
@@ -425,13 +426,13 @@ func (x DefaultGenesisIO) AlterWasmModuleState(cmd *cobra.Command, callback func
 	clientCtx := client.GetClientContextFromCmd(cmd)
 	wasmGenStateBz, err := clientCtx.Codec.MarshalJSON(g.WasmModuleState)
 	if err != nil {
-		return sdkerrors.Wrap(err, "marshal wasm genesis state")
+		return errorsmod.Wrap(err, "marshal wasm genesis state")
 	}
 
 	g.AppState[types.ModuleName] = wasmGenStateBz
 	appStateJSON, err := json.Marshal(g.AppState)
 	if err != nil {
-		return sdkerrors.Wrap(err, "marshal application genesis state")
+		return errorsmod.Wrap(err, "marshal application genesis state")
 	}
 
 	g.GenDoc.AppState = appStateJSON

@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
@@ -716,7 +717,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 							Verifier:    verifierAddress,
 							Beneficiary: beneficiaryAddress,
 						}.GetBytes(t),
-						Funds: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+						Funds: sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10))),
 					},
 				},
 			},
@@ -734,8 +735,8 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NoError(t, importState.ValidateBasic())
 	ctx, keepers := CreateDefaultTestInput(t)
 	keeper := keepers.WasmKeeper
-	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
-	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, sdk.NewInt(100)))
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, math.NewInt(100)))
 
 	// when
 	_, err = InitGenesis(ctx, keeper, importState, TestHandler(keepers.ContractKeeper))
@@ -754,7 +755,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 
 	// verify contract executed
 	gotBalance := keepers.BankKeeper.GetBalance(ctx, beneficiaryAddress, denom)
-	assert.Equal(t, sdk.NewCoin(denom, sdk.NewInt(10)), gotBalance)
+	assert.Equal(t, sdk.NewCoin(denom, math.NewInt(10)), gotBalance)
 }
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {

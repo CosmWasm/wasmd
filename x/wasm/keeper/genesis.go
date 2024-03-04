@@ -87,12 +87,12 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgRo
 	for _, genTx := range data.GenMsgs {
 		msg := genTx.AsMsg()
 		if msg == nil {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
 		}
 		handler := msgRouter.Handler(msg)
 		_, err := handler(ctx, msg)
 		if err != nil {
-			return nil, sdkerrors.Wrap(err, "genesis")
+			return nil, errorsmod.Wrap(err, "genesis")
 		}
 	}
 	return nil, nil

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

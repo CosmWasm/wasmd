@@ -51,7 +51,7 @@ func TestEncoding(t *testing.T) {
 
 	msg, err := codectypes.NewAnyWithValue(types.MsgStoreCodeFixture())
 	require.NoError(t, err)
-	proposalMsg := &v1.MsgSubmitProposal{
+	proposalMsg := &govv1.MsgSubmitProposal{
 		Proposer:       addr1.String(),
 		Messages:       []*codectypes.Any{msg},
 		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
