@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	storetypes "cosmossdk.io/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -112,7 +114,7 @@ func TestGasCostOnQuery(t *testing.T) {
 			keeper.queryGasLimit = 1000
 
 			// make sure we set a limit before calling
-			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
+			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 			// do the query
@@ -187,9 +189,9 @@ func TestGasOnExternalQuery(t *testing.T) {
 			recurse := tc.msg
 			msg := buildRecurseQuery(t, recurse)
 
-			querier := NewGrpcQuerier(keeper.cdc, keeper.storeKey, keeper, tc.gasLimit)
+			querier := NewGrpcQuerier(keeper.cdc, keeper.storeService, keeper, tc.gasLimit)
 			req := &types.QuerySmartContractStateRequest{Address: contractAddr.String(), QueryData: msg}
-			_, gotErr := querier.SmartContractState(sdk.WrapSDKContext(ctx), req)
+			_, gotErr := querier.SmartContractState(ctx, req)
 			if tc.expOutOfGas {
 				require.Error(t, gotErr, sdkerrors.ErrOutOfGas)
 				return
@@ -274,7 +276,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			totalWasmQueryCounter = 0
 
 			// make sure we set a limit before calling
-			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
+			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 			// prepare the query

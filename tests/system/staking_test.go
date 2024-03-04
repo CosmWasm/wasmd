@@ -21,7 +21,7 @@ func TestStakeUnstake(t *testing.T) {
 	// add genesis account with some tokens
 	account1Addr := cli.AddKey("account1")
 	sut.ModifyGenesisCLI(t,
-		[]string{"genesis", "add-genesis-account", account1Addr, "100000000stake"},
+		[]string{"genesis", "add-genesis-account", account1Addr, "10000000stake"},
 	)
 
 	sut.StartChain(t)
@@ -35,20 +35,20 @@ func TestStakeUnstake(t *testing.T) {
 	RequireTxSuccess(t, rsp)
 
 	t.Log(cli.QueryBalance(account1Addr, "stake"))
-	assert.Equal(t, int64(99989999), cli.QueryBalance(account1Addr, "stake"))
+	assert.Equal(t, int64(9989999), cli.QueryBalance(account1Addr, "stake"))
 
 	rsp = cli.CustomQuery("q", "staking", "delegation", account1Addr, valAddr)
-	assert.Equal(t, "10000", gjson.Get(rsp, "balance.amount").String())
-	assert.Equal(t, "stake", gjson.Get(rsp, "balance.denom").String())
+	assert.Equal(t, "10000", gjson.Get(rsp, "delegation_response.balance.amount").String(), rsp)
+	assert.Equal(t, "stake", gjson.Get(rsp, "delegation_response.balance.denom").String(), rsp)
 
 	// unstake tokens
 	rsp = cli.CustomCommand("tx", "staking", "unbond", valAddr, "5000stake", "--from="+account1Addr, "--fees=1stake")
 	RequireTxSuccess(t, rsp)
 
 	rsp = cli.CustomQuery("q", "staking", "delegation", account1Addr, valAddr)
-	assert.Equal(t, "5000", gjson.Get(rsp, "balance.amount").String())
-	assert.Equal(t, "stake", gjson.Get(rsp, "balance.denom").String())
+	assert.Equal(t, "5000", gjson.Get(rsp, "delegation_response.balance.amount").String(), rsp)
+	assert.Equal(t, "stake", gjson.Get(rsp, "delegation_response.balance.denom").String(), rsp)
 
 	rsp = cli.CustomQuery("q", "staking", "unbonding-delegation", account1Addr, valAddr)
-	assert.Equal(t, "5000", gjson.Get(rsp, "entries.#.balance").Array()[0].String())
+	assert.Equal(t, "5000", gjson.Get(rsp, "unbond.entries.#.balance").Array()[0].String(), rsp)
 }

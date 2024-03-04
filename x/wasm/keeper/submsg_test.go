@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,7 +27,7 @@ import (
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -111,9 +112,9 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	subGasLimit := uint64(300_000)
 
 	// prep - create one chain and upload the code
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities)
+	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+	ctx = ctx.WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 	keeper := keepers.WasmKeeper
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(fundedDenom, int64(fundedAmount)))
 	uploader := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart.Add(contractStart...)...)
@@ -193,14 +194,12 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertReturnedEvents := func(expectedEvents int) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			t.Helper()
 			require.Len(t, response.Ok.Events, expectedEvents)
 		}
 	}
 
 	assertGasUsed := func(minGas, maxGas uint64) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			t.Helper()
 			gasUsed := ctx.GasMeter().GasConsumed()
 			assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
 			assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)
@@ -209,13 +208,11 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertErrorString := func(shouldContain string) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			t.Helper()
 			assert.Contains(t, response.Err, shouldContain)
 		}
 	}
 
 	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-		t.Helper()
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
 		require.Equal(t, event.Type, "instantiate")
@@ -246,7 +243,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(102000, 103000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(105000, 106000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -266,7 +263,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(102000, 103000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(105000, 106000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -312,12 +309,12 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			reflectSendBz, err := json.Marshal(reflectSend)
 			require.NoError(t, err)
 
-			execCtx := ctx.WithGasMeter(sdk.NewGasMeter(ctxGasLimit))
+			execCtx := ctx.WithGasMeter(storetypes.NewGasMeter(ctxGasLimit))
 			defer func() {
 				if tc.isOutOfGasPanic {
 					r := recover()
 					require.NotNil(t, r, "expected panic")
-					if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+					if _, ok := r.(storetypes.ErrorOutOfGas); !ok {
 						t.Fatalf("Expected OutOfGas panic, got: %#v\n", r)
 					}
 				}
@@ -370,7 +367,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageHandler(NewSDKMessageHandler(MakeTestCodec(t), nil, customEncoders)))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -436,7 +433,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

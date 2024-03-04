@@ -97,8 +97,6 @@ var (
 
 	// variable aliases
 	// Deprecated: Do not use.
-	ModuleCdc = types.ModuleCdc
-	// Deprecated: Do not use.
 	DefaultCodespace = types.DefaultCodespace
 	// Deprecated: Do not use.
 	ErrCreateFailed = types.ErrCreateFailed

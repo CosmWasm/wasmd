@@ -1,6 +1,6 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.19-alpine3.15 AS go-builder
+FROM golang:1.21-alpine3.17 AS go-builder
 ARG arch=x86_64
 
 # this comes from standard alpine nightly file
@@ -29,7 +29,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/wasmd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.16
+FROM alpine:3.17
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 

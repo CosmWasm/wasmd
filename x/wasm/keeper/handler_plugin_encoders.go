@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -336,7 +337,7 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 	case msg.VoteWeighted != nil:
 		opts := make([]*v1.WeightedVoteOption, len(msg.VoteWeighted.Options))
 		for i, v := range msg.VoteWeighted.Options {
-			weight, err := sdk.NewDecFromStr(v.Weight)
+			weight, err := sdkmath.LegacyNewDecFromStr(v.Weight)
 			if err != nil {
 				return nil, errorsmod.Wrapf(err, "weight for vote %d", i+1)
 			}
@@ -394,7 +395,7 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin
 func ConvertWasmCoinToSdkCoin(coin wasmvmtypes.Coin) (sdk.Coin, error) {
-	amount, ok := sdk.NewIntFromString(coin.Amount)
+	amount, ok := sdkmath.NewIntFromString(coin.Amount)
 	if !ok {
 		return sdk.Coin{}, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
 	}

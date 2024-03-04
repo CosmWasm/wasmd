@@ -50,10 +50,13 @@ func TestBasicWasm(t *testing.T) {
 	t.Cleanup(cleanupFn)
 
 	t.Log("Instantiate wasm code")
-	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, randomBech32Addr(), randomBech32Addr())
+	verifierAddr := randomBech32Addr()
+	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, verifierAddr, randomBech32Addr())
 	newContractAddr := cli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr)
-	assert.Equal(t, expContractAddr, newContractAddr)
-	assert.Len(t, done(), 1)
+	require.Equal(t, expContractAddr, newContractAddr)
+	require.Len(t, done(), 1)
+	gotRsp := cli.QuerySmart(newContractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 
 	t.Log("Update Instantiate Config")
 	qResult = cli.CustomQuery("q", "wasm", "code-info", fmt.Sprint(codeID))

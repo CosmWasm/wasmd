@@ -1,41 +1,83 @@
 package app
 
 import (
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	"fmt"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/CosmWasm/wasmd/app/upgrades"
+	"github.com/CosmWasm/wasmd/app/upgrades/noop"
+	v050 "github.com/CosmWasm/wasmd/app/upgrades/v050"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// UpgradeName defines the on-chain upgrade name for the sample SimApp upgrade
-// from v046 to v047.
-//
-// NOTE: This upgrade defines a reference implementation of what an upgrade
-// could look like when an application is migrating from Cosmos SDK version
-// v0.46.x to v0.47.x.
-const UpgradeName = "v046-to-v047"
+// Upgrades list of chain upgrades
+var Upgrades = []upgrades.Upgrade{v050.Upgrade}
 
-func (app WasmApp) RegisterUpgradeHandlers() {
-	// Set param key table for params module migration
-	for _, subspace := range app.ParamsKeeper.GetSubspaces() {
+// RegisterUpgradeHandlers registers the chain upgrade handlers
+func (app *WasmApp) RegisterUpgradeHandlers() {
+	setupLegacyKeyTables(&app.ParamsKeeper)
+	if len(Upgrades) == 0 {
+		// always have a unique upgrade registered for the current version to test in system tests
+		Upgrades = append(Upgrades, noop.NewUpgrade(app.Version()))
+	}
+
+	keepers := upgrades.AppKeepers{
+		AccountKeeper:         &app.AccountKeeper,
+		ParamsKeeper:          &app.ParamsKeeper,
+		ConsensusParamsKeeper: &app.ConsensusParamsKeeper,
+		CapabilityKeeper:      app.CapabilityKeeper,
+		IBCKeeper:             app.IBCKeeper,
+		Codec:                 app.appCodec,
+		GetStoreKey:           app.GetKey,
+	}
+	app.GetStoreKeys()
+	// register all upgrade handlers
+	for _, upgrade := range Upgrades {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			upgrade.UpgradeName,
+			upgrade.CreateUpgradeHandler(
+				app.ModuleManager,
+				app.configurator,
+				&keepers,
+			),
+		)
+	}
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	// register store loader for current upgrade
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades)) // nolint:gosec
+			break
+		}
+	}
+}
+
+func setupLegacyKeyTables(k *paramskeeper.Keeper) {
+	for _, subspace := range k.GetSubspaces() {
 		subspace := subspace
 
 		var keyTable paramstypes.KeyTable
@@ -45,7 +87,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 		case banktypes.ModuleName:
 			keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 		case stakingtypes.ModuleName:
-			keyTable = stakingtypes.ParamKeyTable()
+			keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
 		case minttypes.ModuleName:
 			keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
 		case distrtypes.ModuleName:
@@ -56,16 +98,9 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 			keyTable = govv1.ParamKeyTable() //nolint:staticcheck
 		case crisistypes.ModuleName:
 			keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
-			// ibc types
-		case ibctransfertypes.ModuleName:
-			keyTable = ibctransfertypes.ParamKeyTable()
-		case icahosttypes.SubModuleName:
-			keyTable = icahosttypes.ParamKeyTable()
-		case icacontrollertypes.SubModuleName:
-			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case wasmtypes.ModuleName:
-			keyTable = wasmtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = v2.ParamKeyTable() //nolint:staticcheck
 		default:
 			continue
 		}
@@ -74,36 +109,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 			subspace.WithKeyTable(keyTable)
 		}
 	}
-
-	baseAppLegacySS := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-
-	app.UpgradeKeeper.SetUpgradeHandler(
-		UpgradeName,
-		func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			// Migrate Tendermint consensus parameters from x/params module to a dedicated x/consensus module.
-			baseapp.MigrateParams(ctx, baseAppLegacySS, &app.ConsensusParamsKeeper)
-
-			// Note: this migration is optional,
-			// You can include x/gov proposal migration documented in [UPGRADING.md](https://github.com/cosmos/cosmos-sdk/blob/main/UPGRADING.md)
-
-			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
-		},
-	)
-
-	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	if err != nil {
-		panic(err)
-	}
-
-	if upgradeInfo.Name == UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{
-				consensustypes.ModuleName,
-				crisistypes.ModuleName,
-			},
-		}
-
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
-	}
+	// sdk 47
+	k.Subspace(baseapp.Paramspace).
+		WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 }

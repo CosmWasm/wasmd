@@ -8,11 +8,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -24,14 +26,14 @@ var _ types.QueryServer = &GrpcQuerier{}
 
 type GrpcQuerier struct {
 	cdc           codec.Codec
-	storeKey      storetypes.StoreKey
+	storeService  corestoretypes.KVStoreService
 	keeper        types.ViewKeeper
-	queryGasLimit sdk.Gas
+	queryGasLimit storetypes.Gas
 }
 
 // NewGrpcQuerier constructor
-func NewGrpcQuerier(cdc codec.Codec, storeKey storetypes.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *GrpcQuerier {
-	return &GrpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
+func NewGrpcQuerier(cdc codec.Codec, storeService corestoretypes.KVStoreService, keeper types.ViewKeeper, queryGasLimit storetypes.Gas) *GrpcQuerier {
+	return &GrpcQuerier{cdc: cdc, storeService: storeService, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
 func (q GrpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
@@ -68,7 +70,8 @@ func (q GrpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.ContractCodeHistoryEntry, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
+
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractCodeHistoryElementPrefix(contractAddr))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var e types.ContractCodeHistoryEntry
@@ -103,7 +106,8 @@ func (q GrpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]string, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
+
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
@@ -141,7 +145,7 @@ func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}
 
 	r := make([]types.Model, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractStorePrefix(contractAddr))
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractStorePrefix(contractAddr))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, types.Model{
@@ -190,12 +194,12 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	if err != nil {
 		return nil, err
 	}
-	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(sdk.NewGasMeter(q.queryGasLimit))
+	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(storetypes.NewGasMeter(q.queryGasLimit))
 	// recover from out-of-gas panic
 	defer func() {
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
-			case sdk.ErrorOutOfGas:
+			case storetypes.ErrorOutOfGas:
 				err = errorsmod.Wrapf(sdkerrors.ErrOutOfGas,
 					"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
 					rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
@@ -254,7 +258,7 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.CodeInfoResponse, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.CodeKeyPrefix)
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.CodeKeyPrefix)
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var c types.CodeInfo
@@ -323,7 +327,8 @@ func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]uint64, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.PinnedCodeIndexPrefix)
+
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.PinnedCodeIndexPrefix)
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, sdk.BigEndianToUint64(key))
@@ -362,7 +367,7 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	if err != nil {
 		return nil, err
 	}
-	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractsByCreatorPrefix(creatorAddress))
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])

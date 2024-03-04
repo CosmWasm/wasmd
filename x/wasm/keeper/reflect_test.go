@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	CyberpunkFeatures = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
-	ReflectFeatures   = CyberpunkFeatures
+	CyberpunkCapabilities = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+	ReflectCapabilities   = CyberpunkCapabilities
 )
 
 func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
@@ -36,7 +36,7 @@ func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
 
 func TestReflectContractSend(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -115,7 +115,7 @@ func TestReflectContractSend(t *testing.T) {
 
 func TestReflectCustomMsg(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -205,7 +205,7 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestRustPanicIsHandled(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, CyberpunkFeatures)
+	ctx, keepers := CreateTestInput(t, false, CyberpunkCapabilities)
 	keeper := keepers.ContractKeeper
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
@@ -228,7 +228,6 @@ func TestRustPanicIsHandled(t *testing.T) {
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
-	t.Helper()
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)

@@ -4,6 +4,7 @@ import (
 	_ "embed"
 
 	typwasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	"github.com/cosmos/cosmos-sdk/types"
 )
 

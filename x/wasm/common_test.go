@@ -14,7 +14,6 @@ const firstCodeID = 1
 
 // ensure store code returns the expected response
 func assertStoreCodeResponse(t *testing.T, data []byte, expected uint64) {
-	t.Helper()
 	var pStoreResp types.MsgStoreCodeResponse
 	require.NoError(t, pStoreResp.Unmarshal(data))
 	require.Equal(t, pStoreResp.CodeID, expected)
@@ -22,7 +21,6 @@ func assertStoreCodeResponse(t *testing.T, data []byte, expected uint64) {
 
 // ensure execution returns the expected data
 func assertExecuteResponse(t *testing.T, data, expected []byte) {
-	t.Helper()
 	var pExecResp types.MsgExecuteContractResponse
 	require.NoError(t, pExecResp.Unmarshal(data))
 	require.Equal(t, pExecResp.Data, expected)
@@ -30,7 +28,6 @@ func assertExecuteResponse(t *testing.T, data, expected []byte) {
 
 // ensures this returns a valid bech32 address and returns it
 func parseInitResponse(t *testing.T, data []byte) string {
-	t.Helper()
 	var pInstResp types.MsgInstantiateContractResponse
 	require.NoError(t, pInstResp.Unmarshal(data))
 	require.NotEmpty(t, pInstResp.Address)

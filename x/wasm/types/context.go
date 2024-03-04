@@ -1,6 +1,8 @@
 package types
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -25,7 +27,7 @@ func WithTXCounter(ctx sdk.Context, counter uint32) sdk.Context {
 
 // TXCounter returns the tx counter value and found bool from the context.
 // The result will be (0, false) for external queries or simulations where no counter available.
-func TXCounter(ctx sdk.Context) (uint32, bool) {
+func TXCounter(ctx context.Context) (uint32, bool) {
 	val, ok := ctx.Value(contextKeyTXCount).(uint32)
 	return val, ok
 }
@@ -36,7 +38,7 @@ func WithQueryStackSize(ctx sdk.Context, counter uint32) sdk.Context {
 }
 
 // QueryStackSize reads the stack position for smart queries from the context
-func QueryStackSize(ctx sdk.Context) (uint32, bool) {
+func QueryStackSize(ctx context.Context) (uint32, bool) {
 	val, ok := ctx.Value(contextKeyQueryStackSize).(uint32)
 	return val, ok
 }
@@ -50,7 +52,7 @@ func WithSubMsgAuthzPolicy(ctx sdk.Context, policy AuthorizationPolicy) sdk.Cont
 }
 
 // SubMsgAuthzPolicy reads the authorization policy for submessages from the context
-func SubMsgAuthzPolicy(ctx sdk.Context) (AuthorizationPolicy, bool) {
+func SubMsgAuthzPolicy(ctx context.Context) (AuthorizationPolicy, bool) {
 	val, ok := ctx.Value(contextKeySubMsgAuthzPolicy).(AuthorizationPolicy)
 	return val, ok
 }
@@ -64,7 +66,7 @@ func WithGasRegister(ctx sdk.Context, gr GasRegister) sdk.Context {
 }
 
 // GasRegisterFromContext reads the gas register from the context
-func GasRegisterFromContext(ctx sdk.Context) (GasRegister, bool) {
+func GasRegisterFromContext(ctx context.Context) (GasRegister, bool) {
 	val, ok := ctx.Value(contextKeyGasRegister).(GasRegister)
 	return val, ok
 }

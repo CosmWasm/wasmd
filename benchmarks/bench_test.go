@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
@@ -96,28 +95,24 @@ func BenchmarkTxSending(b *testing.B) {
 
 			// number of Tx per block for the benchmarks
 			blockSize := tc.blockSize
-			height := int64(3)
+			height := int64(2)
 			txEncoder := appInfo.TxConfig.TxEncoder()
 
 			b.ResetTimer()
 
 			for i := 0; i < b.N/blockSize; i++ {
-				appInfo.App.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
-
+				xxx := make([][]byte, blockSize)
 				for j := 0; j < blockSize; j++ {
 					idx := i*blockSize + j
 					bz, err := txEncoder(txs[idx])
 					require.NoError(b, err)
-					rsp := appInfo.App.CheckTx(abci.RequestCheckTx{
-						Tx:   bz,
-						Type: abci.CheckTxType_New,
-					})
-					require.True(b, rsp.IsOK())
-					dRsp := appInfo.App.DeliverTx(abci.RequestDeliverTx{Tx: bz})
-					require.True(b, dRsp.IsOK())
+					xxx[j] = bz
 				}
-				appInfo.App.EndBlock(abci.RequestEndBlock{Height: height})
-				appInfo.App.Commit()
+				_, err := appInfo.App.FinalizeBlock(&abci.RequestFinalizeBlock{Txs: xxx, Height: height, Time: time.Now()})
+				require.NoError(b, err)
+
+				_, err = appInfo.App.Commit()
+				require.NoError(b, err)
 				height++
 			}
 		})
@@ -153,7 +148,6 @@ func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
 
 func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
 	return func(b *testing.B, info *AppInfo) []sdk.Tx {
-		b.Helper()
 		return GenSequenceOfTxs(b, info, builder, b.N)
 	}
 }
@@ -163,7 +157,6 @@ func buildMemDB(_ *testing.B) dbm.DB {
 }
 
 func buildLevelDB(b *testing.B) dbm.DB {
-	b.Helper()
 	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
 	require.NoError(b, err)
 	return levelDB

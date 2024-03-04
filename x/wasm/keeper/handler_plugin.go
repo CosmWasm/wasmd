@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -33,6 +33,7 @@ type MessageRouter interface {
 type SDKMessageHandler struct {
 	router   MessageRouter
 	encoders msgEncoder
+	cdc      codec.Codec
 }
 
 // NewDefaultMessageHandler constructor
@@ -42,23 +43,24 @@ func NewDefaultMessageHandler(
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
-	unpacker codectypes.AnyUnpacker,
+	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
 	customEncoders ...*MessageEncoders,
 ) Messenger {
-	encoders := DefaultEncoders(unpacker, portSource)
+	encoders := DefaultEncoders(cdc, portSource)
 	for _, e := range customEncoders {
 		encoders = encoders.Merge(e)
 	}
 	return NewMessageHandlerChain(
-		NewSDKMessageHandler(router, encoders),
+		NewSDKMessageHandler(cdc, router, encoders),
 		NewIBCRawPacketHandler(ics4Wrapper, channelKeeper, capabilityKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
 
-func NewSDKMessageHandler(router MessageRouter, encoders msgEncoder) SDKMessageHandler {
+func NewSDKMessageHandler(cdc codec.Codec, router MessageRouter, encoders msgEncoder) SDKMessageHandler {
 	return SDKMessageHandler{
+		cdc:      cdc,
 		router:   router,
 		encoders: encoders,
 	}
@@ -87,15 +89,24 @@ func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddr
 }
 
 func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) (*sdk.Result, error) {
-	if err := msg.ValidateBasic(); err != nil {
+	// todo: this block needs proper review from sdk team
+	if m, ok := msg.(sdk.HasValidateBasic); ok {
+		if err := m.ValidateBasic(); err != nil {
+			return nil, err
+		}
+	}
+
+	// make sure this account can send it
+	signers, _, err := h.cdc.GetMsgV1Signers(msg)
+	if err != nil {
 		return nil, err
 	}
-	// make sure this account can send it
-	for _, acct := range msg.GetSigners() {
-		if !acct.Equals(contractAddr) {
+	for _, acct := range signers {
+		if !contractAddr.Equals(sdk.AccAddress(acct)) {
 			return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
+	// --- end block
 
 	// find the handler and execute it
 	if handler := h.router.Handler(msg); handler != nil {

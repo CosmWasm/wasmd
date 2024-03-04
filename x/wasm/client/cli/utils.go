@@ -14,7 +14,7 @@ import (
 func ExtendUnsafeResetAllCmd(rootCmd *cobra.Command) {
 	unsafeResetCmd := tmcmd.ResetAllCmd.Use
 	for _, branchCmd := range rootCmd.Commands() {
-		if branchCmd.Use != "tendermint" {
+		if branchCmd.Use != "comet" {
 			continue
 		}
 		for _, cmd := range branchCmd.Commands() {
