@@ -738,6 +738,68 @@ func TestContractErrorRedacting(t *testing.T) {
 	require.Contains(t, err.Error(), "addr_validate errored: invalid address")
 }
 
+func TestContractErrorGetsForwarded(t *testing.T) {
+	// This test makes sure that a contract gets the error message from its submessage execution
+	// in a non-redacted form if that error comes from the contract in the submessage.
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	reflect1 := InstantiateReflectExampleContract(t, ctx, keepers)
+	// reflect2 will be the contract that errors. It is owned by the other reflect contract.
+	// This is necessary because the reflect contract only accepts messages from its owner.
+	reflect2, _, err := keepers.ContractKeeper.Instantiate(ctx, reflect1.CodeID, reflect1.Contract, reflect1.Contract, []byte("{}"), "reflect2", sdk.NewCoins())
+	require.NoError(t, err)
+
+	const SubMsgID = 1
+	// Make the reflect1 contract send a submessage to reflect2. That sub-message will error.
+	execMsg := testdata.ReflectHandleMsg{
+		ReflectSubMsg: &testdata.ReflectSubPayload{
+			Msgs: []wasmvmtypes.SubMsg{
+				{
+					ID: SubMsgID,
+					Msg: wasmvmtypes.CosmosMsg{
+						Wasm: &wasmvmtypes.WasmMsg{
+							Execute: &wasmvmtypes.ExecuteMsg{
+								ContractAddr: reflect2.String(),
+								// This message will error in the reflect contract as an empty "msgs" array is not allowed
+								Msg: mustMarshal(t, testdata.ReflectHandleMsg{
+									Reflect: &testdata.ReflectPayload{
+										Msgs: []wasmvmtypes.CosmosMsg{},
+									},
+								}),
+							},
+						},
+					},
+					ReplyOn: wasmvmtypes.ReplyError, // we want to see the error
+				},
+			},
+		},
+	}
+	execMsgBz := mustMarshal(t, execMsg)
+
+	em := sdk.NewEventManager()
+	_, err = keepers.ContractKeeper.Execute(
+		ctx.WithEventManager(em),
+		reflect1.Contract,
+		reflect1.CreatorAddr,
+		execMsgBz,
+		nil,
+	)
+	require.NoError(t, err)
+
+	// now query the submessage reply
+	queryMsgBz := mustMarshal(t, testdata.ReflectQueryMsg{
+		SubMsgResult: &testdata.SubCall{
+			ID: SubMsgID,
+		},
+	})
+	queryResponse, err := keepers.WasmKeeper.QuerySmart(ctx, reflect1.Contract, queryMsgBz)
+	require.NoError(t, err)
+	var submsgReply wasmvmtypes.Reply
+	mustUnmarshal(t, queryResponse, &submsgReply)
+
+	assert.Equal(t, "Messages empty. Must reflect at least one message: execute wasm contract failed", submsgReply.Result.Err)
+}
+
 func TestInstantiateWithContractDataResponse(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
