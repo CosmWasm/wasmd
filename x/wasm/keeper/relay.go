@@ -75,6 +75,10 @@ func (k Keeper) OnConnectChannel(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
@@ -108,6 +112,10 @@ func (k Keeper) OnCloseChannel(
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
 	if res.Err != "" {
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
@@ -144,6 +152,10 @@ func (k Keeper) OnRecvPacket(
 		// Throwing a panic here instead of an error ack will revert
 		// all state downstream and not persist any data in ibc-go.
 		// This can be triggered by throwing a panic in the contract
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
 	if res.Err != "" {
 		// return error ACK with non-redacted contract message, state will be reverted
@@ -200,6 +212,10 @@ func (k Keeper) OnAckPacket(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
@@ -230,6 +246,10 @@ func (k Keeper) OnTimeoutPacket(
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
 	if res.Err != "" {
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))

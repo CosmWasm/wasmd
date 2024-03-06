@@ -323,6 +323,10 @@ func (k Keeper) instantiate(
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return nil, nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrInstantiateFailed, res.Err))
 	}
@@ -407,6 +411,10 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
@@ -484,6 +492,10 @@ func (k Keeper) migrate(
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
 	}
@@ -549,6 +561,10 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
@@ -588,6 +604,10 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
