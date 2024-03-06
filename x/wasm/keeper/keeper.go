@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -168,8 +168,9 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 		}
 	}
 
-	sdkCtx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
-	checksum, err = k.wasmVM.StoreCode(wasmCode)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gasLeft)
+	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
@@ -323,7 +324,14 @@ func (k Keeper) instantiate(
 	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
-		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return nil, nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrInstantiateFailed, res.Err))
 	}
 
 	// persist instance first
@@ -333,7 +341,7 @@ func (k Keeper) instantiate(
 	// check for IBC flag
 	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
 	if err != nil {
-		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
@@ -368,7 +376,7 @@ func (k Keeper) instantiate(
 	))
 
 	sdkCtx = types.WithSubMsgAuthzPolicy(sdkCtx, authPolicy.SubMessageAuthorizationPolicy(types.AuthZActionInstantiate))
-	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(err, "dispatch")
 	}
@@ -404,7 +412,14 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -412,7 +427,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 	))
 
-	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
 	}
@@ -454,7 +469,7 @@ func (k Keeper) migrate(
 	// check for IBC flag
 	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
 	case err != nil:
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
 		// prevent update to non ibc contract
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
@@ -478,7 +493,14 @@ func (k Keeper) migrate(
 	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
 	}
 	// delete old secondary index entry
 	err = k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.mustGetLastContractHistoryEntry(sdkCtx, contractAddress))
@@ -504,7 +526,7 @@ func (k Keeper) migrate(
 	))
 
 	sdkCtx = types.WithSubMsgAuthzPolicy(sdkCtx, authZ.SubMessageAuthorizationPolicy(types.AuthZActionMigrateContract))
-	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
 	}
@@ -540,7 +562,14 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -549,7 +578,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	))
 
 	// sudo submessages are executed with the default authorization policy
-	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
 	}
@@ -577,7 +606,14 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
@@ -585,7 +621,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 	))
 
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
 	}
@@ -760,9 +796,12 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), k.runtimeGasForContract(sdkCtx), costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if qErr != nil {
-		return nil, errorsmod.Wrap(types.ErrQueryFailed, qErr.Error())
+		return nil, errorsmod.Wrap(types.ErrVMError, qErr.Error())
 	}
-	return queryResult, nil
+	if queryResult.Err != "" {
+		return nil, errorsmod.Wrap(types.ErrQueryFailed, queryResult.Err)
+	}
+	return queryResult.Ok, nil
 }
 
 func checkAndIncreaseQueryStackSize(ctx context.Context, maxQueryStackSize uint32) (sdk.Context, error) {
@@ -1078,7 +1117,7 @@ func (k *Keeper) handleContractResponse(
 	msgs []wasmvmtypes.SubMsg,
 	attrs []wasmvmtypes.EventAttribute,
 	data []byte,
-	evts wasmvmtypes.Events,
+	evts wasmvmtypes.Array[wasmvmtypes.Event],
 ) ([]byte, error) {
 	attributeGasCost := k.gasRegister.EventCosts(attrs, evts)
 	ctx.GasMeter().ConsumeGas(attributeGasCost, "Custom contract event attributes")

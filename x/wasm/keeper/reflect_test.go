@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,9 +23,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const (
-	CyberpunkCapabilities = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
-	ReflectCapabilities   = CyberpunkCapabilities
+var (
+	CyberpunkCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4"}
+	ReflectCapabilities   = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
 )
 
 func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
@@ -222,7 +222,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	// when panic is triggered
 	msg := []byte(`{"panic":{}}`)
 	gotData, err := keeper.Execute(ctx, contractAddr, creator, msg, nil)
-	require.ErrorIs(t, err, types.ErrExecuteFailed)
+	require.ErrorIs(t, err, types.ErrVMError)
 	assert.Contains(t, err.Error(), "panicked at 'This page intentionally faulted'")
 	assert.Nil(t, gotData)
 }

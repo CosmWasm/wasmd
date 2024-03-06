@@ -5,48 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 
 	storetypes "cosmossdk.io/store/types"
 )
-
-func TestCompileCosts(t *testing.T) {
-	specs := map[string]struct {
-		srcLen    int
-		srcConfig WasmGasRegisterConfig
-		exp       storetypes.Gas
-		expPanic  bool
-	}{
-		"one byte": {
-			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       storetypes.Gas(3), // DefaultCompileCost
-		},
-		"zero byte": {
-			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       storetypes.Gas(0),
-		},
-		"negative len": {
-			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
-			expPanic:  true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			if spec.expPanic {
-				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
-				})
-				return
-			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
-			assert.Equal(t, spec.exp, gotGas)
-		})
-	}
-}
 
 func TestSetupContractCost(t *testing.T) {
 	specs := map[string]struct {
@@ -258,7 +221,7 @@ func TestEventCosts(t *testing.T) {
 	// most cases are covered in TestReplyCost already. This ensures some edge cases
 	specs := map[string]struct {
 		srcAttrs  []wasmvmtypes.EventAttribute
-		srcEvents wasmvmtypes.Events
+		srcEvents wasmvmtypes.Array[wasmvmtypes.Event]
 		expGas    storetypes.Gas
 	}{
 		"empty events": {

@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
@@ -42,8 +42,8 @@ func (k Keeper) OnOpenChannel(
 	if execErr != nil {
 		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-	if res != nil {
-		return res.Version, nil
+	if res != nil && res.Ok != nil {
+		return res.Ok.Version, nil
 	}
 	return "", nil
 }
@@ -75,8 +75,15 @@ func (k Keeper) OnConnectChannel(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnCloseChannel calls the contract to let it know the IBC channel is closed.
@@ -106,8 +113,15 @@ func (k Keeper) OnCloseChannel(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnRecvPacket calls the contract to process the incoming IBC packet. The contract fully owns the data processing and
@@ -138,6 +152,10 @@ func (k Keeper) OnRecvPacket(
 		// Throwing a panic here instead of an error ack will revert
 		// all state downstream and not persist any data in ibc-go.
 		// This can be triggered by throwing a panic in the contract
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
 	if res.Err != "" {
 		// return error ACK with non-redacted contract message, state will be reverted
@@ -194,7 +212,15 @@ func (k Keeper) OnAckPacket(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnTimeoutPacket calls the contract to let it know the packet was never received on the destination chain within
@@ -221,8 +247,15 @@ func (k Keeper) OnTimeoutPacket(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {

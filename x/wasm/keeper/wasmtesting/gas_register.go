@@ -1,27 +1,19 @@
 package wasmtesting
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	storetypes "cosmossdk.io/store/types"
 )
 
 // MockGasRegister mock that implements keeper.GasRegister
 type MockGasRegister struct {
-	CompileCostFn       func(byteLength int) storetypes.Gas
 	SetupContractCostFn func(discount bool, msgLen int) storetypes.Gas
 	ReplyCostFn         func(discount bool, reply wasmvmtypes.Reply) storetypes.Gas
 	EventCostsFn        func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
 	ToWasmVMGasFn       func(source storetypes.Gas) uint64
 	FromWasmVMGasFn     func(source uint64) storetypes.Gas
 	UncompressCostsFn   func(byteLength int) storetypes.Gas
-}
-
-func (m MockGasRegister) CompileCosts(byteLength int) storetypes.Gas {
-	if m.CompileCostFn == nil {
-		panic("not expected to be called")
-	}
-	return m.CompileCostFn(byteLength)
 }
 
 func (m MockGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
@@ -45,7 +37,7 @@ func (m MockGasRegister) ReplyCosts(discount bool, reply wasmvmtypes.Reply) stor
 	return m.ReplyCostFn(discount, reply)
 }
 
-func (m MockGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute, _ wasmvmtypes.Events) storetypes.Gas {
+func (m MockGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute, _ wasmvmtypes.Array[wasmvmtypes.Event]) storetypes.Gas {
 	if m.EventCostsFn == nil {
 		panic("not expected to be called")
 	}

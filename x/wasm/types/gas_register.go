@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -21,6 +21,7 @@ const (
 	//     Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)"
 	// as well as manual Wasmer benchmarks from 2019. This was then multiplied by 150_000
 	// in the 0.16 -> 1.0 upgrade (https://github.com/CosmWasm/cosmwasm/pull/1120).
+	// In the 2.0 upgrade, this was reduced by a factor of 1000 (https://github.com/CosmWasm/cosmwasm/pull/1884).
 	//
 	// The multiplier deserves more reproducible benchmarking and a strategy that allows easy adjustments.
 	// This is tracked in https://github.com/CosmWasm/wasmd/issues/566 and https://github.com/CosmWasm/wasmd/issues/631.
@@ -30,7 +31,7 @@ const (
 	//
 	// Please note that all gas prices returned to wasmvm should have this multiplied.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938055852
-	DefaultGasMultiplier uint64 = 140_000_000
+	DefaultGasMultiplier uint64 = 140_000
 	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938056803
@@ -74,8 +75,6 @@ func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
 
 // GasRegister abstract source for gas costs
 type GasRegister interface {
-	// CompileCosts costs to persist and "compile" a new wasm contract
-	CompileCosts(byteLength int) storetypes.Gas
 	// UncompressCosts costs to unpack a new wasm contract
 	UncompressCosts(byteLength int) storetypes.Gas
 	// SetupContractCost are charged when interacting with a Wasm contract, i.e. every time
@@ -84,7 +83,7 @@ type GasRegister interface {
 	// ReplyCosts costs to to handle a message reply
 	ReplyCosts(discount bool, reply wasmvmtypes.Reply) storetypes.Gas
 	// EventCosts costs to persist an event
-	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) storetypes.Gas
+	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Array[wasmvmtypes.Event]) storetypes.Gas
 	// ToWasmVMGas converts from Cosmos SDK gas units to [CosmWasm gas] (aka. wasmvm gas)
 	//
 	// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
@@ -165,14 +164,6 @@ func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	}
 }
 
-// CompileCosts costs to persist and "compile" a new wasm contract
-func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
-	if byteLength < 0 {
-		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
-	}
-	return g.c.CompileCost * uint64(byteLength)
-}
-
 // UncompressCosts costs to unpack a new wasm contract
 func (g WasmGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
 	if byteLength < 0 {
@@ -216,7 +207,7 @@ func (g WasmGasRegister) ReplyCosts(discount bool, reply wasmvmtypes.Reply) stor
 }
 
 // EventCosts costs to persist an event
-func (g WasmGasRegister) EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) storetypes.Gas {
+func (g WasmGasRegister) EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Array[wasmvmtypes.Event]) storetypes.Gas {
 	gas, remainingFreeTier := g.eventAttributeCosts(attrs, g.c.EventAttributeDataFreeTier)
 	for _, e := range events {
 		gas += g.c.CustomEventCost

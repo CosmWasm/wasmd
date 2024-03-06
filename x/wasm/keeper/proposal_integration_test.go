@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +23,10 @@ import (
 )
 
 func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
-	pCtx, keepers := CreateTestInput(t, false, ReflectCapabilities+",iterator")
+	capabilities := make([]string, len(ReflectCapabilities)+1)
+	copy(capabilities, ReflectCapabilities)
+	capabilities = append(capabilities, "iterator")
+	pCtx, keepers := CreateTestInput(t, false, capabilities)
 	k := keepers.WasmKeeper
 	keepers.GovKeeper.SetLegacyRouter(v1beta1.NewRouter().
 		AddRoute(types.ModuleName, NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
