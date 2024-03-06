@@ -320,8 +320,8 @@ func (k Keeper) instantiate(
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
 
 	// instantiate wasm contract
-	gas := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(types.ErrVMError, err.Error())
@@ -408,8 +408,8 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
-	gas := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
@@ -489,8 +489,8 @@ func (k Keeper) migrate(
 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	vmStore := types.NewStoreAdapter(prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(sdkCtx)), prefixStoreKey))
-	gas := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
@@ -558,8 +558,8 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
-	gas := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gas, costJSONDeserialization)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
@@ -601,9 +601,9 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
-	gas := k.runtimeGasForContract(ctx)
+	gasLeft := k.runtimeGasForContract(ctx)
 
-	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, execErr.Error())
