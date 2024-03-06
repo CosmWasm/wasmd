@@ -922,27 +922,6 @@ func NewWasmApp(
 	return app
 }
 
-func (app *WasmApp) FinalizeBlock(req *abci.RequestFinalizeBlock) (*abci.ResponseFinalizeBlock, error) {
-	// when skipping sdk 47 for sdk 50, the upgrade handler is called too late in BaseApp
-	// this is a hack to ensure that the migration is executed when needed and not panics
-	app.once.Do(func() {
-		ctx := app.NewUncachedContext(false, tmproto.Header{})
-		if _, err := app.ConsensusParamsKeeper.Params(ctx, &consensusparamtypes.QueryParamsRequest{}); err != nil {
-			// prevents panic: consensus key is nil: collections: not found: key 'no_key' of type github.com/cosmos/gogoproto/tendermint.types.ConsensusParams
-			// sdk 47:
-			// Migrate Tendermint consensus parameters from x/params module to a dedicated x/consensus module.
-			// see https://github.com/cosmos/cosmos-sdk/blob/v0.47.0/simapp/upgrades.go#L66
-			baseAppLegacySS := app.GetSubspace(baseapp.Paramspace)
-			err := baseapp.MigrateParams(sdk.UnwrapSDKContext(ctx), baseAppLegacySS, app.ConsensusParamsKeeper.ParamsStore)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-
-	return app.BaseApp.FinalizeBlock(req)
-}
-
 func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtypes.WasmConfig, txCounterStoreKey *storetypes.KVStoreKey) {
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
