@@ -417,7 +417,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	return nil
 }
 
-func validateSender(contractAddr string, senderAddr string) (sdk.AccAddress, error) {
+func validateSender(contractAddr, senderAddr string) (sdk.AccAddress, error) {
 	contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "contract address")
