@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"sync"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -242,7 +241,6 @@ type WasmApp struct {
 
 	// module configurator
 	configurator module.Configurator
-	once         sync.Once
 }
 
 // NewWasmApp returns a reference to an initialized WasmApp.
