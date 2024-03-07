@@ -175,7 +175,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			}
 		} else {
 			// Issue #759 - we don't return error string for worries of non-determinism
-			moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
+			moduleLogger(ctx).Debug("Redacting submessage error", "cause", err)
 			result = wasmvmtypes.SubMsgResult{
 				Err: redactError(err).Error(),
 			}
