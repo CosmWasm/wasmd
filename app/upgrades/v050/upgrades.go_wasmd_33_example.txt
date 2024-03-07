@@ -64,9 +64,6 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		// sdk 47
-		// consensus params migration is done in app.go FinalizeBlock function to prevent panic
-
 		// sdk 50
 		return mm.RunMigrations(ctx, configurator, fromVM)
 	}
