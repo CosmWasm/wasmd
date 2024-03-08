@@ -97,10 +97,8 @@ func TestIBCCallbacks(t *testing.T) {
 	assert.Len(t, response.IBCAckCallbacks, 1)
 	assert.Empty(t, response.IBCTimeoutCallbacks)
 
-	var ack ibcfee.IncentivizedAcknowledgement
-	err = json.Unmarshal(response.IBCAckCallbacks[0].Acknowledgement.Data, &ack)
-	require.NoError(t, err)
-	assert.Equal(t, []byte(`{"result":"AQ=="}`), ack.AppAcknowledgement) // ics20 success ack
+	// and the ack result should be the ics20 success ack
+	assert.Equal(t, []byte(`{"result":"AQ=="}`), response.IBCAckCallbacks[0].Acknowledgement.Data)
 
 	// now the same, but with a timeout:
 	contractMsg.TimeoutSeconds = 1
