@@ -241,12 +241,18 @@ jobs:
       - run:
           name: gzip
           command: tar -zcvf ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz -C ${BUILD_DIR} wasmd
+      - run:
+          name: Build osx artifact
+          command: make build-osx
+      - run:
+          name: gzip
+          command: tar -zcvf ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-darwin-amd64.tar.gz -C ${BUILD_DIR} wasmd-darwin
       - gh/setup:
           token: GITHUB_CREDS
       - run:
           name: Create release
           command: |
-            gh release create ${CIRCLE_TAG} ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz \
+            gh release create ${CIRCLE_TAG} ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-darwin-amd64.tar.gz \
             --title "$CIRCLE_TAG" \
             --draft \
             --notes "# Wasmd ${CIRCLE_TAG} Release

@@ -86,6 +86,9 @@ else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
 endif
 
+build-osx: go.sum
+	GOOS=darwin GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd-darwin ./cmd/wasmd
+
 build-windows-client: go.sum
 	GOOS=windows GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
 
