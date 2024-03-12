@@ -44,12 +44,17 @@ type MessageEncoders struct {
 	Gov          func(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error)
 }
 
-func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
+// DefaultEncoders setup the wasm module default message encoders
+func DefaultEncoders(
+	unpacker codectypes.AnyUnpacker,
+	portSource types.ICS20TransferPortSource,
+	ibcPortAllocator IBCPortNameGenerator,
+) MessageEncoders {
 	return MessageEncoders{
 		Bank:         EncodeBankMsg,
 		Custom:       NoCustomMsg,
 		Distribution: EncodeDistributionMsg,
-		IBC:          EncodeIBCMsg(portSource),
+		IBC:          EncodeIBCMsg(portSource, ibcPortAllocator),
 		Staking:      EncodeStakingMsg,
 		Any:          EncodeAnyMsg(unpacker),
 		Wasm:         EncodeWasmMsg,
@@ -295,12 +300,15 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 	}
 }
 
-func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
+func EncodeIBCMsg(
+	portSource types.ICS20TransferPortSource,
+	ibcPortAllocator IBCPortNameGenerator,
+) func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
 	return func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
 		switch {
 		case msg.CloseChannel != nil:
 			return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
-				PortId:    PortIDForContract(sender),
+				PortId:    ibcPortAllocator.PortIDForContract(ctx, sender),
 				ChannelId: msg.CloseChannel.ChannelID,
 				Signer:    sender.String(),
 			}}, nil

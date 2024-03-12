@@ -46,9 +46,10 @@ func NewDefaultMessageHandler(
 	bankKeeper types.Burner,
 	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
+	ibcPortAllocator IBCPortNameGenerator,
 	customEncoders ...*MessageEncoders,
 ) Messenger {
-	encoders := DefaultEncoders(cdc, portSource)
+	encoders := DefaultEncoders(cdc, portSource, ibcPortAllocator)
 	for _, e := range customEncoders {
 		encoders = encoders.Merge(e)
 	}

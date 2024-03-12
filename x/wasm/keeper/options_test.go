@@ -26,6 +26,8 @@ func TestConstructorOptions(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	codec := MakeEncodingConfig(t).Codec
 
+	otherIBCPortNameGenerator := struct{ IBCPortNameGenerator }{}
+
 	specs := map[string]struct {
 		srcOpt    Option
 		verify    func(*testing.T, Keeper)
@@ -138,6 +140,12 @@ func TestConstructorOptions(t *testing.T) {
 					types.AuthZActionMigrateContract: {},
 				}
 				assert.Equal(t, exp, k.propagateGovAuthorization)
+			},
+		},
+		"ibc port name": {
+			srcOpt: WithCustomIBCPortNameGenerator(otherIBCPortNameGenerator),
+			verify: func(t *testing.T, k Keeper) {
+				assert.Equal(t, otherIBCPortNameGenerator, k.ibcPortNameGenerator)
 			},
 		},
 	}

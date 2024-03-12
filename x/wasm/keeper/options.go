@@ -158,6 +158,14 @@ func WithMaxQueryStackSize(m uint32) Option {
 	})
 }
 
+// WithCustomIBCPortNameGenerator overwrites the default ibc port name generator for wasm contracts with
+// the custom one
+func WithCustomIBCPortNameGenerator(c IBCPortNameGenerator) Option {
+	return optsFn(func(k *Keeper) {
+		k.ibcPortNameGenerator = c
+	})
+}
+
 // WithAcceptedAccountTypesOnContractInstantiation sets the accepted account types. Account types of this list won't be overwritten or cause a failure
 // when they exist for an address on contract instantiation.
 //
