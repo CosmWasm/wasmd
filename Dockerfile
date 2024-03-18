@@ -1,6 +1,9 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.21-alpine3.17 AS go-builder
+
+# Using Alpine 3.19+ as the build system is currently broken,
+# see https://github.com/CosmWasm/wasmvm/issues/523
+FROM golang:1.21-alpine3.18 AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -25,7 +28,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/wasmd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.17
+FROM alpine:3.18
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 
