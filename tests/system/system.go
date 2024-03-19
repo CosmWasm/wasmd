@@ -39,11 +39,13 @@ var (
 
 // SystemUnderTest blockchain provisioning
 type SystemUnderTest struct {
-	ExecBinary        string
-	blockListener     *EventListener
-	currentHeight     int64
-	chainID           string
-	outputDir         string
+	ExecBinary    string
+	blockListener *EventListener
+	currentHeight int64
+	chainID       string
+	outputDir     string
+	// blockTime is the the expected/desired block time. This is not going to be very precise
+	// since Tendermint consensus does not allow specifying it directly.
 	blockTime         time.Duration
 	rpcAddr           string
 	initialNodesCount int
@@ -94,6 +96,9 @@ func (s *SystemUnderTest) SetupChain() {
 		panic(err.Error())
 	}
 
+	// The commit timeout is a lower bound for the block time. We try to set it to a level that allows us to reach the expected block time.
+	commitTimeout := time.Duration((int64(s.blockTime) * 90) / 100) // leave 10% for all other operations
+
 	args := []string{
 		"testnet",
 		"init-files",
@@ -101,7 +106,7 @@ func (s *SystemUnderTest) SetupChain() {
 		"--output-dir=" + s.outputDir,
 		"--v=" + strconv.Itoa(s.initialNodesCount),
 		"--keyring-backend=test",
-		"--commit-timeout=" + s.blockTime.String(),
+		"--commit-timeout=" + commitTimeout.String(),
 		"--minimum-gas-prices=" + s.minGasPrice,
 		"--starting-ip-address", "", // empty to use host systems
 		"--single-host",
