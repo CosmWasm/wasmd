@@ -466,8 +466,10 @@ func (k Keeper) migrate(
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "to use new code")
 	}
 
+	report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash)
+
 	// check for IBC flag
-	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
+	switch {
 	case err != nil:
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
@@ -482,26 +484,17 @@ func (k Keeper) migrate(
 		contractInfo.IBCPortID = ibcPort
 	}
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	// check for migrate endpoint
+	hasMigrateEndpoint := false
+	switch {
+	case contains(report.Entrypoints, "migrate") && msg != nil:
+		hasMigrateEndpoint = true
+	case !contains(report.Entrypoints, "migrate") && msg == nil:
+		hasMigrateEndpoint = false
+	default:
+		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "invalid migration setup")
+	}
 
-	// prepare querier
-	querier := k.newQueryHandler(sdkCtx, contractAddress)
-
-	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
-	vmStore := types.NewStoreAdapter(prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(sdkCtx)), prefixStoreKey))
-	gasLeft := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
-	k.consumeRuntimeGas(sdkCtx, gasUsed)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
-	}
-	if res == nil {
-		// If this gets executed, that's a bug in wasmvm
-		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
-	}
-	if res.Err != "" {
-		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
-	}
 	// delete old secondary index entry
 	err = k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.mustGetLastContractHistoryEntry(sdkCtx, contractAddress))
 	if err != nil {
@@ -525,13 +518,37 @@ func (k Keeper) migrate(
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 	))
 
-	sdkCtx = types.WithSubMsgAuthzPolicy(sdkCtx, authZ.SubMessageAuthorizationPolicy(types.AuthZActionMigrateContract))
-	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "dispatch")
-	}
+	if hasMigrateEndpoint {
+		env := types.NewEnv(sdkCtx, contractAddress)
 
-	return data, nil
+		// prepare querier
+		querier := k.newQueryHandler(sdkCtx, contractAddress)
+
+		prefixStoreKey := types.GetContractStorePrefix(contractAddress)
+		vmStore := types.NewStoreAdapter(prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(sdkCtx)), prefixStoreKey))
+		gasLeft := k.runtimeGasForContract(sdkCtx)
+		res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+		k.consumeRuntimeGas(sdkCtx, gasUsed)
+		if err != nil {
+			return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
+		}
+		if res == nil {
+			// If this gets executed, that's a bug in wasmvm
+			return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+		}
+		if res.Err != "" {
+			return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
+		}
+
+		sdkCtx = types.WithSubMsgAuthzPolicy(sdkCtx, authZ.SubMessageAuthorizationPolicy(types.AuthZActionMigrateContract))
+		data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
+		if err != nil {
+			return nil, errorsmod.Wrap(err, "dispatch")
+		}
+		return data, nil
+	}
+	return nil, nil
+
 }
 
 // Sudo allows privileged access to a contract. This can never be called by an external tx, but only by
