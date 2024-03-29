@@ -548,7 +548,6 @@ func (k Keeper) migrate(
 		return data, nil
 	}
 	return nil, nil
-
 }
 
 // Sudo allows privileged access to a contract. This can never be called by an external tx, but only by
