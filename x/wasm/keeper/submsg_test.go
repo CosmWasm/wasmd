@@ -676,6 +676,12 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 		}, 0, nil
 	}
 
+	mockWasmVM.AnalyzeCodeFn = func(codeID wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {
+		return &wasmvmtypes.AnalysisReport{
+			Entrypoints: []string{"migrate"},
+		}, nil
+	}
+
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
 		expErr *errorsmod.Error

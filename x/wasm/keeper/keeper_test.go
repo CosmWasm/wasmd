@@ -1334,13 +1334,13 @@ func TestMigrate(t *testing.T) {
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
 			expErr:     types.ErrMigrationFailed,
 		},
-		"fail in contract without migrate msg": {
+		"fail with invalid migration setup": {
 			admin:      creator,
 			caller:     creator,
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
-			expErr:     types.ErrVMError,
+			expErr:     types.ErrMigrationFailed,
 		},
 		"fail when no IBC callbacks": {
 			admin:      fred,
@@ -1577,7 +1577,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_, err := c.Migrate(ctx, example1.Contract, example1.CreatorAddr, example2.CodeID, []byte("{}"))
+	_, err := c.Migrate(ctx, example1.Contract, example1.CreatorAddr, example2.CodeID, nil)
 	require.NoError(t, err)
 
 	// when
