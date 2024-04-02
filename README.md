@@ -139,7 +139,7 @@ Generate protobuf
 make proto-gen
 ```
 
-The generators are executed within a Docker [container](./contrib/prototools-docker), now.
+The generators are executed within a Docker [container](./scripts/contrib/prototools-docker), now.
 
 ## Dockerized
 

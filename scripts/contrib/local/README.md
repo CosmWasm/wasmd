@@ -6,7 +6,7 @@ For manual testing. Works on my box(*) ...
 
 ```
 make install
-cd contrib/local
+cd scripts/contrib/local
 rm -rf /tmp/trash
 HOME=/tmp/trash bash setup_wasmd.sh
 HOME=/tmp/trash bash start_node.sh
@@ -15,9 +15,9 @@ HOME=/tmp/trash bash start_node.sh
 Next shell:
 
 ```
-cd contrib/local
-./01-accounts.sh
-./02-contracts.sh
+cd scripts/contrib/local
+HOME=/tmp/trash bash 01-accounts.sh
+HOME=/tmp/trash bash 02-contracts.sh
 ```
 
 ## Shell script development
