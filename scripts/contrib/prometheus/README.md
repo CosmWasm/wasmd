@@ -38,7 +38,7 @@ Note the `format` parameter in the request for the endpoint:
 ## Run Prometheus
 ```sh
 # port 9090 is used by wasmd already
-docker run -it -v $(pwd)/contrib/prometheus:/prometheus  -p9091:9090  prom/prometheus --config.file=/prometheus/prometheus.yaml
+docker run -it -v $(pwd)/scripts/contrib/prometheus:/prometheus  -p9091:9090  prom/prometheus --config.file=/prometheus/prometheus.yaml
 ```
 * Open [console](http://localhost:9091) and find `wasm_`service metrics
 
