@@ -485,14 +485,9 @@ func (k Keeper) migrate(
 	}
 
 	// check for migrate endpoint
-	hasMigrateEndpoint := false
-	switch {
-	case contains(report.Entrypoints, "migrate") && msg != nil:
-		hasMigrateEndpoint = true
-	case !contains(report.Entrypoints, "migrate") && msg == nil:
-		hasMigrateEndpoint = false
-	default:
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "invalid migration setup")
+	hasMigrateEndpoint := contains(report.Entrypoints, "migrate")
+	if hasMigrateEndpoint != (len(msg) != 0) {
+		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "invalid migration parameters")
 	}
 
 	// delete old secondary index entry
