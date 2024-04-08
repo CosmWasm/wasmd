@@ -34,7 +34,6 @@ func TestIBCCallbacks(t *testing.T) {
 	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
-	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
 	path := wasmibctesting.NewPath(chainA, chainB)
@@ -52,9 +51,14 @@ func TestIBCCallbacks(t *testing.T) {
 	coord.Setup(path)
 
 	// with an ibc-callbacks contract deployed on chain A
-	codeID := chainA.StoreCodeFile("./testdata/ibc_callbacks.wasm").CodeID
-	contractAddr := chainA.InstantiateContract(codeID, []byte(`{}`))
-	require.NotEmpty(t, contractAddr)
+	codeIDonA := chainA.StoreCodeFile("./testdata/ibc_callbacks.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(codeIDonA, []byte(`{}`))
+	require.NotEmpty(t, contractAddrA)
+
+	// and on chain B
+	codeIDonB := chainB.StoreCodeFile("./testdata/ibc_callbacks.wasm").CodeID
+	contractAddrB := chainB.InstantiateContract(codeIDonB, []byte(`{}`))
+	require.NotEmpty(t, contractAddrB)
 
 	// ExecuteMsg is the ibc-callbacks contract's execute msg
 	type ExecuteMsg struct {
@@ -63,17 +67,17 @@ func TestIBCCallbacks(t *testing.T) {
 		TimeoutSeconds wasmvmtypes.Uint64 `json:"timeout_seconds"`
 	}
 	contractMsg := ExecuteMsg{
-		ToAddress:      actorChainB.String(),
+		ToAddress:      contractAddrB.String(),
 		ChannelID:      path.EndpointA.ChannelID,
 		TimeoutSeconds: 100,
 	}
 	contractMsgBz, err := json.Marshal(contractMsg)
 	require.NoError(t, err)
 
-	// when the contract sends an IBCMsg::Transfer to chain B
+	// when the contract on chain A sends an IBCMsg::Transfer to the contract on chain B
 	execMsg := types.MsgExecuteContract{
 		Sender:   actorChainA.String(),
-		Contract: contractAddr.String(),
+		Contract: contractAddrA.String(),
 		Msg:      contractMsgBz,
 		Funds:    oneToken,
 	}
@@ -83,19 +87,29 @@ func TestIBCCallbacks(t *testing.T) {
 	// and the packet is relayed
 	require.NoError(t, coord.RelayAndAckPendingPackets(path))
 
-	// then the contract should receive a callback with the ack result
+	// then the contract on chain B should receive a receive callback
 	type QueryMsg struct {
 		CallbackStats struct{} `json:"callback_stats"`
 	}
 	type QueryResp struct {
-		IBCAckCallbacks     []wasmvmtypes.IBCPacketAckMsg     `json:"ibc_ack_callbacks"`
-		IBCTimeoutCallbacks []wasmvmtypes.IBCPacketTimeoutMsg `json:"ibc_timeout_callbacks"`
-		// TODO: receive callback
+		IBCAckCallbacks         []wasmvmtypes.IBCPacketAckMsg                `json:"ibc_ack_callbacks"`
+		IBCTimeoutCallbacks     []wasmvmtypes.IBCPacketTimeoutMsg            `json:"ibc_timeout_callbacks"`
+		IBCDestinationCallbacks []wasmvmtypes.IBCDestinationChainCallbackMsg `json:"ibc_destination_callbacks"`
 	}
 	var response QueryResp
-	chainA.SmartQuery(contractAddr.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+	chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+	assert.Empty(t, response.IBCAckCallbacks)
+	assert.Empty(t, response.IBCTimeoutCallbacks)
+	assert.Len(t, response.IBCDestinationCallbacks, 1)
+
+	// and the receive callback should contain the ack
+	assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
+
+	// and the contract on chain A should receive a callback with the ack
+	chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
 	assert.Len(t, response.IBCAckCallbacks, 1)
 	assert.Empty(t, response.IBCTimeoutCallbacks)
+	assert.Empty(t, response.IBCDestinationCallbacks)
 
 	// and the ack result should be the ics20 success ack
 	assert.Equal(t, []byte(`{"result":"AQ=="}`), response.IBCAckCallbacks[0].Acknowledgement.Data)
@@ -113,8 +127,15 @@ func TestIBCCallbacks(t *testing.T) {
 	// and the packet times out
 	require.NoError(t, coord.TimeoutPendingPackets(path))
 
-	// then the contract should receive a callback with the timeout result
-	chainA.SmartQuery(contractAddr.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
-	assert.Len(t, response.IBCAckCallbacks, 1)
+	// then the contract on chain B should not receive anything
+	chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+	assert.Empty(t, response.IBCAckCallbacks)
+	assert.Empty(t, response.IBCTimeoutCallbacks)
+	assert.Len(t, response.IBCDestinationCallbacks, 1) // same as before
+
+	// then the contract on chain A should receive a callback with the timeout result
+	chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+	assert.Len(t, response.IBCAckCallbacks, 1) // same as before
 	assert.Len(t, response.IBCTimeoutCallbacks, 1)
+	assert.Empty(t, response.IBCDestinationCallbacks)
 }

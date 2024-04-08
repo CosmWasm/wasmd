@@ -413,7 +413,22 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	ack ibcexported.Acknowledgement,
 	contractAddress string,
 ) error {
-	// no-op for now, but will be supported in the future
+	// sender validation makes no sense here, as the receiver is never the sender
+	contractAddr, err := sdk.AccAddressFromBech32(contractAddress)
+	if err != nil {
+		return err
+	}
+
+	msg := wasmvmtypes.IBCDestinationChainCallbackMsg{
+		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
+		Packet: newIBCPacket(packet),
+	}
+
+	err = i.keeper.IBCDestinationChainCallback(cachedCtx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on destination chain callback")
+	}
+
 	return nil
 }
 
@@ -435,22 +450,23 @@ func validateSender(contractAddr, senderAddr string) (sdk.AccAddress, error) {
 	return contractAddress, nil
 }
 
-func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
+func newIBCPacket(packet ibcexported.PacketI) wasmvmtypes.IBCPacket {
 	timeout := wasmvmtypes.IBCTimeout{
-		Timestamp: packet.TimeoutTimestamp,
+		Timestamp: packet.GetTimeoutTimestamp(),
 	}
-	if !packet.TimeoutHeight.IsZero() {
+	timeoutHeight := packet.GetTimeoutHeight()
+	if !timeoutHeight.IsZero() {
 		timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
-			Height:   packet.TimeoutHeight.RevisionHeight,
-			Revision: packet.TimeoutHeight.RevisionNumber,
+			Height:   timeoutHeight.GetRevisionHeight(),
+			Revision: timeoutHeight.GetRevisionNumber(),
 		}
 	}
 
 	return wasmvmtypes.IBCPacket{
-		Data:     packet.Data,
-		Src:      wasmvmtypes.IBCEndpoint{ChannelID: packet.SourceChannel, PortID: packet.SourcePort},
-		Dest:     wasmvmtypes.IBCEndpoint{ChannelID: packet.DestinationChannel, PortID: packet.DestinationPort},
-		Sequence: packet.Sequence,
+		Data:     packet.GetData(),
+		Src:      wasmvmtypes.IBCEndpoint{ChannelID: packet.GetSourceChannel(), PortID: packet.GetSourcePort()},
+		Dest:     wasmvmtypes.IBCEndpoint{ChannelID: packet.GetDestChannel(), PortID: packet.GetDestPort()},
+		Sequence: packet.GetSequence(),
 		Timeout:  timeout,
 	}
 }
