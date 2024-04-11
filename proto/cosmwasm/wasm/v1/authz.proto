@@ -152,5 +152,8 @@ message AcceptedMessagesFilter {
       "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of raw contract messages
-  repeated bytes messages = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
+  repeated bytes messages = 1 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }

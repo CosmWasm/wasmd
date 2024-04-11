@@ -124,7 +124,10 @@ message ContractCodeHistoryEntry {
   uint64 code_id = 2 [ (gogoproto.customname) = "CodeID" ];
   // Updated Tx position when the operation was executed.
   AbsoluteTxPosition updated = 3;
-  bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 4 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // AbsoluteTxPosition is a unique transaction position that allows for global
