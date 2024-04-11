@@ -179,7 +179,7 @@ message QuerySmartContractStateRequest {
   // QueryData contains the query data passed to the contract
   bytes query_data = 2 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
@@ -189,7 +189,7 @@ message QuerySmartContractStateResponse {
   // Data contains the json data returned from the smart contract
   bytes data = 1 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 

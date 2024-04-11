@@ -126,7 +126,7 @@ message ContractCodeHistoryEntry {
   AbsoluteTxPosition updated = 3;
   bytes msg = 4 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 

@@ -154,6 +154,6 @@ message AcceptedMessagesFilter {
   // Messages is the list of raw contract messages
   repeated bytes messages = 1 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }

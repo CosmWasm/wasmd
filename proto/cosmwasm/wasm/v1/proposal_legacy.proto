@@ -69,7 +69,7 @@ message InstantiateContractProposal {
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 7 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
@@ -103,7 +103,7 @@ message InstantiateContract2Proposal {
   // Msg json encode message to be passed to the contract on instantiation
   bytes msg = 7 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
@@ -140,7 +140,7 @@ message MigrateContractProposal {
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 6 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
@@ -162,7 +162,7 @@ message SudoContractProposal {
   // Msg json encoded message to be passed to the contract as sudo
   bytes msg = 4 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
@@ -186,7 +186,7 @@ message ExecuteContractProposal {
   // Msg json encoded message to be passed to the contract as execute
   bytes msg = 5 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
@@ -332,7 +332,7 @@ message StoreAndInstantiateContractProposal {
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 9 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 10 [

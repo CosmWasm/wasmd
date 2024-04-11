@@ -125,7 +125,7 @@ message MsgInstantiateContract {
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 5 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
@@ -160,7 +160,7 @@ message MsgInstantiateContract2 {
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 5 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
@@ -195,7 +195,7 @@ message MsgExecuteContract {
   // Msg json encoded message to be passed to the contract
   bytes msg = 3 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred to the contract on execution
   repeated cosmos.base.v1beta1.Coin funds = 5 [
@@ -225,7 +225,7 @@ message MsgMigrateContract {
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 4 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
@@ -320,7 +320,7 @@ message MsgSudoContract {
   // Msg json encoded message to be passed to the contract as sudo
   bytes msg = 3 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
@@ -401,7 +401,7 @@ message MsgStoreAndInstantiateContract {
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 8 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
   // Funds coins that are transferred from the authority account to the contract
   // on instantiation
@@ -483,7 +483,7 @@ message MsgStoreAndMigrateContract {
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 5 [
     (gogoproto.casttype) = "RawContractMessage",
-    (amino.encoding) = "bytes_as_string"
+    (amino.encoding) = "inline_json"
   ];
 }
 
