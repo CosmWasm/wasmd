@@ -642,7 +642,7 @@ func NewWasmApp(
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		AllCapabilities(),
+		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
