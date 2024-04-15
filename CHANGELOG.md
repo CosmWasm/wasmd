@@ -8,7 +8,9 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...v0.51.0)
 
+- Bump x/tx to v0.13.2 [#1856](https://github.com/CosmWasm/wasmd/pull/1856)
 - Fix Amino JSON representation [\#1844](https://github.com/CosmWasm/wasmd/pull/1844)
+- Add BuiltInCapabilities() to x/wasm/keeper and deprecate AllCapabilities() [#1855](https://github.com/CosmWasm/wasmd/pull/1855)
 - Move contrib/ in scripts/ [\#1848](https://github.com/CosmWasm/wasmd/pull/1848)
 - Remove contract_tests [\#1847](https://github.com/CosmWasm/wasmd/pull/1847)
 - Upgrade Alpine in Dockerfile to 3.18 [\#1837](https://github.com/CosmWasm/wasmd/pull/1837)
