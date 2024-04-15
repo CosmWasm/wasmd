@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
 
-# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (TBD)
+# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-15)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...v0.51.0)
 
