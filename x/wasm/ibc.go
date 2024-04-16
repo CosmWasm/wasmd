@@ -420,7 +420,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	}
 
 	msg := wasmvmtypes.IBCDestinationChainCallbackMsg{
-		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
+		Ack:    wasmvmtypes.IBCFullAcknowledgement{Data: ack.Acknowledgement(), Success: ack.Success()},
 		Packet: newIBCPacket(packet),
 	}
 
