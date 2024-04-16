@@ -66,9 +66,9 @@ func TestIBCCallbacks(t *testing.T) {
 
 	// ExecuteMsg is the ibc-callbacks contract's execute msg
 	type ExecuteMsg struct {
-		ToAddress      string             `json:"to_address"`
-		ChannelID      string             `json:"channel_id"`
-		TimeoutSeconds wasmvmtypes.Uint64 `json:"timeout_seconds"`
+		ToAddress      string `json:"to_address"`
+		ChannelID      string `json:"channel_id"`
+		TimeoutSeconds uint32 `json:"timeout_seconds"`
 	}
 	contractMsg := ExecuteMsg{
 		ToAddress:      contractAddrB.String(),
