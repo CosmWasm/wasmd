@@ -212,8 +212,6 @@ cosmossdk.io/x/feegrant v0.1.0 h1:c7s3oAq/8/UO0EiN1H5BIjwVntujVTkYs35YPvvrdQk=
 cosmossdk.io/x/feegrant v0.1.0/go.mod h1:4r+FsViJRpcZif/yhTn+E0E6OFfg4n0Lx+6cCtnZElU=
 cosmossdk.io/x/nft v0.1.0 h1:VhcsFiEK33ODN27kxKLa0r/CeFd8laBfbDBwYqCyYCM=
 cosmossdk.io/x/nft v0.1.0/go.mod h1:ec4j4QAO4mJZ+45jeYRnW7awLHby1JZANqe1hNZ4S3g=
-cosmossdk.io/x/tx v0.13.2 h1:Kh90UH30bhnnUdJH+CmWLyaH8IKdY6BBGY3EkdOk82o=
-cosmossdk.io/x/tx v0.13.2/go.mod h1:yhPokDCfXVIuAtyp49IFlWB5YAXUgD7Zek+ZHwsHzvU=
 cosmossdk.io/x/upgrade v0.1.1 h1:aoPe2gNvH+Gwt/Pgq3dOxxQVU3j5P6Xf+DaUJTDZATc=
 cosmossdk.io/x/upgrade v0.1.1/go.mod h1:MNLptLPcIFK9CWt7Ra//8WUZAxweyRDNcbs5nkOcQy0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
@@ -888,6 +886,8 @@ github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pingcap/errors v0.11.4 h1:lFuQV/oaUMGcD2tqt+01ROSmJs75VG1ToEOkZIZ4nE4=
 github.com/pingcap/errors v0.11.4/go.mod h1:Oi8TUi2kEtXXLMJk9l1cGmz20kV3TaQ0usTwv5KuLY8=
+github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458 h1:brPWGOTu5CboVwb77MdeO0L+4Ixc+1Wu4hrwQsVz1x4=
+github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458/go.mod h1:yhPokDCfXVIuAtyp49IFlWB5YAXUgD7Zek+ZHwsHzvU=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
