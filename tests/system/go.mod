@@ -161,6 +161,9 @@ require (
 )
 
 replace (
+	// TODO: temporary fix to test pre-release compatibility. Remove before final release
+	cosmossdk.io/x/tx => github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458
+
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// See: https://github.com/cosmos/cosmos-sdk/issues/13134

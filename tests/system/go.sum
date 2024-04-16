@@ -16,8 +16,6 @@ cosmossdk.io/math v1.3.0 h1:RC+jryuKeytIiictDslBP9i1fhkVm6ZDmZEoNP316zE=
 cosmossdk.io/math v1.3.0/go.mod h1:vnRTxewy+M7BtXBNFybkuhSH4WfedVAAnERHgVFhp3k=
 cosmossdk.io/store v1.0.2 h1:lSg5BTvJBHUDwswNNyeh4K/CbqiHER73VU4nDNb8uk0=
 cosmossdk.io/store v1.0.2/go.mod h1:EFtENTqVTuWwitGW1VwaBct+yDagk7oG/axBMPH+FXs=
-cosmossdk.io/x/tx v0.13.2 h1:Kh90UH30bhnnUdJH+CmWLyaH8IKdY6BBGY3EkdOk82o=
-cosmossdk.io/x/tx v0.13.2/go.mod h1:yhPokDCfXVIuAtyp49IFlWB5YAXUgD7Zek+ZHwsHzvU=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 filippo.io/edwards25519 v1.0.0 h1:0wAIcmJUqRdI8IJ/3eGi5/HwXZWPujYXXlkrQogz0Ek=
 filippo.io/edwards25519 v1.0.0/go.mod h1:N1IkdkCkiLB6tki+MYJoSx2JTY9NUlxZE7eHn5EwJns=
@@ -564,6 +562,8 @@ github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pingcap/errors v0.11.4 h1:lFuQV/oaUMGcD2tqt+01ROSmJs75VG1ToEOkZIZ4nE4=
 github.com/pingcap/errors v0.11.4/go.mod h1:Oi8TUi2kEtXXLMJk9l1cGmz20kV3TaQ0usTwv5KuLY8=
+github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458 h1:brPWGOTu5CboVwb77MdeO0L+4Ixc+1Wu4hrwQsVz1x4=
+github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458/go.mod h1:yhPokDCfXVIuAtyp49IFlWB5YAXUgD7Zek+ZHwsHzvU=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
