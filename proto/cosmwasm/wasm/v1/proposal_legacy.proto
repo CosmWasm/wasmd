@@ -75,7 +75,8 @@ message InstantiateContractProposal {
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -109,7 +110,8 @@ message InstantiateContract2Proposal {
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
   // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
   bytes salt = 9;
@@ -192,7 +194,8 @@ message ExecuteContractProposal {
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -338,7 +341,8 @@ message StoreAndInstantiateContractProposal {
   repeated cosmos.base.v1beta1.Coin funds = 10 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
   // Source is the URL where the code is hosted
   string source = 11;
