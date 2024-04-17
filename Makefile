@@ -3,7 +3,7 @@
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
-LEDGER_ENABLED ?= true
+LEDGER_ENABLED ?= false
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 BINDIR ?= $(GOPATH)/bin
 SIMAPP = ./app
@@ -90,7 +90,7 @@ build-windows-client: go.sum
 	GOOS=windows GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
 
 install: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
+	go install -mod=vendor $(BUILD_FLAGS) ./cmd/wasmd
 
 ########################################
 ### Tools & dependencies
