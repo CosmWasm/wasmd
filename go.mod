@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.7.3
+	cosmossdk.io/api v0.7.4
 	cosmossdk.io/client/v2 v2.0.0-beta.1
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.0
@@ -41,7 +41,7 @@ require (
 	cosmossdk.io/x/evidence v0.1.0
 	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/nft v0.1.0
-	cosmossdk.io/x/tx v0.13.2
+	cosmossdk.io/x/tx v0.13.3-0.20240419091757-db5906b1e894
 	cosmossdk.io/x/upgrade v0.1.1
 	github.com/cometbft/cometbft v0.38.5
 	github.com/cosmos/cosmos-db v1.0.2
@@ -211,9 +211,6 @@ require (
 )
 
 replace (
-	// TODO: temporary fix to test pre-release compatibility. Remove before final release
-	cosmossdk.io/x/tx => github.com/pinosu/cosmos-sdk/x/tx v0.0.0-20240416075524-51939f110458
-
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
