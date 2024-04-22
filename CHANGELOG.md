@@ -4,11 +4,12 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
 
-# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-15)
+# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-22)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...v0.51.0)
 
-- Bump x/tx to v0.13.2 [#1856](https://github.com/CosmWasm/wasmd/pull/1856)
+- Bump cosmos-sdk to v0.50.6 [#1865](https://github.com/CosmWasm/wasmd/pull/1865)
+- Bump tx module to v0.13.3 [#1864](https://github.com/CosmWasm/wasmd/pull/1864)
 - Fix Amino JSON representation [\#1844](https://github.com/CosmWasm/wasmd/pull/1844)
 - Add BuiltInCapabilities() to x/wasm/keeper and deprecate AllCapabilities() [#1855](https://github.com/CosmWasm/wasmd/pull/1855)
 - Move contrib/ in scripts/ [\#1848](https://github.com/CosmWasm/wasmd/pull/1848)
@@ -26,7 +27,7 @@
 
 ### Notable changes:
 - Upgrade to [CosmWasm 2.0.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.0.0)
-- Upgrade to [SDK v0.50.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.5) patch release of Cosmos SDK Eden
+- Upgrade to [SDK v0.50.6](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.6) patch release of Cosmos SDK Eden
 
 ### Migration notes:
 - This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
