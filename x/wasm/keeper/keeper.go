@@ -30,6 +30,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -862,6 +864,48 @@ func (k Keeper) contractInstance(ctx context.Context, contractAddress sdk.AccAdd
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), prefixStoreKey)
 	return contractInfo, codeInfo, types.NewStoreAdapter(prefixStore), nil
+}
+
+func (k Keeper) LoadAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) (channeltypes.Packet, error) {
+	prefixStore, key := k.getAsyncAckStoreAndKey(ctx, portID, channelID, sequence)
+
+	packetBz := prefixStore.Get(key)
+
+	if len(packetBz) == 0 {
+		return channeltypes.Packet{}, types.ErrNotFound.Wrap("packet")
+	}
+
+	var packet channeltypes.Packet
+	// unmarshal packet
+	if err := k.cdc.Unmarshal(packetBz, &packet); err != nil {
+		return channeltypes.Packet{}, err
+	}
+
+	return packet, nil
+}
+
+func (k Keeper) StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Packet) error {
+	prefixStore, key := k.getAsyncAckStoreAndKey(ctx, packet.DestinationPort, packet.DestinationChannel, packet.Sequence)
+
+	packetBz, err := k.cdc.Marshal(&packet)
+	if err != nil {
+		return err
+	}
+	prefixStore.Set(key, packetBz)
+	return nil
+}
+
+func (k Keeper) DeleteAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) {
+	prefixStore, key := k.getAsyncAckStoreAndKey(ctx, portID, channelID, sequence)
+	prefixStore.Delete(key)
+}
+
+func (k Keeper) getAsyncAckStoreAndKey(ctx context.Context, portID string, channelID string, sequence uint64) (prefix.Store, []byte) {
+	// packets are stored under the destination port
+	prefixStoreKey := types.GetAsyncAckStorePrefix(portID)
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), prefixStoreKey)
+	key := types.GetAsyncPacketKey(channelID, sequence)
+	return prefixStore, key
 }
 
 func (k Keeper) GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {

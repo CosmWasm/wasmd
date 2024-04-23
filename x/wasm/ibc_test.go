@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -101,14 +102,14 @@ func TestOnRecvPacket(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			mock := IBCContractKeeperMock{
+			mock := wasmtesting.IBCContractKeeperMock{
 				OnRecvPacketFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
 					// additional custom event to confirm event handling on state commit/ rollback
 					ctx.EventManager().EmitEvent(myCustomEvent)
 					return spec.contractRsp, spec.contractOkMsgExecErr
 				},
 			}
-			h := NewIBCHandler(mock, nil, nil)
+			h := NewIBCHandler(&mock, nil, nil)
 			em := &sdk.EventManager{}
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {
@@ -120,6 +121,15 @@ func TestOnRecvPacket(t *testing.T) {
 			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
 			assert.Equal(t, spec.expAck, gotAck)
 			assert.Equal(t, spec.expEvents, em.Events())
+
+			// make sure packet is stored for async ack
+			asyncAckPacket, err := mock.LoadAsyncAckPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg.DestinationChannel, spec.ibcPkg.Sequence)
+			if spec.expAck == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, spec.ibcPkg, asyncAckPacket)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -194,18 +204,4 @@ func IBCPacketFixture(mutators ...func(p *channeltypes.Packet)) channeltypes.Pac
 		m(&r)
 	}
 	return r
-}
-
-var _ types.IBCContractKeeper = &IBCContractKeeperMock{}
-
-type IBCContractKeeperMock struct {
-	types.IBCContractKeeper
-	OnRecvPacketFn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
-}
-
-func (m IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
-	if m.OnRecvPacketFn == nil {
-		panic("not expected to be called")
-	}
-	return m.OnRecvPacketFn(ctx, contractAddr, msg)
 }
