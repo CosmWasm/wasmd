@@ -364,7 +364,7 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 	}
 
 	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
-		Acknowledgement: &wasmvmtypes.IBCPacketAckMsg{
+		Acknowledgement: &wasmvmtypes.IBCAckCallbackMsg{
 			Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
 			OriginalPacket:  newIBCPacket(packet),
 			Relayer:         relayer.String(),
@@ -393,7 +393,7 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 	}
 
 	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
-		Timeout: &wasmvmtypes.IBCPacketTimeoutMsg{
+		Timeout: &wasmvmtypes.IBCTimeoutCallbackMsg{
 			Packet:  newIBCPacket(packet),
 			Relayer: relayer.String(),
 		},
