@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"math"
+	"strings"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -433,18 +434,14 @@ func (i IBCHandler) IBCReceivePacketCallback(
 }
 
 func validateSender(contractAddr, senderAddr string) (sdk.AccAddress, error) {
+	// We only allow the contract that sent the message to receive source chain callbacks for it.
+	if !strings.EqualFold(contractAddr, senderAddr) {
+		return nil, errorsmod.Wrapf(types.ErrExecuteFailed, "contract address %s does not match packet sender %s", contractAddr, senderAddr)
+	}
+
 	contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "contract address")
-	}
-	senderAddress, err := sdk.AccAddressFromBech32(senderAddr)
-	if err != nil {
-		return nil, errorsmod.Wrapf(err, "packet sender address")
-	}
-
-	// We only allow the contract that sent the message to receive source chain callbacks for it.
-	if !contractAddress.Equals(senderAddress) {
-		return nil, errorsmod.Wrapf(types.ErrExecuteFailed, "contract address %s does not match packet sender %s", contractAddr, senderAddress)
 	}
 
 	return contractAddress, nil
