@@ -70,28 +70,6 @@ func TestIBCCallbacks(t *testing.T) {
 		ChannelID      string `json:"channel_id"`
 		TimeoutSeconds uint32 `json:"timeout_seconds"`
 	}
-	contractMsg := ExecuteMsg{
-		ToAddress:      contractAddrB.String(),
-		ChannelID:      path.EndpointA.ChannelID,
-		TimeoutSeconds: 100,
-	}
-	contractMsgBz, err := json.Marshal(contractMsg)
-	require.NoError(t, err)
-
-	// when the contract on chain A sends an IBCMsg::Transfer to the contract on chain B
-	execMsg := types.MsgExecuteContract{
-		Sender:   actorChainA.String(),
-		Contract: contractAddrA.String(),
-		Msg:      contractMsgBz,
-		Funds:    oneToken,
-	}
-	_, err = chainA.SendMsgs(&execMsg)
-	require.NoError(t, err)
-
-	// and the packet is relayed
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
-
-	// then the contract on chain B should receive a receive callback
 	type QueryMsg struct {
 		CallbackStats struct{} `json:"callback_stats"`
 	}
@@ -100,48 +78,86 @@ func TestIBCCallbacks(t *testing.T) {
 		IBCTimeoutCallbacks     []wasmvmtypes.IBCPacketTimeoutMsg            `json:"ibc_timeout_callbacks"`
 		IBCDestinationCallbacks []wasmvmtypes.IBCDestinationChainCallbackMsg `json:"ibc_destination_callbacks"`
 	}
-	var response QueryResp
-	chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
-	assert.Empty(t, response.IBCAckCallbacks)
-	assert.Empty(t, response.IBCTimeoutCallbacks)
-	assert.Len(t, response.IBCDestinationCallbacks, 1)
 
-	// and the receive callback should contain the ack
-	assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
+	specs := map[string]struct {
+		contractMsg ExecuteMsg
+		// expAck is true if the packet is relayed, false if it times out
+		expAck bool
+	}{
+		"success": {
+			contractMsg: ExecuteMsg{
+				ToAddress:      contractAddrB.String(),
+				ChannelID:      path.EndpointA.ChannelID,
+				TimeoutSeconds: 100,
+			},
+			expAck: true,
+		},
+		"timeout": {
+			contractMsg: ExecuteMsg{
+				ToAddress:      contractAddrB.String(),
+				ChannelID:      path.EndpointA.ChannelID,
+				TimeoutSeconds: 1,
+			},
+			expAck: false,
+		},
+	}
 
-	// and the contract on chain A should receive a callback with the ack
-	chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
-	assert.Len(t, response.IBCAckCallbacks, 1)
-	assert.Empty(t, response.IBCTimeoutCallbacks)
-	assert.Empty(t, response.IBCDestinationCallbacks)
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			contractMsgBz, err := json.Marshal(spec.contractMsg)
+			require.NoError(t, err)
 
-	// and the ack result should be the ics20 success ack
-	assert.Equal(t, []byte(`{"result":"AQ=="}`), response.IBCAckCallbacks[0].Acknowledgement.Data)
+			// when the contract on chain A sends an IBCMsg::Transfer to the contract on chain B
+			execMsg := types.MsgExecuteContract{
+				Sender:   actorChainA.String(),
+				Contract: contractAddrA.String(),
+				Msg:      contractMsgBz,
+				Funds:    oneToken,
+			}
+			_, err = chainA.SendMsgs(&execMsg)
+			require.NoError(t, err)
 
-	// now the same, but with a timeout:
-	contractMsg.TimeoutSeconds = 1
-	contractMsgBz, err = json.Marshal(contractMsg)
-	require.NoError(t, err)
+			if spec.expAck {
+				// and the packet is relayed
+				require.NoError(t, coord.RelayAndAckPendingPackets(path))
 
-	// when the contract sends an IBCMsg::Transfer to chain B
-	execMsg.Msg = contractMsgBz
-	_, err = chainA.SendMsgs(&execMsg)
-	require.NoError(t, err)
+				// then the contract on chain B should receive a receive callback
+				var response QueryResp
+				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				assert.Empty(t, response.IBCAckCallbacks)
+				assert.Empty(t, response.IBCTimeoutCallbacks)
+				assert.Len(t, response.IBCDestinationCallbacks, 1)
 
-	// and the packet times out
-	require.NoError(t, coord.TimeoutPendingPackets(path))
+				// and the receive callback should contain the ack
+				assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
 
-	// then the contract on chain B should not receive anything
-	chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
-	assert.Empty(t, response.IBCAckCallbacks)
-	assert.Empty(t, response.IBCTimeoutCallbacks)
-	assert.Len(t, response.IBCDestinationCallbacks, 1) // same as before
+				// and the contract on chain A should receive a callback with the ack
+				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				assert.Len(t, response.IBCAckCallbacks, 1)
+				assert.Empty(t, response.IBCTimeoutCallbacks)
+				assert.Empty(t, response.IBCDestinationCallbacks)
 
-	// then the contract on chain A should receive a callback with the timeout result
-	chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
-	assert.Len(t, response.IBCAckCallbacks, 1) // same as before
-	assert.Len(t, response.IBCTimeoutCallbacks, 1)
-	assert.Empty(t, response.IBCDestinationCallbacks)
+				// and the ack result should be the ics20 success ack
+				assert.Equal(t, []byte(`{"result":"AQ=="}`), response.IBCAckCallbacks[0].Acknowledgement.Data)
+			} else {
+				// and the packet times out
+				require.NoError(t, coord.TimeoutPendingPackets(path))
+
+				// then the contract on chain B should not receive anything
+				var response QueryResp
+				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				assert.Empty(t, response.IBCAckCallbacks)
+				assert.Empty(t, response.IBCTimeoutCallbacks)
+				assert.Len(t, response.IBCDestinationCallbacks, 1) // same as before
+
+				// and the contract on chain A should receive a callback with the timeout result
+				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				assert.Len(t, response.IBCAckCallbacks, 1) // same as before
+				assert.Len(t, response.IBCTimeoutCallbacks, 1)
+				assert.Empty(t, response.IBCDestinationCallbacks)
+			}
+		})
+	}
 }
 
 func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
