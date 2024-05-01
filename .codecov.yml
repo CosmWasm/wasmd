@@ -45,7 +45,6 @@ flags:
 
 ignore:
   - "cmd/"
-  - "contrib/"
   - "docs/"
   - "docker/"
   - "scripts/"

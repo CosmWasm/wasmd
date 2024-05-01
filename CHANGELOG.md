@@ -2,7 +2,35 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
+
+# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-22)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...v0.51.0)
+
+- Bump cosmos-sdk to v0.50.6 [#1865](https://github.com/CosmWasm/wasmd/pull/1865)
+- Bump tx module to v0.13.3 [#1864](https://github.com/CosmWasm/wasmd/pull/1864)
+- Fix Amino JSON representation [\#1844](https://github.com/CosmWasm/wasmd/pull/1844)
+- Add BuiltInCapabilities() to x/wasm/keeper and deprecate AllCapabilities() [#1855](https://github.com/CosmWasm/wasmd/pull/1855)
+- Move contrib/ in scripts/ [\#1848](https://github.com/CosmWasm/wasmd/pull/1848)
+- Remove contract_tests [\#1847](https://github.com/CosmWasm/wasmd/pull/1847)
+- Upgrade Alpine in Dockerfile to 3.18 [\#1837](https://github.com/CosmWasm/wasmd/pull/1837)
+- Bump wasmvm to 2.0.0 [\#1832](https://github.com/CosmWasm/wasmd/pull/1832)
+- Rename gas to gasLeft [\#1820](https://github.com/CosmWasm/wasmd/pull/1820)
+- Fix misleading error message for duplicate address on instantiate2 [\#1816](https://github.com/CosmWasm/wasmd/pull/1816)
+- Rewrite compatibility section in README [\#1805](https://github.com/CosmWasm/wasmd/pull/1805)
+- Generalize "pinned" to "discount" for cases where contract is in memory [\#1799](https://github.com/CosmWasm/wasmd/pull/1799)
+- Rename InstantiateContractCosts -> SetupContractCost; Remove NewContractInstanceCosts [\#1797](https://github.com/CosmWasm/wasmd/pull/1797)
+- Bump cosmos-sdk proto to v0.50.0 [\#1795](https://github.com/CosmWasm/wasmd/pull/1795)
+- Fix grant contract cli command description [\#1778](https://github.com/CosmWasm/wasmd/issues/1778)
+- Add Build Address gRPC Query [\#1753](https://github.com/CosmWasm/wasmd/pull/1753)
+
+### Notable changes:
+- Upgrade to [CosmWasm 2.0.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.0.0)
+- Upgrade to [SDK v0.50.6](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.6) patch release of Cosmos SDK Eden
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.50.0](https://github.com/CosmWasm/wasmd/tree/v0.50.0) (2023-11-23)
 

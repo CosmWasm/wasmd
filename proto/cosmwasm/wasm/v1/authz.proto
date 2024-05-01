@@ -100,7 +100,8 @@ message MaxFundsLimit {
   repeated cosmos.base.v1beta1.Coin amounts = 1 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -118,7 +119,8 @@ message CombinedLimit {
   repeated cosmos.base.v1beta1.Coin amounts = 2 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -152,5 +154,8 @@ message AcceptedMessagesFilter {
       "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of raw contract messages
-  repeated bytes messages = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
+  repeated bytes messages = 1 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }

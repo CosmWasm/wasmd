@@ -3,7 +3,7 @@ package wasm_test
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 func TestIBCReflectContract(t *testing.T) {
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
-	//  chain B: reflect.wasm + ibc_reflect.wasm
+	//  chain B: reflect_1_5.wasm + ibc_reflect.wasm
 	//
 	//  Chain A "ibc_reflect_send" sends a IBC packet "on channel connect" event to chain B "ibc_reflect"
 	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
@@ -32,7 +32,7 @@ func TestIBCReflectContract(t *testing.T) {
 	codeID := chainA.StoreCodeFile("./keeper/testdata/ibc_reflect_send.wasm").CodeID
 	sendContractAddr := chainA.InstantiateContract(codeID, initMsg)
 
-	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect.wasm").CodeID
+	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect_1_5.wasm").CodeID
 	initMsg = wasmkeeper.IBCReflectInitMsg{
 		ReflectCodeID: reflectID,
 	}.GetBytes(t)
@@ -116,7 +116,7 @@ type AccountQuery struct {
 }
 
 type AccountResponse struct {
-	LastUpdateTime uint64            `json:"last_update_time,string"`
-	RemoteAddr     string            `json:"remote_addr"`
-	RemoteBalance  wasmvmtypes.Coins `json:"remote_balance"`
+	LastUpdateTime uint64                              `json:"last_update_time,string"`
+	RemoteAddr     string                              `json:"remote_addr"`
+	RemoteBalance  wasmvmtypes.Array[wasmvmtypes.Coin] `json:"remote_balance"`
 }

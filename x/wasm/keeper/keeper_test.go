@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -43,7 +43,9 @@ import (
 //go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
-const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+var AvailableCapabilities = []string{
+	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0",
+}
 
 func TestNewKeeper(t *testing.T) {
 	_, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -710,12 +712,100 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.Nil(t, addr)
 }
 
+func TestContractErrorRedacting(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	keepers.Faucet.Fund(ctx, creator, deposit...)
+	example := StoreHackatomExampleContract(t, ctx, keepers)
+
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    []byte{1, 2, 3}, // invalid length
+		Beneficiary: RandomAccountAddress(t),
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	em := sdk.NewEventManager()
+
+	_, _, err = keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "addr_validate errored: invalid address")
+
+	err = redactError(err)
+	// contract error should not be redacted
+	require.Contains(t, err.Error(), "addr_validate errored: invalid address")
+}
+
+func TestContractErrorGetsForwarded(t *testing.T) {
+	// This test makes sure that a contract gets the error message from its submessage execution
+	// in a non-redacted form if that error comes from the contract in the submessage.
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	reflect1 := InstantiateReflectExampleContract(t, ctx, keepers)
+	// reflect2 will be the contract that errors. It is owned by the other reflect contract.
+	// This is necessary because the reflect contract only accepts messages from its owner.
+	reflect2, _, err := keepers.ContractKeeper.Instantiate(ctx, reflect1.CodeID, reflect1.Contract, reflect1.Contract, []byte("{}"), "reflect2", sdk.NewCoins())
+	require.NoError(t, err)
+
+	const SubMsgID = 1
+	// Make the reflect1 contract send a submessage to reflect2. That sub-message will error.
+	execMsg := testdata.ReflectHandleMsg{
+		ReflectSubMsg: &testdata.ReflectSubPayload{
+			Msgs: []wasmvmtypes.SubMsg{
+				{
+					ID: SubMsgID,
+					Msg: wasmvmtypes.CosmosMsg{
+						Wasm: &wasmvmtypes.WasmMsg{
+							Execute: &wasmvmtypes.ExecuteMsg{
+								ContractAddr: reflect2.String(),
+								// This message will error in the reflect contract as an empty "msgs" array is not allowed
+								Msg: mustMarshal(t, testdata.ReflectHandleMsg{
+									Reflect: &testdata.ReflectPayload{
+										Msgs: []wasmvmtypes.CosmosMsg{},
+									},
+								}),
+							},
+						},
+					},
+					ReplyOn: wasmvmtypes.ReplyError, // we want to see the error
+				},
+			},
+		},
+	}
+	execMsgBz := mustMarshal(t, execMsg)
+
+	em := sdk.NewEventManager()
+	_, err = keepers.ContractKeeper.Execute(
+		ctx.WithEventManager(em),
+		reflect1.Contract,
+		reflect1.CreatorAddr,
+		execMsgBz,
+		nil,
+	)
+	require.NoError(t, err)
+
+	// now query the submessage reply
+	queryMsgBz := mustMarshal(t, testdata.ReflectQueryMsg{
+		SubMsgResult: &testdata.SubCall{
+			ID: SubMsgID,
+		},
+	})
+	queryResponse, err := keepers.WasmKeeper.QuerySmart(ctx, reflect1.Contract, queryMsgBz)
+	require.NoError(t, err)
+	var submsgReply wasmvmtypes.Reply
+	mustUnmarshal(t, queryResponse, &submsgReply)
+
+	assert.Equal(t, "Messages empty. Must reflect at least one message: execute wasm contract failed", submsgReply.Result.Err)
+}
+
 func TestInstantiateWithContractDataResponse(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
 	wasmEngineMock := &wasmtesting.MockWasmEngine{
-		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
-			return &wasmvmtypes.Response{Data: []byte("my-response-data")}, 0, nil
+		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{Data: []byte("my-response-data")}}, 0, nil
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
@@ -739,10 +829,10 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	var instantiationCount int
-	callbacks := make([]func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error), 2)
+	callbacks := make([]func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error), 2)
 	wasmEngineMock := &wasmtesting.MockWasmEngine{
 		// dispatch instantiation calls to callbacks
-		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 			require.Greater(t, len(callbacks), instantiationCount, "unexpected call to instantiation")
 			do := callbacks[instantiationCount]
 			instantiationCount++
@@ -762,24 +852,29 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 
 	example := StoreRandomContract(t, ctx, keepers, wasmEngineMock)
 	// factory contract
-	callbacks[0] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	callbacks[0] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		t.Log("called factory")
-		return &wasmvmtypes.Response{Data: []byte("parent"), Messages: []wasmvmtypes.SubMsg{
-			{
-				ID: 1, ReplyOn: wasmvmtypes.ReplyNever,
-				Msg: wasmvmtypes.CosmosMsg{
-					Wasm: &wasmvmtypes.WasmMsg{
-						Instantiate: &wasmvmtypes.InstantiateMsg{CodeID: example.CodeID, Msg: []byte(`{}`), Label: "child"},
+		return &wasmvmtypes.ContractResult{
+			Ok: &wasmvmtypes.Response{
+				Data: []byte("parent"),
+				Messages: []wasmvmtypes.SubMsg{
+					{
+						ID: 1, ReplyOn: wasmvmtypes.ReplyNever,
+						Msg: wasmvmtypes.CosmosMsg{
+							Wasm: &wasmvmtypes.WasmMsg{
+								Instantiate: &wasmvmtypes.InstantiateMsg{CodeID: example.CodeID, Msg: []byte(`{}`), Label: "child"},
+							},
+						},
 					},
 				},
 			},
-		}}, 0, nil
+		}, 0, nil
 	}
 
 	// child contract
 	var capturedSenderAddr string
 	var capturedCodeInfo []byte
-	callbacks[1] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	callbacks[1] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		t.Log("called child")
 		capturedSenderAddr = info.Sender
 		var err error
@@ -789,7 +884,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 			},
 		}, gasLimit)
 		require.NoError(t, err)
-		return &wasmvmtypes.Response{Data: []byte("child")}, 0, nil
+		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{Data: []byte("child")}}, 0, nil
 	}
 
 	// when
@@ -1017,9 +1112,9 @@ func TestExecuteWithPanic(t *testing.T) {
 	// let's make sure we get a reasonable error, no panic/crash
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
 	require.Error(t, err)
-	require.True(t, errors.Is(err, types.ErrExecuteFailed))
+	require.True(t, errors.Is(err, types.ErrVMError))
 	// test with contains as "Display" implementation of the Wasmer "RuntimeError" is different for Mac and Linux
-	assert.Contains(t, err.Error(), "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:169:5: execute wasm contract failed")
+	assert.Contains(t, err.Error(), "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:169:5: wasmvm error")
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
@@ -1245,7 +1340,7 @@ func TestMigrate(t *testing.T) {
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
-			expErr:     types.ErrMigrationFailed,
+			expErr:     types.ErrVMError,
 		},
 		"fail when no IBC callbacks": {
 			admin:      fred,
@@ -1472,8 +1567,8 @@ func TestIterateContractsByCode(t *testing.T) {
 
 func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
-	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
-		return &wasmvmtypes.Response{}, 1, nil
+	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
 	}}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
@@ -1510,8 +1605,8 @@ type sudoMsg struct {
 }
 
 type stealFundsMsg struct {
-	Recipient string            `json:"recipient"`
-	Amount    wasmvmtypes.Coins `json:"amount"`
+	Recipient string                              `json:"recipient"`
+	Amount    wasmvmtypes.Array[wasmvmtypes.Coin] `json:"amount"`
 }
 
 func TestSudo(t *testing.T) {
@@ -1549,7 +1644,7 @@ func TestSudo(t *testing.T) {
 		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
-			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(76543, "denom")},
+			Amount:    wasmvmtypes.Array[wasmvmtypes.Coin]{wasmvmtypes.NewCoin(76543, "denom")},
 		},
 	}
 	sudoMsg, err := json.Marshal(msg)
@@ -1842,18 +1937,20 @@ func TestPinnedContractLoops(t *testing.T) {
 	require.NoError(t, k.pinCode(ctx, example.CodeID))
 	var loops int
 	anyMsg := []byte(`{}`)
-	mock.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mock.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		loops++
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{
-				{
-					ID:      1,
-					ReplyOn: wasmvmtypes.ReplyNever,
-					Msg: wasmvmtypes.CosmosMsg{
-						Wasm: &wasmvmtypes.WasmMsg{
-							Execute: &wasmvmtypes.ExecuteMsg{
-								ContractAddr: example.Contract.String(),
-								Msg:          anyMsg,
+		return &wasmvmtypes.ContractResult{
+			Ok: &wasmvmtypes.Response{
+				Messages: []wasmvmtypes.SubMsg{
+					{
+						ID:      1,
+						ReplyOn: wasmvmtypes.ReplyNever,
+						Msg: wasmvmtypes.CosmosMsg{
+							Wasm: &wasmvmtypes.WasmMsg{
+								Execute: &wasmvmtypes.ExecuteMsg{
+									ContractAddr: example.Contract.String(),
+									Msg:          anyMsg,
+								},
 							},
 						},
 					},
@@ -1861,7 +1958,7 @@ func TestPinnedContractLoops(t *testing.T) {
 			},
 		}, 0, nil
 	}
-	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(20000))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(30_000))
 	require.PanicsWithValue(t, storetypes.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
 		_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), anyMsg, nil)
 		require.NoError(t, err)
@@ -2005,7 +2102,12 @@ func TestReply(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			mock.ReplyFn = spec.replyFn
+			mock.ReplyFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+				resp, gasUsed, err := spec.replyFn(codeID, env, reply, store, goapi, querier, gasMeter, gasLimit, deserCost)
+				return &wasmvmtypes.ContractResult{
+					Ok: resp,
+				}, gasUsed, err
+			}
 			em := sdk.NewEventManager()
 			gotData, gotErr := k.reply(ctx.WithEventManager(em), example.Contract, wasmvmtypes.Reply{})
 			if spec.expErr {
@@ -2037,12 +2139,12 @@ func TestQueryIsolation(t *testing.T) {
 	}).apply(k)
 
 	// when
-	mock.ReplyFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mock.ReplyFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		_, err := querier.Query(wasmvmtypes.QueryRequest{
 			Custom: []byte(`{}`),
 		}, 10000*types.DefaultGasMultiplier)
 		require.NoError(t, err)
-		return &wasmvmtypes.Response{}, 0, nil
+		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 0, nil
 	}
 	em := sdk.NewEventManager()
 	_, gotErr := k.reply(ctx.WithEventManager(em), example.Contract, wasmvmtypes.Reply{})
@@ -2446,13 +2548,13 @@ func TestGasConsumed(t *testing.T) {
 			originalMeter:            storetypes.NewGasMeter(100),
 			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
-			expMultipliedGasConsumed: 140000000,
+			expMultipliedGasConsumed: 140000,
 		},
 		"consumeGas = limit": {
 			originalMeter:            storetypes.NewGasMeter(1),
 			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
-			expMultipliedGasConsumed: 140000000,
+			expMultipliedGasConsumed: 140000,
 		},
 		"consumeGas > limit": {
 			originalMeter: storetypes.NewGasMeter(10),

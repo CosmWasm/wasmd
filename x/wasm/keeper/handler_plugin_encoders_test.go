@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
@@ -62,10 +62,8 @@ func TestEncoding(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := map[string]struct {
-		sender             sdk.AccAddress
-		srcMsg             wasmvmtypes.CosmosMsg
-		srcContractIBCPort string
-		transferPortSource types.ICS20TransferPortSource
+		sender sdk.AccAddress
+		srcMsg wasmvmtypes.CosmosMsg
 		// set if valid
 		output []sdk.Msg
 		// set if expect mapping fails
@@ -387,7 +385,7 @@ func TestEncoding(t *testing.T) {
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Distribution: &wasmvmtypes.DistributionMsg{
 					FundCommunityPool: &wasmvmtypes.FundCommunityPoolMsg{
-						Amount: wasmvmtypes.Coins{
+						Amount: wasmvmtypes.Array[wasmvmtypes.Coin]{
 							wasmvmtypes.NewCoin(200, "stones"),
 							wasmvmtypes.NewCoin(200, "feathers"),
 						},
@@ -407,7 +405,7 @@ func TestEncoding(t *testing.T) {
 		"stargate encoded bank msg": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+				Any: &wasmvmtypes.AnyMsg{
 					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
 					Value:   bankMsgBin,
 				},
@@ -417,7 +415,7 @@ func TestEncoding(t *testing.T) {
 		"stargate encoded msg with any type": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+				Any: &wasmvmtypes.AnyMsg{
 					TypeURL: "/cosmos.gov.v1.MsgSubmitProposal",
 					Value:   proposalMsgBin,
 				},
@@ -427,13 +425,45 @@ func TestEncoding(t *testing.T) {
 		"stargate encoded invalid typeUrl": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+				Any: &wasmvmtypes.AnyMsg{
 					TypeURL: "/cosmos.bank.v2.MsgSend",
 					Value:   bankMsgBin,
 				},
 			},
 			expError: true,
 		},
+	}
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
+			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
+		})
+	}
+}
+
+func TestEncodeIbcMsg(t *testing.T) {
+	var (
+		addr1 = RandomAccountAddress(t)
+		addr2 = RandomAccountAddress(t)
+	)
+
+	cases := map[string]struct {
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		srcContractIBCPort string
+		transferPortSource types.ICS20TransferPortSource
+		// set if valid
+		output []sdk.Msg
+		// set if expect mapping fails
+		expError bool
+	}{
 		"IBC transfer with block timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
@@ -536,6 +566,41 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"IBC transfer with memo": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					Transfer: &wasmvmtypes.TransferMsg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Amount: wasmvmtypes.Coin{
+							Denom:  "ALX",
+							Amount: "1",
+						},
+						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
+						Memo:    "myMemo",
+					},
+				},
+			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "myTransferPort",
+					SourceChannel: "myChanID",
+					Token: sdk.Coin{
+						Denom:  "ALX",
+						Amount: sdkmath.NewInt(1),
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+					Memo:             "myMemo",
+				},
+			},
+		},
 		"IBC close channel": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
@@ -587,7 +652,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.Yes},
+					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Option: wasmvmtypes.Yes},
 				},
 			},
 			output: []sdk.Msg{
@@ -602,7 +667,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.No},
+					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Option: wasmvmtypes.No},
 				},
 			},
 			output: []sdk.Msg{
@@ -617,7 +682,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 10, Vote: wasmvmtypes.Abstain},
+					Vote: &wasmvmtypes.VoteMsg{ProposalId: 10, Option: wasmvmtypes.Abstain},
 				},
 			},
 			output: []sdk.Msg{
@@ -632,7 +697,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.NoWithVeto},
+					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Option: wasmvmtypes.NoWithVeto},
 				},
 			},
 			output: []sdk.Msg{

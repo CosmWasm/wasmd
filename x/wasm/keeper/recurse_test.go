@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -211,7 +211,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
-		GasWork2k uint64 = 77_161 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 77_161 // = SetupContractCost + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
 		GasReturnHashed uint64 = 27
 	)

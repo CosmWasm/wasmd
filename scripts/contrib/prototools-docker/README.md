@@ -13,7 +13,7 @@ Installs generators and tools from:
 
 ### Build
 ```shell script
-docker build -t cosmwasm/prototools-docker -f ./contrib/prototools-docker/Dockerfile .
+docker build -t cosmwasm/prototools-docker -f ./scripts/contrib/prototools-docker/Dockerfile .
 ```
 
 ```shell script

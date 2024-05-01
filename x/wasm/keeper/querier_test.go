@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -198,9 +198,9 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmEngine{QueryFn: func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) ([]byte, uint64, error) {
+			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmEngine{QueryFn: func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.QueryResult, uint64, error) {
 				spec.doInContract()
-				return nil, 0, nil
+				return &wasmvmtypes.QueryResult{}, 0, nil
 			}}
 			// when
 			q := Querier(keepers.WasmKeeper)
@@ -1044,6 +1044,106 @@ func TestEnsurePaginationParams(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
+
+func TestQueryBuildAddress(t *testing.T) {
+	specs := map[string]struct {
+		src    *types.QueryBuildAddressRequest
+		exp    *types.QueryBuildAddressResponse
+		expErr error
+	}{
+		"empty request": {
+			src:    nil,
+			expErr: status.Error(codes.InvalidArgument, "empty request"),
+		},
+		"invalid code hash": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "invalid",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid code hash"),
+		},
+		"invalid creator address": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "invalid",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid creator address"),
+		},
+		"invalid salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "invalid",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid salt"),
+		},
+		"empty salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "",
+				InitArgs:       nil,
+			},
+			expErr: status.Error(codes.InvalidArgument, "empty salt"),
+		},
+		"invalid init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`invalid`),
+			},
+			expErr: fmt.Errorf("invalid"),
+		},
+		"valid - without init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos165fz7lnnt6e08knjqsz6fnz9drs7gewezyq3pl5uspc3zgt5lldq4ge3pl",
+			},
+			expErr: nil,
+		},
+		"valid - with init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`{"verifier":"cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz"}`),
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos150kq3ggdvc9lftcv6ns75t3v6lcpxdmvuwtqr6e9fc029z6h4maqepgss6",
+			},
+			expErr: nil,
+		},
+	}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	q := Querier(keeper)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, gotErr := q.BuildAddress(ctx, spec.src)
+			if spec.expErr != nil {
+				require.Error(t, gotErr)
+				assert.ErrorContains(t, gotErr, spec.expErr.Error())
+				return
+			}
+			require.NoError(t, gotErr)
+			require.NotNil(t, got)
+			assert.Equal(t, spec.exp.Address, got.Address)
 		})
 	}
 }

@@ -72,6 +72,12 @@ service Query {
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
   }
+
+  // BuildAddress builds a contract address
+  rpc BuildAddress(QueryBuildAddressRequest)
+      returns (QueryBuildAddressResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/build_address";
+  }
 }
 
 // QueryContractInfoRequest is the request type for the Query/ContractInfo RPC
@@ -171,14 +177,20 @@ message QuerySmartContractStateRequest {
   // address is the address of the contract
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // QueryData contains the query data passed to the contract
-  bytes query_data = 2 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes query_data = 2 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // QuerySmartContractStateResponse is the response type for the
 // Query/SmartContractState RPC method
 message QuerySmartContractStateResponse {
   // Data contains the json data returned from the smart contract
-  bytes data = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes data = 1 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // QueryCodeRequest is the request type for the Query/Code RPC method
@@ -268,4 +280,25 @@ message QueryContractsByCreatorResponse {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBuildAddressRequest is the request type for the Query/BuildAddress RPC
+// method.
+message QueryBuildAddressRequest {
+  // CodeHash is the hash of the code
+  string code_hash = 1;
+  // CreatorAddress is the address of the contract instantiator
+  string creator_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Salt is a hex encoded salt
+  string salt = 3;
+  // InitArgs are optional json encoded init args to be used in contract address
+  // building if provided
+  bytes init_args = 4;
+}
+
+// QueryBuildAddressResponse is the response type for the Query/BuildAddress RPC
+// method.
+message QueryBuildAddressResponse {
+  // Address is the contract address
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }

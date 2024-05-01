@@ -97,7 +97,7 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
-  
+
   test-system:
     executor: golang
     parallelism: 1
@@ -189,7 +189,7 @@ jobs:
           command: |
             IN_DOCKER=$(docker run --rm "cosmwasm/wasmd:${CIRCLE_SHA1}" /usr/bin/wasmd query wasm libwasmvm-version)
             echo "Runtime libwasmvm-version in docker: $IN_DOCKER"
-            IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm | cut -d" " -f2 | cut -d"v" -f2)
+            IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d" " -f2 | cut -d"v" -f2)
             echo "wasmvm version in go.mod: $IN_GOMOD"
             if [[ "$IN_DOCKER" != "$IN_GOMOD" ]]; then
               echo "Mismatch of wasmvm versions detected"
@@ -197,7 +197,7 @@ jobs:
             fi
       - when:
           condition:
-            equal: [ main, << pipeline.git.branch >> ]
+            equal: [main, << pipeline.git.branch >>]
           steps:
             - run:
                 name: Push application Docker image to docker hub
