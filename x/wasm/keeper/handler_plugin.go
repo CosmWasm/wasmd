@@ -242,7 +242,19 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		// delete the packet from the store after acknowledgement
 		h.wasmKeeper.DeleteAsyncAckPacket(ctx, contractIBCPortID, contractIBCChannelID, msg.IBC.WriteAcknowledgement.PacketSequence)
 
-		return nil, nil, nil, types.ErrUnknownMsg
+		resp := &types.MsgIBCWriteAcknowledgementResponse{}
+		val, err := resp.Marshal()
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
+		}
+
+		any, err := codectypes.NewAnyWithValue(resp)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+		}
+		msgResponses := [][]*codectypes.Any{{any}}
+
+		return nil, [][]byte{val}, msgResponses, nil
 	default:
 		return nil, nil, nil, types.ErrUnknownMsg
 	}
