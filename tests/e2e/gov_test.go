@@ -97,6 +97,7 @@ func TestGovVoteByContract(t *testing.T) {
 				"",
 				"my proposal",
 				"testing",
+				false,
 			)
 			require.NoError(t, err)
 			rsp, gotErr := chain.SendMsgs(msg)
