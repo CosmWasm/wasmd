@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -12,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 )
 
 type MockChannelKeeper struct {
@@ -166,7 +166,6 @@ func (m *IBCContractKeeperMock) LoadAsyncAckPacket(ctx context.Context, portID s
 		return channeltypes.Packet{}, fmt.Errorf("packet not found")
 	}
 	return packet, nil
-
 }
 
 func (m *IBCContractKeeperMock) StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Packet) error {
