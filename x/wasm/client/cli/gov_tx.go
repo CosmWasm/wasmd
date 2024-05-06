@@ -62,7 +62,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -154,7 +154,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -173,7 +173,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -201,7 +201,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 		Short: "Submit an instantiate wasm contract proposal with predictable address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -220,7 +220,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -250,7 +250,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 		Short: "Submit a store and instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -342,7 +342,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				Funds:                 amount,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -375,7 +375,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 		Short: "Submit a migrate wasm contract to a new code version proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -394,7 +394,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -417,7 +417,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 		Short: "Submit a execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -449,7 +449,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 				Funds:    funds,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -474,7 +474,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 		Short: "Submit a sudo wasm contract proposal (to call privileged commands)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -494,7 +494,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 				Msg:       []byte(args[1]),
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -517,7 +517,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 		Short: "Submit a new admin for a contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -533,7 +533,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 
 			src := parseUpdateContractAdminArgs(args, authority)
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -556,7 +556,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -575,7 +575,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				Contract: args[0],
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -598,7 +598,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 		Short: "Submit a pin code proposal for pinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -622,7 +622,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 				CodeIDs:   codeIds,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -657,7 +657,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 		Short: "Submit a unpin code proposal for unpinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -680,7 +680,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				CodeIDs:   codeIds,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -763,7 +763,7 @@ Example:
 $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
 `, version.AppName, bech32Prefix, bech32Prefix)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -792,7 +792,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 				}
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -815,7 +815,7 @@ func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 		Short: "Submit an add code upload params addresses proposal to add addresses to code upload config params",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -834,7 +834,7 @@ func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 				Addresses: args,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -857,7 +857,7 @@ func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
 		Short: "Submit a remove code upload params addresses proposal to remove addresses from code upload config params",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -876,7 +876,7 @@ func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
 				Addresses: args,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
@@ -899,35 +899,41 @@ func addCommonProposalFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(flagAuthority, DefaultGovAuthority.String(), "The address of the governance account. Default is the sdk gov module account")
+	cmd.Flags().Bool(flagExpedited, false, "Expedited proposals have shorter voting period but require higher voting threshold")
 }
 
-func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, error) {
+func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, bool, error) {
 	clientCtx, err := client.GetClientTxContext(cmd)
 	if err != nil {
-		return client.Context{}, "", "", nil, err
+		return client.Context{}, "", "", nil, false, err
 	}
 
 	proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
 	if err != nil {
-		return clientCtx, proposalTitle, "", nil, err
+		return clientCtx, proposalTitle, "", nil, false, err
 	}
 
 	summary, err := cmd.Flags().GetString(cli.FlagSummary)
 	if err != nil {
-		return client.Context{}, proposalTitle, summary, nil, err
+		return client.Context{}, proposalTitle, summary, nil, false, err
 	}
 
 	depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
 	if err != nil {
-		return client.Context{}, proposalTitle, summary, nil, err
+		return client.Context{}, proposalTitle, summary, nil, false, err
 	}
 
 	deposit, err := sdk.ParseCoinsNormalized(depositArg)
 	if err != nil {
-		return client.Context{}, proposalTitle, summary, deposit, err
+		return client.Context{}, proposalTitle, summary, deposit, false, err
 	}
 
-	return clientCtx, proposalTitle, summary, deposit, nil
+	isExpedited, err := cmd.Flags().GetBool(flagExpedited)
+	if err != nil {
+		return client.Context{}, proposalTitle, summary, deposit, false, err
+	}
+
+	return clientCtx, proposalTitle, summary, deposit, isExpedited, nil
 }
 
 func ProposalStoreAndMigrateContractCmd() *cobra.Command {
@@ -936,7 +942,7 @@ func ProposalStoreAndMigrateContractCmd() *cobra.Command {
 		Short: "Submit a store and migrate wasm contract proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, isExpedited, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -963,7 +969,7 @@ func ProposalStoreAndMigrateContractCmd() *cobra.Command {
 				Contract:              args[1],
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, isExpedited)
 			if err != nil {
 				return err
 			}
