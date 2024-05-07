@@ -179,6 +179,9 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			packetData:          []byte(`{"panic":{}}`),
 			expPacketNotHandled: true,
 		},
+		"without ack": {
+			packetData: []byte(`{"no_ack":{}}`),
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
@@ -236,8 +239,8 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				require.Nil(t, *capturedAck)
 				return
 			}
-			require.NoError(t, err)
 			if spec.expAck != nil {
+				require.NoError(t, err)
 				assert.Equal(t, spec.expAck, *capturedAck, string(*capturedAck))
 			} else {
 				require.Nil(t, *capturedAck)
