@@ -38,8 +38,7 @@ func NewKeeper(
 	opts ...Option,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
-	var keeper *Keeper
-	keeper = &Keeper{
+	keeper := &Keeper{
 		storeService:         storeService,
 		cdc:                  cdc,
 		wasmVM:               nil,
@@ -48,7 +47,6 @@ func NewKeeper(
 		accountPruner:        NewVestingCoinBurner(bankKeeper),
 		portKeeper:           portKeeper,
 		capabilityKeeper:     capabilityKeeper,
-		messenger:            NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
 		gasRegister:          types.NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
@@ -59,6 +57,7 @@ func NewKeeper(
 		},
 		authority: authority,
 	}
+	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	preOpts, postOpts := splitOpts(opts)
 	for _, o := range preOpts {
