@@ -20,6 +20,11 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// DefaultMaxIBCCallbackGas is the default value of maximum gas that an IBC callback can use.
+// If the callback uses more gas, it will be out of gas and will not be reverted.
+// Pass this to the callbacks middleware or choose a custom value.
+const DefaultMaxIBCCallbackGas = uint64(1000000)
+
 var _ porttypes.IBCModule = IBCHandler{}
 
 // internal interface that is implemented by ibc middleware
