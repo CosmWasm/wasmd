@@ -234,7 +234,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 			return nil, nil, nil, errorsmod.Wrap(types.ErrInvalid, "packet")
 		}
 
-		err = h.ics4Wrapper.WriteAcknowledgement(ctx, channelCap, packet, asyncAck{msg.IBC.WriteAcknowledgement.Ack})
+		err = h.ics4Wrapper.WriteAcknowledgement(ctx, channelCap, packet, asyncAck(msg.IBC.WriteAcknowledgement.Ack))
 		if err != nil {
 			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
 		}
@@ -262,12 +262,12 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 
 var _ ibcexported.Acknowledgement = asyncAck{}
 
-type asyncAck struct {
-	wasmvmtypes.IBCFullAcknowledgement
-}
+type asyncAck wasmvmtypes.IBCAcknowledgement
 
 func (w asyncAck) Success() bool {
-	return w.IBCFullAcknowledgement.Success
+	// We don't give the contract to supply a success flag because it's not part of the IBC spec.
+	// Currently, ibc-go also just ignores this flag for `WriteAcknowledgement`.
+	return true
 }
 
 func (w asyncAck) Acknowledgement() []byte {

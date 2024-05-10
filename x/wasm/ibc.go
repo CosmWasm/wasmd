@@ -286,7 +286,7 @@ func (i IBCHandler) OnRecvPacket(
 		ctx.EventManager().EmitEvents(em.Events())
 		// contract wants async acknowledgement, so store the packet for later
 		i.keeper.StoreAsyncAckPacket(ctx, packet)
-		return nil
+		ack = nil
 	} else if ack.Success() {
 		// emit all contract and submessage events on success
 		ctx.EventManager().EmitEvents(em.Events())
