@@ -364,14 +364,14 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 		return err
 	}
 
-	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
+	msg := wasmvmtypes.IBCSourceCallbackMsg{
 		Acknowledgement: &wasmvmtypes.IBCAckCallbackMsg{
 			Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
 			OriginalPacket:  newIBCPacket(packet),
 			Relayer:         relayer.String(),
 		},
 	}
-	err = i.keeper.IBCSourceChainCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCSourceCallback(cachedCtx, contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on source chain callback ack")
 	}
@@ -393,13 +393,13 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 		return err
 	}
 
-	msg := wasmvmtypes.IBCSourceChainCallbackMsg{
+	msg := wasmvmtypes.IBCSourceCallbackMsg{
 		Timeout: &wasmvmtypes.IBCTimeoutCallbackMsg{
 			Packet:  newIBCPacket(packet),
 			Relayer: relayer.String(),
 		},
 	}
-	err = i.keeper.IBCSourceChainCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCSourceCallback(cachedCtx, contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on source chain callback timeout")
 	}
@@ -420,12 +420,12 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		return err
 	}
 
-	msg := wasmvmtypes.IBCDestinationChainCallbackMsg{
-		Ack:    wasmvmtypes.IBCFullAcknowledgement{Data: ack.Acknowledgement(), Success: ack.Success()},
+	msg := wasmvmtypes.IBCDestinationCallbackMsg{
+		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
 		Packet: newIBCPacket(packet),
 	}
 
-	err = i.keeper.IBCDestinationChainCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCDestinationCallback(cachedCtx, contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on destination chain callback")
 	}

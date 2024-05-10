@@ -270,12 +270,12 @@ func (k Keeper) OnTimeoutPacket(
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
-// IBCSourceChainCallback calls the contract to let it know the packet triggered by its
+// IBCSourceCallback calls the contract to let it know the packet triggered by its
 // IBC-callbacks-enabled message either timed out or was acknowledged.
-func (k Keeper) IBCSourceChainCallback(
+func (k Keeper) IBCSourceCallback(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	msg wasmvmtypes.IBCSourceChainCallbackMsg,
+	msg wasmvmtypes.IBCSourceCallbackMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-source-chain-callback")
 
@@ -288,7 +288,7 @@ func (k Keeper) IBCSourceChainCallback(
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.IBCSourceChainCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.IBCSourceCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -304,12 +304,12 @@ func (k Keeper) IBCSourceChainCallback(
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
-// IBCDestinationChainCallback calls the contract to let it know that it received a packet of an
+// IBCDestinationCallback calls the contract to let it know that it received a packet of an
 // IBC-callbacks-enabled message that was acknowledged.
-func (k Keeper) IBCDestinationChainCallback(
+func (k Keeper) IBCDestinationCallback(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	msg wasmvmtypes.IBCDestinationChainCallbackMsg,
+	msg wasmvmtypes.IBCDestinationCallbackMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-destination-chain-callback")
 
@@ -322,7 +322,7 @@ func (k Keeper) IBCDestinationChainCallback(
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.IBCDestinationChainCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.IBCDestinationCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())

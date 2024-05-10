@@ -116,15 +116,15 @@ type IBCContractKeeper interface {
 		contractAddr sdk.AccAddress,
 		msg wasmvmtypes.IBCPacketTimeoutMsg,
 	) error
-	IBCSourceChainCallback(
+	IBCSourceCallback(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCSourceChainCallbackMsg,
+		msg wasmvmtypes.IBCSourceCallbackMsg,
 	) error
-	IBCDestinationChainCallback(
+	IBCDestinationCallback(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCDestinationChainCallbackMsg,
+		msg wasmvmtypes.IBCDestinationCallbackMsg,
 	) error
 	// ClaimCapability allows the transfer module to claim a capability
 	// that IBC module passes to it

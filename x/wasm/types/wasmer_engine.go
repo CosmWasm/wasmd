@@ -233,13 +233,13 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
-	// IBCSourceChainCallback is available on IBC-callbacks-enabled contracts and is called when an
+	// IBCSourceCallback is available on IBC-callbacks-enabled contracts and is called when an
 	// IBC-callbacks-enabled IBC message previously sent by this contract is either acknowledged or
 	// times out.
-	IBCSourceChainCallback(
+	IBCSourceCallback(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		msg wasmvmtypes.IBCSourceChainCallbackMsg,
+		msg wasmvmtypes.IBCSourceCallbackMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -248,13 +248,13 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
-	// IBCSourceChainCallback is available on IBC-callbacks-enabled contracts and is called when an
+	// IBCSourceCallback is available on IBC-callbacks-enabled contracts and is called when an
 	// IBC-callbacks-enabled IBC message previously sent by this contract is either acknowledged or
 	// times out.
-	IBCDestinationChainCallback(
+	IBCDestinationCallback(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		msg wasmvmtypes.IBCDestinationChainCallbackMsg,
+		msg wasmvmtypes.IBCDestinationCallbackMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
