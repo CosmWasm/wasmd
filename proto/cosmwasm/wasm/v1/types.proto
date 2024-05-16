@@ -5,6 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -147,4 +148,42 @@ message Model {
                       "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
   // base64-encode raw value
   bytes value = 2;
+}
+
+// EventCodeStored is emitted when contract code is checked and stored
+message EventCodeStored {
+  // CodeID is the reference to the stored Wasm code
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // Creator address who initially stored the code
+  string creator = 2;
+  AccessConfig access_config = 3;
+  bytes checksum = 4;
+}
+
+// EventContractInstantiated is emitted when contract is instantiated
+message EventContractInstantiated {
+  string contract_address = 1;
+  string admin = 2;
+  uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
+  string label = 6;
+  string creator = 7;
+}
+
+// EventContractMigrated is emitted when a contract get migrated to another code
+message EventContractMigrated {
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  string contract_address = 2;
+  bytes msg = 3 [ (gogoproto.casttype) = "RawContractMessage" ];
+}
+
+// EventContractAdminSet is emitted when new admin is set
+message EventContractAdminSet {
+  string contract_address = 1;
+  string new_admin = 2;
 }
