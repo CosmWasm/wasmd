@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"reflect"
@@ -182,15 +181,12 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.mustStoreCodeInfo(sdkCtx, codeID, codeInfo)
 
-	evt := sdk.NewEvent(
-		types.EventTypeStoreCode,
-		sdk.NewAttribute(types.AttributeKeyChecksum, hex.EncodeToString(checksum)),
-		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)), // last element to be compatible with scripts
-	)
-	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
-		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
-	}
-	sdkCtx.EventManager().EmitEvent(evt)
+	sdkCtx.EventManager().EmitTypedEvent(&types.EventCodeStored{
+		CodeID:       codeID,
+		Creator:      creator.String(),
+		AccessConfig: instantiateAccess,
+		Checksum:     checksum,
+	})
 
 	return codeID, checksum, nil
 }
@@ -370,6 +366,16 @@ func (k Keeper) instantiate(
 		return nil, nil, errorsmod.Wrap(err, "dispatch")
 	}
 
+	sdkCtx.EventManager().EmitTypedEvent(&types.EventContractInstantiated{
+		ContractAddress: contractAddress.String(),
+		Admin:           contractInfo.Admin,
+		CodeID:          contractInfo.CodeID,
+		Funds:           deposit,
+		Msg:             initMsg,
+		Label:           label,
+		Creator:         contractInfo.Creator,
+	})
+
 	return contractAddress, data, nil
 }
 
@@ -505,6 +511,12 @@ func (k Keeper) migrate(
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
 	}
+
+	sdkCtx.EventManager().EmitTypedEvent(&types.EventContractMigrated{
+		CodeID:          newCodeID,
+		ContractAddress: contractAddress.String(),
+		Msg:             msg,
+	})
 
 	return data, nil
 }
@@ -644,12 +656,10 @@ func (k Keeper) setContractAdmin(ctx context.Context, contractAddress, caller, n
 	newAdminStr := newAdmin.String()
 	contractInfo.Admin = newAdminStr
 	k.mustStoreContractInfo(sdkCtx, contractAddress, contractInfo)
-	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeUpdateContractAdmin,
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
-		sdk.NewAttribute(types.AttributeKeyNewAdmin, newAdminStr),
-	))
-
+	sdkCtx.EventManager().EmitTypedEvent(&types.EventContractAdminSet{
+		ContractAddress: contractAddress.String(),
+		NewAdmin:        newAdmin.String(),
+	})
 	return nil
 }
 
