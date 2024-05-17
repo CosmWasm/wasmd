@@ -140,6 +140,11 @@ func (k Keeper) GetGasRegister() types.GasRegister {
 	return k.gasRegister
 }
 
+// Cleanup is used to release cache lock of VM instance
+func (k Keeper) Cleanup() {
+	k.wasmVM.Cleanup()
+}
+
 func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ types.AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
