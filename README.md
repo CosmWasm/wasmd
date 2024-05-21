@@ -53,7 +53,7 @@ The following table shows
 
 | wasmd  | compatible | specified                                                         |
 | ------ | ---------- | ----------------------------------------------------------------- |
-| 0.51.0 | 1.5.x      | 1.5.2                                                             |
+| 0.51.0 | 2.0.x      | [2.0.0](https://github.com/CosmWasm/wasmd/blob/v0.51.0/go.mod#L6) |
 | 0.50.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6) |
 | 0.45.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6) |
 | 0.44.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.44.0/go.mod#L6) |
