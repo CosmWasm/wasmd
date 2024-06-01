@@ -106,7 +106,8 @@ type Keeper struct {
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
-	authority string
+	authority            string
+	ibcPortNameGenerator IBCPortNameGenerator
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
@@ -345,7 +346,7 @@ func (k Keeper) instantiate(
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
-		ibcPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
+		ibcPort, err := k.ensureIBCPort(sdkCtx, contractAddress)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -475,7 +476,7 @@ func (k Keeper) migrate(
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
 	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
 		// add ibc port
-		ibcPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
+		ibcPort, err := k.ensureIBCPort(sdkCtx, contractAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -1234,6 +1235,11 @@ func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress,
 		return err
 	}
 	return k.importContractState(ctx, contractAddr, state)
+}
+
+// ContractFromPortID returns the contract address for given port-id. The method does not check if the contract exists
+func (k Keeper) ContractFromPortID(ctx context.Context, portID string) (sdk.AccAddress, error) {
+	return k.ibcPortNameGenerator.ContractFromPortID(ctx, portID)
 }
 
 func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress) QueryHandler {
