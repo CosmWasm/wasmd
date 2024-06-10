@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,9 +23,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const (
-	CyberpunkFeatures = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
-	ReflectFeatures   = CyberpunkFeatures
+var (
+	CyberpunkCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4"}
+	ReflectCapabilities   = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
 )
 
 func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
@@ -36,7 +36,7 @@ func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
 
 func TestReflectContractSend(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -115,7 +115,7 @@ func TestReflectContractSend(t *testing.T) {
 
 func TestReflectCustomMsg(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -205,7 +205,7 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestRustPanicIsHandled(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, CyberpunkFeatures)
+	ctx, keepers := CreateTestInput(t, false, CyberpunkCapabilities)
 	keeper := keepers.ContractKeeper
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
@@ -222,13 +222,12 @@ func TestRustPanicIsHandled(t *testing.T) {
 	// when panic is triggered
 	msg := []byte(`{"panic":{}}`)
 	gotData, err := keeper.Execute(ctx, contractAddr, creator, msg, nil)
-	require.ErrorIs(t, err, types.ErrExecuteFailed)
+	require.ErrorIs(t, err, types.ErrVMError)
 	assert.Contains(t, err.Error(), "panicked at 'This page intentionally faulted'")
 	assert.Nil(t, gotData)
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
-	t.Helper()
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)

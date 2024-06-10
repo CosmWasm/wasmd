@@ -2,34 +2,62 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.2...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
 
-## [v0.40.2](https://github.com/CosmWasm/wasmd/tree/v0.40.2) (2023-06-09)
+# [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-22)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.1...v0.40.2)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...v0.51.0)
 
-This patch release includes only the cosmos-sdk upgrade to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3).
-It solves [barberry](https://forum.cosmos.network/t/cosmos-sdk-security-advisory-barberry/10825) security vulnerability.
+- Bump cosmos-sdk to v0.50.6 [#1865](https://github.com/CosmWasm/wasmd/pull/1865)
+- Bump tx module to v0.13.3 [#1864](https://github.com/CosmWasm/wasmd/pull/1864)
+- Fix Amino JSON representation [\#1844](https://github.com/CosmWasm/wasmd/pull/1844)
+- Add BuiltInCapabilities() to x/wasm/keeper and deprecate AllCapabilities() [#1855](https://github.com/CosmWasm/wasmd/pull/1855)
+- Move contrib/ in scripts/ [\#1848](https://github.com/CosmWasm/wasmd/pull/1848)
+- Remove contract_tests [\#1847](https://github.com/CosmWasm/wasmd/pull/1847)
+- Upgrade Alpine in Dockerfile to 3.18 [\#1837](https://github.com/CosmWasm/wasmd/pull/1837)
+- Bump wasmvm to 2.0.0 [\#1832](https://github.com/CosmWasm/wasmd/pull/1832)
+- Rename gas to gasLeft [\#1820](https://github.com/CosmWasm/wasmd/pull/1820)
+- Fix misleading error message for duplicate address on instantiate2 [\#1816](https://github.com/CosmWasm/wasmd/pull/1816)
+- Rewrite compatibility section in README [\#1805](https://github.com/CosmWasm/wasmd/pull/1805)
+- Generalize "pinned" to "discount" for cases where contract is in memory [\#1799](https://github.com/CosmWasm/wasmd/pull/1799)
+- Rename InstantiateContractCosts -> SetupContractCost; Remove NewContractInstanceCosts [\#1797](https://github.com/CosmWasm/wasmd/pull/1797)
+- Bump cosmos-sdk proto to v0.50.0 [\#1795](https://github.com/CosmWasm/wasmd/pull/1795)
+- Fix grant contract cli command description [\#1778](https://github.com/CosmWasm/wasmd/issues/1778)
+- Add Build Address gRPC Query [\#1753](https://github.com/CosmWasm/wasmd/pull/1753)
 
 ### Notable changes:
-- Upgrade cosmos-sdk to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3)
+- Upgrade to [CosmWasm 2.0.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.0.0)
+- Upgrade to [SDK v0.50.6](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.6) patch release of Cosmos SDK Eden
 
 ### Migration notes:
-- This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
-## [v0.40.1](https://github.com/CosmWasm/wasmd/tree/v0.40.1) (2023-06-06)
+## [v0.50.0](https://github.com/CosmWasm/wasmd/tree/v0.50.0) (2023-11-23)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.0...v0.40.1)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.45.0...v0.50.0)
 
-This patch release includes only the wasmvm upgrade to [v1.2.4](https://github.com/CosmWasm/wasmvm/releases/tag/v1.2.4).
-It solves some incompatibility problems by improving cache invalidation. See [\#426](https://github.com/CosmWasm/wasmvm/issues/426)
+- Fix module migration fails when code upload access is set to `OnlyAddress` [\#1725](https://github.com/CosmWasm/wasmd/issues/1725)
+- Upgrade to SDK v0.50.1 [\#1696](https://github.com/CosmWasm/wasmd/pull/1696)
+- Bump bufbuild/buf-setup-action from 1.27.1 to 1.27.2 [\#1684](https://github.com/CosmWasm/wasmd/pull/1684)
+- Bump google.golang.org/grpc from 1.58.1 to 1.58.3 in /tests/system [\#1682](https://github.com/CosmWasm/wasmd/pull/1682)
+- Rename some more "features" to "capabilities" [\#1679](https://github.com/CosmWasm/wasmd/pull/1679)
+- Bump actions/checkout from 4.1.0 to 4.1.1 [\#1678](https://github.com/CosmWasm/wasmd/pull/1678)
+- Bump bufbuild/buf-setup-action from 1.27.0 to 1.27.1 [\#1677](https://github.com/CosmWasm/wasmd/pull/1677)
+- Upgrade to SDK v0.50 + IBC v8.0 [\#1611](https://github.com/CosmWasm/wasmd/pull/1611)
 
 ### Notable changes:
-- Upgrade wasmvm to v1.2.4. [\#1430](https://github.com/CosmWasm/wasmd/issues/1430)
+- Upgrade to [SDK v0.50.1](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.1) Eden release
+- Upgrade to [IBC v8.0.0](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) release
 
 ### Migration notes:
-- This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.45.0...HEAD)
+- This release includes state migrations! Please pay careful attention to the doc provided by the [SDK](https://github.com/cosmos/cosmos-sdk/blob/v0.50.1/UPGRADING.md#v050x) team 
+  and the [IBC](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) team with their releases
+- We have some example upgrade code in the `app/upgrade/v0.50` dir, assuming that you come from a wasmd v0.4x version.
+- We also tested a chain upgrade with wasmd v0.33 to v0.50 directly with a fix to [app.go](https://github.com/CosmWasm/wasmd/blame/b02a4723618629b5bb9603d8298621f6ef449f92/app/app.go#L927)
+  to work around an issue.
+- Disclaimer: the upgrade codes are examples and may require more customization for your chain. Please do proper tests before applying on mainnets
+- Please share your experience and success stories on CosmWasm [discord](https://discord.com/invite/cPjEnPd)
+
 
 ## [v0.45.0](https://github.com/CosmWasm/wasmd/tree/v0.45.0) (2023-11-15)
 

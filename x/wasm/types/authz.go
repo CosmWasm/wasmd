@@ -2,9 +2,10 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
@@ -44,7 +45,7 @@ func (a StoreCodeAuthorization) MsgTypeURL() string {
 }
 
 // Accept implements Authorization.Accept.
-func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+func (a *StoreCodeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
 	storeMsg, ok := msg.(*MsgStoreCode)
 	if !ok {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("unknown msg type")
@@ -58,7 +59,8 @@ func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztype
 		if !ok {
 			return authztypes.AcceptResponse{}, sdkerrors.ErrNotFound.Wrap("gas register")
 		}
-		ctx.GasMeter().ConsumeGas(gasRegister.UncompressCosts(len(code)), "Uncompress gzip bytecode")
+		sdk.UnwrapSDKContext(ctx).GasMeter().
+			ConsumeGas(gasRegister.UncompressCosts(len(code)), "Uncompress gzip bytecode")
 		wasmCode, err := ioutils.Uncompress(code, int64(MaxWasmSize))
 		if err != nil {
 			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("uncompress wasm archive")
@@ -163,8 +165,8 @@ func (a ContractExecutionAuthorization) NewAuthz(g []ContractGrant) authztypes.A
 }
 
 // Accept implements Authorization.Accept.
-func (a *ContractExecutionAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	return AcceptGrantedMessage[*MsgExecuteContract](ctx, a.Grants, msg, a)
+func (a *ContractExecutionAuthorization) Accept(goCtx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return AcceptGrantedMessage[*MsgExecuteContract](sdk.UnwrapSDKContext(goCtx), a.Grants, msg, a)
 }
 
 // ValidateBasic implements Authorization.ValidateBasic.
@@ -195,8 +197,8 @@ func (a ContractMigrationAuthorization) MsgTypeURL() string {
 }
 
 // Accept implements Authorization.Accept.
-func (a *ContractMigrationAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	return AcceptGrantedMessage[*MsgMigrateContract](ctx, a.Grants, msg, a)
+func (a *ContractMigrationAuthorization) Accept(goCtx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return AcceptGrantedMessage[*MsgMigrateContract](sdk.UnwrapSDKContext(goCtx), a.Grants, msg, a)
 }
 
 // NewAuthz factory method to create an Authorization with updated grants

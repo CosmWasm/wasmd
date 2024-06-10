@@ -9,15 +9,16 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cometbft/cometbft/libs/log"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -106,7 +107,7 @@ func TestQueryAllContractState(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := q.AllContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			got, err := q.AllContractState(ctx, spec.srcQuery)
 
 			if spec.expErr != nil {
 				require.Equal(t, spec.expErr.Error(), err.Error())
@@ -158,7 +159,7 @@ func TestQuerySmartContractState(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			got, err := q.SmartContractState(ctx, spec.srcQuery)
 			require.True(t, errors.Is(err, spec.expErr), "but got %+v", err)
 			if spec.expErr != nil {
 				return
@@ -171,12 +172,12 @@ func TestQuerySmartContractState(t *testing.T) {
 func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	contractAddr := BuildContractAddressClassic(1, 1)
-	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
-	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
+	keepers.WasmKeeper.mustStoreCodeInfo(ctx, 1, types.CodeInfo{})
+	keepers.WasmKeeper.mustStoreContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.TestingLogger())
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.NewTestLogger(t))
 
 	specs := map[string]struct {
 		doInContract func()
@@ -197,13 +198,13 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmEngine{QueryFn: func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) ([]byte, uint64, error) {
+			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmEngine{QueryFn: func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.QueryResult, uint64, error) {
 				spec.doInContract()
-				return nil, 0, nil
+				return &wasmvmtypes.QueryResult{}, 0, nil
 			}}
 			// when
 			q := Querier(keepers.WasmKeeper)
-			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), &types.QuerySmartContractStateRequest{
+			got, err := q.SmartContractState(ctx, &types.QuerySmartContractStateRequest{
 				Address:   contractAddr.String(),
 				QueryData: types.RawContractMessage("{}"),
 			})
@@ -260,7 +261,7 @@ func TestQueryRawContractState(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := q.RawContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			got, err := q.RawContractState(ctx, spec.srcQuery)
 			if spec.expErr != nil {
 				assert.Equal(t, spec.expErr.Error(), err.Error())
 				return
@@ -297,7 +298,7 @@ func TestQueryContractsByCode(t *testing.T) {
 	var h int64 = 10
 	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
 		ctx = ctx.WithBlockHeight(height)
-		meter := sdk.NewGasMeter(1000000)
+		meter := storetypes.NewGasMeter(1000000)
 		ctx = ctx.WithGasMeter(meter)
 		ctx = ctx.WithBlockGasMeter(meter)
 		return ctx
@@ -380,7 +381,7 @@ func TestQueryContractsByCode(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), spec.req)
+			got, err := q.ContractsByCode(ctx, spec.req)
 
 			if spec.expErr != nil {
 				assert.NotNil(t, err)
@@ -519,11 +520,12 @@ func TestQueryContractHistory(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 
 			cAddr, _ := sdk.AccAddressFromBech32(myContractBech32Addr)
-			keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...)
+			require.NoError(t, keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...))
 
 			// when
 			q := Querier(keeper)
-			got, gotErr := q.ContractHistory(sdk.WrapSDKContext(xCtx), &spec.req) //nolint:gosec
+			got, gotErr := q.ContractHistory(xCtx, &spec.req) //nolint:gosec
+
 			// then
 			if spec.expErr != nil {
 				require.Error(t, gotErr)
@@ -599,7 +601,7 @@ func TestQueryCodeList(t *testing.T) {
 			}
 			// when
 			q := Querier(keeper)
-			got, gotErr := q.Codes(sdk.WrapSDKContext(xCtx), &spec.req) //nolint:gosec
+			got, gotErr := q.Codes(xCtx, &spec.req) //nolint:gosec
 
 			// then
 			if spec.expErr != nil {
@@ -631,7 +633,7 @@ func TestQueryContractInfo(t *testing.T) {
 	govv1beta1.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
 
 	k := keepers.WasmKeeper
-	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
+	querier := NewGrpcQuerier(k.cdc, k.storeService, k, k.queryGasLimit)
 	myExtension := func(info *types.ContractInfo) {
 		// abuse gov proposal as a random protobuf extension with an Any type
 		myExt, err := govv1beta1.NewProposal(&govv1beta1.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
@@ -671,9 +673,9 @@ func TestQueryContractInfo(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
-			k.storeContractInfo(xCtx, contractAddr, &spec.stored) //nolint:gosec
+			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored) //nolint:gosec
 			// when
-			gotRsp, gotErr := querier.ContractInfo(sdk.WrapSDKContext(xCtx), spec.src)
+			gotRsp, gotErr := querier.ContractInfo(xCtx, spec.src)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -730,7 +732,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, gotErr := q.PinnedCodes(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			got, gotErr := q.PinnedCodes(ctx, spec.srcQuery)
 			if spec.expErr != nil {
 				require.Error(t, gotErr)
 				assert.ErrorIs(t, gotErr, spec.expErr)
@@ -749,7 +751,7 @@ func TestQueryParams(t *testing.T) {
 
 	q := Querier(keeper)
 
-	paramsResponse, err := q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	paramsResponse, err := q.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, paramsResponse)
 
@@ -764,7 +766,7 @@ func TestQueryParams(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	paramsResponse, err = q.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, paramsResponse)
 
@@ -808,7 +810,7 @@ func TestQueryCodeInfo(t *testing.T) {
 			)
 
 			q := Querier(keeper)
-			got, err := q.Code(sdk.WrapSDKContext(ctx), &types.QueryCodeRequest{
+			got, err := q.Code(ctx, &types.QueryCodeRequest{
 				CodeId: spec.codeID,
 			})
 			require.NoError(t, err)
@@ -881,7 +883,7 @@ func TestQueryCodeInfoList(t *testing.T) {
 		})
 	}
 	q := Querier(keeper)
-	got, err := q.Codes(sdk.WrapSDKContext(ctx), &types.QueryCodesRequest{
+	got, err := q.Codes(ctx, &types.QueryCodesRequest{
 		Pagination: &query.PageRequest{
 			Limit: 3,
 		},
@@ -917,7 +919,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	var h int64 = 10
 	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
 		ctx = ctx.WithBlockHeight(height)
-		meter := sdk.NewGasMeter(1000000)
+		meter := storetypes.NewGasMeter(1000000)
 		ctx = ctx.WithGasMeter(meter)
 		ctx = ctx.WithBlockGasMeter(meter)
 		return ctx
@@ -981,7 +983,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	q := Querier(keepers.WasmKeeper)
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, gotErr := q.ContractsByCreator(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			got, gotErr := q.ContractsByCreator(ctx, spec.srcQuery)
 			if spec.expErr != nil {
 				require.Error(t, gotErr)
 				assert.ErrorContains(t, gotErr, spec.expErr.Error())
@@ -1042,6 +1044,106 @@ func TestEnsurePaginationParams(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
+
+func TestQueryBuildAddress(t *testing.T) {
+	specs := map[string]struct {
+		src    *types.QueryBuildAddressRequest
+		exp    *types.QueryBuildAddressResponse
+		expErr error
+	}{
+		"empty request": {
+			src:    nil,
+			expErr: status.Error(codes.InvalidArgument, "empty request"),
+		},
+		"invalid code hash": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "invalid",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid code hash"),
+		},
+		"invalid creator address": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "invalid",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid creator address"),
+		},
+		"invalid salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "invalid",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid salt"),
+		},
+		"empty salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "",
+				InitArgs:       nil,
+			},
+			expErr: status.Error(codes.InvalidArgument, "empty salt"),
+		},
+		"invalid init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`invalid`),
+			},
+			expErr: fmt.Errorf("invalid"),
+		},
+		"valid - without init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos165fz7lnnt6e08knjqsz6fnz9drs7gewezyq3pl5uspc3zgt5lldq4ge3pl",
+			},
+			expErr: nil,
+		},
+		"valid - with init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`{"verifier":"cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz"}`),
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos150kq3ggdvc9lftcv6ns75t3v6lcpxdmvuwtqr6e9fc029z6h4maqepgss6",
+			},
+			expErr: nil,
+		},
+	}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	q := Querier(keeper)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, gotErr := q.BuildAddress(ctx, spec.src)
+			if spec.expErr != nil {
+				require.Error(t, gotErr)
+				assert.ErrorContains(t, gotErr, spec.expErr.Error())
+				return
+			}
+			require.NoError(t, gotErr)
+			require.NotNil(t, got)
+			assert.Equal(t, spec.exp.Address, got.Address)
 		})
 	}
 }

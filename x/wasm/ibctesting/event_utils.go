@@ -7,10 +7,8 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 )
 
 func GetSendPackets(evts []abci.Event) []channeltypes.Packet {
@@ -91,7 +89,7 @@ func parseTimeoutHeight(raw string) clienttypes.Height {
 	}
 }
 
-func ParsePortIDFromEvents(events sdk.Events) (string, error) {
+func ParsePortIDFromEvents(events []abci.Event) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {
@@ -104,7 +102,7 @@ func ParsePortIDFromEvents(events sdk.Events) (string, error) {
 	return "", fmt.Errorf("port id event attribute not found")
 }
 
-func ParseChannelVersionFromEvents(events sdk.Events) (string, error) {
+func ParseChannelVersionFromEvents(events []abci.Event) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {

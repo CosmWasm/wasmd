@@ -1,29 +1,31 @@
 package types
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"context"
+
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
 
 // ViewKeeper provides read only operations
 type ViewKeeper interface {
-	GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []ContractCodeHistoryEntry
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
-	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
-	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *ContractInfo
-	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, ContractInfo) bool)
-	IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool)
-	IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool)
-	IterateContractState(ctx sdk.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool)
-	GetCodeInfo(ctx sdk.Context, codeID uint64) *CodeInfo
-	IterateCodeInfos(ctx sdk.Context, cb func(uint64, CodeInfo) bool)
-	GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error)
-	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
-	GetParams(ctx sdk.Context) Params
+	GetContractHistory(ctx context.Context, contractAddr sdk.AccAddress) []ContractCodeHistoryEntry
+	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	HasContractInfo(ctx context.Context, contractAddress sdk.AccAddress) bool
+	GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *ContractInfo
+	IterateContractInfo(ctx context.Context, cb func(sdk.AccAddress, ContractInfo) bool)
+	IterateContractsByCreator(ctx context.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool)
+	IterateContractsByCode(ctx context.Context, codeID uint64, cb func(address sdk.AccAddress) bool)
+	IterateContractState(ctx context.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool)
+	GetCodeInfo(ctx context.Context, codeID uint64) *CodeInfo
+	IterateCodeInfos(ctx context.Context, cb func(uint64, CodeInfo) bool)
+	GetByteCode(ctx context.Context, codeID uint64) ([]byte, error)
+	IsPinnedCode(ctx context.Context, codeID uint64) bool
+	GetParams(ctx context.Context) Params
 }
 
 // ContractOpsKeeper contains mutable operations on a contract.

@@ -27,19 +27,20 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type mockSubspace struct {
-	ps types.Params
+	ps v2.Params
 }
 
-func newMockSubspace(ps types.Params) mockSubspace {
+func newMockSubspace(ps v2.Params) mockSubspace {
 	return mockSubspace{ps: ps}
 }
 
 func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
-	*ps.(*types.Params) = ms.ps
+	*ps.(*v2.Params) = ms.ps
 }
 
 type testData struct {
@@ -57,14 +58,19 @@ type testData struct {
 
 func setupTest(t *testing.T) testData {
 	t.Helper()
-	ctx, keepers := keeper.CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4")
+	DefaultParams := v2.Params{
+		CodeUploadAccess:             v2.AccessConfig{Permission: v2.AccessTypeEverybody},
+		InstantiateDefaultPermission: v2.AccessTypeEverybody,
+	}
+
+	ctx, keepers := keeper.CreateTestInput(t, false, []string{"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"})
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(types.DefaultParams())),
+		module:           NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(DefaultParams)),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,
@@ -556,7 +562,7 @@ func assertAttribute(t *testing.T, key, value string, attr abci.EventAttribute) 
 func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, expectedNum int, marshaler codec.Codec) {
 	t.Helper()
 	path := "/cosmwasm.wasm.v1.Query/Codes"
-	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path})
+	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 
@@ -577,7 +583,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/Code"
-	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	resp, err := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
 	if len(expectedBytes) == 0 {
 		require.Equal(t, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID).Error(), err.Error())
 		return
@@ -597,7 +603,7 @@ func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/ContractsByCode"
-	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
 	if len(expContractAddrs) == 0 {
 		assert.ErrorIs(t, err, types.ErrNotFound)
 		return
@@ -622,7 +628,7 @@ func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Conte
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/RawContractState"
-	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 	bz = resp.Value
@@ -640,7 +646,7 @@ func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/ContractInfo"
-	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 	bz = resp.Value

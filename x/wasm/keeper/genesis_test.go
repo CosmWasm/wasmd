@@ -11,18 +11,22 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	dbm "github.com/cometbft/cometbft-db"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -83,8 +87,8 @@ func TestGenesisExportImport(t *testing.T) {
 
 		contract.CodeID = codeID
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
-		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
-		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
+		wasmKeeper.mustStoreContractInfo(srcCtx, contractAddr, &contract)
+		require.NoError(t, wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...))
 		err = wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
 		require.NoError(t, err)
 	}
@@ -116,8 +120,10 @@ func TestGenesisExportImport(t *testing.T) {
 		creatorAddress := sdk.MustAccAddressFromBech32(info.Creator)
 		history := wasmKeeper.GetContractHistory(srcCtx, address)
 
-		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, history[len(history)-1])
-		wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, history[0].Updated, address)
+		err = wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, history[len(history)-1])
+		require.NoError(t, err)
+		err = wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, history[0].Updated, address)
+		require.NoError(t, err)
 		return false
 	})
 
@@ -133,8 +139,10 @@ func TestGenesisExportImport(t *testing.T) {
 
 	// compare whole DB
 
-	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
-	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
+	srcIT, err := wasmKeeper.storeService.OpenKVStore(srcCtx).Iterator(nil, nil)
+	require.NoError(t, err)
+	dstIT, err := dstKeeper.storeService.OpenKVStore(dstCtx).Iterator(nil, nil)
+	require.NoError(t, err)
 
 	t.Cleanup(func() {
 		types.MaxWasmSize = originalMaxWasmSize
@@ -143,9 +151,9 @@ func TestGenesisExportImport(t *testing.T) {
 	})
 
 	for i := 0; srcIT.Valid(); i++ {
-		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", wasmKeeper.storeKey.Name(), srcIT.Key())
+		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing", srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-		require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", wasmKeeper.storeKey.Name(), i, srcIT.Key())
+		require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element: %X", i, srcIT.Key())
 		dstIT.Next()
 		srcIT.Next()
 	}
@@ -609,7 +617,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, importState.ValidateBasic(), genesisStr)
 
-	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	// when
 	_, err = InitGenesis(ctx, keeper, importState, TestHandler(contractKeeper))
@@ -671,8 +679,12 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
-	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID))
-	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeySequenceInstanceID))
+	id, err := keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), id)
+	id, err = keeper.PeekAutoIncrementID(ctx, types.KeySequenceInstanceID)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(3), id)
 }
 
 func TestSupportedGenMsgTypes(t *testing.T) {
@@ -705,7 +717,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 							Verifier:    verifierAddress,
 							Beneficiary: beneficiaryAddress,
 						}.GetBytes(t),
-						Funds: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+						Funds: sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10))),
 					},
 				},
 			},
@@ -723,8 +735,8 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NoError(t, importState.ValidateBasic())
 	ctx, keepers := CreateDefaultTestInput(t)
 	keeper := keepers.WasmKeeper
-	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
-	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, sdk.NewInt(100)))
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(storetypes.NewInfiniteGasMeter())
+	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, math.NewInt(100)))
 
 	// when
 	_, err = InitGenesis(ctx, keeper, importState, TestHandler(keepers.ContractKeeper))
@@ -743,7 +755,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 
 	// verify contract executed
 	gotBalance := keepers.BankKeeper.GetBalance(ctx, beneficiaryAddress, denom)
-	assert.Equal(t, sdk.NewCoin(denom, sdk.NewInt(10)), gotBalance)
+	assert.Equal(t, sdk.NewCoin(denom, math.NewInt(10)), gotBalance)
 }
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
@@ -752,14 +764,14 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
-	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
+	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, tmproto.Header{
+	ctx := sdk.NewContext(ms, cmtproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())
@@ -777,7 +789,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 
 	srcKeeper := NewKeeper(
 		encodingConfig.Codec,
-		keyWasm,
+		runtime.NewKVStoreService(keyWasm),
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},

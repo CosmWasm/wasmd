@@ -7,12 +7,14 @@ import (
 	"testing"
 	"time"
 
-	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -32,31 +34,32 @@ import (
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
-	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
+
+	logLevel := log.LevelOption(zerolog.InfoLevel)
+
+	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
 
 	if withGenesis {
-		return wasmApp, app.NewDefaultGenesisState(wasmApp.AppCodec())
+		return wasmApp, wasmApp.DefaultGenesis()
 	}
 	return wasmApp, app.GenesisState{}
 }
 
 // SetupWithGenesisAccountsAndValSet initializes a new WasmApp with the provided genesis
 // accounts and possible balances.
-func SetupWithGenesisAccountsAndValSet(tb testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
-	tb.Helper()
-
+func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	appCodec := wasmApp.AppCodec()
 
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmtypes.NewValidator(pubKey, 1)
+	valSet := cmtypes.NewValidatorSet([]*cmtypes.Validator{validator})
 
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
@@ -64,7 +67,7 @@ func SetupWithGenesisAccountsAndValSet(tb testing.TB, db dbm.DB, genAccs []autht
 	bondAmt := sdk.DefaultPowerReduction
 
 	for _, val := range valSet.Validators {
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pk, _ := cryptocodec.FromCmtPubKeyInterface(val.PubKey)
 		pkAny, _ := codectypes.NewAnyWithValue(pk)
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
@@ -72,17 +75,17 @@ func SetupWithGenesisAccountsAndValSet(tb testing.TB, db dbm.DB, genAccs []autht
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            bondAmt,
-			DelegatorShares:   sdk.OneDec(),
+			DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			MinSelfDelegation: sdk.ZeroInt(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
+			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
-
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), sdk.ValAddress(val.Address).String(), sdkmath.LegacyOneDec()))
 	}
+
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
 	genesisState[stakingtypes.ModuleName] = appCodec.MustMarshalJSON(stakingGenesis)
@@ -110,16 +113,16 @@ func SetupWithGenesisAccountsAndValSet(tb testing.TB, db dbm.DB, genAccs []autht
 	consensusParams := simtestutil.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
 
-	wasmApp.InitChain(
-		abci.RequestInitChain{
+	_, err = wasmApp.InitChain(
+		&abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: consensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
-
-	wasmApp.Commit()
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
+	require.NoError(b, err)
+	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: wasmApp.LastBlockHeight() + 1})
+	require.NoError(b, err)
 
 	return wasmApp
 }
@@ -135,9 +138,7 @@ type AppInfo struct {
 	TxConfig     client.TxConfig
 }
 
-func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
-	tb.Helper()
-
+func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	// constants
 	minter := secp256k1.GenPrivKey()
 	addr := sdk.AccAddress(minter.PubKey().Address())
@@ -166,25 +167,26 @@ func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
 			Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
 		}
 	}
-	wasmApp := SetupWithGenesisAccountsAndValSet(tb, db, genAccs, bals...)
+	wasmApp := SetupWithGenesisAccountsAndValSet(b, db, genAccs, bals...)
 
 	// add wasm contract
-	height := int64(2)
+	height := int64(1)
 	txGen := moduletestutil.MakeTestEncodingConfig().TxConfig
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
+	_, err := wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height, Time: time.Now()})
+	require.NoError(b, err)
 
 	// upload the code
 	cw20Code, err := os.ReadFile("./testdata/cw20_base.wasm")
-	require.NoError(tb, err)
+	require.NoError(b, err)
 	storeMsg := wasmtypes.MsgStoreCode{
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	storeTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 	_, _, err = wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 	codeID := uint64(1)
 
 	// instantiate the contract
@@ -206,7 +208,7 @@ func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		InitialBalances: initialBalances,
 	}
 	initBz, err := json.Marshal(init)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 	initMsg := wasmtypes.MsgInstantiateContract{
 		Sender: addr.String(),
 		Admin:  addr.String(),
@@ -216,17 +218,18 @@ func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
 	initTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	// TODO: parse contract address better
 	evt := res.Events[len(res.Events)-1]
 	attr := evt.Attributes[0]
 	contractAddr := attr.Value
-
-	wasmApp.EndBlock(abci.RequestEndBlock{Height: height})
-	wasmApp.Commit()
+	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
+	require.NoError(b, err)
+	_, err = wasmApp.Commit()
+	require.NoError(b, err)
 
 	return AppInfo{
 		App:          wasmApp,
@@ -240,16 +243,14 @@ func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	}
 }
 
-func GenSequenceOfTxs(tb testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
-	tb.Helper()
-
+func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
 	fees := sdk.Coins{sdk.NewInt64Coin(info.Denom, 0)}
 	txs := make([]sdk.Tx, numToGenerate)
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
-		require.NoError(tb, err)
+		require.NoError(b, err)
 		txs[i], err = simtestutil.GenSignedMockTx(
 			r,
 			info.TxConfig,
@@ -261,7 +262,7 @@ func GenSequenceOfTxs(tb testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk
 			[]uint64{info.SeqNum},
 			info.MinterKey,
 		)
-		require.NoError(tb, err)
+		require.NoError(b, err)
 		info.SeqNum++
 	}
 

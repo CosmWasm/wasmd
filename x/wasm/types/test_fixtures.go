@@ -4,7 +4,9 @@ import (
 	_ "embed"
 	"math/rand"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -175,7 +177,7 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 		Msg:    []byte(`{"foo":"bar"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
-			Amount: sdk.NewInt(1),
+			Amount: sdkmath.NewInt(1),
 		}},
 	}
 	for _, m := range mutators {
@@ -195,7 +197,7 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 		Msg:      []byte(`{"do":"something"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
-			Amount: sdk.NewInt(1),
+			Amount: sdkmath.NewInt(1),
 		}},
 	}
 	for _, m := range mutators {

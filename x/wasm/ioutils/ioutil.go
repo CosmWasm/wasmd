@@ -3,8 +3,8 @@ package ioutils
 import (
 	"bytes"
 	"compress/gzip"
-	"errors"
 	"encoding/json"
+	"errors"
 	"io"
 
 	errorsmod "cosmossdk.io/errors"

@@ -9,25 +9,24 @@ import (
 	"testing"
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/rand"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -52,7 +51,7 @@ func TestIBCQuerier(t *testing.T) {
 				PortID: &wasmvmtypes.PortIDQuery{},
 			},
 			wasmKeeper: &mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					return &types.ContractInfo{IBCPortID: "myIBCPortID"}
 				},
 			},
@@ -103,7 +102,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			wasmKeeper: &mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					return &types.ContractInfo{IBCPortID: "myLoadedPortID"}
 				},
 			},
@@ -211,8 +210,8 @@ func TestIBCQuerier(t *testing.T) {
 }
 
 func TestBankQuerierBalance(t *testing.T) {
-	mock := bankKeeperMock{GetBalanceFn: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-		return sdk.NewCoin(denom, sdk.NewInt(1))
+	mock := bankKeeperMock{GetBalanceFn: func(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+		return sdk.NewCoin(denom, sdkmath.NewInt(1))
 	}}
 
 	ctx := sdk.Context{}
@@ -247,7 +246,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 		},
 	}
 
-	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx context.Context, denom string) (banktypes.Metadata, bool) {
 		if denom == "utest" {
 			return metadata, true
 		} else {
@@ -379,13 +378,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Admin, i.Creator, i.IBCPortID = myAdminAddr, myCreatorAddr, "myIBCPort"
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -405,7 +404,7 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 			req: &wasmvmtypes.WasmQuery{
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
-			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 				return nil
 			}},
 			expErr: true,
@@ -415,13 +414,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Admin, i.Creator = myAdminAddr, myCreatorAddr
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return false },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return false },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -435,13 +434,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Creator = myCreatorAddr
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -482,7 +481,7 @@ func TestCodeInfoWasmQuerier(t *testing.T) {
 				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
 			},
 			mock: mockWasmQueryKeeper{
-				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+				GetCodeInfoFn: func(ctx context.Context, codeID uint64) *types.CodeInfo {
 					return &types.CodeInfo{
 						CodeHash: myRawChecksum,
 						Creator:  myCreatorAddr,
@@ -510,7 +509,7 @@ func TestCodeInfoWasmQuerier(t *testing.T) {
 				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
 			},
 			mock: mockWasmQueryKeeper{
-				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+				GetCodeInfoFn: func(ctx context.Context, codeID uint64) *types.CodeInfo {
 					return nil
 				},
 			},
@@ -561,7 +560,8 @@ func TestQueryErrors(t *testing.T) {
 			mock := keeper.WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 				return nil, spec.src
 			})
-			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB())).WithLogger(log.TestingLogger())
+			ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithMultiStore(ms).WithLogger(log.NewTestLogger(t))
 			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, types.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
@@ -571,12 +571,12 @@ func TestQueryErrors(t *testing.T) {
 
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
-	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
+	ctx := wasmApp.NewUncachedContext(false, cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
 	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
 	require.NoError(t, err)
 
-	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
-	accepted := keeper.AcceptedStargateQueries{
+	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
+	accepted := keeper.AcceptedQueries{
 		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
 		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
 	}
@@ -635,102 +635,43 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	}
 }
 
-func TestDistributionQuerier(t *testing.T) {
-	t.Skip("not implemented")
-	ctx := sdk.Context{}
-	var myAddr sdk.AccAddress = rand.Bytes(address.Len)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(address.Len)
-	specs := map[string]struct {
-		q       wasmvmtypes.DistributionQuery
-		mockFn  func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
-		expAddr string
-		expErr  bool
-	}{
-		"withdrawal override": {
-			q: wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
-			},
-			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
-				return myOtherAddr
-			},
-			expAddr: myOtherAddr.String(),
-		},
-		"no withdrawal override": {
-			q: wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
-			},
-			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
-				return delAddr
-			},
-			expAddr: myAddr.String(),
-		},
-		"empty address": {
-			q: wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{},
-			},
-			expErr: true,
-		},
-		"unknown query": {
-			q:      wasmvmtypes.DistributionQuery{},
-			expErr: true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			// mock := distrKeeperMock{GetDelegatorWithdrawAddrFn: spec.mockFn}
-			var mock types.DistributionKeeper
-			q := keeper.DistributionQuerier(mock)
-
-			gotBz, gotErr := q(ctx, &spec.q) //nolint:gosec
-			if spec.expErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-			var rsp wasmvmtypes.DelegatorWithdrawAddressResponse
-			require.NoError(t, json.Unmarshal(gotBz, &rsp))
-			assert.Equal(t, spec.expAddr, rsp.WithdrawAddress)
-		})
-	}
-}
-
 type mockWasmQueryKeeper struct {
-	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
-	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmartFn      func(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
-	IsPinnedCodeFn    func(ctx sdk.Context, codeID uint64) bool
-	GetCodeInfoFn     func(ctx sdk.Context, codeID uint64) *types.CodeInfo
+	GetContractInfoFn func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+	QueryRawFn        func(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QuerySmartFn      func(ctx context.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
+	IsPinnedCodeFn    func(ctx context.Context, codeID uint64) bool
+	GetCodeInfoFn     func(ctx context.Context, codeID uint64) *types.CodeInfo
 }
 
-func (m mockWasmQueryKeeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+func (m mockWasmQueryKeeper) GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 	if m.GetContractInfoFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetContractInfoFn(ctx, contractAddress)
 }
 
-func (m mockWasmQueryKeeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
+func (m mockWasmQueryKeeper) QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte {
 	if m.QueryRawFn == nil {
 		panic("not expected to be called")
 	}
 	return m.QueryRawFn(ctx, contractAddress, key)
 }
 
-func (m mockWasmQueryKeeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
+func (m mockWasmQueryKeeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	if m.QuerySmartFn == nil {
 		panic("not expected to be called")
 	}
 	return m.QuerySmartFn(ctx, contractAddr, req)
 }
 
-func (m mockWasmQueryKeeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
+func (m mockWasmQueryKeeper) IsPinnedCode(ctx context.Context, codeID uint64) bool {
 	if m.IsPinnedCodeFn == nil {
 		panic("not expected to be called")
 	}
 	return m.IsPinnedCodeFn(ctx, codeID)
 }
 
-func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+func (m mockWasmQueryKeeper) GetCodeInfo(ctx context.Context, codeID uint64) *types.CodeInfo {
 	if m.GetCodeInfoFn == nil {
 		panic("not expected to be called")
 	}
@@ -738,35 +679,35 @@ func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.
 }
 
 type bankKeeperMock struct {
-	GetSupplyFn         func(ctx sdk.Context, denom string) sdk.Coin
-	GetBalanceFn        func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetAllBalancesFn    func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetDenomMetadataFn  func(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	GetSupplyFn         func(ctx context.Context, denom string) sdk.Coin
+	GetBalanceFn        func(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalancesFn    func(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	GetDenomMetadataFn  func(ctx context.Context, denom string) (banktypes.Metadata, bool)
 	GetDenomsMetadataFn func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error)
 }
 
-func (m bankKeeperMock) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
+func (m bankKeeperMock) GetSupply(ctx context.Context, denom string) sdk.Coin {
 	if m.GetSupplyFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetSupplyFn(ctx, denom)
 }
 
-func (m bankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+func (m bankKeeperMock) GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	if m.GetBalanceFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetBalanceFn(ctx, addr, denom)
 }
 
-func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+func (m bankKeeperMock) GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
 	if m.GetAllBalancesFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetAllBalancesFn(ctx, addr)
 }
 
-func (m bankKeeperMock) GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+func (m bankKeeperMock) GetDenomMetaData(ctx context.Context, denom string) (banktypes.Metadata, bool) {
 	if m.GetDenomMetadataFn == nil {
 		panic("not expected to be called")
 	}
@@ -784,9 +725,9 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		queryPath             string
-		protoResponseStruct   codec.ProtoMarshaler
+		protoResponseStruct   proto.Message
 		originalResponse      string
-		expectedProtoResponse codec.ProtoMarshaler
+		expectedProtoResponse proto.Message
 		expectedError         bool
 	}{
 		{
@@ -795,7 +736,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			originalResponse:    "0a090a036261721202333012050a03666f6f",
 			protoResponseStruct: &banktypes.QueryAllBalancesResponse{},
 			expectedProtoResponse: &banktypes.QueryAllBalancesResponse{
-				Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+				Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
 				Pagination: &query.PageResponse{
 					NextKey: []byte("foo"),
 				},
@@ -814,7 +755,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			originalVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
-			appCodec := app.MakeEncodingConfig().Codec
+			appCodec := app.MakeEncodingConfig(t).Codec
 
 			jsonMarshalledResponse, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.protoResponseStruct, originalVersionBz)
 			if tc.expectedError {
@@ -869,11 +810,11 @@ func TestConvertSDKDecCoinToWasmDecCoin(t *testing.T) {
 }
 
 func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
-	appCodec := app.MakeEncodingConfig().Codec
+	appCodec := app.MakeEncodingConfig(t).Codec
 
 	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
 	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
-		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
 		Pagination: &query.PageResponse{
 			NextKey: []byte("foo"),
 		},
@@ -901,8 +842,8 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 		originalResponse    string
 		updatedResponse     string
 		queryPath           string
-		responseProtoStruct codec.ProtoMarshaler
-		expectedProto       func() codec.ProtoMarshaler
+		responseProtoStruct proto.Message
+		expectedProto       func() proto.Message
 	}{
 		/**
 		   *
@@ -930,7 +871,7 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 			"0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679122d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679",
 			"/cosmos.auth.v1beta1.Query/Account",
 			&authtypes.QueryAccountResponse{},
-			func() codec.ProtoMarshaler {
+			func() proto.Message {
 				account := authtypes.BaseAccount{
 					Address: "cosmos1f8uxultn8sqzhznrsz3q77xwaquhgrsg6jyvfy",
 				}
@@ -945,7 +886,7 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			appCodec := app.MakeEncodingConfig().Codec
+			appCodec := app.MakeEncodingConfig(t).Codec
 
 			originVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)

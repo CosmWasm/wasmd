@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -28,13 +30,13 @@ func TestSnapshotter(t *testing.T) {
 		wasmFiles []string
 	}{
 		"single contract": {
-			wasmFiles: []string{"./testdata/reflect.wasm"},
+			wasmFiles: []string{"./testdata/reflect_1_5.wasm"},
 		},
 		"multiple contract": {
-			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/burner.wasm", "./testdata/reflect.wasm"},
+			wasmFiles: []string{"./testdata/reflect_1_5.wasm", "./testdata/burner.wasm", "./testdata/reflect_1_5.wasm"},
 		},
 		"duplicate contracts": {
-			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/reflect.wasm"},
+			wasmFiles: []string{"./testdata/reflect_1_5.wasm", "./testdata/reflect_1_5.wasm"},
 		},
 	}
 	for name, spec := range specs {
@@ -61,7 +63,9 @@ func TestSnapshotter(t *testing.T) {
 				srcCodeIDToChecksum[codeID] = checksum
 			}
 			// create snapshot
-			srcWasmApp.Commit()
+			_, err := srcWasmApp.Commit()
+			require.NoError(t, err)
+
 			snapshotHeight := uint64(srcWasmApp.LastBlockHeight())
 			snapshot, err := srcWasmApp.SnapshotManager().Create(snapshotHeight)
 			require.NoError(t, err)
@@ -111,14 +115,13 @@ func TestSnapshotter(t *testing.T) {
 }
 
 func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
-	t.Helper()
 	senderPrivKey := ed25519.GenPrivKey()
-	pubKey, err := cryptocodec.ToTmPubKeyInterface(senderPrivKey.PubKey())
+	pubKey, err := cryptocodec.ToCmtPubKeyInterface(senderPrivKey.PubKey())
 	require.NoError(t, err)
 
 	senderAddr := senderPrivKey.PubKey().Address().Bytes()
 	acc := authtypes.NewBaseAccount(senderAddr, senderPrivKey.PubKey(), 0, 0)
-	amount, ok := sdk.NewIntFromString("10000000000000000000")
+	amount, ok := sdkmath.NewIntFromString("10000000000000000000")
 	require.True(t, ok)
 
 	balance := banktypes.Balance{

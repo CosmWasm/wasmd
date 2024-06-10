@@ -7,9 +7,9 @@ import (
 	"math"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {

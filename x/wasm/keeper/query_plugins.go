@@ -1,15 +1,18 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,7 +20,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -51,7 +54,7 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	// set a limit for a subCtx
 	sdkGas := q.gasRegister.FromWasmVMGas(gasLimit)
 	// discard all changes/ events in subCtx by not committing the cached context
-	subCtx, _ := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas)).CacheContext()
+	subCtx, _ := q.Ctx.WithGasMeter(storetypes.NewGasMeter(sdkGas)).CacheContext()
 
 	// make sure we charge the higher level context even on panic
 	defer func() {
@@ -87,20 +90,21 @@ type QueryPlugins struct {
 	IBC          func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error)
 	Staking      func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
 	Stargate     func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
+	Grpc         func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error)
 	Wasm         func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 	Distribution func(ctx sdk.Context, request *wasmvmtypes.DistributionQuery) ([]byte, error)
 }
 
 type contractMetaDataSource interface {
-	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+	GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 }
 
 type wasmQueryKeeper interface {
 	contractMetaDataSource
-	GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo
-	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
-	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
+	GetCodeInfo(ctx context.Context, codeID uint64) *types.CodeInfo
+	QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	IsPinnedCode(ctx context.Context, codeID uint64) bool
 }
 
 func DefaultQueryPlugins(
@@ -110,12 +114,15 @@ func DefaultQueryPlugins(
 	channelKeeper types.ChannelKeeper,
 	wasm wasmQueryKeeper,
 ) QueryPlugins {
+	// By default, we reject all stargate and gRPC queries.
+	// The chain needs to provide a querier plugin that only allows deterministic queries.
 	return QueryPlugins{
 		Bank:         BankQuerier(bank),
 		Custom:       NoCustomQuerier,
 		IBC:          IBCQuerier(wasm, channelKeeper),
 		Staking:      StakingQuerier(staking, distKeeper),
 		Stargate:     RejectStargateQuerier(),
+		Grpc:         RejectGrpcQuerier,
 		Wasm:         WasmQuerier(wasm),
 		Distribution: DistributionQuerier(distKeeper),
 	}
@@ -141,6 +148,9 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	if o.Stargate != nil {
 		e.Stargate = o.Stargate
 	}
+	if o.Grpc != nil {
+		e.Grpc = o.Grpc
+	}
 	if o.Wasm != nil {
 		e.Wasm = o.Wasm
 	}
@@ -164,6 +174,14 @@ func (e QueryPlugins) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, req wa
 		return e.Staking(ctx, req.Staking)
 	case req.Stargate != nil:
 		return e.Stargate(ctx, req.Stargate)
+	case req.Grpc != nil:
+		resp, err := e.Grpc(ctx, req.Grpc)
+		if err != nil {
+			return nil, err
+		}
+		// Marshaling the response here instead of inside the query
+		// plugin makes sure that the response is always protobuf encoded.
+		return proto.Marshal(resp)
 	case req.Wasm != nil:
 		return e.Wasm(ctx, req.Wasm)
 	case req.Distribution != nil:
@@ -252,10 +270,10 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 			if portID == "" { // then fallback to contract port address
 				portID = wasm.GetContractInfo(ctx, caller).IBCPortID
 			}
-			var channels wasmvmtypes.IBCChannels
+			var channels wasmvmtypes.Array[wasmvmtypes.IBCChannel]
 			if portID != "" { // then return empty list for non ibc contracts; no channels possible
 				gotChannels := channelKeeper.GetAllChannelsWithPortPrefix(ctx, portID)
-				channels = make(wasmvmtypes.IBCChannels, 0, len(gotChannels))
+				channels = make(wasmvmtypes.Array[wasmvmtypes.IBCChannel], 0, len(gotChannels))
 				for _, ch := range gotChannels {
 					if ch.State != channeltypes.OPEN {
 						continue
@@ -314,6 +332,48 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 	}
 }
 
+func RejectGrpcQuerier(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "gRPC queries are disabled"}
+}
+
+// AcceptListGrpcQuerier supports a preconfigured set of gRPC queries only.
+// All arguments must be non nil.
+//
+// Warning: Chains need to test and maintain their accept list carefully.
+// There were critical consensus breaking issues in the past with non-deterministic behavior in the SDK.
+//
+// These queries can be set via WithQueryPlugins option in the wasm keeper constructor:
+// WithQueryPlugins(&QueryPlugins{Grpc: AcceptListGrpcQuerier(acceptList, queryRouter, codec)})
+func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
+	return func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
+		protoResponse, accepted := acceptList[request.Path]
+		if !accepted {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
+		}
+
+		handler := queryRouter.Route(request.Path)
+		if handler == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
+		}
+
+		res, err := handler(ctx, &abci.RequestQuery{
+			Data: request.Data,
+			Path: request.Path,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// decode the query response into the expected protobuf message
+		err = codec.Unmarshal(res.Value, protoResponse)
+		if err != nil {
+			return nil, err
+		}
+
+		return protoResponse, nil
+	}
+}
+
 // RejectStargateQuerier rejects all stargate queries
 func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
@@ -321,10 +381,10 @@ func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.Stargate
 	}
 }
 
-// AcceptedStargateQueries define accepted Stargate queries as a map with path as key and response type as value.
+// AcceptedQueries define accepted Stargate or gRPC queries as a map with path as key and response type as value.
 // For example:
 // acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
-type AcceptedStargateQueries map[string]codec.ProtoMarshaler
+type AcceptedQueries map[string]proto.Message
 
 // AcceptListStargateQuerier supports a preconfigured set of stargate queries only.
 // All arguments must be non nil.
@@ -332,9 +392,9 @@ type AcceptedStargateQueries map[string]codec.ProtoMarshaler
 // Warning: Chains need to test and maintain their accept list carefully.
 // There were critical consensus breaking issues in the past with non-deterministic behavior in the SDK.
 //
-// This queries can be set via WithQueryPlugins option in the wasm keeper constructor:
+// These queries can be set via WithQueryPlugins option in the wasm keeper constructor:
 // WithQueryPlugins(&QueryPlugins{Stargate: AcceptListStargateQuerier(acceptList, queryRouter, codec)})
-func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 		protoResponse, accepted := acceptList[request.Path]
 		if !accepted {
@@ -346,7 +406,7 @@ func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter G
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := route(ctx, abci.RequestQuery{
+		res, err := route(ctx, &abci.RequestQuery{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -364,14 +424,20 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: "Staking is not supported"}
 		}
 		if request.BondedDenom != nil {
-			denom := keeper.BondDenom(ctx)
+			denom, err := keeper.BondDenom(ctx)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "bond denom")
+			}
 			res := wasmvmtypes.BondedDenomResponse{
 				Denom: denom,
 			}
 			return json.Marshal(res)
 		}
 		if request.AllValidators != nil {
-			validators := keeper.GetBondedValidatorsByPower(ctx)
+			validators, err := keeper.GetBondedValidatorsByPower(ctx)
+			if err != nil {
+				return nil, err
+			}
 			// validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmvmtypes.Validator, len(validators))
 			for i, v := range validators {
@@ -392,9 +458,14 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			if err != nil {
 				return nil, err
 			}
-			v, found := keeper.GetValidator(ctx, valAddr)
+
 			res := wasmvmtypes.ValidatorResponse{}
-			if found {
+			v, err := keeper.GetValidator(ctx, valAddr)
+			switch {
+			case stakingtypes.ErrNoValidatorFound.Is(err): // return empty result for backwards compatibility. Changed in SDK 50
+			case err != nil:
+				return nil, err
+			default:
 				res.Validator = &wasmvmtypes.Validator{
 					Address:       v.OperatorAddress,
 					Commission:    v.Commission.Rate.String(),
@@ -409,7 +480,10 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			if err != nil {
 				return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, request.AllDelegations.Delegator)
 			}
-			sdkDels := keeper.GetAllDelegatorDelegations(ctx, delegator)
+			sdkDels, err := keeper.GetAllDelegatorDelegations(ctx, delegator)
+			if err != nil {
+				return nil, err
+			}
 			delegations, err := sdkToDelegations(ctx, keeper, sdkDels)
 			if err != nil {
 				return nil, err
@@ -430,8 +504,12 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			}
 
 			var res wasmvmtypes.DelegationResponse
-			d, found := keeper.GetDelegation(ctx, delegator, validator)
-			if found {
+			d, err := keeper.GetDelegation(ctx, delegator, validator)
+			switch {
+			case stakingtypes.ErrNoDelegation.Is(err): // return empty result for backwards compatibility. Changed in SDK 50
+			case err != nil:
+				return nil, err
+			default:
 				res.Delegation, err = sdkToFullDelegation(ctx, keeper, distKeeper, d)
 				if err != nil {
 					return nil, err
@@ -443,9 +521,12 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 	}
 }
 
-func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Delegations, error) {
+func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Array[wasmvmtypes.Delegation], error) {
 	result := make([]wasmvmtypes.Delegation, len(delegations))
-	bondDenom := keeper.BondDenom(ctx)
+	bondDenom, err := keeper.BondDenom(ctx)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "bond denom")
+	}
 
 	for i, d := range delegations {
 		delAddr, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
@@ -459,9 +540,9 @@ func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations [
 
 		// shares to amount logic comes from here:
 		// https://github.com/cosmos/cosmos-sdk/blob/v0.38.3/x/staking/keeper/querier.go#L404
-		val, found := keeper.GetValidator(ctx, valAddr)
-		if !found {
-			return nil, errorsmod.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
+		val, err := keeper.GetValidator(ctx, valAddr)
+		if err != nil { // is stakingtypes.ErrNoValidatorFound
+			return nil, errorsmod.Wrap(err, "can't load validator for delegation")
 		}
 		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(d.Shares).TruncateInt())
 
@@ -483,11 +564,15 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "validator address")
 	}
-	val, found := keeper.GetValidator(ctx, valAddr)
-	if !found {
-		return nil, errorsmod.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
+	val, err := keeper.GetValidator(ctx, valAddr)
+	if err != nil { // is stakingtypes.ErrNoValidatorFound
+		return nil, errorsmod.Wrap(err, "can't load validator for delegation")
 	}
-	bondDenom := keeper.BondDenom(ctx)
+	bondDenom, err := keeper.BondDenom(ctx)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "bond denom")
+	}
+
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
 
 	delegationCoins := ConvertSdkCoinToWasmCoin(amount)
@@ -498,7 +583,11 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	// otherwise, it can redelegate the full amount
 	// (there are cases of partial funds redelegated, but this is a start)
 	redelegateCoins := wasmvmtypes.NewCoin(0, bondDenom)
-	if !keeper.HasReceivingRedelegation(ctx, delAddr, valAddr) {
+	found, err := keeper.HasReceivingRedelegation(ctx, delAddr, valAddr)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		redelegateCoins = delegationCoins
 	}
 
@@ -524,12 +613,12 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 // https://github.com/cosmos/cosmos-sdk/issues/7466 is merged
 func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) ([]wasmvmtypes.Coin, error) {
 	// Try to get *delegator* reward info!
-	params := distrtypes.QueryDelegationRewardsRequest{
+	params := distributiontypes.QueryDelegationRewardsRequest{
 		DelegatorAddress: delegation.DelegatorAddress,
 		ValidatorAddress: delegation.ValidatorAddress,
 	}
 	cache, _ := ctx.CacheContext()
-	qres, err := distKeeper.DelegationRewards(sdk.WrapSDKContext(cache), &params)
+	qres, err := distKeeper.DelegationRewards(cache, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -608,7 +697,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 	return func(ctx sdk.Context, req *wasmvmtypes.DistributionQuery) ([]byte, error) {
 		switch {
 		case req.DelegatorWithdrawAddress != nil:
-			got, err := k.DelegatorWithdrawAddress(ctx, &distrtypes.QueryDelegatorWithdrawAddressRequest{DelegatorAddress: req.DelegatorWithdrawAddress.DelegatorAddress})
+			got, err := k.DelegatorWithdrawAddress(ctx, &distributiontypes.QueryDelegatorWithdrawAddressRequest{DelegatorAddress: req.DelegatorWithdrawAddress.DelegatorAddress})
 			if err != nil {
 				return nil, err
 			}
@@ -616,7 +705,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 				WithdrawAddress: got.WithdrawAddress,
 			})
 		case req.DelegationRewards != nil:
-			got, err := k.DelegationRewards(ctx, &distrtypes.QueryDelegationRewardsRequest{
+			got, err := k.DelegationRewards(ctx, &distributiontypes.QueryDelegationRewardsRequest{
 				DelegatorAddress: req.DelegationRewards.DelegatorAddress,
 				ValidatorAddress: req.DelegationRewards.ValidatorAddress,
 			})
@@ -627,7 +716,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 				Rewards: ConvertSDKDecCoinsToWasmDecCoins(got.Rewards),
 			})
 		case req.DelegationTotalRewards != nil:
-			got, err := k.DelegationTotalRewards(ctx, &distrtypes.QueryDelegationTotalRewardsRequest{
+			got, err := k.DelegationTotalRewards(ctx, &distributiontypes.QueryDelegationTotalRewardsRequest{
 				DelegatorAddress: req.DelegationTotalRewards.DelegatorAddress,
 			})
 			if err != nil {
@@ -638,7 +727,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 				Total:   ConvertSDKDecCoinsToWasmDecCoins(got.Total),
 			})
 		case req.DelegatorValidators != nil:
-			got, err := k.DelegatorValidators(ctx, &distrtypes.QueryDelegatorValidatorsRequest{
+			got, err := k.DelegatorValidators(ctx, &distributiontypes.QueryDelegatorValidatorsRequest{
 				DelegatorAddress: req.DelegatorValidators.DelegatorAddress,
 			})
 			if err != nil {
@@ -653,7 +742,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 }
 
 // ConvertSDKDelegatorRewardsToWasmRewards convert sdk to wasmvm type
-func ConvertSDKDelegatorRewardsToWasmRewards(rewards []distrtypes.DelegationDelegatorReward) []wasmvmtypes.DelegatorReward {
+func ConvertSDKDelegatorRewardsToWasmRewards(rewards []distributiontypes.DelegationDelegatorReward) []wasmvmtypes.DelegatorReward {
 	r := make([]wasmvmtypes.DelegatorReward, len(rewards))
 	for i, v := range rewards {
 		r[i] = wasmvmtypes.DelegatorReward{
@@ -677,8 +766,8 @@ func ConvertSDKDecCoinsToWasmDecCoins(src sdk.DecCoins) []wasmvmtypes.DecCoin {
 }
 
 // ConvertSdkCoinsToWasmCoins covert sdk type to wasmvm coins type
-func ConvertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmvmtypes.Coins {
-	converted := make(wasmvmtypes.Coins, len(coins))
+func ConvertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmvmtypes.Array[wasmvmtypes.Coin] {
+	converted := make(wasmvmtypes.Array[wasmvmtypes.Coin], len(coins))
 	for i, c := range coins {
 		converted[i] = ConvertSdkCoinToWasmCoin(c)
 	}
@@ -741,7 +830,7 @@ func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []w
 // ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
 // This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
 // being able to use response directly by json marshaling, which is supported in cosmwasm.
-func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshaler, bz []byte) ([]byte, error) {
+func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse proto.Message, bz []byte) ([]byte, error) {
 	// unmarshal binary into stargate response data structure
 	err := cdc.Unmarshal(bz, protoResponse)
 	if err != nil {

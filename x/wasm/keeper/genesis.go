@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"context"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -13,7 +15,7 @@ import (
 
 // ValidatorSetSource is a subset of the staking keeper
 type ValidatorSetSource interface {
-	ApplyAndReturnValidatorSetUpdates(sdk.Context) (updates []abci.ValidatorUpdate, err error)
+	ApplyAndReturnValidatorSetUpdates(context.Context) (updates []abci.ValidatorUpdate, err error)
 }
 
 // InitGenesis sets supply information for genesis.
@@ -61,13 +63,19 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgRo
 	}
 
 	// sanity check seq values
-	seqVal := keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID)
+	seqVal, err := keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID)
+	if err != nil {
+		return nil, err
+	}
 	if seqVal <= maxCodeID {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeySequenceCodeID), seqVal, maxCodeID)
 	}
 	// ensure next classic address is unused so that we know the sequence is good
 	rCtx, _ := ctx.CacheContext()
-	seqVal = keeper.PeekAutoIncrementID(rCtx, types.KeySequenceInstanceID)
+	seqVal, err = keeper.PeekAutoIncrementID(rCtx, types.KeySequenceInstanceID)
+	if err != nil {
+		return nil, err
+	}
 	addr := keeper.ClassicAddressGenerator()(rCtx, seqVal, nil)
 	if keeper.HasContractInfo(ctx, addr) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "value: %d for seq %s was used already", seqVal, string(types.KeySequenceInstanceID))
@@ -79,12 +87,12 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgRo
 	for _, genTx := range data.GenMsgs {
 		msg := genTx.AsMsg()
 		if msg == nil {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
 		}
 		handler := msgRouter.Handler(msg)
 		_, err := handler(ctx, msg)
 		if err != nil {
-			return nil, sdkerrors.Wrap(err, "genesis")
+			return nil, errorsmod.Wrap(err, "genesis")
 		}
 	}
 	return nil, nil
@@ -129,9 +137,13 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 	})
 
 	for _, k := range [][]byte{types.KeySequenceCodeID, types.KeySequenceInstanceID} {
+		id, err := keeper.PeekAutoIncrementID(ctx, k)
+		if err != nil {
+			panic(err)
+		}
 		genState.Sequences = append(genState.Sequences, types.Sequence{
 			IDKey: k,
-			Value: keeper.PeekAutoIncrementID(ctx, k),
+			Value: id,
 		})
 	}
 

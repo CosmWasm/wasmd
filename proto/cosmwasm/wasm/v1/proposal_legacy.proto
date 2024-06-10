@@ -67,12 +67,16 @@ message InstantiateContractProposal {
   // Label is optional metadata to be stored with a constract instance.
   string label = 6;
   // Msg json encoded message to be passed to the contract on instantiation
-  bytes msg = 7 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 7 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -98,12 +102,16 @@ message InstantiateContract2Proposal {
   // Label is optional metadata to be stored with a constract instance.
   string label = 6;
   // Msg json encode message to be passed to the contract on instantiation
-  bytes msg = 7 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 7 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
   // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
   bytes salt = 9;
@@ -132,7 +140,10 @@ message MigrateContractProposal {
   // CodeID references the new WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
-  bytes msg = 6 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 6 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -151,7 +162,10 @@ message SudoContractProposal {
   // Contract is the address of the smart contract
   string contract = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Msg json encoded message to be passed to the contract as sudo
-  bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 4 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -172,12 +186,16 @@ message ExecuteContractProposal {
   // Contract is the address of the smart contract
   string contract = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Msg json encoded message to be passed to the contract as execute
-  bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 5 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
 }
 
@@ -315,12 +333,16 @@ message StoreAndInstantiateContractProposal {
   // Label is optional metadata to be stored with a constract instance.
   string label = 8;
   // Msg json encoded message to be passed to the contract on instantiation
-  bytes msg = 9 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 9 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 10 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (amino.encoding) = "legacy_coins"
   ];
   // Source is the URL where the code is hosted
   string source = 11;

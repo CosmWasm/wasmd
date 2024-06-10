@@ -3,6 +3,7 @@ package ibctesting
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,7 +12,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -56,13 +57,23 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	}
 	r, err := chain.SendMsgs(storeMsg)
 	require.NoError(chain.t, err)
-	// unmarshal protobuf response from data
-	require.Len(chain.t, r.MsgResponses, 1)
-	require.NotEmpty(chain.t, r.MsgResponses[0].GetCachedValue())
-	pInstResp := r.MsgResponses[0].GetCachedValue().(*types.MsgStoreCodeResponse)
+
+	var pInstResp types.MsgStoreCodeResponse
+	chain.UnwrapExecTXResult(r, &pInstResp)
+
 	require.NotEmpty(chain.t, pInstResp.CodeID)
 	require.NotEmpty(chain.t, pInstResp.Checksum)
-	return *pInstResp
+	return pInstResp
+}
+
+// UnwrapExecTXResult is a helper to unpack execution result from proto any type
+func (chain *TestChain) UnwrapExecTXResult(r *abci.ExecTxResult, target proto.Message) {
+	var wrappedRsp sdk.TxMsgData
+	require.NoError(chain.t, chain.Codec.Unmarshal(r.Data, &wrappedRsp))
+
+	// unmarshal protobuf response from data
+	require.Len(chain.t, wrappedRsp.MsgResponses, 1)
+	require.NoError(chain.t, proto.Unmarshal(wrappedRsp.MsgResponses[0].Value, target))
 }
 
 func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
@@ -77,9 +88,10 @@ func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.A
 
 	r, err := chain.SendMsgs(instantiateMsg)
 	require.NoError(chain.t, err)
-	require.Len(chain.t, r.MsgResponses, 1)
-	require.NotEmpty(chain.t, r.MsgResponses[0].GetCachedValue())
-	pExecResp := r.MsgResponses[0].GetCachedValue().(*types.MsgInstantiateContractResponse)
+
+	var pExecResp types.MsgInstantiateContractResponse
+	chain.UnwrapExecTXResult(r, &pExecResp)
+
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
 	require.NoError(chain.t, err)
 	return a
@@ -95,10 +107,11 @@ func (chain *TestChain) RawQuery(contractAddr string, queryData []byte) ([]byte,
 		return nil, err
 	}
 
-	res := chain.App.Query(abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
 		Path: "/cosmwasm.wasm.v1.Query/RawContractState",
 		Data: reqBin,
 	})
+	require.NoError(chain.t, err)
 
 	if res.Code != 0 {
 		return nil, fmt.Errorf("raw query failed: (%d) %s", res.Code, res.Log)
@@ -132,11 +145,11 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg, response inter
 		return err
 	}
 
-	// TODO: what is the query?
-	res := chain.App.Query(abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
 		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})
+	require.NoError(chain.t, err)
 
 	if res.Code != 0 {
 		return fmt.Errorf("smart query failed: (%d) %s", res.Code, res.Log)

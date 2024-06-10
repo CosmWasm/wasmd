@@ -44,7 +44,8 @@ message AccessConfig {
 
   reserved 2; // was address
 
-  repeated string addresses = 3 [ (gogoproto.moretags) = "yaml:\"addresses\"" ];
+  repeated string addresses = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 // Params defines the set of wasm parameters.
@@ -64,7 +65,7 @@ message CodeInfo {
   // CodeHash is the unique identifier created by wasmvm
   bytes code_hash = 1;
   // Creator address who initially stored the code
-  string creator = 2;
+  string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Used in v1beta1
   reserved 3, 4;
   // InstantiateConfig access control to apply on contract creation, optional
@@ -79,9 +80,9 @@ message ContractInfo {
   // CodeID is the reference to the stored Wasm code
   uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
   // Creator address who initially instantiated the contract
-  string creator = 2;
+  string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Admin is an optional address that can execute migrations
-  string admin = 3;
+  string admin = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Label is optional metadata to be stored with a contract instance.
   string label = 4;
   // Created Tx position when the contract was instantiated.
@@ -123,7 +124,10 @@ message ContractCodeHistoryEntry {
   uint64 code_id = 2 [ (gogoproto.customname) = "CodeID" ];
   // Updated Tx position when the operation was executed.
   AbsoluteTxPosition updated = 3;
-  bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes msg = 4 [
+    (gogoproto.casttype) = "RawContractMessage",
+    (amino.encoding) = "inline_json"
+  ];
 }
 
 // AbsoluteTxPosition is a unique transaction position that allows for global

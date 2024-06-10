@@ -2,7 +2,6 @@ package wasmtesting
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type MockCoinTransferrer struct {
@@ -17,10 +16,10 @@ func (m *MockCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr, toAddr sd
 }
 
 type AccountPrunerMock struct {
-	CleanupExistingAccountFn func(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
+	CleanupExistingAccountFn func(ctx sdk.Context, existingAccount sdk.AccountI) (handled bool, err error)
 }
 
-func (m AccountPrunerMock) CleanupExistingAccount(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error) {
+func (m AccountPrunerMock) CleanupExistingAccount(ctx sdk.Context, existingAccount sdk.AccountI) (handled bool, err error) {
 	if m.CleanupExistingAccountFn == nil {
 		panic("not expected to be called")
 	}
