@@ -799,7 +799,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 		return nil, errorsmod.Wrap(types.ErrVMError, qErr.Error())
 	}
 	if queryResult.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrQueryFailed, queryResult.Err)
+		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrQueryFailed, queryResult.Err))
 	}
 	return queryResult.Ok, nil
 }
