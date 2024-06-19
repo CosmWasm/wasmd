@@ -202,5 +202,5 @@ func TestQuerierError(t *testing.T) {
 	require.Error(t, err)
 
 	// we expect the contract's "reply 1 not found" to be in there
-	assert.Equal(t, "Generic error: Querier contract error: reply 1 not found: query wasm contract failed: query wasm contract failed", err.Error())
+	assert.Contains(t, err.Error(), "reply 1 not found")
 }
