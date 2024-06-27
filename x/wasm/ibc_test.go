@@ -51,8 +51,8 @@ func TestOnRecvPacket(t *testing.T) {
 		},
 		"contract returns err response": {
 			ibcPkg:      anyContractIBCPkg,
-			contractRsp: channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
-			expAck:      channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
+			contractRsp: CreateErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
+			expAck:      CreateErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
 			expEvents: sdk.Events{
 				{
 					Type: "ibc_packet_received",
@@ -87,7 +87,7 @@ func TestOnRecvPacket(t *testing.T) {
 		"returned messages executed with error": {
 			ibcPkg:               anyContractIBCPkg,
 			contractOkMsgExecErr: types.ErrInvalid.Wrap("testing"),
-			expAck:               channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
+			expAck:               CreateErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
 			expEvents: sdk.Events{{
 				Type: "ibc_packet_received",
 				Attributes: []abci.EventAttribute{
