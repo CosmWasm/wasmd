@@ -278,7 +278,7 @@ func (i IBCHandler) OnRecvPacket(
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
-		ack = channeltypes.NewErrorAcknowledgement(err)
+		ack = CreateErrorAcknowledgement(err)
 		// the state gets reverted, so we drop all captured events
 	} else if ack == nil || ack.Success() {
 		// emit all contract and submessage events on success
@@ -357,4 +357,13 @@ func ValidateChannelParams(channelID string) error {
 		return errorsmod.Wrapf(types.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
 	}
 	return nil
+}
+
+// CreateErrorAcknowledgement turns an error into an error acknowledgement.
+//
+// This function is x/wasm specific and might include the full error text in the future
+// as we gain confidence that it is deterministic. Don't use it in other contexts.
+// See also https://github.com/CosmWasm/wasmd/issues/1740.
+func CreateErrorAcknowledgement(err error) ibcexported.Acknowledgement {
+	return channeltypes.NewErrorAcknowledgementWithCodespace(err)
 }

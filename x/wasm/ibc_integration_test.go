@@ -171,8 +171,9 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			expAck:     []byte(`{"error":"invalid packet: Generic error: my error"}`),
 		},
 		"with returned msg fails": {
+			// ErrInvalidAddress (https://github.com/cosmos/cosmos-sdk/blob/v0.50.7/types/errors/errors.go#L28-L29)
 			packetData: []byte(`{"return_msgs": {"msgs": [{"bank":{"send":{"to_address": "invalid-address", "amount": [{"denom": "ALX", "amount": "1"}]}}}]}}`),
-			expAck:     []byte(`{"error":"ABCI code: 7: error handling packet: see events for details"}`),
+			expAck:     []byte(`{"error":"ABCI error: sdk/7: error handling packet: see events for details"}`),
 		},
 		"with contract panic": {
 			packetData:          []byte(`{"panic":{}}`),
