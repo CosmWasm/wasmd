@@ -24,6 +24,8 @@ const (
 	ProposalTypeClearAdmin                          ProposalType = "ClearAdmin"
 	ProposalTypePinCodes                            ProposalType = "PinCodes"
 	ProposalTypeUnpinCodes                          ProposalType = "UnpinCodes"
+	ProposalTypeSetGaslessContracts                 ProposalType = "SetGaslessContracts"
+	ProposalTypeUnSetGaslessContracts               ProposalType = "UnSetGaslessContracts"
 	ProposalTypeUpdateInstantiateConfig             ProposalType = "UpdateInstantiateConfig"
 	ProposalTypeStoreAndInstantiateContractProposal ProposalType = "StoreAndInstantiateContract"
 )
@@ -906,6 +908,98 @@ func (p UnpinCodesProposal) String() string {
   Description: %s
   Codes:       %v
 `, p.Title, p.Description, p.CodeIDs)
+}
+
+func NewSetGaslessContractsProposal(
+	title string,
+	description string,
+	contractAddresses []string,
+) *SetGasLessContractsProposal {
+	return &SetGasLessContractsProposal{
+		Title:             title,
+		Description:       description,
+		ContractAddresses: contractAddresses,
+	}
+}
+
+// ProposalRoute returns the routing key of a parameter change proposal.
+func (p SetGasLessContractsProposal) ProposalRoute() string { return RouterKey }
+
+// GetTitle returns the title of the proposal
+func (p *SetGasLessContractsProposal) GetTitle() string { return p.Title }
+
+// GetDescription returns the human readable description of the proposal
+func (p SetGasLessContractsProposal) GetDescription() string { return p.Description }
+
+// ProposalType returns the type
+func (p SetGasLessContractsProposal) ProposalType() string {
+	return string(ProposalTypeSetGaslessContracts)
+}
+
+// ValidateBasic validates the proposal
+func (p SetGasLessContractsProposal) ValidateBasic() error {
+	if err := validateProposalCommons(p.Title, p.Description); err != nil {
+		return err
+	}
+	if len(p.ContractAddresses) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "contract addresses")
+	}
+	return nil
+}
+
+// String implements the Stringer interface.
+func (p SetGasLessContractsProposal) String() string {
+	return fmt.Sprintf(`Set Gasless Contracts Proposal:
+  Title:       %s
+  Description: %s
+  ContractAddresses:       %v
+`, p.Title, p.Description, p.ContractAddresses)
+}
+
+func NewUnsetGasLessContractsProposal(
+	title string,
+	description string,
+	contractAddresses []string,
+) *UnsetGasLessContractsProposal {
+	return &UnsetGasLessContractsProposal{
+		Title:             title,
+		Description:       description,
+		ContractAddresses: contractAddresses,
+	}
+}
+
+// ProposalRoute returns the routing key of a parameter change proposal.
+func (p UnsetGasLessContractsProposal) ProposalRoute() string { return RouterKey }
+
+// GetTitle returns the title of the proposal
+func (p *UnsetGasLessContractsProposal) GetTitle() string { return p.Title }
+
+// GetDescription returns the human readable description of the proposal
+func (p UnsetGasLessContractsProposal) GetDescription() string { return p.Description }
+
+// ProposalType returns the type
+func (p UnsetGasLessContractsProposal) ProposalType() string {
+	return string(ProposalTypeUnSetGaslessContracts)
+}
+
+// ValidateBasic validates the proposal
+func (p UnsetGasLessContractsProposal) ValidateBasic() error {
+	if err := validateProposalCommons(p.Title, p.Description); err != nil {
+		return err
+	}
+	if len(p.ContractAddresses) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "contract addresses")
+	}
+	return nil
+}
+
+// String implements the Stringer interface.
+func (p UnsetGasLessContractsProposal) String() string {
+	return fmt.Sprintf(`Unset Gasless Contracts Proposal:
+  Title:       %s
+  Description: %s
+  ContractAddresses:       %v
+`, p.Title, p.Description, p.ContractAddresses)
 }
 
 func validateProposalCommons(title, description string) error {

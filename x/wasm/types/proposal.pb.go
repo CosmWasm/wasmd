@@ -549,9 +549,9 @@ func (m *SetGasLessContractsProposal) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SetGasLessContractsProposal proto.InternalMessageInfo
 
-// UnSetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
+// UnsetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
 // the wasmvm cache.
-type UnSetGasLessContractsProposal struct {
+type UnsetGasLessContractsProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty" yaml:"title"`
 	// Description is a human readable text
@@ -560,17 +560,17 @@ type UnSetGasLessContractsProposal struct {
 	ContractAddresses []string `protobuf:"bytes,3,rep,name=contract_addresses,json=contractAddresses,proto3" json:"contract_addresses,omitempty" yaml:"contract_addresses"`
 }
 
-func (m *UnSetGasLessContractsProposal) Reset()      { *m = UnSetGasLessContractsProposal{} }
-func (*UnSetGasLessContractsProposal) ProtoMessage() {}
-func (*UnSetGasLessContractsProposal) Descriptor() ([]byte, []int) {
+func (m *UnsetGasLessContractsProposal) Reset()      { *m = UnsetGasLessContractsProposal{} }
+func (*UnsetGasLessContractsProposal) ProtoMessage() {}
+func (*UnsetGasLessContractsProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{11}
 }
-func (m *UnSetGasLessContractsProposal) XXX_Unmarshal(b []byte) error {
+func (m *UnsetGasLessContractsProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *UnSetGasLessContractsProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *UnsetGasLessContractsProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_UnSetGasLessContractsProposal.Marshal(b, m, deterministic)
+		return xxx_messageInfo_UnsetGasLessContractsProposal.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -580,17 +580,17 @@ func (m *UnSetGasLessContractsProposal) XXX_Marshal(b []byte, deterministic bool
 		return b[:n], nil
 	}
 }
-func (m *UnSetGasLessContractsProposal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnSetGasLessContractsProposal.Merge(m, src)
+func (m *UnsetGasLessContractsProposal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnsetGasLessContractsProposal.Merge(m, src)
 }
-func (m *UnSetGasLessContractsProposal) XXX_Size() int {
+func (m *UnsetGasLessContractsProposal) XXX_Size() int {
 	return m.Size()
 }
-func (m *UnSetGasLessContractsProposal) XXX_DiscardUnknown() {
-	xxx_messageInfo_UnSetGasLessContractsProposal.DiscardUnknown(m)
+func (m *UnsetGasLessContractsProposal) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnsetGasLessContractsProposal.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UnSetGasLessContractsProposal proto.InternalMessageInfo
+var xxx_messageInfo_UnsetGasLessContractsProposal proto.InternalMessageInfo
 
 // AccessConfigUpdate contains the code id and the access config to be
 // applied.
@@ -754,7 +754,7 @@ func init() {
 	proto.RegisterType((*PinCodesProposal)(nil), "cosmwasm.wasm.v1.PinCodesProposal")
 	proto.RegisterType((*UnpinCodesProposal)(nil), "cosmwasm.wasm.v1.UnpinCodesProposal")
 	proto.RegisterType((*SetGasLessContractsProposal)(nil), "cosmwasm.wasm.v1.SetGasLessContractsProposal")
-	proto.RegisterType((*UnSetGasLessContractsProposal)(nil), "cosmwasm.wasm.v1.UnSetGasLessContractsProposal")
+	proto.RegisterType((*UnsetGasLessContractsProposal)(nil), "cosmwasm.wasm.v1.UnsetGasLessContractsProposal")
 	proto.RegisterType((*AccessConfigUpdate)(nil), "cosmwasm.wasm.v1.AccessConfigUpdate")
 	proto.RegisterType((*UpdateInstantiateConfigProposal)(nil), "cosmwasm.wasm.v1.UpdateInstantiateConfigProposal")
 	proto.RegisterType((*StoreAndInstantiateContractProposal)(nil), "cosmwasm.wasm.v1.StoreAndInstantiateContractProposal")
@@ -1270,14 +1270,14 @@ func (this *SetGasLessContractsProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *UnSetGasLessContractsProposal) Equal(that interface{}) bool {
+func (this *UnsetGasLessContractsProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*UnSetGasLessContractsProposal)
+	that1, ok := that.(*UnsetGasLessContractsProposal)
 	if !ok {
-		that2, ok := that.(UnSetGasLessContractsProposal)
+		that2, ok := that.(UnsetGasLessContractsProposal)
 		if ok {
 			that1 = &that2
 		} else {
@@ -2141,7 +2141,7 @@ func (m *SetGasLessContractsProposal) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *UnSetGasLessContractsProposal) Marshal() (dAtA []byte, err error) {
+func (m *UnsetGasLessContractsProposal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2151,12 +2151,12 @@ func (m *UnSetGasLessContractsProposal) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *UnSetGasLessContractsProposal) MarshalTo(dAtA []byte) (int, error) {
+func (m *UnsetGasLessContractsProposal) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *UnSetGasLessContractsProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *UnsetGasLessContractsProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2756,7 +2756,7 @@ func (m *SetGasLessContractsProposal) Size() (n int) {
 	return n
 }
 
-func (m *UnSetGasLessContractsProposal) Size() (n int) {
+func (m *UnsetGasLessContractsProposal) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5341,7 +5341,7 @@ func (m *SetGasLessContractsProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *UnSetGasLessContractsProposal) Unmarshal(dAtA []byte) error {
+func (m *UnsetGasLessContractsProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -5364,10 +5364,10 @@ func (m *UnSetGasLessContractsProposal) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: UnSetGasLessContractsProposal: wiretype end group for non-group")
+			return fmt.Errorf("proto: UnsetGasLessContractsProposal: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UnSetGasLessContractsProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: UnsetGasLessContractsProposal: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

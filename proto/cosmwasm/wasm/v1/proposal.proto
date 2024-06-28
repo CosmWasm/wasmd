@@ -225,9 +225,9 @@ message SetGasLessContractsProposal {
   ];
 }
 
-// UnSetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
+// UnsetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
 // the wasmvm cache.
-message UnSetGasLessContractsProposal {
+message UnsetGasLessContractsProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary

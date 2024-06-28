@@ -309,6 +309,29 @@ func (q grpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 	}, nil
 }
 
+func (q grpcQuerier) GaslessContracts(c context.Context, req *types.QueryGaslessContractsRequest) (*types.QueryGaslessContractsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	r := make([]string, 0)
+
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GaslessContractIndexPrefix)
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			r = append(r, string(key))
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryGaslessContractsResponse{
+		ContractAddresses: r,
+		Pagination:        pageRes,
+	}, nil
+}
+
 // Params returns params of the module.
 func (q grpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
