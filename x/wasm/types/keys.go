@@ -126,6 +126,16 @@ func GetPinnedCodeIndexPrefix(codeID uint64) []byte {
 	return r
 }
 
+// GetGaslessContractIndexPrefix returns the key prefix for a gasless contract into the wasmvm cache
+func GetGaslessContractIndexPrefix(contractAddr sdk.AccAddress) []byte {
+	prefixLen := len(PinnedCodeIndexPrefix)
+	contractAddrLen := len(contractAddr)
+	r := make([]byte, prefixLen+contractAddrLen)
+	copy(r[0:], GaslessContractIndexPrefix)
+	copy(r[prefixLen:], contractAddr)
+	return r
+}
+
 // ParsePinnedCodeIndex converts the serialized code ID back.
 func ParsePinnedCodeIndex(s []byte) uint64 {
 	return sdk.BigEndianToUint64(s)

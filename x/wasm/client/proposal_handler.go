@@ -19,6 +19,8 @@ var ProposalHandlers = []govclient.ProposalHandler{
 	govclient.NewProposalHandler(cli.ProposalClearContractAdminCmd, rest.ClearContractAdminProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalPinCodesCmd, rest.PinCodeProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalUnpinCodesCmd, rest.UnpinCodeProposalHandler),
+	govclient.NewProposalHandler(cli.ProposalSetGaslessContractsCmd, rest.SetGaslessContractProposalHandler),
+	govclient.NewProposalHandler(cli.ProposalUnsetGaslessContractsCmd, rest.UnsetGaslessContractProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalUpdateInstantiateConfigCmd, rest.UpdateInstantiateConfigProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalStoreAndInstantiateContractCmd, rest.EmptyRestHandler),
 	govclient.NewProposalHandler(cli.ProposalInstantiateContract2Cmd, rest.EmptyRestHandler),

@@ -349,8 +349,12 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, err
 	}
 
+	isGasless := k.IsGasless(ctx, contractAddress)
+
 	executeCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
-	ctx.GasMeter().ConsumeGas(executeCosts, "Loading CosmWasm module: execute")
+	if !isGasless {
+		ctx.GasMeter().ConsumeGas(executeCosts, "Loading CosmWasm module: execute")
+	}
 
 	// add more funds
 	if !coins.IsZero() {
@@ -366,7 +370,11 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	// if not gasless contract then set runtime gas
+	if !isGasless {
+		k.consumeRuntimeGas(ctx, gasUsed)
+	}
+
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
@@ -881,6 +889,37 @@ func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 func (k Keeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetPinnedCodeIndexPrefix(codeID))
+}
+
+// setGaslessContract set the gasless contract
+func (k Keeper) setGasless(ctx sdk.Context, contractAddr sdk.AccAddress) error {
+	info := k.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "contract info")
+	}
+	store := ctx.KVStore(k.storeKey)
+	// store 1 byte to not run into `nil` debugging issues
+	store.Set(types.GetGaslessContractIndexPrefix(contractAddr), []byte{1})
+
+	return nil
+}
+
+// unsetGaslessContract removes the gasless contract
+func (k Keeper) unsetGasless(ctx sdk.Context, contractAddr sdk.AccAddress) error {
+	info := k.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "contract info")
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetGaslessContractIndexPrefix(contractAddr))
+	return nil
+}
+
+// IsGaslessContract returns true when contract is gasless
+func (k Keeper) IsGasless(ctx sdk.Context, contractAddr sdk.AccAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetGaslessContractIndexPrefix(contractAddr))
 }
 
 // InitializePinnedCodes updates wasmvm to pin to cache all contracts marked as pinned

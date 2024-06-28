@@ -711,6 +711,78 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	return cmd
 }
 
+func ProposalSetGaslessContractsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-gasless [contract-addresses]",
+		Short: "Submit a set gasless contracts proposal",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			content := types.SetGasLessContractsProposal{
+				Title:             proposalTitle,
+				Description:       proposalDescr,
+				ContractAddresses: args,
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	return cmd
+}
+
+func ProposalUnsetGaslessContractsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unset-gasless [contract-addresses]",
+		Short: "Submit a unset gasless contracts proposal",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			content := types.UnsetGasLessContractsProposal{
+				Title:             proposalTitle,
+				Description:       proposalDescr,
+				ContractAddresses: args,
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	return cmd
+}
+
 func parseAccessConfig(raw string) (c types.AccessConfig, err error) {
 	switch raw {
 	case "nobody":

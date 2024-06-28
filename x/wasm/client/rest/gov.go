@@ -465,6 +465,96 @@ func UnpinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler
 	}
 }
 
+type SetGaslessContractJSONReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"`
+
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
+
+	ContractAddresses []string `json:"code_ids" yaml:"contract_addresses"`
+}
+
+func (s SetGaslessContractJSONReq) Content() govtypes.Content {
+	return &types.SetGasLessContractsProposal{
+		Title:             s.Title,
+		Description:       s.Description,
+		ContractAddresses: s.ContractAddresses,
+	}
+}
+
+func (s SetGaslessContractJSONReq) GetProposer() string {
+	return s.Proposer
+}
+
+func (s SetGaslessContractJSONReq) GetDeposit() sdk.Coins {
+	return s.Deposit
+}
+
+func (s SetGaslessContractJSONReq) GetBaseReq() rest.BaseReq {
+	return s.BaseReq
+}
+
+func SetGaslessContractProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
+	return govrest.ProposalRESTHandler{
+		SubRoute: "set_gasless",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			var req SetGaslessContractJSONReq
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
+				return
+			}
+			toStdTxResponse(cliCtx, w, req)
+		},
+	}
+}
+
+type UnsetGaslessContractJSONReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"`
+
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
+
+	ContractAddresses []string `json:"code_ids" yaml:"contract_addresses"`
+}
+
+func (s UnsetGaslessContractJSONReq) Content() govtypes.Content {
+	return &types.UnsetGasLessContractsProposal{
+		Title:             s.Title,
+		Description:       s.Description,
+		ContractAddresses: s.ContractAddresses,
+	}
+}
+
+func (s UnsetGaslessContractJSONReq) GetProposer() string {
+	return s.Proposer
+}
+
+func (s UnsetGaslessContractJSONReq) GetDeposit() sdk.Coins {
+	return s.Deposit
+}
+
+func (s UnsetGaslessContractJSONReq) GetBaseReq() rest.BaseReq {
+	return s.BaseReq
+}
+
+func UnsetGaslessContractProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
+	return govrest.ProposalRESTHandler{
+		SubRoute: "unset_gasless",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			var req UnsetGaslessContractJSONReq
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
+				return
+			}
+			toStdTxResponse(cliCtx, w, req)
+		},
+	}
+}
+
 type UpdateInstantiateConfigProposalJSONReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
