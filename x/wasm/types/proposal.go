@@ -45,6 +45,8 @@ var EnableAllProposals = []ProposalType{
 	ProposalTypeClearAdmin,
 	ProposalTypePinCodes,
 	ProposalTypeUnpinCodes,
+	ProposalTypeSetGaslessContracts,
+	ProposalTypeUnSetGaslessContracts,
 	ProposalTypeUpdateInstantiateConfig,
 	ProposalTypeStoreAndInstantiateContractProposal,
 }
@@ -78,6 +80,8 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypePinCodes))
 	govtypes.RegisterProposalType(string(ProposalTypeUnpinCodes))
+	govtypes.RegisterProposalType(string(ProposalTypeSetGaslessContracts))
+	govtypes.RegisterProposalType(string(ProposalTypeUnSetGaslessContracts))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
 	govtypes.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
 	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
@@ -90,6 +94,8 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
 	govtypes.RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
 	govtypes.RegisterProposalTypeCodec(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
+	govtypes.RegisterProposalTypeCodec(&SetGasLessContractsProposal{}, "wasm/SetGasLessContractsProposal")
+	govtypes.RegisterProposalTypeCodec(&UnsetGasLessContractsProposal{}, "wasm/UnsetGasLessContractsProposal")
 	govtypes.RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
 	govtypes.RegisterProposalTypeCodec(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal")
 }

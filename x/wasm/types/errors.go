@@ -85,6 +85,12 @@ var (
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(sdkErrors.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
+
+	// ErrSetGaslessFailed error for setting gasless contract failures
+	ErrSetGaslessFailed = sdkErrors.Register(DefaultCodespace, 29, "setting gasless contract failed")
+
+	// ErrUnsetGaslessFailed error for unsetting gasless contract failures
+	ErrUnsetGaslessFailed = sdkErrors.Register(DefaultCodespace, 30, "unsetting gasless contract failed")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted

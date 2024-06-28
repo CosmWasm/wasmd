@@ -51,6 +51,10 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return handlePinCodesProposal(ctx, k, *c)
 		case *types.UnpinCodesProposal:
 			return handleUnpinCodesProposal(ctx, k, *c)
+		case *types.SetGasLessContractsProposal:
+			return handleSetGaslessContractsProposal(ctx, k, *c)
+		case *types.UnsetGasLessContractsProposal:
+			return handleUnsetGaslessContractsProposal(ctx, k, *c)
 		case *types.UpdateInstantiateConfigProposal:
 			return handleUpdateInstantiateConfigProposal(ctx, k, *c)
 		case *types.StoreAndInstantiateContractProposal:
@@ -306,6 +310,38 @@ func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 	for _, v := range p.CodeIDs {
 		if err := k.UnpinCode(ctx, v); err != nil {
 			return sdkerrors.Wrapf(err, "code id: %d", v)
+		}
+	}
+	return nil
+}
+
+func handleSetGaslessContractsProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.SetGasLessContractsProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, v := range p.ContractAddresses {
+		contractAddr, err := sdk.AccAddressFromBech32(v)
+		if err != nil {
+			return sdkerrors.Wrap(err, "contract")
+		}
+		if err := k.SetGasless(ctx, contractAddr); err != nil {
+			return sdkerrors.Wrapf(err, "contract address: %s", v)
+		}
+	}
+	return nil
+}
+
+func handleUnsetGaslessContractsProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UnsetGasLessContractsProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, v := range p.ContractAddresses {
+		contractAddr, err := sdk.AccAddressFromBech32(v)
+		if err != nil {
+			return sdkerrors.Wrap(err, "contract")
+		}
+		if err := k.UnsetGasless(ctx, contractAddr); err != nil {
+			return sdkerrors.Wrapf(err, "contract address: %s", v)
 		}
 	}
 	return nil

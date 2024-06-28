@@ -72,6 +72,12 @@ type ContractOpsKeeper interface {
 	// UnpinCode removes the wasm contract from wasmvm cache
 	UnpinCode(ctx sdk.Context, codeID uint64) error
 
+	// SetGasless set the gasless wasm contract in wasmvm cache
+	SetGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error
+
+	// UnsetGasless removes the gasless wasm contract from wasmvm cache
+	UnsetGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error
+
 	// SetContractInfoExtension updates the extension point data that is stored with the contract info
 	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra ContractInfoExtension) error
 
