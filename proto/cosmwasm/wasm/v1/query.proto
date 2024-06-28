@@ -59,6 +59,11 @@ service Query {
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/pinned";
   }
 
+  // GaslessContracts gets the gasless contract addresses
+  rpc GaslessContracts(QueryGaslessContractsRequest) returns (QueryGaslessContractsResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/codes/gasless";
+  }
+
   // Params gets the module params
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/params";
@@ -231,6 +236,22 @@ message QueryPinnedCodesRequest {
 message QueryPinnedCodesResponse {
   repeated uint64 code_ids = 1
       [ (gogoproto.nullable) = false, (gogoproto.customname) = "CodeIDs" ];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGaslessContractsRequest is the request type for the Query/GaslessContracts
+// RPC method
+message QueryGaslessContractsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryGaslessContractsResponse is the response type for the
+// Query/GaslessContracts RPC method
+message QueryGaslessContractsResponse {
+  repeated string contract_addresses = 1
+      [ (gogoproto.nullable) = false, (gogoproto.customname) = "ContractAddresses" ];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

@@ -47,9 +47,11 @@
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
     - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
+    - [SetGasLessContractsProposal](#cosmwasm.wasm.v1.SetGasLessContractsProposal)
     - [StoreAndInstantiateContractProposal](#cosmwasm.wasm.v1.StoreAndInstantiateContractProposal)
     - [StoreCodeProposal](#cosmwasm.wasm.v1.StoreCodeProposal)
     - [SudoContractProposal](#cosmwasm.wasm.v1.SudoContractProposal)
+    - [UnSetGasLessContractsProposal](#cosmwasm.wasm.v1.UnSetGasLessContractsProposal)
     - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
     - [UpdateAdminProposal](#cosmwasm.wasm.v1.UpdateAdminProposal)
     - [UpdateInstantiateConfigProposal](#cosmwasm.wasm.v1.UpdateInstantiateConfigProposal)
@@ -70,6 +72,8 @@
     - [QueryContractsByCodeResponse](#cosmwasm.wasm.v1.QueryContractsByCodeResponse)
     - [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest)
     - [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse)
+    - [QueryGaslessContractsRequest](#cosmwasm.wasm.v1.QueryGaslessContractsRequest)
+    - [QueryGaslessContractsResponse](#cosmwasm.wasm.v1.QueryGaslessContractsResponse)
     - [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse)
     - [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest)
@@ -749,6 +753,24 @@ wasmvm cache.
 
 
 
+<a name="cosmwasm.wasm.v1.SetGasLessContractsProposal"></a>
+
+### SetGasLessContractsProposal
+SetGasLessContractsProposal gov proposal content type to set gassless a set of contract addresses in the
+wasmvm cache.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `contract_addresses` | [string](#string) | repeated | ContractAddresses references the new WASM addresses |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.StoreAndInstantiateContractProposal"></a>
 
 ### StoreAndInstantiateContractProposal
@@ -812,6 +834,24 @@ SudoContractProposal gov proposal content type to call sudo on a contract.
 | `description` | [string](#string) |  | Description is a human readable text |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as sudo |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.UnSetGasLessContractsProposal"></a>
+
+### UnSetGasLessContractsProposal
+UnSetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
+the wasmvm cache.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `contract_addresses` | [string](#string) | repeated | ContractAddresses references the new WASM addresses |
 
 
 
@@ -1137,6 +1177,39 @@ Query/ContractsByCreator RPC method.
 
 
 
+<a name="cosmwasm.wasm.v1.QueryGaslessContractsRequest"></a>
+
+### QueryGaslessContractsRequest
+QueryGaslessContractsRequest is the request type for the Query/GaslessContracts
+RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryGaslessContractsResponse"></a>
+
+### QueryGaslessContractsResponse
+QueryGaslessContractsResponse is the response type for the
+Query/GaslessContracts RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_addresses` | [string](#string) | repeated |  |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
@@ -1283,6 +1356,7 @@ Query provides defines the gRPC querier service
 | `Code` | [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest) | [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse) | Code gets the binary code and metadata for a singe wasm code | GET|/cosmwasm/wasm/v1/code/{code_id}|
 | `Codes` | [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest) | [QueryCodesResponse](#cosmwasm.wasm.v1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes | GET|/cosmwasm/wasm/v1/code|
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
+| `GaslessContracts` | [QueryGaslessContractsRequest](#cosmwasm.wasm.v1.QueryGaslessContractsRequest) | [QueryGaslessContractsResponse](#cosmwasm.wasm.v1.QueryGaslessContractsResponse) | GaslessContracts gets the gasless contract addresses | GET|/cosmwasm/wasm/v1/codes/gasless|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
 

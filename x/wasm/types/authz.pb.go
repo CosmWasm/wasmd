@@ -5,24 +5,21 @@ package types
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var (
-	_ = proto.Marshal
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -43,11 +40,9 @@ func (*ContractExecutionAuthorization) ProtoMessage()    {}
 func (*ContractExecutionAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{0}
 }
-
 func (m *ContractExecutionAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractExecutionAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractExecutionAuthorization.Marshal(b, m, deterministic)
@@ -60,15 +55,12 @@ func (m *ContractExecutionAuthorization) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *ContractExecutionAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractExecutionAuthorization.Merge(m, src)
 }
-
 func (m *ContractExecutionAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractExecutionAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractExecutionAuthorization.DiscardUnknown(m)
 }
@@ -88,11 +80,9 @@ func (*ContractMigrationAuthorization) ProtoMessage()    {}
 func (*ContractMigrationAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{1}
 }
-
 func (m *ContractMigrationAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractMigrationAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractMigrationAuthorization.Marshal(b, m, deterministic)
@@ -105,15 +95,12 @@ func (m *ContractMigrationAuthorization) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *ContractMigrationAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractMigrationAuthorization.Merge(m, src)
 }
-
 func (m *ContractMigrationAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractMigrationAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractMigrationAuthorization.DiscardUnknown(m)
 }
@@ -140,11 +127,9 @@ func (*ContractGrant) ProtoMessage()    {}
 func (*ContractGrant) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{2}
 }
-
 func (m *ContractGrant) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractGrant.Marshal(b, m, deterministic)
@@ -157,15 +142,12 @@ func (m *ContractGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *ContractGrant) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractGrant.Merge(m, src)
 }
-
 func (m *ContractGrant) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractGrant) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractGrant.DiscardUnknown(m)
 }
@@ -185,11 +167,9 @@ func (*MaxCallsLimit) ProtoMessage()    {}
 func (*MaxCallsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{3}
 }
-
 func (m *MaxCallsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MaxCallsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MaxCallsLimit.Marshal(b, m, deterministic)
@@ -202,15 +182,12 @@ func (m *MaxCallsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *MaxCallsLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MaxCallsLimit.Merge(m, src)
 }
-
 func (m *MaxCallsLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MaxCallsLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_MaxCallsLimit.DiscardUnknown(m)
 }
@@ -230,11 +207,9 @@ func (*MaxFundsLimit) ProtoMessage()    {}
 func (*MaxFundsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{4}
 }
-
 func (m *MaxFundsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MaxFundsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MaxFundsLimit.Marshal(b, m, deterministic)
@@ -247,15 +222,12 @@ func (m *MaxFundsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *MaxFundsLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MaxFundsLimit.Merge(m, src)
 }
-
 func (m *MaxFundsLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MaxFundsLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_MaxFundsLimit.DiscardUnknown(m)
 }
@@ -278,11 +250,9 @@ func (*CombinedLimit) ProtoMessage()    {}
 func (*CombinedLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{5}
 }
-
 func (m *CombinedLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CombinedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CombinedLimit.Marshal(b, m, deterministic)
@@ -295,15 +265,12 @@ func (m *CombinedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *CombinedLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CombinedLimit.Merge(m, src)
 }
-
 func (m *CombinedLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CombinedLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_CombinedLimit.DiscardUnknown(m)
 }
@@ -313,7 +280,8 @@ var xxx_messageInfo_CombinedLimit proto.InternalMessageInfo
 // AllowAllMessagesFilter is a wildcard to allow any type of contract payload
 // message.
 // Since: wasmd 0.30
-type AllowAllMessagesFilter struct{}
+type AllowAllMessagesFilter struct {
+}
 
 func (m *AllowAllMessagesFilter) Reset()         { *m = AllowAllMessagesFilter{} }
 func (m *AllowAllMessagesFilter) String() string { return proto.CompactTextString(m) }
@@ -321,11 +289,9 @@ func (*AllowAllMessagesFilter) ProtoMessage()    {}
 func (*AllowAllMessagesFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{6}
 }
-
 func (m *AllowAllMessagesFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AllowAllMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AllowAllMessagesFilter.Marshal(b, m, deterministic)
@@ -338,15 +304,12 @@ func (m *AllowAllMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *AllowAllMessagesFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AllowAllMessagesFilter.Merge(m, src)
 }
-
 func (m *AllowAllMessagesFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AllowAllMessagesFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AllowAllMessagesFilter.DiscardUnknown(m)
 }
@@ -367,11 +330,9 @@ func (*AcceptedMessageKeysFilter) ProtoMessage()    {}
 func (*AcceptedMessageKeysFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{7}
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AcceptedMessageKeysFilter.Marshal(b, m, deterministic)
@@ -384,15 +345,12 @@ func (m *AcceptedMessageKeysFilter) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AcceptedMessageKeysFilter.Merge(m, src)
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AcceptedMessageKeysFilter.DiscardUnknown(m)
 }
@@ -413,11 +371,9 @@ func (*AcceptedMessagesFilter) ProtoMessage()    {}
 func (*AcceptedMessagesFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{8}
 }
-
 func (m *AcceptedMessagesFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AcceptedMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AcceptedMessagesFilter.Marshal(b, m, deterministic)
@@ -430,15 +386,12 @@ func (m *AcceptedMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *AcceptedMessagesFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AcceptedMessagesFilter.Merge(m, src)
 }
-
 func (m *AcceptedMessagesFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AcceptedMessagesFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AcceptedMessagesFilter.DiscardUnknown(m)
 }
@@ -834,7 +787,6 @@ func encodeVarintAuthz(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *ContractExecutionAuthorization) Size() (n int) {
 	if m == nil {
 		return 0
@@ -973,11 +925,9 @@ func (m *AcceptedMessagesFilter) Size() (n int) {
 func sovAuthz(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozAuthz(x uint64) (n int) {
 	return sovAuthz(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1062,7 +1012,6 @@ func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1147,7 +1096,6 @@ func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractGrant) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1302,7 +1250,6 @@ func (m *ContractGrant) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MaxCallsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1372,7 +1319,6 @@ func (m *MaxCallsLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MaxFundsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1457,7 +1403,6 @@ func (m *MaxFundsLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CombinedLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1561,7 +1506,6 @@ func (m *CombinedLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AllowAllMessagesFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1612,7 +1556,6 @@ func (m *AllowAllMessagesFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1695,7 +1638,6 @@ func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AcceptedMessagesFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1778,7 +1720,6 @@ func (m *AcceptedMessagesFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipAuthz(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

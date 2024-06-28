@@ -46,3 +46,5 @@ dependency-graph.png
 *.out
 *.synctex.gz
 contract_tests/*
+
+.oraid
