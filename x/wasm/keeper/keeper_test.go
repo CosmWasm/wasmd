@@ -1782,6 +1782,55 @@ func TestUnpinCode(t *testing.T) {
 	assert.Equal(t, exp, em.Events())
 }
 
+func TestSetGaslessContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	var capturedChecksums []wasmvm.Checksum
+	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksum)
+		return nil
+	}}
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+
+	em := sdk.NewEventManager()
+
+	// when
+	gotErr := k.setGasless(ctx.WithEventManager(em), example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+	assert.True(t, k.IsGasless(ctx, example.Contract))
+}
+
+func TestUnsetGaslessContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	var capturedChecksums []wasmvm.Checksum
+	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksum)
+		return nil
+	}}
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+
+	em := sdk.NewEventManager()
+
+	// when
+	gotErr := k.setGasless(ctx.WithEventManager(em), example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+
+	gotErr = k.unsetGasless(ctx.WithEventManager(em), example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+	assert.False(t, k.IsGasless(ctx, example.Contract))
+}
+
 func TestInitializePinnedCodes(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
