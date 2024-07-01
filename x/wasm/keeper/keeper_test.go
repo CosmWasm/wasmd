@@ -1819,24 +1819,17 @@ func TestSetGaslessContract(t *testing.T) {
 func TestUnsetGaslessContract(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
-
-	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
-		return nil
-	}}
+	mock := wasmtesting.MockWasmer{}
 	wasmtesting.MakeInstantiable(&mock)
 	example := SeedNewContractInstance(t, ctx, keepers, &mock)
 
-	em := sdk.NewEventManager()
-
 	// when
-	gotErr := k.setGasless(ctx.WithEventManager(em), example.Contract)
+	gotErr := k.setGasless(ctx, example.Contract)
 
 	// then
 	require.NoError(t, gotErr)
 
-	gotErr = k.unsetGasless(ctx.WithEventManager(em), example.Contract)
+	gotErr = k.unsetGasless(ctx, example.Contract)
 
 	// then
 	require.NoError(t, gotErr)
