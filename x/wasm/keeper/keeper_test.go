@@ -1783,25 +1783,39 @@ func TestUnpinCode(t *testing.T) {
 }
 
 func TestSetGaslessContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	k := keepers.WasmKeeper
 
-	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
-		return nil
+	mock := wasmtesting.MockWasmer{ExecuteFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		return &wasmvmtypes.Response{
+			Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
+		}, 0, nil
 	}}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mock))
+	k := keepers.WasmKeeper
 	wasmtesting.MakeInstantiable(&mock)
 	example := SeedNewContractInstance(t, ctx, keepers, &mock)
 
-	em := sdk.NewEventManager()
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(20_000_000))
+	_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
+	require.NoError(t, err)
+	gasConsumed := ctx.GasMeter().GasConsumed()
+	t.Logf("gas consumed %v", gasConsumed)
 
 	// when
-	gotErr := k.setGasless(ctx.WithEventManager(em), example.Contract)
+	gotErr := k.setGasless(ctx, example.Contract)
 
 	// then
 	require.NoError(t, gotErr)
 	assert.True(t, k.IsGasless(ctx, example.Contract))
+
+	gasConsumed = ctx.GasMeter().GasConsumed()
+	t.Logf("gas consumed %v", gasConsumed)
+
+	_, err = k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
+	require.NoError(t, err)
+	gasUsed := ctx.GasMeter().GasConsumed() - gasConsumed
+	// Should be 0
+	t.Logf("gas used %v", gasUsed)
 }
 
 func TestUnsetGaslessContract(t *testing.T) {
