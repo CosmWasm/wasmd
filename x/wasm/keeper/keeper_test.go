@@ -1798,8 +1798,6 @@ func TestSetGaslessContract(t *testing.T) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(20_000_000))
 	_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
 	require.NoError(t, err)
-	gasConsumed := ctx.GasMeter().GasConsumed()
-	t.Logf("gas consumed %v", gasConsumed)
 
 	// when
 	gotErr := k.setGasless(ctx, example.Contract)
@@ -1808,14 +1806,14 @@ func TestSetGaslessContract(t *testing.T) {
 	require.NoError(t, gotErr)
 	assert.True(t, k.IsGasless(ctx, example.Contract))
 
-	gasConsumed = ctx.GasMeter().GasConsumed()
+	gasConsumed := ctx.GasMeter().GasConsumed()
 	t.Logf("gas consumed %v", gasConsumed)
 
 	_, err = k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
 	require.NoError(t, err)
 	gasUsed := ctx.GasMeter().GasConsumed() - gasConsumed
 	// Should be 0
-	t.Logf("gas used %v", gasUsed)
+	assert.True(t, gasUsed == 0)
 }
 
 func TestUnsetGaslessContract(t *testing.T) {
