@@ -343,14 +343,12 @@ func (k Keeper) instantiate(
 
 // Execute executes the contract instance
 func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
-
+	gasConsumed := ctx.GasMeter().GasConsumed()
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
 	}
-
-	gasConsumed := ctx.GasMeter().GasConsumed()
 
 	executeCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
 	ctx.GasMeter().ConsumeGas(executeCosts, "Loading CosmWasm module: execute")
