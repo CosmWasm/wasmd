@@ -112,7 +112,6 @@ func parseStoreCodeArgs(file, sender string, flags *flag.FlagSet) (types.MsgStor
 	// gzip the wasm file
 	if ioutils.IsWasm(wasm) {
 		wasm, err = ioutils.GzipIt(wasm)
-
 		if err != nil {
 			return types.MsgStoreCode{}, err
 		}

@@ -105,6 +105,13 @@ type ICS4Wrapper interface {
 		timeoutTimestamp uint64,
 		data []byte,
 	) (uint64, error)
+
+	WriteAcknowledgement(
+		ctx sdk.Context,
+		chanCap *capabilitytypes.Capability,
+		packet ibcexported.PacketI,
+		acknowledgement ibcexported.Acknowledgement,
+	) error
 }
 
 // ClientKeeper defines the expected IBC client keeper
