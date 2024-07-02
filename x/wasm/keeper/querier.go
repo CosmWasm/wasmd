@@ -25,7 +25,7 @@ import (
 )
 
 // DefaultGasCostBuildAddress is the SDK gas cost to build a contract address
-const DefaultGasCostBuildAddress = 500_000
+const DefaultGasCostBuildAddress = 10
 
 var _ types.QueryServer = &GrpcQuerier{}
 
