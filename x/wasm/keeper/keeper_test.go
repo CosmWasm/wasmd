@@ -1222,6 +1222,10 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, keeper.SetAccessConfig(parentCtx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
 	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
 
+	// reflect contract does not have migrate endpoint
+	codeWithoutMigrateEndpoint := StoreReflectContract(t, parentCtx, keepers)
+	require.NotEqual(t, originalCodeID, codeWithoutMigrateEndpoint.CodeID)
+
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
 	initMsgBz := HackatomExampleInitMsg{
@@ -1247,7 +1251,7 @@ func TestMigrate(t *testing.T) {
 		expIBCPort           bool
 		initMsg              []byte
 	}{
-		"all good with same code id": {
+		"all good with same code id: msg != nil": {
 			admin:       creator,
 			caller:      creator,
 			initMsg:     initMsgBz,
@@ -1255,6 +1259,13 @@ func TestMigrate(t *testing.T) {
 			toCodeID:    originalCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
+		},
+		"all good with valid migration setup: msg == nil": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   codeWithoutMigrateEndpoint.CodeID,
 		},
 		"all good with different code id": {
 			admin:       creator,
@@ -1334,13 +1345,22 @@ func TestMigrate(t *testing.T) {
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
 			expErr:     types.ErrMigrationFailed,
 		},
-		"fail in contract without migrate msg": {
+		"prevent invalid migration setup: msg == nil": {
 			admin:      creator,
 			caller:     creator,
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
-			expErr:     types.ErrVMError,
+			expErr:     types.ErrMigrationFailed,
+		},
+		"prevent invalid migration setup: msg != nil": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   codeWithoutMigrateEndpoint.CodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
 		},
 		"fail when no IBC callbacks": {
 			admin:      fred,
@@ -1396,7 +1416,10 @@ func TestMigrate(t *testing.T) {
 			require.NoError(t, json.Unmarshal(raw, &stored))
 			require.Contains(t, stored, "verifier")
 			require.NoError(t, err)
-			assert.Equal(t, spec.expVerifier.String(), stored["verifier"])
+
+			if spec.expVerifier != nil {
+				assert.Equal(t, spec.expVerifier.String(), stored["verifier"])
+			}
 		})
 	}
 }
@@ -1577,7 +1600,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_, err := c.Migrate(ctx, example1.Contract, example1.CreatorAddr, example2.CodeID, []byte("{}"))
+	_, err := c.Migrate(ctx, example1.Contract, example1.CreatorAddr, example2.CodeID, nil)
 	require.NoError(t, err)
 
 	// when
