@@ -284,16 +284,9 @@ func (i IBCHandler) OnRecvPacket(
 		return ack
 	}
 
-	switch {
-	case ack == nil || ack.Acknowledgement() == nil:
+	if ack == nil || ack.Success() {
 		// emit all contract and submessage events on success
 		// nil ack is a success case, see: https://github.com/cosmos/ibc-go/blob/v7.0.0/modules/core/keeper/msg_server.go#L453
-		ctx.EventManager().EmitEvents(em.Events())
-		// contract wants async acknowledgement, so store the packet for later
-		i.keeper.StoreAsyncAckPacket(ctx, packet)
-		ack = nil
-	case ack.Success():
-		// emit all contract and submessage events on success
 		ctx.EventManager().EmitEvents(em.Events())
 	}
 	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)

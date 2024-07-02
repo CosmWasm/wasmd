@@ -121,15 +121,6 @@ func TestOnRecvPacket(t *testing.T) {
 			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
 			assert.Equal(t, spec.expAck, gotAck)
 			assert.Equal(t, spec.expEvents, em.Events())
-
-			// make sure packet is stored for async ack
-			asyncAckPacket, err := mock.LoadAsyncAckPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg.DestinationChannel, spec.ibcPkg.Sequence)
-			if spec.expAck == nil {
-				assert.NoError(t, err)
-				assert.Equal(t, spec.ibcPkg, asyncAckPacket)
-			} else {
-				assert.Error(t, err)
-			}
 		})
 	}
 }
