@@ -292,6 +292,9 @@ workflows:
             tags:
               only:
                 - /^v.*/
+      - tidy-go:
+          requires:
+            - setup-dependencies
       - lint:
           requires:
             - setup-dependencies
