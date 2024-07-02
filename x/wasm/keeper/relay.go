@@ -172,7 +172,9 @@ func (k Keeper) OnRecvPacket(
 	}
 
 	if data == nil {
-		// contract wants async acknowledgement, so store the packet for later
+		// Protocol might never write acknowledgement or contract
+		// wants async acknowledgements, we don't know.
+		// So store the packet for later.
 		err = k.StoreAsyncAckPacket(ctx, convertPacket(msg.Packet))
 		if err != nil {
 			return nil, err

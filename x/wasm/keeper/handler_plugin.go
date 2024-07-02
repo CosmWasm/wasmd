@@ -238,7 +238,9 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
 		}
 
-		// delete the packet from the store after acknowledgement
+		// Delete the packet from the store after acknowledgement.
+		// This ensures WriteAcknowledgement can only be used once per packet
+		// such that overriding the acknowledgement later on is not possible.
 		h.wasmKeeper.DeleteAsyncAckPacket(ctx, contractIBCPortID, contractIBCChannelID, msg.IBC.WriteAcknowledgement.PacketSequence)
 
 		resp := &types.MsgIBCWriteAcknowledgementResponse{}
