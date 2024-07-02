@@ -68,9 +68,9 @@ func GetAsyncPacketKey(destChannel string, sequence uint64) []byte {
 	// key is a concatenation of length-prefixed destination channel and sequence
 	channel := []byte(destChannel)
 	channelLen := make([]byte, 4)
-	binary.LittleEndian.PutUint32(channelLen, uint32(len(channel)))
+	binary.BigEndian.PutUint32(channelLen, uint32(len(channel)))
 	seq := make([]byte, 8)
-	binary.LittleEndian.PutUint64(seq, sequence)
+	binary.BigEndian.PutUint64(seq, sequence)
 
 	return append(append(channelLen, channel...), seq...)
 }
