@@ -124,11 +124,11 @@ type IBCContractKeeper interface {
 
 	// LoadAsyncAckPacket loads a previously stored packet. See StoreAsyncAckPacket for more details.
 	// Both the portID and channelID are the ones on the destination chain (the chain that this is executed on).
-	LoadAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) (channeltypes.Packet, error)
+	LoadAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) (channeltypes.Packet, error)
 	// StoreAsyncAckPacket stores a packet to be acknowledged later. These are packets that were
 	// received and processed by the contract, but the contract did not want to acknowledge them immediately.
 	// They are stored in the keeper until the contract calls "WriteAcknowledgement" to acknowledge them.
 	StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Packet) error
 	// DeleteAsyncAckPacket deletes a previously stored packet. See StoreAsyncAckPacket for more details.
-	DeleteAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64)
+	DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64)
 }

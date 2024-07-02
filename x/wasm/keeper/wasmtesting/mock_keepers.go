@@ -156,7 +156,7 @@ func (m *IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.A
 	return m.OnRecvPacketFn(ctx, contractAddr, msg)
 }
 
-func (m *IBCContractKeeperMock) LoadAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) (channeltypes.Packet, error) {
+func (m *IBCContractKeeperMock) LoadAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) (channeltypes.Packet, error) {
 	if m.packets == nil {
 		m.packets = make(map[string]channeltypes.Packet)
 	}
@@ -177,7 +177,7 @@ func (m *IBCContractKeeperMock) StoreAsyncAckPacket(ctx context.Context, packet 
 	return nil
 }
 
-func (m *IBCContractKeeperMock) DeleteAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) {
+func (m *IBCContractKeeperMock) DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) {
 	key := portID + fmt.Sprint(len(channelID)) + channelID
 	delete(m.packets, key)
 }

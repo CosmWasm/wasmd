@@ -865,7 +865,7 @@ func (k Keeper) contractInstance(ctx context.Context, contractAddress sdk.AccAdd
 	return contractInfo, codeInfo, types.NewStoreAdapter(prefixStore), nil
 }
 
-func (k Keeper) LoadAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) (channeltypes.Packet, error) {
+func (k Keeper) LoadAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) (channeltypes.Packet, error) {
 	prefixStore, key := k.getAsyncAckStoreAndKey(ctx, portID, channelID, sequence)
 
 	packetBz := prefixStore.Get(key)
@@ -894,12 +894,12 @@ func (k Keeper) StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Pac
 	return nil
 }
 
-func (k Keeper) DeleteAsyncAckPacket(ctx context.Context, portID string, channelID string, sequence uint64) {
+func (k Keeper) DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) {
 	prefixStore, key := k.getAsyncAckStoreAndKey(ctx, portID, channelID, sequence)
 	prefixStore.Delete(key)
 }
 
-func (k Keeper) getAsyncAckStoreAndKey(ctx context.Context, portID string, channelID string, sequence uint64) (prefix.Store, []byte) {
+func (k Keeper) getAsyncAckStoreAndKey(ctx context.Context, portID, channelID string, sequence uint64) (prefix.Store, []byte) {
 	// packets are stored under the destination port
 	prefixStoreKey := types.GetAsyncAckStorePrefix(portID)
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), prefixStoreKey)
