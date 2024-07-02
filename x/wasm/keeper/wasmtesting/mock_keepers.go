@@ -69,7 +69,8 @@ func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string
 var _ types.ICS4Wrapper = &MockICS4Wrapper{}
 
 type MockICS4Wrapper struct {
-	SendPacketFn func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
+	SendPacketFn           func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
+	WriteAcknowledgementFn func(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
 }
 
 func (m *MockICS4Wrapper) SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
@@ -85,8 +86,10 @@ func (m *MockICS4Wrapper) WriteAcknowledgement(
 	packet ibcexported.PacketI,
 	acknowledgement ibcexported.Acknowledgement,
 ) error {
-	// TODO: implement mocking
-	panic("not supposed to be called!")
+	if m.WriteAcknowledgementFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.WriteAcknowledgementFn(ctx, chanCap, packet, acknowledgement)
 }
 
 func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
