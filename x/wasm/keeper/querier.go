@@ -25,7 +25,7 @@ import (
 )
 
 // DefaultGasCostBuildAddress is the SDK gas cost to build a contract address
-const DefaultGasCostBuildAddress = 5
+const DefaultGasCostBuildAddress = 500_000
 
 var _ types.QueryServer = &GrpcQuerier{}
 
@@ -433,8 +433,7 @@ func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddres
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	costBuildAddress := DefaultGasCostBuildAddress * types.DefaultGasMultiplier
-	defer ctx.GasMeter().ConsumeGas(costBuildAddress, "build address")
+	defer ctx.GasMeter().ConsumeGas(DefaultGasCostBuildAddress, "build address")
 
 	if req.InitArgs == nil {
 		return &types.QueryBuildAddressResponse{
