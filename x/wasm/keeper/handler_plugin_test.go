@@ -294,7 +294,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		DestinationChannel: "channel-1",
 		Data:               []byte{},
 		TimeoutHeight:      clienttypes.Height{},
-		TimeoutTimestamp:   0,
+		TimeoutTimestamp:   1720000000000000000,
 	}
 	contractKeeper.StoreAsyncAckPacket(ctx, ackPacket)
 
@@ -384,7 +384,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			assert.Nil(t, evts)
 			require.NotNil(t, data)
 			assert.Len(t, msgResponses, 1)
-			// assert.Equal(t, "/cosmwasm.wasm.v1.MsgIBCSendResponse", msgResponses[0][0].TypeUrl)
+			assert.Equal(t, "/"+proto.MessageName(spec.expResp), msgResponses[0][0].TypeUrl)
 
 			// compare expected responses
 			expResp, err := proto.Marshal(spec.expResp)
