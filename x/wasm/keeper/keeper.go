@@ -468,7 +468,8 @@ func (k Keeper) migrate(
 	}
 
 	// check for IBC flag
-	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
+	report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash)
+	switch {
 	case err != nil:
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
@@ -481,6 +482,30 @@ func (k Keeper) migrate(
 			return nil, err
 		}
 		contractInfo.IBCPortID = ibcPort
+	}
+
+	// check for migrate version
+	oldCodeInfo := k.GetCodeInfo(ctx, contractInfo.CodeID)
+	oldReport, err := k.wasmVM.AnalyzeCode(oldCodeInfo.CodeHash)
+	if err != nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
+	}
+	if oldReport.ContractMigrateVersion != nil && report.ContractMigrateVersion != nil {
+		// if both are set, we only migrate if the new version is higher
+		switch {
+		case *report.ContractMigrateVersion < *oldReport.ContractMigrateVersion:
+			// we do not allow downgrades
+			return nil, errorsmod.Wrapf(
+				types.ErrMigrationFailed,
+				"new migrate version %d is lower than current version %d",
+				*report.ContractMigrateVersion,
+				*oldReport.ContractMigrateVersion,
+			)
+		case *report.ContractMigrateVersion == *oldReport.ContractMigrateVersion:
+			// migration is a no-op if the versions are the same
+			return []byte{}, nil
+		}
+		// in the future, we will call the new entrypoint variant here
 	}
 
 	env := types.NewEnv(sdkCtx, contractAddress)
