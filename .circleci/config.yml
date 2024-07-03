@@ -67,7 +67,7 @@ jobs:
       - checkout
       - run:
           name: Check go mod tidy
-          # Use --check or --exit-code when available (Go 1.22?)
+          # Use --diff when available (Go 1.23)
           # https://github.com/golang/go/issues/27005
           command: |
             go mod tidy
