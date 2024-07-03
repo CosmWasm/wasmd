@@ -62,27 +62,25 @@ func (p *WasmVMMetricsCollector) Describe(descs chan<- *prometheus.Desc) {
 // Collect is called by the Prometheus registry when collecting metrics.
 func (p *WasmVMMetricsCollector) Collect(c chan<- prometheus.Metric) {
 	m, err := p.source.GetMetrics()
-	if err != nil {
-		return
+	if err == nil {
+		c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsPinnedMemoryCache), labelPinned)
+		c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsMemoryCache), labelMemory)
+		c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsFsCache), labelFs)
+		c <- prometheus.MustNewConstMetric(p.CacheMissesDescr, prometheus.CounterValue, float64(m.Misses))
+		c <- prometheus.MustNewConstMetric(p.CacheElementsDescr, prometheus.GaugeValue, float64(m.ElementsPinnedMemoryCache), labelPinned)
+		c <- prometheus.MustNewConstMetric(p.CacheElementsDescr, prometheus.GaugeValue, float64(m.ElementsMemoryCache), labelMemory)
+		c <- prometheus.MustNewConstMetric(p.CacheSizeDescr, prometheus.GaugeValue, float64(m.SizeMemoryCache), labelMemory)
+		c <- prometheus.MustNewConstMetric(p.CacheSizeDescr, prometheus.GaugeValue, float64(m.SizePinnedMemoryCache), labelPinned)
 	}
-	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsPinnedMemoryCache), labelPinned)
-	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsMemoryCache), labelMemory)
-	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsFsCache), labelFs)
-	c <- prometheus.MustNewConstMetric(p.CacheMissesDescr, prometheus.CounterValue, float64(m.Misses))
-	c <- prometheus.MustNewConstMetric(p.CacheElementsDescr, prometheus.GaugeValue, float64(m.ElementsPinnedMemoryCache), labelPinned)
-	c <- prometheus.MustNewConstMetric(p.CacheElementsDescr, prometheus.GaugeValue, float64(m.ElementsMemoryCache), labelMemory)
-	c <- prometheus.MustNewConstMetric(p.CacheSizeDescr, prometheus.GaugeValue, float64(m.SizeMemoryCache), labelMemory)
-	c <- prometheus.MustNewConstMetric(p.CacheSizeDescr, prometheus.GaugeValue, float64(m.SizePinnedMemoryCache), labelPinned)
 
 	pm, err := p.source.GetPinnedMetrics()
-	if err != nil {
-		return
+	if err == nil {
+		for _, mod := range pm.PerModule {
+			c <- prometheus.MustNewConstMetric(p.PinnedHitsDescr, prometheus.CounterValue, float64(mod.Metrics.Hits), mod.Checksum.String())
+			c <- prometheus.MustNewConstMetric(p.PinnedSizeDescr, prometheus.GaugeValue, float64(mod.Metrics.Size), mod.Checksum.String())
+		}
 	}
 
-	for _, mod := range pm.PerModule {
-		c <- prometheus.MustNewConstMetric(p.PinnedHitsDescr, prometheus.CounterValue, float64(mod.Metrics.Hits), mod.Checksum.String())
-		c <- prometheus.MustNewConstMetric(p.PinnedSizeDescr, prometheus.GaugeValue, float64(mod.Metrics.Size), mod.Checksum.String())
-	}
 	// Node about fs metrics:
 	// The number of elements and the size of elements in the file system cache cannot easily be obtained.
 	// We had to either scan the whole directory of potentially thousands of files or track the values when files are added or removed.
