@@ -559,6 +559,8 @@ func (k Keeper) migrate(
 	))
 
 	var data []byte
+
+	// if migrate entry point was called
 	if response != nil {
 		sdkCtx = types.WithSubMsgAuthzPolicy(sdkCtx, authZ.SubMessageAuthorizationPolicy(types.AuthZActionMigrateContract))
 		data, err = k.handleContractResponse(
