@@ -21,7 +21,8 @@ import (
 )
 
 // DefaultMaxIBCCallbackGas is the default value of maximum gas that an IBC callback can use.
-// If the callback uses more gas, it will be out of gas and will not be reverted.
+// If the callback uses more gas, it will be out of gas and the contract state changes will be reverted,
+// but the transaction will be committed.
 // Pass this to the callbacks middleware or choose a custom value.
 const DefaultMaxIBCCallbackGas = uint64(1_000_000)
 
