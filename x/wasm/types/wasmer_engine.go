@@ -246,6 +246,9 @@ type WasmEngine interface {
 
 	// GetMetrics some internal metrics for monitoring purposes.
 	GetMetrics() (*wasmvmtypes.Metrics, error)
+
+	// GetPinnedMetrics some internal metrics about pinned contracts for monitoring purposes.
+	GetPinnedMetrics() (*wasmvmtypes.PinnedMetrics, error)
 }
 
 var _ wasmvm.KVStore = &StoreAdapter{}
