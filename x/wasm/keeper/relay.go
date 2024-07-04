@@ -270,6 +270,74 @@ func (k Keeper) OnTimeoutPacket(
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
+// IBCSourceCallback calls the contract to let it know the packet triggered by its
+// IBC-callbacks-enabled message either timed out or was acknowledged.
+func (k Keeper) IBCSourceCallback(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	msg wasmvmtypes.IBCSourceCallbackMsg,
+) error {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-source-chain-callback")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	env := types.NewEnv(ctx, contractAddr)
+	querier := k.newQueryHandler(ctx, contractAddr)
+
+	gasLeft := k.runtimeGasForContract(ctx)
+	res, gasUsed, execErr := k.wasmVM.IBCSourceCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasUsed)
+	if execErr != nil {
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+}
+
+// IBCDestinationCallback calls the contract to let it know that it received a packet of an
+// IBC-callbacks-enabled message that was acknowledged.
+func (k Keeper) IBCDestinationCallback(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	msg wasmvmtypes.IBCDestinationCallbackMsg,
+) error {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-destination-chain-callback")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	env := types.NewEnv(ctx, contractAddr)
+	querier := k.newQueryHandler(ctx, contractAddr)
+
+	gasLeft := k.runtimeGasForContract(ctx)
+	res, gasUsed, execErr := k.wasmVM.IBCDestinationCallback(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasUsed)
+	if execErr != nil {
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+}
+
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {
 	_, err := k.handleContractResponse(ctx, addr, id, res.Messages, res.Attributes, nil, res.Events)
 	return err
