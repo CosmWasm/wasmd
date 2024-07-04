@@ -447,8 +447,6 @@ func (k Keeper) migrate(
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	setupCost := k.gasRegister.SetupContractCost(k.IsPinnedCode(sdkCtx, newCodeID), len(msg))
-	// setupCost is only charged if we call the contract
 
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -497,7 +495,7 @@ func (k Keeper) migrate(
 	if report.ContractMigrateVersion == nil ||
 		oldReport.ContractMigrateVersion == nil ||
 		*report.ContractMigrateVersion != *oldReport.ContractMigrateVersion {
-		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, setupCost)
+		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, newCodeID)
 		if err != nil {
 			return nil, err
 		}
@@ -554,8 +552,9 @@ func (k Keeper) callMigrateEntrypoint(
 	contractAddress sdk.AccAddress,
 	newChecksum wasmvmtypes.Checksum,
 	msg []byte,
-	setupCost uint64,
+	newCodeID uint64,
 ) (*wasmvmtypes.Response, error) {
+	setupCost := k.gasRegister.SetupContractCost(k.IsPinnedCode(sdkCtx, newCodeID), len(msg))
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: migrate")
 
 	env := types.NewEnv(sdkCtx, contractAddress)
