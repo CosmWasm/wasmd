@@ -1222,6 +1222,10 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, keeper.SetAccessConfig(parentCtx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
 	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
 
+	// store hackatom contracts with "migrate_version" attributes
+	hackatom42 := StoreExampleContract(t, parentCtx, keepers, "./testdata/hackatom_42.wasm")
+	hackatom420 := StoreExampleContract(t, parentCtx, keepers, "./testdata/hackatom_420.wasm")
+
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
 	initMsgBz := HackatomExampleInitMsg{
@@ -1348,6 +1352,51 @@ func TestMigrate(t *testing.T) {
 			initMsg:    IBCReflectInitMsg{ReflectCodeID: StoreReflectContract(t, parentCtx, keepers).CodeID}.GetBytes(t),
 			fromCodeID: ibcCodeID,
 			toCodeID:   newCodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
+		},
+		"all good with migrate versions": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    hackatom420.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
+		},
+		"all good with no migrate version to migrate version contract": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
+		},
+		"all good with same migrate version": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: fred, // not updated
+		},
+		"fail when migrate version contract to no migrate version contract": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: hackatom42.CodeID,
+			toCodeID:   originalCodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
+		},
+		"prevent migration to older migrate version": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: hackatom420.CodeID,
+			toCodeID:   hackatom42.CodeID,
 			migrateMsg: migMsgBz,
 			expErr:     types.ErrMigrationFailed,
 		},
