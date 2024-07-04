@@ -492,29 +492,43 @@ func (k Keeper) migrate(
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
 	}
-	if oldReport.ContractMigrateVersion != nil && report.ContractMigrateVersion != nil {
+
+	switch {
+	case report.ContractMigrateVersion != nil && oldReport.ContractMigrateVersion != nil:
 		// if both are set, we only migrate if the new version is higher
 		switch {
 		case *report.ContractMigrateVersion < *oldReport.ContractMigrateVersion:
-			// we do not allow downgrades
+			// prevent downgrades
 			return nil, errorsmod.Wrapf(
 				types.ErrMigrationFailed,
 				"new migrate version %d is lower than current version %d",
 				*report.ContractMigrateVersion,
 				*oldReport.ContractMigrateVersion,
 			)
-		// case *report.ContractMigrateVersion == *oldReport.ContractMigrateVersion:
-		// no need to call the migrate entrypoint if the versions are the same
-
 		case *report.ContractMigrateVersion > *oldReport.ContractMigrateVersion:
-			// in the future, we will call the new entrypoint variant in this case
+			// in the future, we will provide MigrateInfo to the contract in this case
 			response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, setupCost)
 			if err != nil {
 				return nil, err
 			}
 		}
-	} else {
-		// we need to call the migrate entrypoint in this case
+		// no need to call the migrate entrypoint if the versions are the same
+	case report.ContractMigrateVersion != nil:
+		// migrating from contract without migrate version to one with migrate version
+		// in the future, we will provide MigrateInfo to the contract in this case
+		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, setupCost)
+		if err != nil {
+			return nil, err
+		}
+	case oldReport.ContractMigrateVersion != nil:
+		// prevent migrating from contract with migrate version to one without migrate version
+		return nil, errorsmod.Wrapf(
+			types.ErrMigrationFailed,
+			"cannot migrate from contract with migrate version %d to contract without migrate version",
+			*oldReport.ContractMigrateVersion,
+		)
+	default:
+		// we need to call the normal migrate entrypoint in this case
 		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, setupCost)
 		if err != nil {
 			return nil, err
