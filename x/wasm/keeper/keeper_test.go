@@ -1382,23 +1382,23 @@ func TestMigrate(t *testing.T) {
 			migrateMsg:  migMsgBz,
 			expVerifier: fred, // not updated
 		},
-		"fail when migrate version contract to no migrate version contract": {
-			admin:      creator,
-			caller:     creator,
-			initMsg:    initMsgBz,
-			fromCodeID: hackatom42.CodeID,
-			toCodeID:   originalCodeID,
-			migrateMsg: migMsgBz,
-			expErr:     types.ErrMigrationFailed,
+		"all good with migrate version contract to no migrate version contract": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    originalCodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
 		},
-		"prevent migration to older migrate version": {
-			admin:      creator,
-			caller:     creator,
-			initMsg:    initMsgBz,
-			fromCodeID: hackatom420.CodeID,
-			toCodeID:   hackatom42.CodeID,
-			migrateMsg: migMsgBz,
-			expErr:     types.ErrMigrationFailed,
+		"all good with migration to older migrate version": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom420.CodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
 		},
 	}
 
