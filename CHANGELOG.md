@@ -2,7 +2,29 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.52.0...HEAD)
+
+## [v0.52.0](https://github.com/CosmWasm/wasmd/tree/v0.52.0) (2024-07-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...v0.52.0)
+
+- Update wasmvm to 2.1 release [#1927](https://github.com/CosmWasm/wasmd/pull/1927)
+- Validate number of addresses in msg [#1926](https://github.com/CosmWasm/wasmd/pull/1926)
+- Add `cosmwasm_2_1` capability [#1925](https://github.com/CosmWasm/wasmd/pull/1925)
+- Migrate Version checks [#1924](https://github.com/CosmWasm/wasmd/pull/1924)
+- Pinned Metrics [#1922](https://github.com/CosmWasm/wasmd/pull/1922)
+- Mark wasm queries with module_query_safe [#1915](https://github.com/CosmWasm/wasmd/pull/1915)
+- Add codespace to error acknowledgement [#1911](https://github.com/CosmWasm/wasmd/pull/1911)
+- Upgrade cosmos-sdk to v0.50.7 [#1905](https://github.com/CosmWasm/wasmd/pull/1905)
+- Mark QuerySmart contract error as deterministic [#1904](https://github.com/CosmWasm/wasmd/pull/1904)
+- Async Ack [#1876](https://github.com/CosmWasm/wasmd/pull/1876)
+- IBC Callbacks [#1817](https://github.com/CosmWasm/wasmd/pull/1817)
+
+### Notable changes:
+- Upgrade to [CosmWasm 2.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.1.0)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 # [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-22)
 
@@ -50,7 +72,7 @@
 - Upgrade to [IBC v8.0.0](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) release
 
 ### Migration notes:
-- This release includes state migrations! Please pay careful attention to the doc provided by the [SDK](https://github.com/cosmos/cosmos-sdk/blob/v0.50.1/UPGRADING.md#v050x) team 
+- This release includes state migrations! Please pay careful attention to the doc provided by the [SDK](https://github.com/cosmos/cosmos-sdk/blob/v0.50.1/UPGRADING.md#v050x) team
   and the [IBC](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) team with their releases
 - We have some example upgrade code in the `app/upgrade/v0.50` dir, assuming that you come from a wasmd v0.4x version.
 - We also tested a chain upgrade with wasmd v0.33 to v0.50 directly with a fix to [app.go](https://github.com/CosmWasm/wasmd/blame/b02a4723618629b5bb9603d8298621f6ef449f92/app/app.go#L927)
@@ -226,23 +248,23 @@ below to learn more!
 - If you are not coming from v0.32.0, please see the "Notables changes" below, first. Especially about CometBFT.
 - IBC-Go is a new major version including the "hucklebery" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
 - SDK 47 support is a big step from the SDK 45 version supported before. Make sure to read the upgrade guide for the SDK
-  before applying any changes. Links below. 
-- Some advice from working with SDK 47 that may affect you, too:    
-  - The SDK version includes some key store migration for the CLI. Make sure you backup your private keys before 
+  before applying any changes. Links below.
+- Some advice from working with SDK 47 that may affect you, too:
+  - The SDK version includes some key store migration for the CLI. Make sure you backup your private keys before
     testing this! You can not switch back to v0.45 afaik
-  - Take care that you use the goleveldb version used in the SDK. A transitive dependency may change it which caused 
+  - Take care that you use the goleveldb version used in the SDK. A transitive dependency may change it which caused
     failing queries on a running server: `Error: rpc error: code = InvalidArgument desc = failed to load state at height 1; version does not exist (latest height: 1): invalid request`
     Ensure this in go.mod:
     `github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7`
   - With custom modules, use the new proto-builder version (Makefile) to let proto types register with the correct registry
-  - Ensure that all `ParameterChangeProposal` are completed before the upgrade or migrate them to `v1.gov`. SDK and wasm 
+  - Ensure that all `ParameterChangeProposal` are completed before the upgrade or migrate them to `v1.gov`. SDK and wasm
     modules execute a migration before so that these proposals would not have an affect.
   - Attribute keys/ values in events are strings and not bytes in CometBFT. This may break clients
   - CLI: `add-genesis-account`, `gentx,add-genesis-account`, `collect-gentxs` and others are now under genesis command as parent
   - CLI: `--broadcast-mode block` was removed. You need to query the result for a TX with `wasmd q tx <hash>` instead
 
 ### Migration notes:
-- This release contains a [state migration](./x/wasm/migrations/v2) for the wasmd module that stores 
+- This release contains a [state migration](./x/wasm/migrations/v2) for the wasmd module that stores
   the params in the module store.
 - SDK v0.47 comes with a lot of api/state braking changes to previous versions. Please see their [upgrade guide](https://github.com/cosmos/cosmos-sdk/blob/main/UPGRADING.md#v047x)
   which contains a lot of helpful details.
@@ -273,14 +295,14 @@ below to learn more!
 - New behaviour for Contracts returning errors on IBC packet receive.
   - Let contract fully abort IBC receive in certain case [\#1220](https://github.com/CosmWasm/wasmd/issues/1220)
   - Return non redacted error content on IBC packet recv [\#1289](https://github.com/CosmWasm/wasmd/issues/1289)
-  - Wasm and submessage events follow SDK transaction behaviour. Not persisted on state rollback  
+  - Wasm and submessage events follow SDK transaction behaviour. Not persisted on state rollback
   - Full error message is stored in event [\#1288](https://github.com/CosmWasm/wasmd/issues/1288)
-  - See updates in cosmwasm [doc](https://github.com/CosmWasm/cosmwasm/pull/1646/files?short_path=f9839d7#diff-f9839d73197185aaec052064f43a324bd9309413f3ad36183c3247580b1b6669) for more details.  
-- The SDK v0.45.15 replaces Tendermint with CometBFT. This requires a `replace` statement in `go.mod`. 
+  - See updates in cosmwasm [doc](https://github.com/CosmWasm/cosmwasm/pull/1646/files?short_path=f9839d7#diff-f9839d73197185aaec052064f43a324bd9309413f3ad36183c3247580b1b6669) for more details.
+- The SDK v0.45.15 replaces Tendermint with CometBFT. This requires a `replace` statement in `go.mod`.
   Please read their [release notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.15) carefully for details
 - The SDK v0.45.x line reached its end-of-life.
-- CometBFT includes some [breaking changes](https://github.com/cometbft/cometbft/blob/v0.34.27/CHANGELOG.md#breaking-changes) 
- 
+- CometBFT includes some [breaking changes](https://github.com/cometbft/cometbft/blob/v0.34.27/CHANGELOG.md#breaking-changes)
+
 ### Migration notes:
 - This release does not include any state migrations but breaking changes that require a coordinated chain upgrade
 
@@ -335,7 +357,7 @@ below to learn more!
 
 ### Notable changes:
 - IBC fee middleware is setup in `app.go`. Please note that it can be enabled with new channels only. A nice read is this [article](https://medium.com/the-interchain-foundation/ibc-relaying-as-a-service-the-in-protocol-incentivization-story-2c008861a957).
-- Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command  
+- Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command
 - Go v1.19 required to prevent a mixed chain setup with older versions. Just to be on the safe side.
 - Store code proposal types have new metadata fields added that can help to build client side tooling to verify the wasm contract in the proposal
 
@@ -356,7 +378,7 @@ below to learn more!
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 - Add dependencies for protobuf and remove third_party forlder [/#1030](https://github.com/CosmWasm/wasmd/pull/1030)
-- Check wasmvm version on startup [\#1029](https://github.com/CosmWasm/wasmd/pull/1029/) 
+- Check wasmvm version on startup [\#1029](https://github.com/CosmWasm/wasmd/pull/1029/)
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
 - Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
@@ -379,7 +401,7 @@ below to learn more!
 - A new [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/pull/1014/files#diff-bf58b9da4b674719f07dd5421c532c1ead13a15f8896b59c1f724215d2064b73R75) was introduced which is an additional value for `message` type events
 - Store event contains a new attribute with the code checksum now
 - New `wasmd tx wasm instantiate2` CLI command for predictable addresses on instantiation
-- New `cosmwasm_1_1` CosmWasm capability (former "feature") was introduced in [cosmwasm/#1356](https://github.com/CosmWasm/cosmwasm/pull/1356) to support total supply queries 
+- New `cosmwasm_1_1` CosmWasm capability (former "feature") was introduced in [cosmwasm/#1356](https://github.com/CosmWasm/cosmwasm/pull/1356) to support total supply queries
 - Protobuf files are published to [buf.build](https://buf.build/cosmwasm/wasmd/docs/main:cosmwasm.wasm.v1)
 
 ### Migration notes:
@@ -591,13 +613,13 @@ Yes
 - Renamed InitMsg and MigrateMsg fields to Msg. This applies to protobuf Msg
   and Proposals, as well as REST and CLI [\#563](https://github.com/CosmWasm/wasmd/pull/563)
 - Removed source and builder fields from StoreCode and CodeInfo. They were rarely used.
-  [\#564](https://github.com/CosmWasm/wasmd/pull/564)  
+  [\#564](https://github.com/CosmWasm/wasmd/pull/564)
 - Changed contract address derivation function. If you hardcoded the first contract
   addresses anywhere (in scripts?), please update them.
   [\#565](https://github.com/CosmWasm/wasmd/pull/565)
 
 **Implemented Enhancements:**
-- Cosmos SDK 0.42.9, wasmvm 0.16.0 [\#582](https://github.com/CosmWasm/wasmd/pull/582) 
+- Cosmos SDK 0.42.9, wasmvm 0.16.0 [\#582](https://github.com/CosmWasm/wasmd/pull/582)
 - Better ibc contract interface [\#570](https://github.com/CosmWasm/wasmd/pull/570) ([ethanfrey](https://github.com/ethanfrey))
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
 - IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
