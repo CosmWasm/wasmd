@@ -2,7 +2,29 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.52.0...HEAD)
+
+## [v0.52.0](https://github.com/CosmWasm/wasmd/tree/v0.52.0) (2024-07-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.51.0...v0.52.0)
+
+- Update wasmvm to 2.1 release [#1927](https://github.com/CosmWasm/wasmd/pull/1927)
+- Validate number of addresses in msg [#1926](https://github.com/CosmWasm/wasmd/pull/1926)
+- Add `cosmwasm_2_1` capability [#1925](https://github.com/CosmWasm/wasmd/pull/1925)
+- Migrate Version checks [#1924](https://github.com/CosmWasm/wasmd/pull/1924)
+- Pinned Metrics [#1922](https://github.com/CosmWasm/wasmd/pull/1922)
+- Mark wasm queries with module_query_safe [#1915](https://github.com/CosmWasm/wasmd/pull/1915)
+- Add codespace to error acknowledgement [#1911](https://github.com/CosmWasm/wasmd/pull/1911)
+- Upgrade cosmos-sdk to v0.50.7 [#1905](https://github.com/CosmWasm/wasmd/pull/1905)
+- Mark QuerySmart contract error as deterministic [#1904](https://github.com/CosmWasm/wasmd/pull/1904)
+- Async Ack [#1876](https://github.com/CosmWasm/wasmd/pull/1876)
+- IBC Callbacks [#1817](https://github.com/CosmWasm/wasmd/pull/1817)
+
+### Notable changes:
+- Upgrade to [CosmWasm 2.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.0.0)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 # [v0.51.0](https://github.com/CosmWasm/wasmd/tree/v0.51.0) (2024-04-22)
 
