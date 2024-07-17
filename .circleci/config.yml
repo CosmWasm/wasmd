@@ -262,7 +262,7 @@ jobs:
           name: gzip
           command: tar -zcvf ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz -C ${BUILD_DIR} wasmd
       - gh/setup:
-          token: GITHUB_CREDS
+          token: WASMD_GITHUB_RELEASES_TOKEN
       - run:
           name: Create release
           command: |
