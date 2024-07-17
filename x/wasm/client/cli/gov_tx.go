@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -190,8 +191,10 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 }
 
 func ProposalInstantiateContract2Cmd() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] --authority [address] --label [text] --title [text] --summary [text]  --admin [address,optional] --amount [coins,optional]",
+		Use: "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] [salt] --authority [address] --label [text] --title [text] " +
+			"--summary [text] --admin [address,optional] --amount [coins,optional] --fix-msg [bool,optional]",
 		Short: "Submit an instantiate wasm contract proposal with predictable address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -199,7 +202,14 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
+			salt, err := decoder.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
+			if err != nil {
+				return fmt.Errorf("fix msg: %w", err)
+			}
 			authority, err := cmd.Flags().GetString(flagAuthority)
 			if err != nil {
 				return fmt.Errorf("authority: %s", err)
@@ -209,10 +219,19 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			// Why is this an MsgInstantiateContract and not MsgInstantiateContract2?
-			instantiateMsg, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
+			data, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
 			if err != nil {
 				return err
+			}
+			instantiateMsg := &types.MsgInstantiateContract2{
+				Sender: data.Sender,
+				Admin:  data.Admin,
+				CodeID: data.CodeID,
+				Label:  data.Label,
+				Msg:    data.Msg,
+				Funds:  data.Funds,
+				Salt:   salt,
+				FixMsg: fixMsg,
 			}
 
 			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{instantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
@@ -229,6 +248,8 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 
 	// proposal flags
 	addCommonProposalFlags(cmd)
