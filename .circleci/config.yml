@@ -253,8 +253,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: Fetch static artifact
-          command: docker create --name wasmd_temp "cosmwasm/wasmd:${CIRCLE_TAG}"; docker cp wasmd_temp:/usr/bin/wasmd ${BUILD_DIR};  docker rm -f wasmd_temp
+          name: Copy wasmd binary from Docker image
+          command: |
+            docker create --name wasmd_temp "cosmwasm/wasmd:${CIRCLE_TAG}"
+            docker cp wasmd_temp:/usr/bin/wasmd ${BUILD_DIR}
+            docker rm -f wasmd_temp
       - run:
           name: gzip
           command: tar -zcvf ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz -C ${BUILD_DIR} wasmd
