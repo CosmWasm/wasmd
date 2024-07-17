@@ -254,9 +254,7 @@ jobs:
             gh release create ${CIRCLE_TAG} \
             --title "$CIRCLE_TAG" \
             --draft \
-            --notes "# Wasmd ${CIRCLE_TAG} Release
-            See the [CHANGELOG](https://github.com/CosmWasm/wasmd/blob/${CIRCLE_TAG}/CHANGELOG.md) for details on the changes in this version.
-            "
+            --notes "See the [CHANGELOG](https://github.com/CosmWasm/wasmd/blob/${CIRCLE_TAG}/CHANGELOG.md) for details on the changes in this version."
 
 workflows:
   test-suite:
