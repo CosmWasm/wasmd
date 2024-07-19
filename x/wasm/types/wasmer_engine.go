@@ -7,8 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// DefaultMaxQueryStackSize maximum size of the stack of contract instances doing queries
+// DefaultMaxQueryStackSize maximum size of the stack of recursive queries a contract can make
 const DefaultMaxQueryStackSize uint32 = 10
+
+const DefaultMaxCallDepth uint32 = 500
 
 // WasmEngine defines the WASM contract runtime engine.
 type WasmEngine interface {
