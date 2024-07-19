@@ -50,7 +50,6 @@ service Query {
   // SmartContractState get smart query result from the contract
   rpc SmartContractState(QuerySmartContractStateRequest)
       returns (QuerySmartContractStateResponse) {
-    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}";
   }

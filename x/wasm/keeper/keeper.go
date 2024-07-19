@@ -99,6 +99,7 @@ type Keeper struct {
 	queryGasLimit        uint64
 	gasRegister          types.GasRegister
 	maxQueryStackSize    uint32
+	maxCallDepth         uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
 	params               collections.Item[types.Params]
@@ -821,6 +822,7 @@ func (k Keeper) mustGetLastContractHistoryEntry(ctx context.Context, contractAdd
 // QuerySmart queries the smart contract itself.
 func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
+
 	// checks and increase query stack size
 	sdkCtx, err := checkAndIncreaseQueryStackSize(sdk.UnwrapSDKContext(ctx), k.maxQueryStackSize)
 	if err != nil {
@@ -866,6 +868,24 @@ func checkAndIncreaseQueryStackSize(ctx context.Context, maxQueryStackSize uint3
 
 	// set updated stack size
 	return types.WithQueryStackSize(sdk.UnwrapSDKContext(ctx), queryStackSize), nil
+}
+
+func checkAndIncreaseCallDepth(ctx context.Context, maxCallDepth uint32) (sdk.Context, error) {
+	var callDepth uint32 = 0
+	if size, ok := types.CallDepth(ctx); ok {
+		callDepth = size
+	}
+
+	// increase
+	callDepth++
+
+	// did we go too far?
+	if callDepth > maxCallDepth {
+		return sdk.Context{}, types.ErrExceedMaxCallDepth
+	}
+
+	// set updated stack size
+	return types.WithCallDepth(sdk.UnwrapSDKContext(ctx), callDepth), nil
 }
 
 // QueryRaw returns the contract's state for give key. Returns `nil` when key is `nil`.
