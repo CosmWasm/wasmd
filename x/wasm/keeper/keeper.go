@@ -389,7 +389,11 @@ func (k Keeper) instantiate(
 func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	gasConsumed := sdkCtx.GasMeter().GasConsumed()
+	isGasLess := k.IsGasless(sdkCtx, contractAddress)
+	// infinite gas meter
+	if isGasLess {
+		sdkCtx = sdkCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+	}
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
@@ -432,11 +436,6 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
-	}
-
-	// refund gas if gasless
-	if k.IsGasless(sdkCtx, contractAddress) {
-		sdkCtx.GasMeter().RefundGas(sdkCtx.GasMeter().GasConsumed()-gasConsumed, "Gasless Contract")
 	}
 
 	return data, nil
