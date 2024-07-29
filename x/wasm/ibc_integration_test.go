@@ -1,7 +1,9 @@
 package wasm_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
@@ -171,12 +173,16 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			expAck:     []byte(`{"error":"invalid packet: Generic error: my error"}`),
 		},
 		"with returned msg fails": {
+			// ErrInvalidAddress (https://github.com/cosmos/cosmos-sdk/blob/v0.50.7/types/errors/errors.go#L28-L29)
 			packetData: []byte(`{"return_msgs": {"msgs": [{"bank":{"send":{"to_address": "invalid-address", "amount": [{"denom": "ALX", "amount": "1"}]}}}]}}`),
-			expAck:     []byte(`{"error":"ABCI code: 7: error handling packet: see events for details"}`),
+			expAck:     []byte(`{"error":"ABCI error: sdk/7: error handling packet: see events for details"}`),
 		},
 		"with contract panic": {
 			packetData:          []byte(`{"panic":{}}`),
 			expPacketNotHandled: true,
+		},
+		"without ack": {
+			packetData: []byte(`{"no_ack":{}}`),
 		},
 	}
 	for name, spec := range specs {
@@ -230,19 +236,107 @@ func TestOnIBCPacketReceive(t *testing.T) {
 
 			// then
 			if spec.expPacketNotHandled {
-				const contractPanicToErrMsg = `recovered: Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted'`
+				const contractPanicToErrMsg = `recovered: Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at`
 				assert.ErrorContains(t, err, contractPanicToErrMsg)
 				require.Nil(t, *capturedAck)
 				return
 			}
-			require.NoError(t, err)
 			if spec.expAck != nil {
+				require.NoError(t, err)
 				assert.Equal(t, spec.expAck, *capturedAck, string(*capturedAck))
 			} else {
 				require.Nil(t, *capturedAck)
 			}
 		})
 	}
+}
+
+func TestIBCAsyncAck(t *testing.T) {
+	// given 2 chains with a mock on chain A to control the IBC flow
+	// and  the ibc-reflect contract on chain B
+	// when the no_ack package is relayed
+	// then the contract does not produce an ack
+	// and
+	// when the async_ack message is executed on chain B
+	// then the contract produces the ack
+
+	ackBytes := []byte("my ack")
+
+	mockContractEngine := NewCaptureAckTestContractEngine()
+	chainAOpts := []wasmkeeper.Option{
+		wasmkeeper.WithWasmEngine(mockContractEngine),
+	}
+	var (
+		coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+		chainA = coord.GetChain(wasmibctesting.GetChainID(1))
+		chainB = coord.GetChain(wasmibctesting.GetChainID(2))
+	)
+	// setup chain A contract metadata for mock
+	myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
+
+	// setup chain B contracts
+	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect_1_5.wasm").CodeID
+	initMsg, err := json.Marshal(wasmkeeper.IBCReflectInitMsg{ReflectCodeID: reflectID})
+	require.NoError(t, err)
+	codeID := chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID
+	ibcReflectContractAddr := chainB.InstantiateContract(codeID, initMsg)
+
+	// establish IBC channels
+	var (
+		sourcePortID      = chainA.ContractInfo(myMockContractAddr).IBCPortID
+		counterpartPortID = chainB.ContractInfo(ibcReflectContractAddr).IBCPortID
+		path              = wasmibctesting.NewPath(chainA, chainB)
+	)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
+	}
+
+	coord.SetupConnections(path)
+	coord.CreateChannels(path)
+	coord.CommitBlock(chainA, chainB)
+	require.Equal(t, 0, len(chainA.PendingSendPackets))
+	require.Equal(t, 0, len(chainB.PendingSendPackets))
+
+	// when the "no_ack" ibc packet is sent from chain A to chain B
+	capturedAck := mockContractEngine.SubmitIBCPacket(t, path, chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
+	coord.CommitBlock(chainA, chainB)
+
+	require.Equal(t, 1, len(chainA.PendingSendPackets))
+	require.Equal(t, 0, len(chainB.PendingSendPackets))
+
+	// we don't expect an ack yet
+	err = path.RelayPacketWithoutAck(chainA.PendingSendPackets[0], nil)
+	noAckPacket := chainA.PendingSendPackets[0]
+	chainA.PendingSendPackets = []channeltypes.Packet{}
+	require.NoError(t, err)
+	assert.Nil(t, *capturedAck)
+
+	// when the "async_ack" ibc packet is sent from chain A to chain B
+	destChannel := path.EndpointB.ChannelID
+	packetSeq := 1
+	ackData := base64.StdEncoding.EncodeToString(ackBytes)
+	ack := fmt.Sprintf(`{"data":"%s"}`, ackData)
+	msg := fmt.Sprintf(`{"async_ack":{"channel_id":"%s","packet_sequence": "%d", "ack": %s}}`, destChannel, packetSeq, ack)
+	res, err := chainB.SendMsgs(&types.MsgExecuteContract{
+		Sender:   chainB.SenderAccount.GetAddress().String(),
+		Contract: ibcReflectContractAddr.String(),
+		Msg:      []byte(msg),
+	})
+	require.NoError(t, err)
+
+	// relay the ack
+	err = path.EndpointA.UpdateClient()
+	require.NoError(t, err)
+	acknowledgement, err := wasmibctesting.ParseAckFromEvents(res.GetEvents())
+	require.NoError(t, err)
+	err = path.EndpointA.AcknowledgePacket(noAckPacket, acknowledgement)
+	require.NoError(t, err)
+
+	// now ack for the no_ack packet should have arrived
+	require.Equal(t, ackBytes, *capturedAck)
 }
 
 // mock to submit an ibc data package from given chain and capture the ack

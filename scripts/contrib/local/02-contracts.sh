@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 echo "-----------------------"
 echo "## Add new CosmWasm contract"
-RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" \
+RESP=$(wasmd tx wasm store "$DIR/../../../x/wasm/keeper/testdata/hackatom.wasm" \
   --from validator --gas 1500000 -y --chain-id=testing --node=http://localhost:26657 -b sync -o json --keyring-backend=test)
 sleep 6
 RESP=$(wasmd q tx $(echo "$RESP"| jq -r '.txhash') -o json)
@@ -44,8 +44,8 @@ sleep 6
 wasmd q tx $(echo "$RESP"| jq -r '.txhash') -o json | jq
 
 
-predictedAdress=$(wasmd q wasm build-address "$CODE_HASH" $(wasmd keys show validator -a --keyring-backend=test) $(echo -n "testing" | xxd -ps) "$INIT")
-wasmd q wasm contract "$predictedAdress" -o json | jq
+predictedAddress=$(wasmd q wasm build-address "$CODE_HASH" $(wasmd keys show validator -a --keyring-backend=test) $(echo -n "testing" | xxd -ps) "$INIT" | awk '{print $2}')
+wasmd q wasm contract "$predictedAddress" -o json | jq
 
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)
@@ -80,7 +80,7 @@ echo "### Query new admin: $(wasmd q wasm contract "$CONTRACT" -o json | jq -r '
 echo "-----------------------"
 echo "## Migrate contract"
 echo "### Upload new code"
-RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/keeper/testdata/burner.wasm" \
+RESP=$(wasmd tx wasm store "$DIR/../../../x/wasm/keeper/testdata/burner.wasm" \
   --from validator --gas 1100000 -y --chain-id=testing --node=http://localhost:26657 -b sync -o json --keyring-backend=test)
 sleep 6
 RESP=$(wasmd q tx $(echo "$RESP"| jq -r '.txhash') -o json)
