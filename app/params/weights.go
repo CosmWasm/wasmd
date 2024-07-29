@@ -37,6 +37,8 @@ const (
 	DefaultWeightSudoContractProposal                int = 5
 	DefaultWeightPinCodesProposal                    int = 5
 	DefaultWeightUnpinCodesProposal                  int = 5
+	DefaultWeightSetGaslessContractsProposal         int = 5
+	DefaultWeightUnsetGaslessContractsProposal       int = 5
 	DefaultWeightUpdateInstantiateConfigProposal     int = 5
 	DefaultWeightStoreAndInstantiateContractProposal int = 5
 )

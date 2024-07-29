@@ -3,36 +3,38 @@
 This document gives an overview of how the various governance
 proposals interact with the CosmWasm contract lifecycle. It is
 a high-level, technical introduction meant to provide context before
-looking into the code, or constructing proposals. 
+looking into the code, or constructing proposals.
 
 ## Proposal Types
+
 We have added 15 new wasm specific proposal messages that cover the contract's live cycle and authorization:
- 
-* `MsgStoreCode` - upload a wasm binary
-* `MsgInstantiateContract` - instantiate a wasm contract
-* `MsgInstantiateContract2` - instantiate a wasm contract with a predictable address
-* `MsgMigrateContract` - migrate a wasm contract to a new code version
-* `MsgSudoContract` - call into the protected `sudo` entry point of a contract
-* `MsgExecuteContract` - execute a wasm contract as an arbitrary user
-* `MsgUpdateAdmin` - set a new admin for a contract
-* `MsgClearAdmin` - clear admin for a contract to prevent further migrations
-* `MsgPinCodes` - pin the given code ids in cache. This trades memory for reduced startup time and lowers gas cost
-* `MsgUnpinCodes` - unpin the given code ids from the cache. This frees up memory and returns to standard speed and gas cost
-* `MsgUpdateInstantiateConfig` - update instantiate permissions to a list of given code ids.
-* `MsgStoreAndInstantiateContract` - upload and instantiate a wasm contract.
-* `MsgRemoveCodeUploadParamsAddresses` - remove addresses from code upload params.
-* `MsgAddCodeUploadParamsAddresses` - add addresses to code upload params.
-* `MsgStoreAndMigrateContract` - upload and migrate a wasm contract.
+
+- `MsgStoreCode` - upload a wasm binary
+- `MsgInstantiateContract` - instantiate a wasm contract
+- `MsgInstantiateContract2` - instantiate a wasm contract with a predictable address
+- `MsgMigrateContract` - migrate a wasm contract to a new code version
+- `MsgSudoContract` - call into the protected `sudo` entry point of a contract
+- `MsgExecuteContract` - execute a wasm contract as an arbitrary user
+- `MsgUpdateAdmin` - set a new admin for a contract
+- `MsgClearAdmin` - clear admin for a contract to prevent further migrations
+- `MsgPinCodes` - pin the given code ids in cache. This trades memory for reduced startup time and lowers gas cost
+- `MsgUnpinCodes` - unpin the given code ids from the cache. This frees up memory and returns to standard speed and gas cost
+- `MsgUpdateInstantiateConfig` - update instantiate permissions to a list of given code ids.
+- `MsgStoreAndInstantiateContract` - upload and instantiate a wasm contract.
+- `MsgRemoveCodeUploadParamsAddresses` - remove addresses from code upload params.
+- `MsgAddCodeUploadParamsAddresses` - add addresses to code upload params.
+- `MsgStoreAndMigrateContract` - upload and migrate a wasm contract.
 
 ## Wasmd Authorization Settings
 
-Settings via sdk `params` module: 
+Settings via sdk `params` module:
+
 - `code_upload_access` - who can upload a wasm binary: `Nobody`, `Everybody`, `AnyOfAddresses`
-- `instantiate_default_permission` - platform default, who can instantiate a wasm binary when the code owner has not set it 
+- `instantiate_default_permission` - platform default, who can instantiate a wasm binary when the code owner has not set it
 
 See [params.go](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/params.go)
 
-### Init Params Via Genesis 
+### Init Params Via Genesis
 
 ```json
     "wasm": {
@@ -42,25 +44,31 @@ See [params.go](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/param
         },
         "instantiate_default_permission": "Everybody"
       }
-    },  
+    },
 ```
 
 The values can be updated via gov proposal `MsgUpdateParams`.
 
 ### Update Params Via [MsgUpdateParams](https://github.com/CosmWasm/wasmd/blob/v0.41.0/proto/cosmwasm/wasm/v1/tx.proto#L263)
+
 Example to submit a parameter change gov proposal:
 
 - First create a draft proposal using the interactive CLI
+
 ```sh
 wasmd tx gov draft-proposal
 ```
 
 - Submit the proposal
+
 ```sh
 wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=testing -b block
 ```
+
 #### Content examples
-* Disable wasm code uploads
+
+- Disable wasm code uploads
+
 ```json
 {
   "title": "Foo",
@@ -77,7 +85,9 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
   "deposit": ""
 }
 ```
-* Allow wasm code uploads for everybody
+
+- Allow wasm code uploads for everybody
+
 ```json
 {
   "title": "Foo",
@@ -95,7 +105,8 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 }
 ```
 
-* Restrict code uploads to a single address
+- Restrict code uploads to a single address
+
 ```json
 {
   "title": "Foo",
@@ -106,7 +117,9 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
       "key": "uploadAccess",
       "value": {
         "permission": "AnyOfAddresses",
-        "addresses": ["cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0fr2sh"]
+        "addresses": [
+          "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0fr2sh"
+        ]
       }
     }
   ],
@@ -114,7 +127,8 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 }
 ```
 
-* Restrict code uploads to two addresses
+- Restrict code uploads to two addresses
+
 ```json
 {
   "title": "Foo",
@@ -125,7 +139,10 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
       "key": "uploadAccess",
       "value": {
         "permission": "AnyOfAddresses",
-        "addresses": ["cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0fr2sh", "cosmos1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0fr2sh"]
+        "addresses": [
+          "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0fr2sh",
+          "cosmos1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0fr2sh"
+        ]
       }
     }
   ],
@@ -133,7 +150,8 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 }
 ```
 
-* Set chain **default** instantiation settings to nobody
+- Set chain **default** instantiation settings to nobody
+
 ```json
 {
   "title": "Foo",
@@ -148,7 +166,9 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
   "deposit": ""
 }
 ```
-* Set chain **default** instantiation settings to everybody
+
+- Set chain **default** instantiation settings to everybody
+
 ```json
 {
   "title": "Foo",
@@ -165,9 +185,10 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 ```
 
 ### Tests
-* [params validation unit tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/params_test.go)
-* [genesis validation tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/genesis_test.go)
-* [policy integration tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/keeper/keeper_test.go)
+
+- [params validation unit tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/params_test.go)
+- [genesis validation tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/genesis_test.go)
+- [policy integration tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/keeper/keeper_test.go)
 
 ## CLI
 
@@ -192,5 +213,5 @@ Available Commands:
 ...
 ```
 
-
-
+- [Rest Unit tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/client/proposal_handler_test.go)
+- [Rest smoke LCD test](https://github.com/CosmWasm/wasmd/blob/master/lcd_test/wasm_test.go)

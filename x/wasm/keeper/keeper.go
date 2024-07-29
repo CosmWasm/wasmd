@@ -389,6 +389,7 @@ func (k Keeper) instantiate(
 func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	gasConsumed := sdkCtx.GasMeter().GasConsumed()
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
@@ -431,6 +432,11 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "dispatch")
+	}
+
+	// refund gas if gasless
+	if k.IsGasless(sdkCtx, contractAddress) {
+		sdkCtx.GasMeter().RefundGas(sdkCtx.GasMeter().GasConsumed()-gasConsumed, "Gasless Contract")
 	}
 
 	return data, nil
@@ -1134,6 +1140,41 @@ func (k Keeper) IsPinnedCode(ctx context.Context, codeID uint64) bool {
 	ok, err := store.Has(types.GetPinnedCodeIndexPrefix(codeID))
 	if err != nil {
 		panic(err)
+	}
+	return ok
+}
+
+// setGaslessContract set the gasless contract
+func (k Keeper) setGasless(ctx sdk.Context, contractAddr sdk.AccAddress) error {
+	info := k.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return errorsmod.Wrap(types.ErrNotFound, "contract info")
+	}
+	store := k.storeService.OpenKVStore(ctx)
+	// store 1 byte to not run into `nil` debugging issues
+	store.Set(types.GetGaslessContractIndexPrefix(contractAddr), []byte{1})
+
+	return nil
+}
+
+// unsetGaslessContract removes the gasless contract
+func (k Keeper) unsetGasless(ctx sdk.Context, contractAddr sdk.AccAddress) error {
+	info := k.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return errorsmod.Wrap(types.ErrNotFound, "contract info")
+	}
+
+	store := k.storeService.OpenKVStore(ctx)
+	store.Delete(types.GetGaslessContractIndexPrefix(contractAddr))
+	return nil
+}
+
+// IsGaslessContract returns true when contract is gasless
+func (k Keeper) IsGasless(ctx sdk.Context, contractAddr sdk.AccAddress) bool {
+	store := k.storeService.OpenKVStore(ctx)
+	ok, err := store.Has(types.GetGaslessContractIndexPrefix(contractAddr))
+	if err != nil {
+		return false
 	}
 	return ok
 }

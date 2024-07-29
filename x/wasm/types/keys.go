@@ -36,6 +36,7 @@ var (
 	ContractsByCreatorPrefix                       = []byte{0x09}
 	ParamsKey                                      = []byte{0x10}
 	AsyncAckKeyPrefix                              = []byte{0x11}
+	GaslessContractIndexPrefix                     = []byte{0x0a}
 
 	KeySequenceCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeySequenceInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
@@ -142,6 +143,16 @@ func GetPinnedCodeIndexPrefix(codeID uint64) []byte {
 	r := make([]byte, prefixLen+8)
 	copy(r[0:], PinnedCodeIndexPrefix)
 	copy(r[prefixLen:], sdk.Uint64ToBigEndian(codeID))
+	return r
+}
+
+// GetGaslessContractIndexPrefix returns the key prefix for a gasless contract into the wasmvm cache
+func GetGaslessContractIndexPrefix(contractAddr sdk.AccAddress) []byte {
+	prefixLen := len(PinnedCodeIndexPrefix)
+	contractAddrLen := len(contractAddr)
+	r := make([]byte, prefixLen+contractAddrLen)
+	copy(r[0:], GaslessContractIndexPrefix)
+	copy(r[prefixLen:], contractAddr)
 	return r
 }
 

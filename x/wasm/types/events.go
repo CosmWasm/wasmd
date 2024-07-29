@@ -20,6 +20,8 @@ const (
 	EventTypeMigrate                = "migrate"
 	EventTypePinCode                = "pin_code"
 	EventTypeUnpinCode              = "unpin_code"
+	EventTypeSetGasless             = "set_gasless"
+	EventTypeUnsetGasless           = "unset_gasless"
 	EventTypeSudo                   = "sudo"
 	EventTypeReply                  = "reply"
 	EventTypeGovContractResult      = "gov_contract_result"

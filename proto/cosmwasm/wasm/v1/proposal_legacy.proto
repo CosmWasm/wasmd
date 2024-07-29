@@ -278,6 +278,38 @@ message UnpinCodesProposal {
   ];
 }
 
+// SetGasLessContractsProposal gov proposal content type to set gassless a set of contract addresses in the
+// wasmvm cache.
+message SetGasLessContractsProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
+  // Title is a short summary
+  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+  // Description is a human readable text
+  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+  // ContractAddresses references the new WASM addresses
+  repeated string contract_addresses = 3 [
+    (gogoproto.customname) = "ContractAddresses",
+    (gogoproto.moretags) = "yaml:\"contract_addresses\""
+  ];
+}
+
+// UnsetGasLessContractsProposal gov proposal content type to unset gassless a set of contract addresses in
+// the wasmvm cache.
+message UnsetGasLessContractsProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
+  // Title is a short summary
+  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+  // Description is a human readable text
+  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+  // ContractAddresses references the new WASM addresses
+  repeated string contract_addresses = 3 [
+    (gogoproto.customname) = "ContractAddresses",
+    (gogoproto.moretags) = "yaml:\"contract_addresses\""
+  ];
+}
+
 // AccessConfigUpdate contains the code id and the access config to be
 // applied.
 message AccessConfigUpdate {

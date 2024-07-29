@@ -708,6 +708,74 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	return cmd
 }
 
+func ProposalSetGaslessContractsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-gasless [contract-addresses]",
+		Short: "Submit a set gasless contracts proposal",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, expedite, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.SetGasLessContractsProposal{
+				Title:             proposalTitle,
+				Description:       summary,
+				ContractAddresses: args,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			if err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func ProposalUnsetGaslessContractsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unset-gasless [contract-addresses]",
+		Short: "Submit a unset gasless contracts proposal",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, expedite, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.UnsetGasLessContractsProposal{
+				Title:             proposalTitle,
+				Description:       summary,
+				ContractAddresses: args,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			if err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
 func parseAccessConfig(raw string) (c types.AccessConfig, err error) {
 	switch raw {
 	case "nobody":

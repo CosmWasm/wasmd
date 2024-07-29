@@ -29,6 +29,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 type mockSubspace struct {
@@ -659,4 +660,30 @@ func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 
 	assert.Equal(t, codeID, rsp.CodeID)
 	assert.Equal(t, creator.String(), rsp.Creator)
+}
+
+func TestOldVersion(t *testing.T) {
+	data := setupTest(t)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+
+	data.module.RegisterInterfaces(interfaceRegistry)
+
+	msg, err := interfaceRegistry.Resolve("/cosmwasm.wasm.v1beta1.MsgExecuteContract")
+
+	require.NoError(t, err)
+
+	t.Logf("MsgExecuteContract %v", msg)
+}
+
+func TestProposalOldVersion(t *testing.T) {
+	data := setupTest(t)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+
+	data.module.RegisterInterfaces(interfaceRegistry)
+
+	msg, err := interfaceRegistry.Resolve("/cosmwasm.wasm.v1beta1.UpdateAdminProposal")
+
+	require.NoError(t, err)
+
+	t.Logf("UpdateAdminProposal %v", msg)
 }

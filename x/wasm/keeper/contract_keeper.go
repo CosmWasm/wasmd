@@ -29,6 +29,8 @@ type decoratedKeeper interface {
 	setContractAdmin(ctx context.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ types.AuthorizationPolicy) error
 	pinCode(ctx context.Context, codeID uint64) error
 	unpinCode(ctx context.Context, codeID uint64) error
+	setGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error
+	unsetGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error
 	execute(ctx context.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 	Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 	setContractInfoExtension(ctx context.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
@@ -119,6 +121,14 @@ func (p PermissionedKeeper) PinCode(ctx sdk.Context, codeID uint64) error {
 
 func (p PermissionedKeeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
 	return p.nested.unpinCode(ctx, codeID)
+}
+
+func (p PermissionedKeeper) SetGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error {
+	return p.nested.setGasless(ctx, contractAddress)
+}
+
+func (p PermissionedKeeper) UnsetGasless(ctx sdk.Context, contractAddress sdk.AccAddress) error {
+	return p.nested.unsetGasless(ctx, contractAddress)
 }
 
 // SetContractInfoExtension updates the extra attributes that can be stored with the contract info

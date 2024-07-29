@@ -1939,6 +1939,62 @@ func TestUnpinCode(t *testing.T) {
 	assert.Equal(t, exp, em.Events())
 }
 
+func TestSetGaslessContract(t *testing.T) {
+
+	mock := wasmtesting.MockWasmEngine{ExecuteFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+		return &wasmvmtypes.ContractResult{
+			Ok: &wasmvmtypes.Response{
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
+			},
+		}, 0, nil
+	}}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mock))
+	k := keepers.WasmKeeper
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(20_000_000))
+	_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
+	require.NoError(t, err)
+
+	// when
+	gotErr := k.setGasless(ctx, example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+	assert.True(t, k.IsGasless(ctx, example.Contract))
+
+	gasConsumed := ctx.GasMeter().GasConsumed()
+	t.Logf("gas consumed %v", gasConsumed)
+
+	_, err = k.execute(ctx, example.Contract, RandomAccountAddress(t), []byte(`{}`), nil)
+	require.NoError(t, err)
+	gasUsed := ctx.GasMeter().GasConsumed() - gasConsumed
+	// Should be 0
+	assert.True(t, gasUsed == 0)
+}
+
+func TestUnsetGaslessContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+	mock := wasmtesting.MockWasmEngine{}
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+
+	// when
+	gotErr := k.setGasless(ctx, example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+
+	gotErr = k.unsetGasless(ctx, example.Contract)
+
+	// then
+	require.NoError(t, gotErr)
+	assert.False(t, k.IsGasless(ctx, example.Contract))
+}
+
 func TestInitializePinnedCodes(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper

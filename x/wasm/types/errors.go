@@ -89,6 +89,12 @@ var (
 
 	// ErrVMError means an error occurred in wasmvm (not in the contract itself, but in the host environment)
 	ErrVMError = errorsmod.Register(DefaultCodespace, 29, "wasmvm error")
+
+	// ErrSetGaslessFailed error for setting gasless contract failures
+	ErrSetGaslessFailed = errorsmod.Register(DefaultCodespace, 40, "setting gasless contract failed")
+
+	// ErrUnsetGaslessFailed error for unsetting gasless contract failures
+	ErrUnsetGaslessFailed = errorsmod.Register(DefaultCodespace, 41, "unsetting gasless contract failed")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted
