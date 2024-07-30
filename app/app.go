@@ -12,7 +12,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
-	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -142,6 +141,10 @@ import (
 	ibchooks "github.com/osmosis-labs/osmosis/x/ibc-hooks"
 	ibchookskeeper "github.com/osmosis-labs/osmosis/x/ibc-hooks/keeper"
 	ibchookstypes "github.com/osmosis-labs/osmosis/x/ibc-hooks/types"
+
+	packetforward "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 )
 
 const appName = "WasmApp"
@@ -241,9 +244,14 @@ type WasmApp struct {
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
-	ContractKeeper *wasmkeeper.PermissionedKeeper
-	ClockKeeper    clockkeeper.Keeper
-	IBCHooksKeeper *ibchookskeeper.Keeper
+	ContractKeeper      *wasmkeeper.PermissionedKeeper
+	ClockKeeper         clockkeeper.Keeper
+	IBCHooksKeeper      *ibchookskeeper.Keeper
+	PacketForwardKeeper *packetforwardkeeper.Keeper
+
+	// Middleware wrapper
+	Ics20WasmHooks   *ibchooks.WasmHooks
+	HooksICS4Wrapper ibchooks.ICS4Middleware
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -336,7 +344,7 @@ func NewWasmApp(
 		// non sdk store keys
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey, clocktypes.StoreKey,
+		icacontrollertypes.StoreKey, clocktypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -590,9 +598,21 @@ func NewWasmApp(
 	// IBC Fee Module keeper
 	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
 		appCodec, keys[ibcfeetypes.StoreKey],
-		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.HooksICS4Wrapper, // may be replaced with IBC middleware
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	)
+
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		app.keys[packetforwardtypes.StoreKey],
+		app.TransferKeeper, // Will be zero-value here. Reference is set later on with SetTransferKeeper.
+		app.IBCKeeper.ChannelKeeper,
+		app.DistrKeeper,
+		app.BankKeeper,
+		// The ICS4Wrapper is replaced by the IBCFeeKeeper instead of the channel so that sending can be overridden by the middleware
+		&app.HooksICS4Wrapper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Create Transfer Keepers
@@ -600,7 +620,7 @@ func NewWasmApp(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCFeeKeeper, // ISC4 Wrapper: fee IBC middleware
+		app.PacketForwardKeeper, // ISC4 Wrapper: fee IBC middleware
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
@@ -608,6 +628,7 @@ func NewWasmApp(
 		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
@@ -679,10 +700,18 @@ func NewWasmApp(
 		nil,
 	)
 
+	wasmHooks := ibchooks.NewWasmHooks(app.IBCHooksKeeper, nil, sdk.GetConfig().GetBech32AccountAddrPrefix()) // The contract keeper needs to be set later
+	app.Ics20WasmHooks = &wasmHooks
+
+	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
+
 	// Create fee enabled wasm ibc Stack
 	var wasmStack porttypes.IBCModule
-	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStackIBCHandler, app.IBCFeeKeeper)
+	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
+	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
@@ -694,11 +723,7 @@ func NewWasmApp(
 	icaControllerStack = icacontroller.NewIBCMiddleware(noAuthzModule, app.ICAControllerKeeper)
 	// app.ICAAuthModule = icaControllerStack.(ibcmock.IBCModule)
 	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, app.ICAControllerKeeper)
-	icaControllerStack = ibccallbacks.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper, wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas)
-	icaICS4Wrapper := icaControllerStack.(porttypes.ICS4Wrapper)
 	icaControllerStack = ibcfee.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper)
-	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
-	app.ICAControllerKeeper.WithICS4Wrapper(icaICS4Wrapper)
 
 	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
@@ -709,11 +734,17 @@ func NewWasmApp(
 	// Create Transfer Stack
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = ibccallbacks.NewIBCMiddleware(transferStack, app.IBCFeeKeeper, wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas)
-	transferICS4Wrapper := transferStack.(porttypes.ICS4Wrapper)
+
+	transferStack = packetforward.NewIBCMiddleware(
+		transferStack,
+		app.PacketForwardKeeper,
+		1,
+		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
+		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,
+	)
+
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
-	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
-	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
+	transferStack = ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
 
 	// Create static IBC router, add app routes, then set and seal it
 	ibcRouter := porttypes.NewRouter().
@@ -766,6 +797,8 @@ func NewWasmApp(
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 		clock.NewAppModule(appCodec, app.ClockKeeper),
+		ibchooks.NewAppModule(app.AccountKeeper, *app.IBCHooksKeeper),
+		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -781,8 +814,9 @@ func NewWasmApp(
 					paramsclient.ProposalHandler,
 				},
 			),
-			clocktypes.ModuleName:    clock.AppModuleBasic{},
-			ibchookstypes.ModuleName: ibchooks.AppModuleBasic{},
+			clocktypes.ModuleName:         clock.AppModuleBasic{},
+			ibchookstypes.ModuleName:      ibchooks.AppModuleBasic{},
+			packetforwardtypes.ModuleName: packetforward.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -813,6 +847,7 @@ func NewWasmApp(
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -831,6 +866,7 @@ func NewWasmApp(
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -858,6 +894,7 @@ func NewWasmApp(
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1237,5 +1274,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(clocktypes.ModuleName)
 	paramsKeeper.Subspace(ibchookstypes.ModuleName)
+	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	return paramsKeeper
 }

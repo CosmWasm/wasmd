@@ -10,6 +10,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.5.0
 	github.com/cosmos/iavl v1.2.0
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.0.2
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4
@@ -140,6 +141,7 @@ require (
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/hdevalence/ed25519consensus v0.1.0 // indirect
 	github.com/huandu/skiplist v1.2.0 // indirect
+	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -214,7 +216,6 @@ require (
 )
 
 replace (
-
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
