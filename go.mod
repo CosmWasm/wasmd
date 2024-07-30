@@ -217,8 +217,8 @@ replace (
 
 	// indexer and timestamp added
 	github.com/cometbft/cometbft => github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4
-	// go list -m -json github.com/oraichain/cosmos-sdk@v0.50.1-eip191 | jq '.|"\(.Path) \(.Version)"' -r
-	// github.com/cosmos/cosmos-sdk => github.com/oraichain/cosmos-sdk v0.50.2-0.20240227050747-739a9071eb6f
+	// go list -m -json github.com/oraichain/cosmos-sdk@v0.50.7-epi191 | jq '.|"\(.Path) \(.Version)"' -r
+	github.com/cosmos/cosmos-sdk => github.com/oraichain/cosmos-sdk v0.50.5-0.20240729032658-16fb0ec0a540
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
