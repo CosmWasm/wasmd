@@ -134,6 +134,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/CosmosContracts/juno/v18/x/clock"
+	clockkeeper "github.com/CosmosContracts/juno/v18/x/clock/keeper"
+	clocktypes "github.com/CosmosContracts/juno/v18/x/clock/types"
 )
 
 const appName = "WasmApp"
@@ -233,6 +237,9 @@ type WasmApp struct {
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
+	ContractKeeper *wasmkeeper.PermissionedKeeper
+	ClockKeeper    clockkeeper.Keeper
+
 	// the module manager
 	ModuleManager      *module.Manager
 	BasicModuleManager module.BasicManager
@@ -274,6 +281,7 @@ func NewWasmApp(
 
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
+	clockkeeper.RegisterProposalTypes()
 
 	// Below we could construct and set an application specific mempool and
 	// ABCI 1.0 PrepareProposal and ProcessProposal handlers. These defaults are
@@ -323,7 +331,7 @@ func NewWasmApp(
 		// non sdk store keys
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey,
+		icacontrollertypes.StoreKey, clocktypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -527,7 +535,8 @@ func NewWasmApp(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		AddRoute(clocktypes.RouterKey, clockkeeper.NewClockProposalHandler(app.ClockKeeper))
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -651,6 +660,13 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
+	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
+	app.ClockKeeper = clockkeeper.NewKeeper(
+		app.keys[clocktypes.StoreKey],
+		appCodec,
+		*app.ContractKeeper,
+	)
+
 	// Create fee enabled wasm ibc Stack
 	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
@@ -737,6 +753,7 @@ func NewWasmApp(
 		ibctm.AppModule{},
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+		clock.NewAppModule(appCodec, app.ClockKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -752,6 +769,7 @@ func NewWasmApp(
 					paramsclient.ProposalHandler,
 				},
 			),
+			clocktypes.ModuleName: clock.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -780,6 +798,7 @@ func NewWasmApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		clocktypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -796,6 +815,7 @@ func NewWasmApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		clocktypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -821,6 +841,7 @@ func NewWasmApp(
 		ibcfeetypes.ModuleName,
 		// wasm after ibc transfer
 		wasmtypes.ModuleName,
+		clocktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1198,5 +1219,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icahosttypes.SubModuleName).WithKeyTable(icahosttypes.ParamKeyTable())
 
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	paramsKeeper.Subspace(clocktypes.ModuleName)
+
 	return paramsKeeper
 }
