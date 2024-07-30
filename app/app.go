@@ -138,6 +138,10 @@ import (
 	"github.com/CosmosContracts/juno/v18/x/clock"
 	clockkeeper "github.com/CosmosContracts/juno/v18/x/clock/keeper"
 	clocktypes "github.com/CosmosContracts/juno/v18/x/clock/types"
+
+	ibchooks "github.com/osmosis-labs/osmosis/x/ibc-hooks"
+	ibchookskeeper "github.com/osmosis-labs/osmosis/x/ibc-hooks/keeper"
+	ibchookstypes "github.com/osmosis-labs/osmosis/x/ibc-hooks/types"
 )
 
 const appName = "WasmApp"
@@ -239,6 +243,7 @@ type WasmApp struct {
 
 	ContractKeeper *wasmkeeper.PermissionedKeeper
 	ClockKeeper    clockkeeper.Keeper
+	IBCHooksKeeper *ibchookskeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -667,6 +672,13 @@ func NewWasmApp(
 		*app.ContractKeeper,
 	)
 
+	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
+		app.keys[ibchookstypes.StoreKey],
+		app.GetSubspace(ibchookstypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		nil,
+	)
+
 	// Create fee enabled wasm ibc Stack
 	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
@@ -769,7 +781,8 @@ func NewWasmApp(
 					paramsclient.ProposalHandler,
 				},
 			),
-			clocktypes.ModuleName: clock.AppModuleBasic{},
+			clocktypes.ModuleName:    clock.AppModuleBasic{},
+			ibchookstypes.ModuleName: ibchooks.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -799,6 +812,7 @@ func NewWasmApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -816,6 +830,7 @@ func NewWasmApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -842,6 +857,7 @@ func NewWasmApp(
 		// wasm after ibc transfer
 		wasmtypes.ModuleName,
 		clocktypes.ModuleName,
+		ibchookstypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1220,6 +1236,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(clocktypes.ModuleName)
-
+	paramsKeeper.Subspace(ibchookstypes.ModuleName)
 	return paramsKeeper
 }
