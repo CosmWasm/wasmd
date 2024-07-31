@@ -36,17 +36,11 @@ type TokenfactoryKeeper interface {
 	GetDenomsFromCreator(ctx sdk.Context, creator string) []string
 }
 
-type BankKeeper interface {
-	simulation.BankKeeper
-	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-}
-
 func WeightedOperations(
 	appParams simtypes.AppParams,
 	tfKeeper TokenfactoryKeeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 ) simulation.WeightedOperations {
 	var (
 		weightMsgCreateDenom      int
@@ -152,7 +146,7 @@ func DefaultSimulationDenomSelector(r *rand.Rand, ctx sdk.Context, tfKeeper Toke
 func SimulateMsgSetDenomMetadata(
 	tfKeeper TokenfactoryKeeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -206,7 +200,7 @@ func SimulateMsgSetDenomMetadata(
 func SimulateMsgChangeAdmin(
 	tfKeeper TokenfactoryKeeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -256,7 +250,7 @@ func SimulateMsgChangeAdmin(
 func SimulateMsgBurn(
 	tfKeeper TokenfactoryKeeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -310,7 +304,7 @@ func SimulateMsgBurn(
 func SimulateMsgMint(
 	tfKeeper TokenfactoryKeeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -354,7 +348,7 @@ func SimulateMsgMint(
 }
 
 // Simulate msg create denom
-func SimulateMsgCreateDenom(tfKeeper TokenfactoryKeeper, ak types.AccountKeeper, bk BankKeeper) simtypes.Operation {
+func SimulateMsgCreateDenom(tfKeeper TokenfactoryKeeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -395,7 +389,7 @@ func BuildOperationInput(
 	},
 	simAccount simtypes.Account,
 	ak types.AccountKeeper,
-	bk BankKeeper,
+	bk types.BankKeeper,
 	deposit sdk.Coins,
 ) simulation.OperationInput {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()

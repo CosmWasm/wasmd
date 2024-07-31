@@ -145,6 +145,11 @@ import (
 	packetforward "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+
+	"github.com/CosmWasm/wasmd/x/tokenfactory"
+	"github.com/CosmWasm/wasmd/x/tokenfactory/bindings"
+	tokenfactorykeeper "github.com/CosmWasm/wasmd/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/CosmWasm/wasmd/x/tokenfactory/types"
 )
 
 const appName = "WasmApp"
@@ -153,6 +158,12 @@ const appName = "WasmApp"
 var (
 	NodeDir      = ".oraid"
 	Bech32Prefix = "orai"
+
+	EnabledCapabilities = []string{
+		tokenfactorytypes.EnableBurnFrom,
+		// tokenfactorytypes.EnableForceTransfer,
+		tokenfactorytypes.EnableSetMetadata,
+	}
 )
 
 // These constants are derived from the above variables.
@@ -248,6 +259,7 @@ type WasmApp struct {
 	ClockKeeper         clockkeeper.Keeper
 	IBCHooksKeeper      *ibchookskeeper.Keeper
 	PacketForwardKeeper *packetforwardkeeper.Keeper
+	TokenFactoryKeeper  tokenfactorykeeper.Keeper
 
 	// Middleware wrapper
 	Ics20WasmHooks   *ibchooks.WasmHooks
@@ -663,6 +675,8 @@ func NewWasmApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
+	wasmOpts = append(bindings.RegisterCustomPlugins(&app.BankKeeper, &app.TokenFactoryKeeper), wasmOpts...)
+
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -691,6 +705,15 @@ func NewWasmApp(
 		app.keys[clocktypes.StoreKey],
 		appCodec,
 		*app.ContractKeeper,
+	)
+
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		keys[tokenfactorytypes.StoreKey],
+		app.GetSubspace(tokenfactorytypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		EnabledCapabilities,
 	)
 
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
@@ -817,6 +840,7 @@ func NewWasmApp(
 			clocktypes.ModuleName:         clock.AppModuleBasic{},
 			ibchookstypes.ModuleName:      ibchooks.AppModuleBasic{},
 			packetforwardtypes.ModuleName: packetforward.AppModuleBasic{},
+			tokenfactorytypes.ModuleName:  tokenfactory.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
