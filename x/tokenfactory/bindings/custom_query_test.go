@@ -47,7 +47,7 @@ type ChainResponse struct {
 	Data []byte `json:"data"`
 }
 
-func queryCustom(t *testing.T, ctx sdk.Context, tokenz *app.TokenApp, contract sdk.AccAddress, request bindings.TokenQuery, response interface{}) {
+func queryCustom(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, contract sdk.AccAddress, request bindings.TokenQuery, response interface{}) {
 	wrapped := bindings.TokenFactoryQuery{
 		Token: &request,
 	}

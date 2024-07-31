@@ -72,7 +72,7 @@ func TestMintMsg(t *testing.T) {
 	require.NoError(t, err)
 	sunDenom := fmt.Sprintf("factory/%s/%s", reflect.String(), msg.CreateDenom.Subdenom)
 
-	amount, ok := sdk.NewIntFromString("808010808")
+	amount, ok := math.NewIntFromString("808010808")
 	require.True(t, ok)
 	msg = bindings.TokenMsg{MintTokens: &bindings.MintTokens{
 		Denom:         sunDenom,
@@ -201,7 +201,7 @@ func TestForceTransfer(t *testing.T) {
 	require.NoError(t, err)
 	sunDenom := fmt.Sprintf("factory/%s/%s", reflect.String(), msg.CreateDenom.Subdenom)
 
-	amount, ok := sdk.NewIntFromString("808010808")
+	amount, ok := math.NewIntFromString("808010808")
 	require.True(t, ok)
 
 	// Mint new tokens to lucky
@@ -254,7 +254,7 @@ func TestBurnMsg(t *testing.T) {
 	require.NoError(t, err)
 	sunDenom := fmt.Sprintf("factory/%s/%s", reflect.String(), msg.CreateDenom.Subdenom)
 
-	amount, ok := sdk.NewIntFromString("808010809")
+	amount, ok := math.NewIntFromString("808010809")
 	require.True(t, ok)
 
 	msg = bindings.TokenMsg{MintTokens: &bindings.MintTokens{
@@ -266,7 +266,7 @@ func TestBurnMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// can burn from different address with burnFrom
-	amt, ok := sdk.NewIntFromString("1")
+	amt, ok := math.NewIntFromString("1")
 	require.True(t, ok)
 	msg = bindings.TokenMsg{BurnTokens: &bindings.BurnTokens{
 		Denom:           sunDenom,
@@ -303,7 +303,7 @@ type ReflectSubMsgs struct {
 	Msgs []wasmvmtypes.SubMsg `json:"msgs"`
 }
 
-func executeCustom(t *testing.T, ctx sdk.Context, osmosis *app.TokenApp, contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TokenMsg, funds sdk.Coin) error {
+func executeCustom(t *testing.T, ctx sdk.Context, osmosis *app.WasmApp, contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TokenMsg, funds sdk.Coin) error {
 	wrapped := bindings.TokenFactoryMsg{
 		Token: &msg,
 	}
