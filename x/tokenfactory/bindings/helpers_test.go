@@ -3,30 +3,29 @@ package bindings_test
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/math"
-	"cosmossdk.io/simapp"
+
+	"cosmossdk.io/x/bank/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
-func CreateTestInput() (*app.WasmApp, sdk.Context) {
-	osmosis := app.Setup(false)
-	ctx := osmosis.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "osmosis-1", Time: time.Now().UTC()})
+func CreateTestInput(t *testing.T) (*app.WasmApp, sdk.Context) {
+	osmosis := app.Setup(t)
+	ctx := osmosis.BaseApp.NewContext(false)
 	return osmosis, ctx
 }
 
 func FundAccount(t *testing.T, ctx sdk.Context, osmosis *app.WasmApp, acct sdk.AccAddress) {
-	err := simapp.FundAccount(osmosis.BankKeeper, ctx, acct, sdk.NewCoins(
+	err := testutil.FundAccount(ctx, osmosis.BankKeeper, acct, sdk.NewCoins(
 		sdk.NewCoin("uosmo", math.NewInt(10000000000)),
 	))
 	require.NoError(t, err)
@@ -71,9 +70,9 @@ func instantiateReflectContract(t *testing.T, ctx sdk.Context, tokenz *app.WasmA
 }
 
 func fundAccount(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr sdk.AccAddress, coins sdk.Coins) {
-	err := simapp.FundAccount(
-		tokenz.BankKeeper,
+	err := testutil.FundAccount(
 		ctx,
+		tokenz.BankKeeper,
 		addr,
 		coins,
 	)
@@ -81,7 +80,7 @@ func fundAccount(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr sdk.Ac
 }
 
 func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.WasmApp, sdk.Context) {
-	tokenz, ctx := CreateTestInput()
+	tokenz, ctx := CreateTestInput(t)
 	wasmKeeper := tokenz.WasmKeeper
 
 	storeReflectCode(t, ctx, tokenz, addr)
