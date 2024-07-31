@@ -23,6 +23,7 @@ import (
 	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 )
 
 func TestIBCFeesTransfer(t *testing.T) {
@@ -218,4 +219,124 @@ func TestIBCFeesWasm(t *testing.T) {
 	// and on chain B
 	payeeBalance = chainB.AllBalances(payee)
 	assert.Equal(t, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2)).String(), payeeBalance.String())
+}
+
+func TestIBCFeesReflect(t *testing.T) {
+	// scenario:
+	// given 2 chains with reflect on chain A
+	//   and an ibc channel established
+	// when ibc-reflect sends a PayPacketFee and a PayPacketFeeAsync msg
+	// then the relayer's payee is receiving the fee(s) on success
+
+	marshaler := app.MakeEncodingConfig(t).Codec
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
+	chainB := coord.GetChain(ibctesting.GetChainID(2))
+	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
+	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
+
+	// setup chain A
+	codeID := chainA.StoreCodeFile("./testdata/reflect_2_2.wasm").CodeID
+
+	initMsg := []byte("{}")
+	reflectContractAddr := chainA.InstantiateContract(codeID, initMsg)
+
+	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
+	oneToken := []wasmvmtypes.Coin{wasmvmtypes.NewCoin(1, sdk.DefaultBondDenom)}
+
+	path := wasmibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  ibctransfertypes.PortID,
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  ibctransfertypes.PortID,
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Order:   channeltypes.UNORDERED,
+	}
+	// with an ics-29 fee enabled channel setup between both chains
+	coord.Setup(path)
+	appA := chainA.App.(*app.WasmApp)
+	appB := chainB.App.(*app.WasmApp)
+	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID))
+	require.True(t, appB.IBCFeeKeeper.IsFeeEnabled(chainB.GetContext(), ibctransfertypes.PortID, path.EndpointB.ChannelID))
+	// and with a payee registered for A -> B
+	_, err := chainA.SendMsgs(ibcfee.NewMsgRegisterPayee(ibctransfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), payee.String()))
+	require.NoError(t, err)
+	_, err = chainB.SendMsgs(ibcfee.NewMsgRegisterCounterpartyPayee(ibctransfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), payee.String()))
+	require.NoError(t, err)
+
+	// when reflect contract on A sends a PayPacketFee msg, followed by a transfer
+	_, err = ExecViaReflectContract(t, chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
+		{
+			IBC: &wasmvmtypes.IBCMsg{
+				PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
+					Fee: wasmvmtypes.IBCFee{
+						AckFee:     oneToken,
+						RecvFee:    oneToken,
+						TimeoutFee: []wasmvmtypes.Coin{},
+					},
+					Relayers: []string{},
+					Src: wasmvmtypes.IBCEndpoint{
+						PortID:    ibctransfertypes.PortID,
+						ChannelID: path.EndpointA.ChannelID,
+					},
+				},
+			},
+		},
+		{
+			IBC: &wasmvmtypes.IBCMsg{
+				Transfer: &wasmvmtypes.TransferMsg{
+					ChannelID: path.EndpointA.ChannelID,
+					ToAddress: actorChainB.String(),
+					Amount:    wasmvmtypes.NewCoin(10, sdk.DefaultBondDenom),
+					Timeout: wasmvmtypes.IBCTimeout{
+						Timestamp: 9999999999999999999,
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	pendingIncentivisedPackages := appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID)
+	assert.Len(t, pendingIncentivisedPackages, 1)
+
+	// and sends an PayPacketFeeAsync msg
+	_, err = ExecViaReflectContract(t, chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
+		{
+			IBC: &wasmvmtypes.IBCMsg{
+				PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
+					Fee: wasmvmtypes.IBCFee{
+						AckFee:     []wasmvmtypes.Coin{},
+						RecvFee:    oneToken,
+						TimeoutFee: oneToken,
+					},
+					Relayers: []string{},
+					Sequence: pendingIncentivisedPackages[0].PacketId.Sequence,
+					Src: wasmvmtypes.IBCEndpoint{
+						PortID:    ibctransfertypes.PortID,
+						ChannelID: path.EndpointA.ChannelID,
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	// and packages relayed
+	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+
+	// then
+	// on chain A
+	payeeBalance := chainA.AllBalances(payee)
+	// 2 tokens from the PayPacketFee and 1 token from the PayPacketFeeAsync
+	assert.Equal(t, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(3)).String(), payeeBalance.String())
+	// and on chain B
+	pendingIncentivisedPackages = appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID)
+	assert.Len(t, pendingIncentivisedPackages, 0)
+	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sdk.DefaultBondDenom, sdkmath.NewInt(10))
+	gotBalance := chainB.Balance(actorChainB, expBalance.Denom)
+	assert.Equal(t, expBalance.String(), gotBalance.String(), chainB.AllBalances(actorChainB))
 }
