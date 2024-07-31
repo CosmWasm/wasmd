@@ -4,14 +4,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 
-	"cosmossdk.io/math"
-
-	"cosmossdk.io/x/bank/testutil"
+	// "cosmossdk.io/x/bank/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/app"
@@ -22,13 +21,6 @@ func CreateTestInput(t *testing.T) (*app.WasmApp, sdk.Context) {
 	osmosis := app.Setup(t)
 	ctx := osmosis.BaseApp.NewContext(false)
 	return osmosis, ctx
-}
-
-func FundAccount(t *testing.T, ctx sdk.Context, osmosis *app.WasmApp, acct sdk.AccAddress) {
-	err := testutil.FundAccount(ctx, osmosis.BankKeeper, acct, sdk.NewCoins(
-		sdk.NewCoin("uosmo", math.NewInt(10000000000)),
-	))
-	require.NoError(t, err)
 }
 
 // we need to make this deterministic (same every test run), as content might affect gas costs
