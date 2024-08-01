@@ -285,6 +285,20 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
+func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest) (*types.CodeInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	if req.CodeId == 0 {
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
+	}
+	rsp := queryCodeInfo(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
+	if rsp == nil {
+		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
+	}
+	return rsp, nil
+}
+
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
@@ -298,19 +312,10 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 }
 
 func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
-	if codeID == 0 {
-		return nil, nil
-	}
-	res := keeper.GetCodeInfo(ctx, codeID)
-	if res == nil {
+	info := queryCodeInfo(ctx, codeID, keeper)
+	if info == nil {
 		// nil, nil leads to 404 in rest handler
 		return nil, nil
-	}
-	info := types.CodeInfoResponse{
-		CodeID:                codeID,
-		Creator:               res.Creator,
-		DataHash:              res.CodeHash,
-		InstantiatePermission: res.InstantiateConfig,
 	}
 
 	code, err := keeper.GetByteCode(ctx, codeID)
@@ -318,7 +323,24 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 		return nil, errorsmod.Wrap(err, "loading wasm code")
 	}
 
-	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil
+	return &types.QueryCodeResponse{CodeInfoResponse: info, Data: code}, nil
+}
+
+func queryCodeInfo(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) *types.CodeInfoResponse {
+	if codeID == 0 {
+		return nil
+	}
+	res := keeper.GetCodeInfo(ctx, codeID)
+	if res == nil {
+		return nil
+	}
+	info := types.CodeInfoResponse{
+		CodeID:                codeID,
+		Creator:               res.Creator,
+		DataHash:              res.CodeHash,
+		InstantiatePermission: res.InstantiateConfig,
+	}
+	return &info
 }
 
 func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesRequest) (*types.QueryPinnedCodesResponse, error) {

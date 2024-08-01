@@ -53,7 +53,7 @@ service Query {
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}";
   }
-  // Code gets the binary code and metadata for a singe wasm code
+  // Code gets the binary code and metadata for a single wasm code
   rpc Code(QueryCodeRequest) returns (QueryCodeResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}";
@@ -62,6 +62,12 @@ service Query {
   rpc Codes(QueryCodesRequest) returns (QueryCodesResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code";
+  }
+
+  // CodeInfo gets the metadata for a single wasm code
+  rpc CodeInfo(QueryCodeInfoRequest) returns (CodeInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/cosmwasm/wasm/v1/code-info/{code_id}";
   }
 
   // PinnedCodes gets the pinned code ids
@@ -207,6 +213,11 @@ message QuerySmartContractStateResponse {
 
 // QueryCodeRequest is the request type for the Query/Code RPC method
 message QueryCodeRequest {
+  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+}
+
+// QueryCodeInfoRequest is the request type for the Query/Code RPC method
+message QueryCodeInfoRequest {
   uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
 }
 
