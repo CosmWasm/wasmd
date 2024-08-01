@@ -3,6 +3,7 @@ package bindings_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,8 @@ import (
 func CreateTestInput(t *testing.T) (*app.WasmApp, sdk.Context) {
 	osmosis := app.Setup(t)
 	ctx := osmosis.BaseApp.NewContext(false)
+	myTime := time.Unix(0, 1619700924259075000)
+	ctx = ctx.WithBlockTime(myTime)
 	return osmosis, ctx
 }
 
