@@ -384,6 +384,7 @@ func (endpoint *Endpoint) ChanOpenAck() error {
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
 	if err := endpoint.Chain.sendMsgs(msg); err != nil {
+		println("myerror", err.Error())
 		return err
 	}
 

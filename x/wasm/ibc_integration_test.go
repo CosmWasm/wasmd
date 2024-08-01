@@ -34,7 +34,7 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 		"different version": {
 			startVersion: v1,
 			contractRsp:  &wasmvmtypes.IBC3ChannelOpenResponse{Version: "v2"},
-			expVersion:   v1,
+			expVersion:   "v2",
 		},
 		"no response": {
 			startVersion: v1,
