@@ -140,7 +140,7 @@ message QueryContractHistoryResponse {
 // QueryContractsByCodeRequest is the request type for the Query/ContractsByCode
 // RPC method
 message QueryContractsByCodeRequest {
-  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -213,12 +213,12 @@ message QuerySmartContractStateResponse {
 
 // QueryCodeRequest is the request type for the Query/Code RPC method
 message QueryCodeRequest {
-  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
 }
 
 // QueryCodeInfoRequest is the request type for the Query/Code RPC method
 message QueryCodeInfoRequest {
-  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
 }
 
 // CodeInfoResponse contains code meta data from CodeInfo

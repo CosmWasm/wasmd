@@ -1075,7 +1075,7 @@ QueryCodeInfoRequest is the request type for the Query/Code RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
 
 
 
@@ -1090,7 +1090,7 @@ QueryCodeRequest is the request type for the Query/Code RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
 
 
 
@@ -1220,7 +1220,7 @@ RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
 | `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
