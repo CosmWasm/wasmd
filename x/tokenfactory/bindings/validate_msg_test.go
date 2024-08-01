@@ -39,7 +39,7 @@ func TestCreateDenom(t *testing.T) {
 		},
 		"invalid sub-denom": {
 			createDenom: &bindings.CreateDenom{
-				Subdenom: "sub-denom_2",
+				Subdenom: "sub-denom2!",
 			},
 			expErr: true,
 		},

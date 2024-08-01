@@ -98,7 +98,7 @@ func PerformCreateDenom(f *tokenfactorykeeper.Keeper, b *bankkeeper.BaseKeeper, 
 
 	// Create denom
 	resp, err := msgServer.CreateDenom(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		msgCreateDenom,
 	)
 	if err != nil {
