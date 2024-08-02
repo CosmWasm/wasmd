@@ -65,7 +65,7 @@ service Query {
   }
 
   // CodeInfo gets the metadata for a single wasm code
-  rpc CodeInfo(QueryCodeInfoRequest) returns (CodeInfoResponse) {
+  rpc CodeInfo(QueryCodeInfoRequest) returns (QueryCodeInfoResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code-info/{code_id}";
   }
@@ -219,6 +219,13 @@ message QueryCodeRequest {
 // QueryCodeInfoRequest is the request type for the Query/Code RPC method
 message QueryCodeInfoRequest {
   uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
+}
+
+// QueryCodeInfoResponse is the response type for the Query/Code RPC method
+message QueryCodeInfoResponse {
+  option (gogoproto.equal) = true;
+  CodeInfoResponse code_info = 1
+      [ (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
 }
 
 // CodeInfoResponse contains code meta data from CodeInfo

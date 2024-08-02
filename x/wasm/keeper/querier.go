@@ -285,18 +285,20 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
-func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest) (*types.CodeInfoResponse, error) {
+func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest) (*types.QueryCodeInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
 		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
 	}
-	rsp := queryCodeInfo(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
-	if rsp == nil {
+	info := queryCodeInfo(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
+	if info == nil {
 		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
 	}
-	return rsp, nil
+	return &types.QueryCodeInfoResponse{
+		CodeInfoResponse: info,
+	}, nil
 }
 
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {

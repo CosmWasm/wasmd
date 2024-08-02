@@ -64,6 +64,7 @@
     - [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest)
     - [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse)
     - [QueryCodeInfoRequest](#cosmwasm.wasm.v1.QueryCodeInfoRequest)
+    - [QueryCodeInfoResponse](#cosmwasm.wasm.v1.QueryCodeInfoResponse)
     - [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest)
     - [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse)
     - [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest)
@@ -1082,6 +1083,21 @@ QueryCodeInfoRequest is the request type for the Query/Code RPC method
 
 
 
+<a name="cosmwasm.wasm.v1.QueryCodeInfoResponse"></a>
+
+### QueryCodeInfoResponse
+QueryCodeInfoResponse is the response type for the Query/Code RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_info` | [CodeInfoResponse](#cosmwasm.wasm.v1.CodeInfoResponse) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryCodeRequest"></a>
 
 ### QueryCodeRequest
@@ -1424,7 +1440,7 @@ Query provides defines the gRPC querier service
 | `SmartContractState` | [QuerySmartContractStateRequest](#cosmwasm.wasm.v1.QuerySmartContractStateRequest) | [QuerySmartContractStateResponse](#cosmwasm.wasm.v1.QuerySmartContractStateResponse) | SmartContractState get smart query result from the contract | GET|/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}|
 | `Code` | [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest) | [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse) | Code gets the binary code and metadata for a single wasm code | GET|/cosmwasm/wasm/v1/code/{code_id}|
 | `Codes` | [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest) | [QueryCodesResponse](#cosmwasm.wasm.v1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes | GET|/cosmwasm/wasm/v1/code|
-| `CodeInfo` | [QueryCodeInfoRequest](#cosmwasm.wasm.v1.QueryCodeInfoRequest) | [CodeInfoResponse](#cosmwasm.wasm.v1.CodeInfoResponse) | CodeInfo gets the metadata for a single wasm code | GET|/cosmwasm/wasm/v1/code-info/{code_id}|
+| `CodeInfo` | [QueryCodeInfoRequest](#cosmwasm.wasm.v1.QueryCodeInfoRequest) | [QueryCodeInfoResponse](#cosmwasm.wasm.v1.QueryCodeInfoResponse) | CodeInfo gets the metadata for a single wasm code | GET|/cosmwasm/wasm/v1/code-info/{code_id}|
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
