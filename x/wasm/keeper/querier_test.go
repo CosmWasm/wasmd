@@ -815,12 +815,10 @@ func TestQueryCodeInfo(t *testing.T) {
 			})
 			require.NoError(t, err)
 			expectedResponse := &types.QueryCodeInfoResponse{
-				CodeInfoResponse: &types.CodeInfoResponse{
-					CodeID:                spec.codeID,
-					Creator:               codeInfo.Creator,
-					DataHash:              codeInfo.CodeHash,
-					InstantiatePermission: spec.accessConfig,
-				},
+				CodeID:                spec.codeID,
+				Creator:               codeInfo.Creator,
+				Checksum:              codeInfo.CodeHash,
+				InstantiatePermission: spec.accessConfig,
 			}
 			require.NotNil(t, got)
 			require.EqualValues(t, expectedResponse, got)

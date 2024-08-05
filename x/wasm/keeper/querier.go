@@ -297,7 +297,10 @@ func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest
 		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
 	}
 	return &types.QueryCodeInfoResponse{
-		CodeInfoResponse: info,
+		CodeID:                info.CodeID,
+		Creator:               info.Creator,
+		Checksum:              info.DataHash,
+		InstantiatePermission: info.InstantiatePermission,
 	}, nil
 }
 

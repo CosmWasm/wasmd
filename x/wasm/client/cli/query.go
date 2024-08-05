@@ -261,11 +261,8 @@ func GetCmdQueryCodeInfo() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if res.CodeInfoResponse == nil {
-				return fmt.Errorf("code not found")
-			}
 
-			return clientCtx.PrintProto(res.CodeInfoResponse)
+			return clientCtx.PrintProto(res)
 		},
 		SilenceUsage: true,
 	}

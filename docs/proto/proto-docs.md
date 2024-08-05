@@ -1091,7 +1091,10 @@ QueryCodeInfoResponse is the response type for the Query/Code RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_info` | [CodeInfoResponse](#cosmwasm.wasm.v1.CodeInfoResponse) |  |  |
+| `code_id` | [uint64](#uint64) |  |  |
+| `creator` | [string](#string) |  |  |
+| `checksum` | [bytes](#bytes) |  |  |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  |  |
 
 
 

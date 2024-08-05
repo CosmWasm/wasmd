@@ -224,8 +224,13 @@ message QueryCodeInfoRequest {
 // QueryCodeInfoResponse is the response type for the Query/Code RPC method
 message QueryCodeInfoResponse {
   option (gogoproto.equal) = true;
-  CodeInfoResponse code_info = 1
-      [ (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
+
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  bytes checksum = 3 [ (gogoproto.casttype) =
+                           "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
+  AccessConfig instantiate_permission = 4
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // CodeInfoResponse contains code meta data from CodeInfo
