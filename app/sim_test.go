@@ -21,18 +21,19 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/feegrant"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var FlagEnableStreamingValue bool
@@ -66,7 +67,7 @@ func TestFullAppSimulation(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		BlockedAddresses(),
+		BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()),
 		config,
 		app.AppCodec(),
 	)
@@ -92,7 +93,7 @@ func TestAppImportExport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		BlockedAddresses(),
+		BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()),
 		config,
 		app.AppCodec(),
 	)
@@ -204,7 +205,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		BlockedAddresses(),
+		BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()),
 		config,
 		app.AppCodec(),
 	)
@@ -254,7 +255,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
-		BlockedAddresses(),
+		BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()),
 		config,
 		app.AppCodec(),
 	)
@@ -347,7 +348,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 				simtestutil.SimulationOperations(app, app.AppCodec(), config),
-				BlockedAddresses(),
+				BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()),
 				config,
 				app.AppCodec(),
 			)

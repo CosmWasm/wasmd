@@ -9,11 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var emptyWasmOpts []wasmkeeper.Option
@@ -46,7 +47,7 @@ func TestWasmdExport(t *testing.T) {
 func TestBlockedAddrs(t *testing.T) {
 	gapp := Setup(t)
 
-	for acc := range BlockedAddresses() {
+	for acc := range BlockedAddresses(authtypes.NewModuleAddress(govtypes.ModuleName).String()) {
 		t.Run(acc, func(t *testing.T) {
 			var addr sdk.AccAddress
 			if modAddr, err := sdk.AccAddressFromBech32(acc); err == nil {

@@ -181,8 +181,6 @@ var (
 		tokenfactorytypes.EnableForceTransfer,
 		tokenfactorytypes.EnableSetMetadata,
 	}
-	Authority     = authtypes.NewModuleAddress(govtypes.ModuleName)
-	AuthorityAddr = Authority.String()
 )
 
 // These constants are derived from the above variables.
@@ -312,6 +310,9 @@ func NewWasmApp(
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
+
+	Authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	AuthorityAddr := Authority.String()
 
 	signingOptions := signing.Options{
 		AddressCodec: address.Bech32Codec{
@@ -461,11 +462,12 @@ func NewWasmApp(
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		AuthorityAddr,
 	)
+
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		app.AccountKeeper,
-		BlockedAddresses(),
+		BlockedAddresses(AuthorityAddr),
 		AuthorityAddr,
 		logger,
 	)
@@ -1347,14 +1349,14 @@ func GetMaccPerms() map[string][]string {
 }
 
 // BlockedAddresses returns all the app's blocked account addresses.
-func BlockedAddresses() map[string]bool {
+func BlockedAddresses(authorityAddr string) map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range GetMaccPerms() {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, AuthorityAddr)
+	delete(modAccAddrs, authorityAddr)
 
 	return modAccAddrs
 }
