@@ -35,9 +35,6 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// SimAppChainID hardcoded chainID for simulation
-const SimAppChainID = "simulation-app"
-
 var FlagEnableStreamingValue bool
 
 // Get flags every time the simulator is run
@@ -60,6 +57,7 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 
 func TestFullAppSimulation(t *testing.T) {
 	config, db, _, app := setupSimulationApp(t, "skipping application simulation")
+
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t,
