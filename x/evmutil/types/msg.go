@@ -119,6 +119,8 @@ func (msg MsgConvertERC20ToCoin) ValidateBasic() error {
 		)
 	}
 
+	println("receiver", msg.Receiver)
+
 	_, err := sdk.AccAddressFromBech32(msg.Receiver)
 	if err != nil {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidAddress, "receiver is not a valid bech32 address")

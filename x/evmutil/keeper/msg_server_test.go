@@ -29,7 +29,7 @@ func TestMsgServerSuite(t *testing.T) {
 }
 
 func (suite *MsgServerSuite) TestConvertCoinToERC20() {
-	invoker, err := sdk.AccAddressFromBech32("kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz")
+	invoker, err := sdk.AccAddressFromBech32("orai123fxg0l602etulhhcdm0vt7l57qya5wjh9vf4k")
 	suite.Require().NoError(err)
 
 	err = suite.App.FundAccount(suite.Ctx, invoker, sdk.NewCoins(sdk.NewCoin("erc20/usdc", sdkmath.NewInt(10000))))
