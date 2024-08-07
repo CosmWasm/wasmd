@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/evmutil/testutil"
 	"github.com/CosmWasm/wasmd/x/evmutil/types"
 )
@@ -23,7 +22,6 @@ func TestERC20TestSuite(t *testing.T) {
 }
 
 func (suite *ERC20TestSuite) SetupTest() {
-	app.SetSDKConfig()
 	suite.Suite.SetupTest()
 	suite.contractAddr = suite.DeployERC20()
 }

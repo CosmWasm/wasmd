@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/evmutil"
 	"github.com/CosmWasm/wasmd/x/evmutil/testutil"
 	"github.com/CosmWasm/wasmd/x/evmutil/types"
@@ -16,7 +15,6 @@ type genesisTestSuite struct {
 }
 
 func (suite *genesisTestSuite) SetupTest() {
-	app.SetSDKConfig()
 	suite.Suite.SetupTest()
 }
 

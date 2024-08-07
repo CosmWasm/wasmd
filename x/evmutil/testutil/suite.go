@@ -61,6 +61,9 @@ type Suite struct {
 }
 
 func (suite *Suite) SetupTest() {
+
+	app.SetSDKConfig()
+
 	// empty setup
 	suite.App = app.SetupWithEmptyStore(suite.T())
 	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{Height: 1, Time: tmtime.Now()})
@@ -145,7 +148,7 @@ func (suite *Suite) SetupTest() {
 	valAddr := sdk.ValAddress(suite.Address.Bytes())
 	validator, err := stakingtypes.NewValidator(valAddr.String(), consPriv.PubKey(), stakingtypes.Description{})
 	suite.Require().NoError(err)
-	println("validator", validator.String())
+
 	err = suite.App.GetStakingKeeper().SetValidatorByConsAddr(suite.Ctx, validator)
 	suite.Require().NoError(err)
 	suite.App.GetStakingKeeper().SetValidator(suite.Ctx, validator)
