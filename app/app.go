@@ -161,6 +161,10 @@ import (
 	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	protov2 "google.golang.org/protobuf/proto"
+
+	"github.com/CosmWasm/wasmd/x/evmutil"
+	evmutilkeeper "github.com/CosmWasm/wasmd/x/evmutil/keeper"
+	evmutiltypes "github.com/CosmWasm/wasmd/x/evmutil/types"
 )
 
 const appName = "WasmApp"
@@ -169,6 +173,8 @@ const appName = "WasmApp"
 var (
 	NodeDir      = ".oraid"
 	Bech32Prefix = "orai"
+	CosmosDenom  = Bech32Prefix
+	EvmDenom     = "aorai" // atto orai. This will be converted automatically by evmutil of kava
 
 	EnabledCapabilities = []string{
 		tokenfactorytypes.EnableBurnFrom,
@@ -216,6 +222,7 @@ var maccPerms = map[string][]string{
 	wasmtypes.ModuleName:         {authtypes.Burner},
 	tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
+	evmutiltypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
 }
 
 var (
@@ -277,6 +284,7 @@ type WasmApp struct {
 	TokenFactoryKeeper  tokenfactorykeeper.Keeper
 
 	EvmKeeper       *evmkeeper.Keeper
+	EvmutilKeeper   evmutilkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
 
 	// Middleware wrapper
@@ -390,7 +398,7 @@ func NewWasmApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey, clocktypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey, tokenfactorytypes.StoreKey,
-		evmtypes.StoreKey, feemarkettypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, evmutiltypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -594,13 +602,23 @@ func NewWasmApp(
 		appCodec, Authority, runtime.NewKVStoreService(keys[feemarkettypes.StoreKey]), tkeys[feemarkettypes.TransientKey], feeMarketSs,
 	)
 
+	app.EvmutilKeeper = evmutilkeeper.NewKeeper(
+		appCodec,
+		keys[evmutiltypes.StoreKey],
+		app.GetSubspace(evmutiltypes.ModuleName),
+		app.BankKeeper,
+		app.AccountKeeper,
+	)
+	evmBankKeeper := evmutilkeeper.NewEvmBankKeeperWithDenoms(app.EvmutilKeeper, app.BankKeeper, app.AccountKeeper, EvmDenom, CosmosDenom)
+
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, "", evmSs,
 	)
+	app.EvmutilKeeper.SetEvmKeeper(app.EvmKeeper)
 
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
@@ -870,6 +888,7 @@ func NewWasmApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper),
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, evmSs),
 		feemarket.NewAppModule(app.FeeMarketKeeper, feeMarketSs),
+		evmutil.NewAppModule(app.EvmutilKeeper, app.BankKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -923,6 +942,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		evmutiltypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -945,6 +965,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		evmutiltypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -976,6 +997,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		evmutiltypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1359,7 +1381,9 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchookstypes.ModuleName)
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
-	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable())
+	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
+	paramsKeeper.Subspace(evmutiltypes.ModuleName)
+
 	return paramsKeeper
 }

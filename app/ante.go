@@ -23,9 +23,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 
 	storetypes "cosmossdk.io/store/types"
-	"github.com/CosmWasm/wasmd/crypto/ethsecp256k1"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	evmante "github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
 	emvtypes "github.com/evmos/ethermint/x/evm/types"
 	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"

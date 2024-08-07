@@ -11,8 +11,11 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
+
 	cmttypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
@@ -38,7 +41,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -46,7 +49,11 @@ import (
 )
 
 // SimAppChainID hardcoded chainID for simulation
-const SimAppChainID = "oraichain_9000-1"
+var (
+	SimAppChainID        = "oraichain_9000-1"
+	emptyTime            time.Time
+	defaultInitialHeight int64 = 1
+)
 
 // SetupOptions defines arguments that are passed into `WasmApp` constructor.
 type SetupOptions struct {
@@ -225,40 +232,6 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 	return genesisState
 }
 
-// AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
-// initial balance of accAmt in random order
-func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int) []sdk.AccAddress {
-	return addTestAddrs(app, ctx, accNum, accAmt, simtestutil.CreateIncrementalAccounts)
-}
-
-func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
-	testAddrs := strategy(accNum)
-	bondDenom, err := app.StakingKeeper.BondDenom(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	initCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, accAmt))
-
-	for _, addr := range testAddrs {
-		initAccountWithCoins(app, ctx, addr, initCoins)
-	}
-
-	return testAddrs
-}
-
-func initAccountWithCoins(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
-	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
-	if err != nil {
-		panic(err)
-	}
-
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
-	if err != nil {
-		panic(err)
-	}
-}
-
 var emptyWasmOptions []wasmkeeper.Option
 
 // NewTestNetworkFixture returns a new WasmApp AppConstructor for network simulation tests
@@ -396,4 +369,172 @@ func GenesisStateWithValSet(
 	genesisState[banktypes.ModuleName] = codec.MustMarshalJSON(bankGenesis)
 	println(string(genesisState[banktypes.ModuleName]))
 	return genesisState, nil
+}
+
+func GeneratePrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
+	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
+	keys = make([]cryptotypes.PrivKey, n)
+	addrs = make([]sdk.AccAddress, n)
+	for i := 0; i < n; i++ {
+		secret := make([]byte, 32)
+		_, err := r.Read(secret)
+		if err != nil {
+			panic("Could not read randomness")
+		}
+		keys[i] = secp256k1.GenPrivKeyFromSecret(secret)
+		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
+	}
+	return
+}
+
+type AuthBankGenesisBuilder struct {
+	AuthGenesis authtypes.GenesisState
+	BankGenesis banktypes.GenesisState
+}
+
+// NewAuthBankGenesisBuilder creates a AuthBankGenesisBuilder containing default genesis states.
+func NewAuthBankGenesisBuilder() *AuthBankGenesisBuilder {
+	return &AuthBankGenesisBuilder{
+		AuthGenesis: *authtypes.DefaultGenesisState(),
+		BankGenesis: *banktypes.DefaultGenesisState(),
+	}
+}
+
+// BuildMarshalled assembles the final GenesisState and json encodes it into a generic genesis type.
+func (builder *AuthBankGenesisBuilder) BuildMarshalled(cdc codec.JSONCodec) GenesisState {
+	return GenesisState{
+		authtypes.ModuleName: cdc.MustMarshalJSON(&builder.AuthGenesis),
+		banktypes.ModuleName: cdc.MustMarshalJSON(&builder.BankGenesis),
+	}
+}
+
+// WithAccounts adds accounts of any type to the genesis state.
+func (builder *AuthBankGenesisBuilder) WithAccounts(account ...authtypes.GenesisAccount) *AuthBankGenesisBuilder {
+	existing, err := authtypes.UnpackAccounts(builder.AuthGenesis.Accounts)
+	if err != nil {
+		panic(err)
+	}
+	existing = append(existing, account...)
+
+	existingPacked, err := authtypes.PackAccounts(existing)
+	if err != nil {
+		panic(err)
+	}
+	builder.AuthGenesis.Accounts = existingPacked
+	return builder
+}
+
+// WithBalances adds balances to the bank genesis state.
+// It does not check the new denom is in the genesis state denom metadata.
+func (builder *AuthBankGenesisBuilder) WithBalances(balance ...banktypes.Balance) *AuthBankGenesisBuilder {
+	builder.BankGenesis.Balances = append(builder.BankGenesis.Balances, balance...)
+	if !builder.BankGenesis.Supply.Empty() {
+		for _, b := range balance {
+			builder.BankGenesis.Supply = builder.BankGenesis.Supply.Add(b.Coins...)
+		}
+	}
+	return builder
+}
+
+// WithSimpleAccount adds a standard account to the genesis state.
+func (builder *AuthBankGenesisBuilder) WithSimpleAccount(address sdk.AccAddress, balance sdk.Coins) *AuthBankGenesisBuilder {
+	return builder.
+		WithAccounts(authtypes.NewBaseAccount(address, nil, 0, 0)).
+		WithBalances(banktypes.Balance{Address: address.String(), Coins: balance})
+}
+
+// WithSimpleModuleAccount adds a module account to the genesis state.
+func (builder *AuthBankGenesisBuilder) WithSimpleModuleAccount(moduleName string, balance sdk.Coins, permissions ...string) *AuthBankGenesisBuilder {
+	account := authtypes.NewEmptyModuleAccount(moduleName, permissions...)
+
+	return builder.
+		WithAccounts(account).
+		WithBalances(banktypes.Balance{Address: account.Address, Coins: balance})
+}
+
+// WithSimplePeriodicVestingAccount adds a periodic vesting account to the genesis state.
+func (builder *AuthBankGenesisBuilder) WithSimplePeriodicVestingAccount(address sdk.AccAddress, balance sdk.Coins, periods vestingtypes.Periods, firstPeriodStartTimestamp int64) *AuthBankGenesisBuilder {
+	vestingAccount := newPeriodicVestingAccount(address, periods, firstPeriodStartTimestamp)
+
+	return builder.
+		WithAccounts(vestingAccount).
+		WithBalances(banktypes.Balance{Address: address.String(), Coins: balance})
+}
+
+// NewFundedGenStateWithSameCoins creates a (auth and bank) genesis state populated with accounts from the given addresses and balance.
+func NewFundedGenStateWithSameCoins(cdc codec.JSONCodec, balance sdk.Coins, addresses []sdk.AccAddress) GenesisState {
+	builder := NewAuthBankGenesisBuilder()
+	for _, address := range addresses {
+		builder.WithSimpleAccount(address, balance)
+	}
+	return builder.BuildMarshalled(cdc)
+}
+
+// newPeriodicVestingAccount creates a periodic vesting account from a set of vesting periods.
+func newPeriodicVestingAccount(address sdk.AccAddress, periods vestingtypes.Periods, firstPeriodStartTimestamp int64) *vestingtypes.PeriodicVestingAccount {
+	baseAccount := authtypes.NewBaseAccount(address, nil, 0, 0)
+
+	originalVesting := sdk.NewCoins()
+	for _, p := range periods {
+		originalVesting = originalVesting.Add(p.Amount...)
+	}
+
+	var totalPeriods int64
+	for _, p := range periods {
+		totalPeriods += p.Length
+	}
+	endTime := firstPeriodStartTimestamp + totalPeriods
+
+	baseVestingAccount, _ := vestingtypes.NewBaseVestingAccount(baseAccount, originalVesting, endTime)
+	return vestingtypes.NewPeriodicVestingAccountRaw(baseVestingAccount, firstPeriodStartTimestamp, periods)
+}
+
+// AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
+// initial balance of accAmt in random order
+func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int) []sdk.AccAddress {
+	return addTestAddrs(app, ctx, accNum, accAmt, simtestutil.CreateIncrementalAccounts)
+}
+
+func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
+	testAddrs := strategy(accNum)
+	bondDenom, err := app.StakingKeeper.BondDenom(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	initCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, accAmt))
+
+	for _, addr := range testAddrs {
+		initAccountWithCoins(app, ctx, addr, initCoins)
+	}
+
+	return testAddrs
+}
+
+func initAccountWithCoins(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
+	if err != nil {
+		panic(err)
+	}
+
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// SetSDKConfig configures the global config with kava app specific parameters.
+// It does not seal the config to allow modification in tests.
+func SetSDKConfig() *sdk.Config {
+	config := sdk.GetConfig()
+	SetBech32AddressPrefixes(config)
+
+	return config
+}
+
+// SetBech32AddressPrefixes sets the global prefix to be used when serializing addresses to bech32 strings.
+func SetBech32AddressPrefixes(config *sdk.Config) {
+	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(Bech32PrefixValAddr, Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
 }
