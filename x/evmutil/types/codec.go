@@ -6,6 +6,8 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	etherminttypes "github.com/evmos/ethermint/types"
 )
 
 // RegisterLegacyAminoCodec registers the necessary evmutil interfaces and concrete types
@@ -20,6 +22,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgConvertCoinToERC20{},
 		&MsgConvertERC20ToCoin{},
 	)
+
+	// evmutil make account compatible
+	registry.RegisterImplementations((*sdk.AccountI)(nil), &etherminttypes.EthAccount{}, &authtypes.BaseAccount{})
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

@@ -98,7 +98,7 @@ func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx s
 	if err != nil {
 		panic(err)
 	}
-	app.InitChain(
+	_, err = app.InitChain(
 		&abci.RequestInitChain{
 			Time:          genTime,
 			Validators:    []abci.ValidatorUpdate{},
@@ -114,7 +114,9 @@ func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx s
 			InitialHeight: initialHeight,
 		},
 	)
-	app.Commit()
-	app.BeginBlocker(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return app
 }

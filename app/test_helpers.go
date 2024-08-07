@@ -198,7 +198,7 @@ func SetupWithGenesisValSet(
 
 // SetupWithEmptyStore set up a wasmd app instance with empty DB
 func SetupWithEmptyStore(t testing.TB) *WasmApp {
-	app, _ := setup(t, "testing", false, 0)
+	app, _ := setup(t, SimAppChainID, false, 0)
 	return app
 }
 

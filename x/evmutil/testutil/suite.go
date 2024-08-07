@@ -27,9 +27,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/evmos/ethermint/server/config"
 	etherminttests "github.com/evmos/ethermint/tests"
+	etherminttypes "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	"github.com/stretchr/testify/suite"
@@ -59,8 +61,8 @@ type Suite struct {
 }
 
 func (suite *Suite) SetupTest() {
-
-	suite.App = app.Setup(suite.T())
+	// empty setup
+	suite.App = app.SetupWithEmptyStore(suite.T())
 	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{Height: 1, Time: tmtime.Now()})
 	suite.BankKeeper = suite.App.GetBankKeeper()
 	suite.AccountKeeper = suite.App.GetAccountKeeper()
@@ -93,11 +95,13 @@ func (suite *Suite) SetupTest() {
 		sdk.AccAddress(suite.Key2.PubKey().Address()),
 	})
 
-	// gs := app.GenesisState{
-	// 	evmtypes.ModuleName:       cdc.MustMarshalJSON(evmGenesis),
-	// 	feemarkettypes.ModuleName: cdc.MustMarshalJSON(feemarketGenesis),
-	// }
-	suite.App.InitializeFromGenesisStates(suite.Ctx, authGS)
+	validatorGS := app.GenesisStateWithSingleValidator(suite.T(), suite.App)
+
+	gs := app.GenesisState{
+		evmtypes.ModuleName:       cdc.MustMarshalJSON(evmGenesis),
+		feemarkettypes.ModuleName: cdc.MustMarshalJSON(feemarketGenesis),
+	}
+	suite.App.InitializeFromGenesisStates(suite.Ctx, authGS, validatorGS, gs)
 
 	// consensus key - needed to set up evm module
 	consPriv, err := ethsecp256k1.GenerateKey()
@@ -107,7 +111,7 @@ func (suite *Suite) SetupTest() {
 	// InitializeFromGenesisStates commits first block so we start at 2 here
 	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{
 		Height:          suite.App.LastBlockHeight() + 1,
-		ChainID:         "kavatest_1-1",
+		ChainID:         app.SimAppChainID,
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 		Version: tmversion.Consensus{
@@ -132,12 +136,10 @@ func (suite *Suite) SetupTest() {
 	// We need to set the validator as calling the EVM looks up the validator address
 	// https://github.com/CosmWasm/wasmd/blob/f21592ebfe74da7590eb42ed926dae970b2a9a3f/x/evm/keeper/state_transition.go#L487
 	// evmkeeper.EVMConfig() will return error "failed to load evm config" if not set
-	// acc := &etherminttypes.EthAccount{
-	// 	BaseAccount: authtypes.NewBaseAccount(sdk.AccAddress(suite.Address.Bytes()), nil, 1, 1),
-	// 	CodeHash:    common.BytesToHash(crypto.Keccak256(nil)).String(),
-	// }
-	acc := suite.AccountKeeper.NewAccountWithAddress(suite.Ctx, suite.Address.Bytes())
-	suite.Require().NoError(acc.SetSequence(1))
+	acc := &etherminttypes.EthAccount{
+		BaseAccount: authtypes.NewBaseAccount(sdk.AccAddress(suite.Address.Bytes()), nil, 1, 1),
+		CodeHash:    common.BytesToHash(crypto.Keccak256(nil)).String(),
+	}
 
 	suite.AccountKeeper.SetAccount(suite.Ctx, acc)
 	valAddr := sdk.ValAddress(suite.Address.Bytes())
@@ -171,8 +173,7 @@ func (suite *Suite) SetupTest() {
 
 func (suite *Suite) Commit() {
 
-	// finalize block so we have CheckTx state set
-	// _, _ = suite.App.Commit()
+	_, _ = suite.App.Commit()
 	header := suite.Ctx.BlockHeader()
 	header.Height += 1
 	suite.App.BeginBlocker(suite.Ctx)
