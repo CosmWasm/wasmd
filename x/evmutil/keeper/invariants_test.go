@@ -42,7 +42,7 @@ func (suite *invariantTestSuite) SetupValidState() {
 	suite.FundModuleAccountWithKava(
 		types.ModuleName,
 		sdk.NewCoins(
-			sdk.NewCoin("ukava", sdkmath.NewInt(2)), // ( sum of all minor balances ) / conversion multiplier
+			sdk.NewCoin("orai", sdkmath.NewInt(2)), // ( sum of all minor balances ) / conversion multiplier
 		),
 	)
 

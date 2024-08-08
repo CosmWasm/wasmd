@@ -85,14 +85,14 @@ func (suite *Suite) SetupTest() {
 	suite.Addrs = addrs
 
 	evmGenesis := evmtypes.DefaultGenesisState()
-	evmGenesis.Params.EvmDenom = "akava"
+	evmGenesis.Params.EvmDenom = app.EvmDenom
 
 	feemarketGenesis := feemarkettypes.DefaultGenesisState()
 	feemarketGenesis.Params.EnableHeight = 1
 	feemarketGenesis.Params.NoBaseFee = false
 
 	cdc := suite.App.AppCodec()
-	coins := sdk.NewCoins(sdk.NewInt64Coin("ukava", 1000_000_000_000_000_000))
+	coins := sdk.NewCoins(sdk.NewInt64Coin("orai", 1000_000_000_000_000_000))
 	authGS := app.NewFundedGenStateWithSameCoins(cdc, coins, []sdk.AccAddress{
 		sdk.AccAddress(suite.Key1.PubKey().Address()),
 		sdk.AccAddress(suite.Key2.PubKey().Address()),
@@ -109,7 +109,7 @@ func (suite *Suite) SetupTest() {
 	consAddress := sdk.ConsAddress(suite.Key1.PubKey().Address())
 
 	// InitializeFromGenesisStates commits first block so we start at 2 here
-	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{
+	suite.Ctx = suite.App.NewUncachedContext(false, tmproto.Header{
 		Height:          suite.App.LastBlockHeight() + 1,
 		ChainID:         app.SimAppChainID,
 		Time:            time.Now().UTC(),
@@ -143,7 +143,13 @@ func (suite *Suite) SetupTest() {
 		CodeHash:    common.BytesToHash(crypto.Keccak256(nil)).String(),
 	}
 
+	suite.FundAccountWithKava(suite.Addrs[0], sdk.NewCoins(
+		sdk.NewInt64Coin("aorai", 200),
+		sdk.NewInt64Coin("orai", 100),
+	))
+
 	suite.AccountKeeper.SetAccount(suite.Ctx, acc)
+
 	valAddr := sdk.ValAddress(suite.Address.Bytes())
 	validator, err := stakingtypes.NewValidator(valAddr.String(), suite.Key1.PubKey(), stakingtypes.Description{})
 	suite.Require().NoError(err)
@@ -164,6 +170,10 @@ func (suite *Suite) SetupTest() {
 		),
 	))
 
+	suite.App.EvmKeeper.SetParams(suite.Ctx, evmGenesis.Params)
+
+	suite.App.FeeMarketKeeper.SetBaseFee(suite.Ctx, big.NewInt(100))
+
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
 	evmtypes.RegisterQueryServer(queryHelper, suite.App.EvmKeeper)
 	suite.QueryClientEvm = evmtypes.NewQueryClient(queryHelper)
@@ -173,6 +183,7 @@ func (suite *Suite) SetupTest() {
 	// We need to commit so that the ethermint feemarket beginblock runs to set the minfee
 	// feeMarketKeeper.GetBaseFee() will return nil otherwise
 	suite.Commit()
+
 }
 
 func (suite *Suite) Commit() {
@@ -180,19 +191,20 @@ func (suite *Suite) Commit() {
 	_, _ = suite.App.Commit()
 	header := suite.Ctx.BlockHeader()
 	header.Height += 1
-	suite.App.BeginBlocker(suite.Ctx)
+	suite.App.FinalizeBlock(&abci.RequestFinalizeBlock{Height: header.Height})
 
 	// update ctx
-	suite.Ctx = suite.App.NewContextLegacy(true, header)
+	suite.Ctx = suite.App.NewUncachedContext(false, header)
+
 }
 
 func (suite *Suite) FundAccountWithKava(addr sdk.AccAddress, coins sdk.Coins) {
-	ukava := coins.AmountOf("ukava")
+	ukava := coins.AmountOf("orai")
 	if ukava.IsPositive() {
-		err := suite.App.FundAccount(suite.Ctx, addr, sdk.NewCoins(sdk.NewCoin("ukava", ukava)))
+		err := suite.App.FundAccount(suite.Ctx, addr, sdk.NewCoins(sdk.NewCoin("orai", ukava)))
 		suite.Require().NoError(err)
 	}
-	akava := coins.AmountOf("akava")
+	akava := coins.AmountOf("aorai")
 	if ukava.IsPositive() {
 		err := suite.Keeper.SetBalance(suite.Ctx, addr, akava)
 		suite.Require().NoError(err)
@@ -200,12 +212,12 @@ func (suite *Suite) FundAccountWithKava(addr sdk.AccAddress, coins sdk.Coins) {
 }
 
 func (suite *Suite) FundModuleAccountWithKava(moduleName string, coins sdk.Coins) {
-	ukava := coins.AmountOf("ukava")
+	ukava := coins.AmountOf("orai")
 	if ukava.IsPositive() {
-		err := suite.App.FundModuleAccount(suite.Ctx, moduleName, sdk.NewCoins(sdk.NewCoin("ukava", ukava)))
+		err := suite.App.FundModuleAccount(suite.Ctx, moduleName, sdk.NewCoins(sdk.NewCoin("orai", ukava)))
 		suite.Require().NoError(err)
 	}
-	akava := coins.AmountOf("akava")
+	akava := coins.AmountOf("aorai")
 	if ukava.IsPositive() {
 		addr := suite.AccountKeeper.GetModuleAddress(moduleName)
 		err := suite.Keeper.SetBalance(suite.Ctx, addr, akava)
@@ -219,7 +231,7 @@ func (suite *Suite) DeployERC20() types.InternalEVMAddress {
 	suite.App.FundModuleAccount(
 		suite.Ctx,
 		types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(0))),
+		sdk.NewCoins(sdk.NewCoin("orai", sdkmath.NewInt(0))),
 	)
 
 	contractAddr, err := suite.Keeper.DeployTestMintableERC20Contract(suite.Ctx, "USDC", "USDC", uint8(18))
@@ -321,7 +333,7 @@ func (suite *Suite) SendTx(
 	// Mint the max gas to the FeeCollector to ensure balance in case of refund
 	suite.MintFeeCollector(sdk.NewCoins(
 		sdk.NewCoin(
-			"ukava",
+			"orai",
 			sdkmath.NewInt(baseFee.Int64()*int64(gasRes.Gas*2)),
 		)))
 

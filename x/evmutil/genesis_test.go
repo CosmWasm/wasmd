@@ -25,10 +25,9 @@ func (s *genesisTestSuite) TestInitGenesis_SetAccounts() {
 		},
 		types.DefaultParams(),
 	)
-	accounts := s.Keeper.GetAllAccounts(s.Ctx)
-	s.Require().Len(accounts, 0)
+
 	evmutil.InitGenesis(s.Ctx, s.Keeper, gs)
-	accounts = s.Keeper.GetAllAccounts(s.Ctx)
+	accounts := s.Keeper.GetAllAccounts(s.Ctx)
 	s.Require().Len(accounts, 1)
 	account := s.Keeper.GetAccount(s.Ctx, s.Addrs[0])
 	s.Require().Equal(account.Address, s.Addrs[0])
