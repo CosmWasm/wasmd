@@ -22,6 +22,10 @@ func TestConversionTestSuite(t *testing.T) {
 	suite.Run(t, new(ConversionTestSuite))
 }
 
+func (suite *ConversionTestSuite) SetupTest() {
+	suite.Suite.SetupTest()
+}
+
 func (suite *ConversionTestSuite) TestMint() {
 	pair := types.NewConversionPair(
 		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
@@ -35,7 +39,7 @@ func (suite *ConversionTestSuite) TestMint() {
 	suite.Require().NoError(err)
 	suite.Require().Equal(sdk.NewCoin(pair.Denom, sdkmath.NewIntFromBigInt(amount)), coin)
 
-	bal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, recipient, pair.Denom)
+	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
 	suite.Require().Equal(amount, bal.Amount.BigInt(), "minted amount should increase balance")
 }
 
@@ -50,7 +54,7 @@ func (suite *ConversionTestSuite) TestBurn_InsufficientBalance() {
 
 	err := suite.Keeper.BurnConversionPairCoin(suite.Ctx, pair, sdk.NewCoin(pair.Denom, amount), recipient)
 	suite.Require().Error(err)
-	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
+	suite.Require().Equal("spendable balance 0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
 }
 
 func (suite *ConversionTestSuite) TestBurn() {
@@ -66,13 +70,13 @@ func (suite *ConversionTestSuite) TestBurn() {
 	suite.Require().NoError(err)
 	suite.Require().Equal(sdk.NewCoin(pair.Denom, amount), coin)
 
-	bal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, recipient, pair.Denom)
+	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
 	suite.Require().Equal(amount, bal.Amount, "minted amount should increase balance")
 
 	err = suite.Keeper.BurnConversionPairCoin(suite.Ctx, pair, sdk.NewCoin(pair.Denom, amount), recipient)
 	suite.Require().NoError(err)
 
-	bal = suite.App.GetBankKeeper().GetBalance(suite.Ctx, recipient, pair.Denom)
+	bal = suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
 	suite.Require().Equal(sdkmath.ZeroInt(), bal.Amount, "balance should be zero after burn")
 }
 
@@ -179,7 +183,7 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 	suite.Require().GreaterOrEqual(ctx.GasMeter().GasConsumed(), uint64(50000))
 
 	// Source should decrease
-	bal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, originAcc, pair.Denom)
+	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, originAcc, pair.Denom)
 	suite.Require().Equal(sdkmath.ZeroInt(), bal.Amount, "conversion should decrease source balance")
 
 	// Module bal should also decrease
@@ -238,7 +242,7 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
 	)
 
 	suite.Require().Error(err)
-	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
+	suite.Require().Equal("spendable balance 0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
 }
 
 func (suite *ConversionTestSuite) TestConvertCoinToERC20_NotEnabled() {
@@ -299,7 +303,7 @@ func (suite *ConversionTestSuite) TestConvertERC20ToCoin() {
 	suite.Require().GreaterOrEqual(ctx.GasMeter().GasConsumed(), uint64(50000))
 
 	// bank balance should decrease
-	bal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, userAddr, pair.Denom)
+	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, userAddr, pair.Denom)
 	suite.Require().Equal(convertAmt, bal.Amount, "conversion should decrease source balance")
 
 	// Module bal should also decrease
@@ -349,6 +353,6 @@ func (suite *ConversionTestSuite) TestConvertERC20ToCoin_EmptyContract() {
 	suite.Require().ErrorContains(err, "contract call failed: method 'balanceOf'")
 
 	// bank balance should not change
-	bal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, userAddr, pair.Denom)
+	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, userAddr, pair.Denom)
 	suite.Require().Equal(sdkmath.ZeroInt(), bal.Amount)
 }

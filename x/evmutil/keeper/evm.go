@@ -98,7 +98,7 @@ func (k Keeper) CallEVMWithData(
 	// accurate exact amount in this case, as both the chain state and tx used
 	// to estimate and apply are the exact same (ie. no txs between estimate and
 	// apply, tx order is the same, etc.)
-	gasRes, err := k.evmKeeper.EstimateGas(sdk.WrapSDKContext(ethGasContext), &evmtypes.EthCallRequest{
+	gasRes, err := k.evmKeeper.EstimateGas(ethGasContext, &evmtypes.EthCallRequest{
 		Args:   args,
 		GasCap: config.DefaultGasCap,
 	})

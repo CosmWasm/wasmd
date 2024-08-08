@@ -90,7 +90,7 @@ func (suite *MsgServerSuite) TestConvertCoinToERC20() {
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			_, err := suite.msgServer.ConvertCoinToERC20(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
+			_, err := suite.msgServer.ConvertCoinToERC20(suite.Ctx, &tc.msg)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
@@ -223,7 +223,7 @@ func (suite *MsgServerSuite) TestConvertERC20ToCoin() {
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			_, err := suite.msgServer.ConvertERC20ToCoin(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
+			_, err := suite.msgServer.ConvertERC20ToCoin(suite.Ctx, &tc.msg)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
@@ -238,7 +238,7 @@ func (suite *MsgServerSuite) TestConvertERC20ToCoin() {
 				suite.Require().Equal(expectedBal.BigInt(), bal, "user erc20 balance is invalid")
 
 				// validate user coin balance
-				coinBal := suite.App.GetBankKeeper().GetBalance(suite.Ctx, invokerCosmosAddr, pair.Denom)
+				coinBal := suite.App.BankKeeper.GetBalance(suite.Ctx, invokerCosmosAddr, pair.Denom)
 				suite.Require().Equal(tc.msg.Amount, coinBal.Amount, "user coin balance is invalid")
 
 				// msg server event

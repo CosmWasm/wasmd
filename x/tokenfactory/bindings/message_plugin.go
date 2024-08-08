@@ -144,7 +144,7 @@ func PerformMint(f *tokenfactorykeeper.Keeper, b *bankkeeper.BaseKeeper, ctx sdk
 
 	// Mint through token factory / message server
 	msgServer := tokenfactorykeeper.NewMsgServerImpl(*f)
-	_, err = msgServer.Mint(sdk.WrapSDKContext(ctx), sdkMsg)
+	_, err = msgServer.Mint(ctx, sdkMsg)
 	if err != nil {
 		return errorsmod.Wrap(err, "minting coins from message")
 	}
@@ -185,7 +185,7 @@ func ChangeAdmin(f *tokenfactorykeeper.Keeper, ctx sdk.Context, contractAddr sdk
 	}
 
 	msgServer := tokenfactorykeeper.NewMsgServerImpl(*f)
-	_, err = msgServer.ChangeAdmin(sdk.WrapSDKContext(ctx), changeAdminMsg)
+	_, err = msgServer.ChangeAdmin(ctx, changeAdminMsg)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed changing admin from message")
 	}
@@ -219,7 +219,7 @@ func PerformBurn(f *tokenfactorykeeper.Keeper, ctx sdk.Context, contractAddr sdk
 
 	// Burn through token factory / message server
 	msgServer := tokenfactorykeeper.NewMsgServerImpl(*f)
-	_, err := msgServer.Burn(sdk.WrapSDKContext(ctx), sdkMsg)
+	_, err := msgServer.Burn(ctx, sdkMsg)
 	if err != nil {
 		return errorsmod.Wrap(err, "burning coins from message")
 	}
@@ -260,7 +260,7 @@ func PerformForceTransfer(f *tokenfactorykeeper.Keeper, ctx sdk.Context, contrac
 
 	// Transfer through token factory / message server
 	msgServer := tokenfactorykeeper.NewMsgServerImpl(*f)
-	_, err = msgServer.ForceTransfer(sdk.WrapSDKContext(ctx), sdkMsg)
+	_, err = msgServer.ForceTransfer(ctx, sdkMsg)
 	if err != nil {
 		return errorsmod.Wrap(err, "force transferring from message")
 	}

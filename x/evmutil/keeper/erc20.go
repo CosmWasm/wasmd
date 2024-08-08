@@ -56,7 +56,9 @@ func (k Keeper) DeployTestMintableERC20Contract(
 	}
 
 	contractAddr := crypto.CreateAddress(types.ModuleEVMAddress, nonce)
+
 	_, err = k.CallEVMWithData(ctx, types.ModuleEVMAddress, nil, data)
+
 	if err != nil {
 		return types.InternalEVMAddress{}, fmt.Errorf("failed to deploy ERC20 for %s: %w", name, err)
 	}

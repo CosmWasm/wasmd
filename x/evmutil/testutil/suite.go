@@ -14,7 +14,6 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/cometbft/cometbft/version"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -66,9 +65,8 @@ func (suite *Suite) SetupTest() {
 
 	// empty setup
 	suite.App = app.SetupWithEmptyStore(suite.T())
-	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{Height: 1, Time: tmtime.Now()})
-	suite.BankKeeper = suite.App.GetBankKeeper()
-	suite.AccountKeeper = suite.App.GetAccountKeeper()
+	suite.BankKeeper = suite.App.BankKeeper
+	suite.AccountKeeper = suite.App.AccountKeeper
 	suite.Keeper = suite.App.EvmutilKeeper
 	suite.EvmBankKeeper = keeper.NewEvmBankKeeper(suite.App.EvmutilKeeper, suite.BankKeeper, suite.AccountKeeper)
 	suite.EvmModuleAddr = suite.AccountKeeper.GetModuleAddress(evmtypes.ModuleName)
@@ -80,6 +78,8 @@ func (suite *Suite) SetupTest() {
 	suite.Key1Addr = types.NewInternalEVMAddress(common.BytesToAddress(suite.Key1.PubKey().Address()))
 	suite.Key2, err = ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
+
+	suite.Address = common.BytesToAddress(suite.Key1.PubKey().Address().Bytes())
 
 	_, addrs := app.GeneratePrivKeyAddressPairs(4)
 	suite.Addrs = addrs
@@ -104,12 +104,9 @@ func (suite *Suite) SetupTest() {
 		evmtypes.ModuleName:       cdc.MustMarshalJSON(evmGenesis),
 		feemarkettypes.ModuleName: cdc.MustMarshalJSON(feemarketGenesis),
 	}
-	suite.App.InitializeFromGenesisStates(suite.Ctx, authGS, validatorGS, gs)
 
 	// consensus key - needed to set up evm module
-	consPriv, err := ethsecp256k1.GenerateKey()
-	suite.Require().NoError(err)
-	consAddress := sdk.ConsAddress(consPriv.PubKey().Address())
+	consAddress := sdk.ConsAddress(suite.Key1.PubKey().Address())
 
 	// InitializeFromGenesisStates commits first block so we start at 2 here
 	suite.Ctx = suite.App.NewContextLegacy(true, tmproto.Header{
@@ -136,6 +133,8 @@ func (suite *Suite) SetupTest() {
 		LastResultsHash:    tmhash.Sum([]byte("last_result")),
 	})
 
+	suite.App.InitializeFromGenesisStates(suite.Ctx, authGS, validatorGS, gs)
+
 	// We need to set the validator as calling the EVM looks up the validator address
 	// https://github.com/CosmWasm/wasmd/blob/f21592ebfe74da7590eb42ed926dae970b2a9a3f/x/evm/keeper/state_transition.go#L487
 	// evmkeeper.EVMConfig() will return error "failed to load evm config" if not set
@@ -146,12 +145,12 @@ func (suite *Suite) SetupTest() {
 
 	suite.AccountKeeper.SetAccount(suite.Ctx, acc)
 	valAddr := sdk.ValAddress(suite.Address.Bytes())
-	validator, err := stakingtypes.NewValidator(valAddr.String(), consPriv.PubKey(), stakingtypes.Description{})
+	validator, err := stakingtypes.NewValidator(valAddr.String(), suite.Key1.PubKey(), stakingtypes.Description{})
 	suite.Require().NoError(err)
 
-	err = suite.App.GetStakingKeeper().SetValidatorByConsAddr(suite.Ctx, validator)
+	err = suite.App.StakingKeeper.SetValidatorByConsAddr(suite.Ctx, validator)
 	suite.Require().NoError(err)
-	suite.App.GetStakingKeeper().SetValidator(suite.Ctx, validator)
+	suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
 
 	// add conversion pair for first module deployed contract to evmutil params
 	suite.Keeper.SetParams(suite.Ctx, types.NewParams(
@@ -293,7 +292,7 @@ func (suite *Suite) SendTx(
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
 ) (*evmtypes.MsgEthereumTxResponse, error) {
-	ctx := sdk.WrapSDKContext(suite.Ctx)
+	ctx := suite.Ctx
 	chainID := suite.App.EvmKeeper.ChainID()
 
 	args, err := json.Marshal(&evmtypes.TransactionArgs{
@@ -304,6 +303,7 @@ func (suite *Suite) SendTx(
 	if err != nil {
 		return nil, err
 	}
+
 	gasRes, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
 		Args:   args,
 		GasCap: config.DefaultGasCap,
