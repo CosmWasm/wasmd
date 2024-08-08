@@ -150,7 +150,8 @@ func (suite *Suite) SetupTest() {
 
 	err = suite.App.StakingKeeper.SetValidatorByConsAddr(suite.Ctx, validator)
 	suite.Require().NoError(err)
-	suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
+	err = suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
+	suite.Require().NoError(err)
 
 	// add conversion pair for first module deployed contract to evmutil params
 	suite.Keeper.SetParams(suite.Ctx, types.NewParams(

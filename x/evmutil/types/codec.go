@@ -4,9 +4,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	etherminttypes "github.com/evmos/ethermint/types"
 )
 
@@ -25,6 +27,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 	// evmutil make account compatible
 	registry.RegisterImplementations((*sdk.AccountI)(nil), &etherminttypes.EthAccount{}, &authtypes.BaseAccount{})
+	registry.RegisterImplementations((*cryptotypes.PrivKey)(nil), &ethsecp256k1.PrivKey{})
+	registry.RegisterImplementations((*cryptotypes.PubKey)(nil), &ethsecp256k1.PubKey{})
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
