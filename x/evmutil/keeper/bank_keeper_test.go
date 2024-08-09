@@ -702,6 +702,7 @@ func (suite *evmBankKeeperTestSuite) TestConvertOneUkavaToAkavaIfNeeded() {
 }
 
 func (suite *evmBankKeeperTestSuite) TestConvertAkavaToUkava() {
+	baseFee := int64(suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx).Uint64())
 	tests := []struct {
 		name          string
 		startingCoins sdk.Coins
@@ -710,19 +711,20 @@ func (suite *evmBankKeeperTestSuite) TestConvertAkavaToUkava() {
 		{
 			"not enough ukava",
 			sdk.NewCoins(sdk.NewInt64Coin("aorai", 100)),
-			sdk.NewCoins(sdk.NewInt64Coin("aorai", 100), sdk.NewInt64Coin("orai", 0)),
+			sdk.NewCoins(sdk.NewInt64Coin("aorai", 100+baseFee), sdk.NewInt64Coin("orai", 0+baseFee)),
 		},
 		{
 			"converts akava for 1 ukava",
 			sdk.NewCoins(sdk.NewInt64Coin("orai", 10), sdk.NewInt64Coin("aorai", 1_000_000_000_003)),
-			sdk.NewCoins(sdk.NewInt64Coin("orai", 11), sdk.NewInt64Coin("aorai", 3)),
+			sdk.NewCoins(sdk.NewInt64Coin("orai", 11+baseFee), sdk.NewInt64Coin("aorai", 3)),
 		},
 		{
 			"converts more than 1 ukava of akava",
 			sdk.NewCoins(sdk.NewInt64Coin("orai", 10), sdk.NewInt64Coin("aorai", 8_000_000_000_123)),
-			sdk.NewCoins(sdk.NewInt64Coin("orai", 18), sdk.NewInt64Coin("aorai", 123)),
+			sdk.NewCoins(sdk.NewInt64Coin("orai", 18+baseFee), sdk.NewInt64Coin("aorai", 123)),
 		},
 	}
+
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.SetupTest()
@@ -736,6 +738,7 @@ func (suite *evmBankKeeperTestSuite) TestConvertAkavaToUkava() {
 			suite.Require().Equal(tt.expectedCoins.AmountOf("aorai"), akava)
 			ukava := suite.BankKeeper.GetBalance(suite.Ctx, suite.Addrs[0], "orai")
 			suite.Require().Equal(tt.expectedCoins.AmountOf("orai"), ukava.Amount)
+
 		})
 	}
 }

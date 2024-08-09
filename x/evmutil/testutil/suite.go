@@ -171,7 +171,6 @@ func (suite *Suite) SetupTest() {
 	))
 
 	suite.App.EvmKeeper.SetParams(suite.Ctx, evmGenesis.Params)
-
 	suite.App.FeeMarketKeeper.SetBaseFee(suite.Ctx, big.NewInt(100))
 
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
@@ -228,11 +227,12 @@ func (suite *Suite) FundModuleAccountWithKava(moduleName string, coins sdk.Coins
 func (suite *Suite) DeployERC20() types.InternalEVMAddress {
 	// make sure module account is created
 	// qq: any better ways to do this?
-	suite.App.FundModuleAccount(
+	err := suite.App.FundModuleAccount(
 		suite.Ctx,
 		types.ModuleName,
 		sdk.NewCoins(sdk.NewCoin("orai", sdkmath.NewInt(0))),
 	)
+	suite.Require().NoError(err)
 
 	contractAddr, err := suite.Keeper.DeployTestMintableERC20Contract(suite.Ctx, "USDC", "USDC", uint8(18))
 	suite.Require().NoError(err)
@@ -331,11 +331,13 @@ func (suite *Suite) SendTx(
 	suite.Require().NotNil(baseFee, "base fee is nil")
 
 	// Mint the max gas to the FeeCollector to ensure balance in case of refund
-	suite.MintFeeCollector(sdk.NewCoins(
+	fees := sdk.NewCoins(
 		sdk.NewCoin(
 			"orai",
 			sdkmath.NewInt(baseFee.Int64()*int64(gasRes.Gas*2)),
-		)))
+		))
+	suite.T().Logf("fee %v", fees)
+	suite.MintFeeCollector(fees)
 
 	ercTransferTx := evmtypes.NewTx(
 		chainID,
