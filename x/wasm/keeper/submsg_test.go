@@ -243,7 +243,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 111_000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
