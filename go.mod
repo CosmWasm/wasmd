@@ -212,6 +212,9 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+// replace wasmvm with local version
+replace github.com/CosmWasm/wasmvm/v2 => ../wasmvm
+
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
