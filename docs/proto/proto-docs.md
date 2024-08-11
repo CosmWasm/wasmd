@@ -11,6 +11,10 @@
     - [CodeInfo](#cosmwasm.wasm.v1.CodeInfo)
     - [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry)
     - [ContractInfo](#cosmwasm.wasm.v1.ContractInfo)
+    - [EventCodeStored](#cosmwasm.wasm.v1.EventCodeStored)
+    - [EventContractAdminSet](#cosmwasm.wasm.v1.EventContractAdminSet)
+    - [EventContractInstantiated](#cosmwasm.wasm.v1.EventContractInstantiated)
+    - [EventContractMigrated](#cosmwasm.wasm.v1.EventContractMigrated)
     - [Model](#cosmwasm.wasm.v1.Model)
     - [Params](#cosmwasm.wasm.v1.Params)
   
@@ -233,6 +237,78 @@ ContractInfo stores a WASM contract instance
 | `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. |
 | `ibc_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.EventCodeStored"></a>
+
+### EventCodeStored
+EventCodeStored is emitted when contract code is checked and stored
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
+| `creator` | [string](#string) |  | Creator address who initially stored the code |
+| `access_config` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  |  |
+| `checksum` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.EventContractAdminSet"></a>
+
+### EventContractAdminSet
+EventContractAdminSet is emitted when new admin is set
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  |  |
+| `new_admin` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.EventContractInstantiated"></a>
+
+### EventContractInstantiated
+EventContractInstantiated is emitted when contract is instantiated
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  |  |
+| `admin` | [string](#string) |  |  |
+| `code_id` | [uint64](#uint64) |  |  |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `msg` | [bytes](#bytes) |  |  |
+| `label` | [string](#string) |  |  |
+| `creator` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.EventContractMigrated"></a>
+
+### EventContractMigrated
+EventContractMigrated is emitted when a contract get migrated to another code
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  |  |
+| `contract_address` | [string](#string) |  |  |
+| `msg` | [bytes](#bytes) |  |  |
 
 
 

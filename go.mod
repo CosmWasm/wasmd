@@ -214,7 +214,14 @@ require (
 )
 
 replace (
+	cosmossdk.io/store => github.com/InjectiveLabs/cosmos-sdk/store v1.1.1-0.20240514133821-c9bef3f12c8f
+	cosmossdk.io/x/evidence => github.com/InjectiveLabs/cosmos-sdk/x/evidence v0.1.1-0.20240426135407-dfcf7db6a1f0
+	cosmossdk.io/x/feegrant => github.com/InjectiveLabs/cosmos-sdk/x/feegrant v0.1.1-0.20240426135407-dfcf7db6a1f0
+	cosmossdk.io/x/upgrade => github.com/InjectiveLabs/cosmos-sdk/x/upgrade v0.1.2-0.20240426135407-dfcf7db6a1f0
+
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
+
+	github.com/cosmos/cosmos-sdk => github.com/InjectiveLabs/cosmos-sdk v0.50.7-0.20240514172429-bce96ae91e77
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
