@@ -228,7 +228,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 	return cmd
 }
 
-// InstantiateContract2Cmd will instantiate a contract from previously uploaded code with predicable address generated
+// InstantiateContract2Cmd will instantiate a contract from previously uploaded code with predictable address generated
 func InstantiateContract2Cmd() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{

@@ -1536,7 +1536,7 @@ code id.
 
 ### MsgInstantiateContract2
 MsgInstantiateContract2 create a new smart contract instance for the given
-code id with a predicable address.
+code id with a predictable address.
 
 
 | Field | Type | Label | Description |
