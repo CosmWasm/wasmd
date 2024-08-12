@@ -322,7 +322,7 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 
 	// ensure sensible admin is set (or explicitly immutable)
 	if adminStr == "" && !noAdmin {
-		return nil, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
+		return nil, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutable (wasmd issue #719)")
 	}
 	if adminStr != "" && noAdmin {
 		return nil, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
