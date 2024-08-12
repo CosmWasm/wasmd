@@ -274,14 +274,12 @@ func TestIBCFeesReflect(t *testing.T) {
 				PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
 					Fee: wasmvmtypes.IBCFee{
 						AckFee:     oneToken,
-						RecvFee:    oneToken,
+						ReceiveFee: oneToken,
 						TimeoutFee: []wasmvmtypes.Coin{},
 					},
-					Relayers: []string{},
-					Src: wasmvmtypes.IBCEndpoint{
-						PortID:    ibctransfertypes.PortID,
-						ChannelID: path.EndpointA.ChannelID,
-					},
+					Relayers:  []string{},
+					PortID:    ibctransfertypes.PortID,
+					ChannelID: path.EndpointA.ChannelID,
 				},
 			},
 		},
@@ -310,15 +308,13 @@ func TestIBCFeesReflect(t *testing.T) {
 				PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
 					Fee: wasmvmtypes.IBCFee{
 						AckFee:     []wasmvmtypes.Coin{},
-						RecvFee:    oneToken,
+						ReceiveFee: oneToken,
 						TimeoutFee: oneToken,
 					},
-					Relayers: []string{},
-					Sequence: pendingIncentivisedPackages[0].PacketId.Sequence,
-					Src: wasmvmtypes.IBCEndpoint{
-						PortID:    ibctransfertypes.PortID,
-						ChannelID: path.EndpointA.ChannelID,
-					},
+					Relayers:  []string{},
+					Sequence:  pendingIncentivisedPackages[0].PacketId.Sequence,
+					PortID:    ibctransfertypes.PortID,
+					ChannelID: path.EndpointA.ChannelID,
 				},
 			},
 		},

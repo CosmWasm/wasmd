@@ -328,8 +328,8 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			msg := &ibcfeetypes.MsgPayPacketFee{
 				Fee:             fee,
-				SourcePortId:    msg.PayPacketFee.Src.PortID,
-				SourceChannelId: msg.PayPacketFee.Src.ChannelID,
+				SourcePortId:    msg.PayPacketFee.PortID,
+				SourceChannelId: msg.PayPacketFee.ChannelID,
 				Signer:          sender.String(),
 				Relayers:        msg.PayPacketFee.Relayers,
 			}
@@ -341,8 +341,8 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			msg := &ibcfeetypes.MsgPayPacketFeeAsync{
 				PacketId: channeltypes.PacketId{
-					PortId:    msg.PayPacketFeeAsync.Src.PortID,
-					ChannelId: msg.PayPacketFeeAsync.Src.ChannelID,
+					PortId:    msg.PayPacketFeeAsync.PortID,
+					ChannelId: msg.PayPacketFeeAsync.ChannelID,
 					Sequence:  msg.PayPacketFeeAsync.Sequence,
 				},
 				PacketFee: ibcfeetypes.NewPacketFee(fee, sender.String(), msg.PayPacketFeeAsync.Relayers),
@@ -440,7 +440,7 @@ func ConvertIBCFee(fee *wasmvmtypes.IBCFee) (ibcfeetypes.Fee, error) {
 	if err != nil {
 		return ibcfeetypes.Fee{}, err
 	}
-	recvFee, err := ConvertWasmCoinsToSdkCoins(fee.RecvFee)
+	recvFee, err := ConvertWasmCoinsToSdkCoins(fee.ReceiveFee)
 	if err != nil {
 		return ibcfeetypes.Fee{}, err
 	}
