@@ -103,7 +103,6 @@ func (k Keeper) CallEVMWithData(
 		GasCap: config.DefaultGasCap,
 	})
 	if err != nil {
-
 		return nil, errorsmod.Wrap(evmtypes.ErrVMExecution, err.Error())
 	}
 
