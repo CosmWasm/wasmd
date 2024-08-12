@@ -22,8 +22,8 @@ func (k Keeper) ClassicAddressGenerator() AddressGenerator {
 	}
 }
 
-// PredicableAddressGenerator generates a predictable contract address
-func PredicableAddressGenerator(creator sdk.AccAddress, salt, msg []byte, fixMsg bool) AddressGenerator {
+// PredictableAddressGenerator generates a predictable contract address
+func PredictableAddressGenerator(creator sdk.AccAddress, salt, msg []byte, fixMsg bool) AddressGenerator {
 	return func(_ context.Context, _ uint64, checksum []byte) sdk.AccAddress {
 		if !fixMsg { // clear msg to not be included in the address generation
 			msg = []byte{}
