@@ -936,8 +936,8 @@ github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4 h1:xxiGoC9su
 github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240729032658-16fb0ec0a540 h1:eKScpVbDghsaMY/O7QrRZi1BvP6Q0JcQIJ367N0T2+A=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240729032658-16fb0ec0a540/go.mod h1:84xDDJEHttRT7NDGwBaUOLVOMN0JNE9x7NbsYIxXs1s=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240809021459-466a4d2d6446 h1:vupNolm+DKAAgTtda8m+UP8rqdbIv+wfiM866jHkc/g=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240809021459-466a4d2d6446/go.mod h1:smtazCjLxliih4Cvm54n83hVg9bdOPw+WArXVHGGVO4=
+github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240814153440-6fa6d0eb634f h1:UaLU3z2dJr2KaFdraB5JWLi0U4X9vWL8SJ1wwlGGVFo=
+github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240814153440-6fa6d0eb634f/go.mod h1:smtazCjLxliih4Cvm54n83hVg9bdOPw+WArXVHGGVO4=
 github.com/oraichain/juno/x/clock v0.0.0-20240730044630-b70856e973de h1:rY6c793v6tOaZC66ExXqt+3b9rY+hAi/Jh/EbmCD61U=
 github.com/oraichain/juno/x/clock v0.0.0-20240730044630-b70856e973de/go.mod h1:JAaOF+0j23OoyEgd6uhE3cgNDpZcfVZx4/DBbnMjUsc=
 github.com/ory/dockertest v3.3.5+incompatible h1:iLLK6SQwIhcbrG783Dghaaa3WPzGc+4Emza6EbVUUGA=
