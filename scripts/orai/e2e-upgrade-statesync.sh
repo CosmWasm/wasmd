@@ -10,14 +10,14 @@ EXECUTE_MSG=${EXECUTE_MSG:-'{"ping":{}}'}
 STATE_SYNC_HOME=${STATE_SYNC_HOME:-".oraid/state_sync"}
 
 # run e2e upgrade before testing statesync
-sh $PWD/scripts/e2e-upgrade.sh
+sh $PWD/scripts/orai/e2e-upgrade.sh
 
 # sleep a bit for the network to start 
 echo "Sleep to wait for the network to start and wait for new snapshot intervals are after the upgrade to take place..."
 sleep 60s
 
 # now we setup statesync node
-sh $PWD/scripts/state_sync.sh
+sh $PWD/scripts/orai/state_sync.sh
 
 echo "Sleep 1 min to get statesync done..."
 sleep 1m

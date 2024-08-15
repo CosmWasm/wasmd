@@ -2,7 +2,7 @@
 # Before running this script, you must setup local network:
 # sh $PWD/scripts/multinode-local-testnet.sh
 
-WASM_PATH=${WASM_PATH:-"$PWD/scripts/wasm_file/cw-clock-example.wasm"}
+WASM_PATH=${WASM_PATH:-"$PWD/scripts/orai/wasm_file/cw-clock-example.wasm"}
 ARGS="--chain-id testing -y --keyring-backend test --gas auto --gas-adjustment 1.5 -b block"
 VALIDATOR_HOME=${VALIDATOR_HOME:-"$HOME/.oraid/validator1"}
 QUERY_MSG=${QUERY_MSG:-'{"get_config":{}}'}

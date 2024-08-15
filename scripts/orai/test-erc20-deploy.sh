@@ -10,7 +10,7 @@ PRIVATE_KEY_ETH=${PRIVATE_KEY_ETH:-"021646C7F742C743E60CC460C56242738A3951667E71
 current_dir=$PWD
 
 # clone repo
-rm -rf ../../erc20-deploy/ && git clone https://github.com/oraichain/evm-bridge-proxy.git ../../erc20-deploy && cd ../../erc20-deploy
+rm -rf ../erc20-deploy/ && git clone https://github.com/oraichain/evm-bridge-proxy.git ../erc20-deploy && cd ../erc20-deploy
 
 # prepare env and chain
 yarn && yarn compile;
@@ -30,4 +30,4 @@ if [ $contract_addr_len -ne 42 ] ; then
    rm -rf ../../erc20-deploy/ && exit 1
 fi
 
-echo "ERC20 Test Passed"; rm -rf ../../erc20-deploy/ && cd $current_dir
+echo "ERC20 Test Passed"; rm -rf ../erc20-deploy/ && cd $current_dir
