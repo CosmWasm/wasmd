@@ -83,7 +83,7 @@ ifeq ($(OS),Windows_NT)
 	$(error oraid server not supported. Use "make build-windows-client" for client)
 	exit 1
 else
-	go build -mod=readonly $(BUILD_FLAGS) -o build/oraid ./cmd/wasmd
+	go build -mod=readonly $(BUILD_FLAGS) -o build/oraid ./cmd/wasmd && mv build/oraid $(GOPATH)/bin/oraid
 endif
 
 build-windows-client: go.sum

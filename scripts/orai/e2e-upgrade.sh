@@ -12,13 +12,14 @@ VALIDATOR_HOME=${VALIDATOR_HOME:-"$HOME/.oraid/validator1"}
 MIGRATE_MSG=${MIGRATE_MSG:-'{}'}
 EXECUTE_MSG=${EXECUTE_MSG:-'{"ping":{}}'}
 HIDE_LOGS="/dev/null"
+GO_VERSION=$(go version | awk '{print $3}')
 
 # kill all running binaries
 pkill oraid && sleep 2
 
 # download current production binary
 current_dir=$PWD
-rm -rf ../orai-old/ && git clone https://github.com/oraichain/orai.git ../orai-old && cd ../orai-old/orai && git checkout $OLD_VERSION && go mod tidy && GOTOOLCHAIN=go1.21.4 make install
+rm -rf ../orai-old/ && git clone https://github.com/oraichain/orai.git ../orai-old && cd ../orai-old/orai && git checkout $OLD_VERSION && go mod tidy && GOTOOLCHAIN=$GO_VERSION make build
 
 cd $current_dir
 
@@ -58,7 +59,7 @@ cd ../orai-old/orai && git checkout $NEW_VERSION
 
 # install new binary for the upgrade
 echo "install new binary"
-GOTOOLCHAIN=go1.21.4 make install
+GOTOOLCHAIN=$GO_VERSION make build
 
 # Back to current folder
 cd $current_dir
