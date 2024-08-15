@@ -127,6 +127,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	srvflags "github.com/evmos/ethermint/server/flags"
 	"github.com/spf13/cast"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -614,11 +615,11 @@ func NewWasmApp(
 	evmBankKeeper := evmutilkeeper.NewEvmBankKeeperWithDenoms(app.EvmutilKeeper, app.BankKeeper, app.AccountKeeper, EvmDenom, CosmosDenom)
 
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
-
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
 		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
-		nil, geth.NewEVM, "", evmSs,
+		nil, geth.NewEVM, tracer, evmSs,
 	)
 	app.EvmutilKeeper.SetEvmKeeper(app.EvmKeeper)
 
