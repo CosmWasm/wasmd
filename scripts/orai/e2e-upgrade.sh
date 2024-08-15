@@ -54,7 +54,7 @@ done
 pkill oraid
 
 # Becasue we have not moved codebase to wasmd yet then we have to take old repo to make new version of oraid
-cd ../orai/orai
+cd ../orai-old/orai && git checkout $NEW_VERSION
 
 # install new binary for the upgrade
 echo "install new binary"
