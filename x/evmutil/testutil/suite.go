@@ -105,11 +105,13 @@ func (suite *Suite) SetupTest() {
 		feemarkettypes.ModuleName: cdc.MustMarshalJSON(feemarketGenesis),
 	}
 
+	suite.App.InitializeFromGenesisStates(authGS, validatorGS, gs)
+
 	// consensus key - needed to set up evm module
 	consAddress := sdk.ConsAddress(suite.Key1.PubKey().Address())
 
 	// InitializeFromGenesisStates commits first block so we start at 2 here
-	suite.Ctx = suite.App.NewUncachedContext(false, tmproto.Header{
+	suite.Ctx = suite.App.NewContextLegacy(false, tmproto.Header{
 		Height:          suite.App.LastBlockHeight() + 1,
 		ChainID:         app.SimAppChainID,
 		Time:            time.Now().UTC(),
@@ -132,8 +134,6 @@ func (suite *Suite) SetupTest() {
 		ConsensusHash:      tmhash.Sum([]byte("consensus")),
 		LastResultsHash:    tmhash.Sum([]byte("last_result")),
 	})
-
-	suite.App.InitializeFromGenesisStates(suite.Ctx, authGS, validatorGS, gs)
 
 	// We need to set the validator as calling the EVM looks up the validator address
 	// https://github.com/CosmWasm/wasmd/blob/f21592ebfe74da7590eb42ed926dae970b2a9a3f/x/evm/keeper/state_transition.go#L487
@@ -186,14 +186,16 @@ func (suite *Suite) SetupTest() {
 }
 
 func (suite *Suite) Commit() {
-
-	_, _ = suite.App.Commit()
 	header := suite.Ctx.BlockHeader()
-	header.Height += 1
 	suite.App.FinalizeBlock(&abci.RequestFinalizeBlock{Height: header.Height})
 
+	_, _ = suite.App.Commit()
+
+	header.Height += 1
+	header.AppHash = suite.App.LastCommitID().Hash
+
 	// update ctx
-	suite.Ctx = suite.App.NewUncachedContext(false, header)
+	suite.Ctx = suite.Ctx.WithBlockHeader(header)
 
 }
 
