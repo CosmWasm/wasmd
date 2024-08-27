@@ -113,13 +113,13 @@ func TestConstructorOptions(t *testing.T) {
 		"max query recursion limit": {
 			srcOpt: WithMaxQueryStackSize(1),
 			verify: func(t *testing.T, k Keeper) {
-				assert.IsType(t, uint32(1), k.maxQueryStackSize)
+				assert.Equal(t, uint32(1), k.maxQueryStackSize)
 			},
 		},
 		"max message recursion limit": {
 			srcOpt: WithMaxCallDepth(1),
 			verify: func(t *testing.T, k Keeper) {
-				assert.IsType(t, uint32(1), k.maxCallDepth)
+				assert.Equal(t, uint32(1), k.maxCallDepth)
 			},
 		},
 		"accepted account types": {
