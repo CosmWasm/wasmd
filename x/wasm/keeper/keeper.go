@@ -431,7 +431,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 
 	data, err := k.handleContractResponse(sdkCtx, contractAddress, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Data, res.Ok.Events)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "dispatch")
+		return nil, err
 	}
 
 	return data, nil
@@ -1481,7 +1481,7 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 	result := origRspData
 	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, messages); {
 	case err != nil:
-		return nil, errorsmod.Wrap(err, "submessages")
+		return nil, err
 	case rsp != nil:
 		result = rsp
 	}
