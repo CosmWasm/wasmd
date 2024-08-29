@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/tests/ibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 

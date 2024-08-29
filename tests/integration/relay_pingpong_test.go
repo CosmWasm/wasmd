@@ -17,7 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	app2 "github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
