@@ -153,7 +153,9 @@ import (
 
 	simappparams "cosmossdk.io/simapp/params"
 	evmv1 "github.com/evmos/ethermint/api/ethermint/evm/v1"
+	evmante "github.com/evmos/ethermint/app/ante"
 	"github.com/evmos/ethermint/ethereum/eip712"
+	etherminttypes "github.com/evmos/ethermint/types"
 	"github.com/evmos/ethermint/x/evm"
 	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
@@ -1119,12 +1121,14 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
 			HandlerOptions: ante.HandlerOptions{
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: txConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  DefaultSigGasConsumer,
+				SignModeHandler:        txConfig.SignModeHandler(),
+				FeegrantKeeper:         app.FeeGrantKeeper,
+				SigGasConsumer:         DefaultSigGasConsumer,
+				ExtensionOptionChecker: etherminttypes.HasDynamicFeeExtensionOption,
+				TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
 			},
 			AccountKeeper:         app.AccountKeeper,
+			BankKeeper:            app.BankKeeper,
 			IBCKeeper:             app.IBCKeeper,
 			EvmKeeper:             app.EvmKeeper,
 			FeeMarketKeeper:       app.FeeMarketKeeper,
@@ -1132,6 +1136,12 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 			WasmKeeper:            &app.WasmKeeper,
 			TXCounterStoreService: runtime.NewKVStoreService(txCounterStoreKey),
 			CircuitKeeper:         &app.CircuitKeeper,
+			DisabledAuthzMsgs: []string{
+				sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
+				sdk.MsgTypeURL(&vestingtypes.MsgCreateVestingAccount{}),
+				sdk.MsgTypeURL(&vestingtypes.MsgCreatePermanentLockedAccount{}),
+				sdk.MsgTypeURL(&vestingtypes.MsgCreatePeriodicVestingAccount{}),
+			},
 		},
 	)
 	if err != nil {
