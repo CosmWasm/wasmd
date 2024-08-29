@@ -22,7 +22,7 @@ func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
 	myAddress := sdk.AccAddress(rand.Bytes(address.Len))
 
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
+	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 

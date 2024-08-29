@@ -19,11 +19,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -54,7 +54,7 @@ type testData struct {
 	faucet           *keeper.TestFaucet
 	grpcQueryRouter  *baseapp.GRPCQueryRouter
 	msgServiceRouter *baseapp.MsgServiceRouter
-	encConf          params.EncodingConfig
+	encConf          moduletestutil.TestEncodingConfig
 }
 
 func setupTest(t *testing.T) testData {
