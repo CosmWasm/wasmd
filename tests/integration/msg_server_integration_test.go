@@ -20,10 +20,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-//go:embed ../../../x/wasm/keeper/testdata/reflect_1_5.wasm
+//go:embed testdata/reflect_1_5.wasm
 var wasmContract []byte
 
-//go:embed ../../../x/wasm/keeper/testdata/hackatom.wasm
+//go:embed testdata/hackatom.wasm
 var hackatomContract []byte
 
 func TestStoreCode(t *testing.T) {

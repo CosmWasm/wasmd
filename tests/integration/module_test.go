@@ -107,7 +107,7 @@ func mustLoad(path string) []byte {
 var (
 	addrAcc1     = keyPubAddr()
 	addr1        = addrAcc1.String()
-	testContract = mustLoad("./keeper/testdata/hackatom.wasm")
+	testContract = mustLoad("./testdata/hackatom.wasm")
 	maskContract = testdata.ReflectContractWasm()
 	oldContract  = mustLoad("./testdata/escrow_0.7.wasm")
 )

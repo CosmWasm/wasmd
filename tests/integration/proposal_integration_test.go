@@ -42,8 +42,7 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	keepers.Faucet.Fund(pCtx, myAddress, sdk.NewCoin("denom", sdkmath.NewIntFromUint64(100_000_000)))
 
 	reflectExample := keeper.InstantiateReflectExampleContract(t, pCtx, keepers)
-	burnerCodeID, _, err := k.create(pCtx, myAddress, testdata.BurnerContractWasm(), nil, keeper.DefaultAuthorizationPolicy{}) //TODO: what to do here
-	require.NoError(t, err)
+	burnerExample := keeper.StoreBurnerExampleContract(t, pCtx, keepers)
 	hackatomExample := keeper.InstantiateHackatomExampleContract(t, pCtx, keepers)
 
 	type StealMsg struct {
@@ -114,7 +113,7 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 				Title:       "Foo",
 				Description: "Bar",
 				Contract:    reflectExample.Contract.String(),
-				CodeID:      burnerCodeID,
+				CodeID:      burnerExample.CodeID,
 				Msg:         []byte(fmt.Sprintf(`{"payout": "%s"}`, myAddress)),
 			},
 		},

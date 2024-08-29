@@ -695,6 +695,27 @@ func InstantiateReflectExampleContract(t testing.TB, ctx sdk.Context, keepers Te
 	}
 }
 
+// InstantiateReflectExampleContractWithPortID load and instantiate the "./testdata/reflect_2_0.wasm" contract with defined port ID
+func InstantiateReflectExampleContractWithPortID(t testing.TB, ctx sdk.Context, keepers TestKeepers, portID string) ExampleInstance {
+	example := StoreReflectContract(t, ctx, keepers)
+	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	label := "demo contract to query"
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, example.CreatorAddr, []byte("{}"), label, initialAmount)
+
+	require.NoError(t, err)
+
+	cInfo := keepers.WasmKeeper.GetContractInfo(ctx, contractAddr)
+	cInfo.IBCPortID = portID
+	keepers.WasmKeeper.mustStoreContractInfo(ctx, contractAddr, cInfo)
+
+	return ExampleInstance{
+		ExampleContract: example,
+		Contract:        contractAddr,
+		Label:           label,
+		Deposit:         initialAmount,
+	}
+}
+
 type HackatomExampleInitMsg struct {
 	Verifier    sdk.AccAddress `json:"verifier"`
 	Beneficiary sdk.AccAddress `json:"beneficiary"`

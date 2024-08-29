@@ -713,12 +713,10 @@ func TestIBCListChannelsQuery(t *testing.T) {
 	pCtx, keepers := keeper.CreateTestInput(t, false, ReflectCapabilities, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 	nonIbcExample := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
-	ibcExample := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
 	// add an ibc port for testing
 	myIBCPortID := "myValidPortID"
-	cInfo := keeper.GetContractInfo(pCtx, ibcExample.Contract)
-	cInfo.IBCPortID = myIBCPortID
-	keeper.mustStoreContractInfo(pCtx, ibcExample.Contract, cInfo) //TODO: what to do here
+	ibcExample := wasmKeeper.InstantiateReflectExampleContractWithPortID(t, pCtx, keepers, myIBCPortID)
+
 	// store a random channel to be ignored in queries
 	unusedChan := channeltypes.Channel{
 		State:    channeltypes.OPEN,

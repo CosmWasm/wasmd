@@ -200,10 +200,10 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
 
 			// setup chain B contracts
-			reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect_1_5.wasm").CodeID
+			reflectID := chainB.StoreCodeFile("./testdata/reflect_1_5.wasm").CodeID
 			initMsg, err := json.Marshal(wasmkeeper.IBCReflectInitMsg{ReflectCodeID: reflectID})
 			require.NoError(t, err)
-			codeID := chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID
+			codeID := chainB.StoreCodeFile("./testdata/ibc_reflect.wasm").CodeID
 			ibcReflectContractAddr := chainB.InstantiateContract(codeID, initMsg)
 
 			// establish IBC channels
@@ -275,10 +275,10 @@ func TestIBCAsyncAck(t *testing.T) {
 	myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
 
 	// setup chain B contracts
-	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect_1_5.wasm").CodeID
+	reflectID := chainB.StoreCodeFile("./testdata/reflect_1_5.wasm").CodeID
 	initMsg, err := json.Marshal(wasmkeeper.IBCReflectInitMsg{ReflectCodeID: reflectID})
 	require.NoError(t, err)
-	codeID := chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID
+	codeID := chainB.StoreCodeFile("./testdata/ibc_reflect.wasm").CodeID
 	ibcReflectContractAddr := chainB.InstantiateContract(codeID, initMsg)
 
 	// establish IBC channels
