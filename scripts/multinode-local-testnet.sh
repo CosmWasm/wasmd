@@ -1,5 +1,5 @@
 #!/bin/bash
-set -u
+set -ux
 
 HIDE_LOGS="/dev/null"
 CHAIN_ID=${CHAIN_ID:-mychain_1-2}
@@ -128,6 +128,11 @@ sed -i -E 's|tcp://127.0.0.1:26657|tcp://0.0.0.0:26651|g' $VALIDATOR3_CONFIG
 sed -i -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26650|g' $VALIDATOR3_CONFIG
 sed -i -E 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $VALIDATOR3_CONFIG
 
+# enable lcd
+sed -i -e "s%^enable *=.*%enable = true%; " $VALIDATOR1_APP_TOML
+sed -i -e "s%^enable *=.*%enable = true%; " $VALIDATOR2_APP_TOML
+sed -i -e "s%^enable *=.*%enable = true%; " $VALIDATOR3_APP_TOML
+
 # modify jsonrpc ports to avoid clashing
 sed -i -E 's|0.0.0.0:8545|0.0.0.0:7545|g' $VALIDATOR2_APP_TOML
 sed -i -e "s%^ws-address *=.*%ws-address = \"0.0.0.0:7546\"%; " $VALIDATOR2_APP_TOML
@@ -149,22 +154,22 @@ screen -S validator2 -d -m oraid start --home $VALIDATOR2_HOME
 screen -S validator3 -d -m oraid start --home $VALIDATOR3_HOME
 
 # send orai from first validator to second validator
-echo "Waiting 12 seconds to send funds to validators 2 and 3..."
-sleep 7
+echo "Waiting 5 seconds to start the validators..."
+sleep 5
 
 oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) $(oraid keys show validator2 -a $ARGS --home $VALIDATOR2_HOME) 5000000000orai  --home $VALIDATOR1_HOME $TX_SEND_ARGS > $HIDE_LOGS
 
 # need to sleep to send fund to validator3
-sleep 5
+sleep 1
 oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) $(oraid keys show validator3 -a $ARGS --home $VALIDATOR3_HOME) 5000000000orai  --home $VALIDATOR1_HOME $TX_SEND_ARGS > $HIDE_LOGS
 # send test orai to a test account
 # oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) orai14n3tx8s5ftzhlxvq0w5962v60vd82h30rha573 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS > $HIDE_LOGS
 
-echo "Waiting 5 seconds to create two new validators..."
-sleep 5
+echo "Waiting 1 second to create two new validators..."
+sleep 1
 
 update_validator () {    
-    cat $PWD/scripts/orai/json/validator.json | jq "$1" > $PWD/scripts/orai/json/temp_validator.json && mv $PWD/scripts/orai/json/temp_validator.json $PWD/scripts/orai/json/validator.json
+    cat $PWD/scripts/json/validator.json | jq "$1" > $PWD/scripts/json/temp_validator.json && mv $PWD/scripts/json/temp_validator.json $PWD/scripts/json/validator.json
 }
 
 VALIDATOR2_PUBKEY=$(oraid comet show-validator --home $VALIDATOR2_HOME | jq -r '.key')
@@ -174,12 +179,12 @@ VALIDATOR3_PUBKEY=$(oraid comet show-validator --home $VALIDATOR3_HOME | jq -r '
 update_validator ".pubkey[\"key\"]=\"$VALIDATOR2_PUBKEY\""
 update_validator '.moniker="validator2"'
 update_validator '.amount="500000000orai"'
-oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from validator2 --home $VALIDATOR2_HOME $TX_SEND_ARGS  > $HIDE_LOGS
+oraid tx staking create-validator $PWD/scripts/json/validator.json  --from validator2 --home $VALIDATOR2_HOME $TX_SEND_ARGS  > $HIDE_LOGS
 
 # create third validator
 update_validator ".pubkey[\"key\"]=\"$VALIDATOR3_PUBKEY\""
 update_validator '.moniker="validator3"'
 update_validator '.amount="500000000orai"'
-oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from=validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
+oraid tx staking create-validator $PWD/scripts/json/validator.json  --from=validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
 
 echo "All 3 Validators are up and running!"

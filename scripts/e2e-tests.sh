@@ -5,10 +5,13 @@ set -eu
 # setup the network using the old binary
 
 WASM_PATH=${WASM_PATH:-"$PWD/scripts/wasm_file/swapmap.wasm"}
-ARGS="--chain-id testing -y --keyring-backend test --gas auto --gas-adjustment 1.5 -b block"
+ARGS="--chain-id testing -y --keyring-backend test --gas auto --gas-adjustment 1.5"
 NEW_VERSION=${NEW_VERSION:-"v0.42.3"}
 VALIDATOR_HOME=${VALIDATOR_HOME:-"$HOME/.oraid/validator1"}
 re='^[0-9]+([.][0-9]+)?$'
+
+# rebuild the latest code before testing
+make build
 
 # setup local network
 sh $PWD/scripts/multinode-local-testnet.sh
