@@ -163,9 +163,9 @@ import (
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	protov2 "google.golang.org/protobuf/proto"
 
-	"github.com/CosmWasm/wasmd/x/evmutil"
-	evmutilkeeper "github.com/CosmWasm/wasmd/x/evmutil/keeper"
-	evmutiltypes "github.com/CosmWasm/wasmd/x/evmutil/types"
+	"github.com/evmos/ethermint/x/erc20"
+	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
+	erc20types "github.com/evmos/ethermint/x/erc20/types"
 )
 
 const appName = "WasmApp"
@@ -221,7 +221,7 @@ var maccPerms = map[string][]string{
 	wasmtypes.ModuleName:         {authtypes.Burner},
 	tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
-	evmutiltypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+	erc20types.ModuleName:        {authtypes.Minter, authtypes.Burner},
 }
 
 var (
@@ -283,7 +283,7 @@ type WasmApp struct {
 	TokenFactoryKeeper  tokenfactorykeeper.Keeper
 
 	EvmKeeper       *evmkeeper.Keeper
-	EvmutilKeeper   evmutilkeeper.Keeper
+	Erc20Keeper     erc20keeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
 
 	// Middleware wrapper
@@ -400,7 +400,7 @@ func NewWasmApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey, clocktypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey, tokenfactorytypes.StoreKey,
-		evmtypes.StoreKey, feemarkettypes.StoreKey, evmutiltypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -605,23 +605,19 @@ func NewWasmApp(
 		appCodec, Authority, runtime.NewKVStoreService(keys[feemarkettypes.StoreKey]), tkeys[feemarkettypes.TransientKey], feeMarketSs,
 	)
 
-	app.EvmutilKeeper = evmutilkeeper.NewKeeper(
-		appCodec,
-		keys[evmutiltypes.StoreKey],
-		app.GetSubspace(evmutiltypes.ModuleName),
-		app.BankKeeper,
-		app.AccountKeeper,
-	)
-	evmBankKeeper := evmutilkeeper.NewEvmBankKeeperWithDenoms(app.EvmutilKeeper, app.BankKeeper, app.AccountKeeper, EvmDenom, CosmosDenom)
-
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
-		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
-	app.EvmutilKeeper.SetEvmKeeper(app.EvmKeeper)
+
+	app.Erc20Keeper = erc20keeper.NewKeeper(
+		runtime.NewKVStoreService(keys[erc20types.StoreKey]), appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
+		app.AuthzKeeper,
+	)
 
 	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
@@ -630,7 +626,8 @@ func NewWasmApp(
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
-		AddRoute(clocktypes.RouterKey, clockkeeper.NewClockProposalHandler(app.ClockKeeper))
+		AddRoute(clocktypes.RouterKey, clockkeeper.NewClockProposalHandler(app.ClockKeeper)).
+		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper))
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -891,7 +888,7 @@ func NewWasmApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper),
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, evmSs),
 		feemarket.NewAppModule(app.FeeMarketKeeper, feeMarketSs),
-		evmutil.NewAppModule(app.EvmutilKeeper, app.BankKeeper),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -914,7 +911,7 @@ func NewWasmApp(
 			tokenfactorytypes.ModuleName:  tokenfactory.AppModuleBasic{},
 			evmtypes.ModuleName:           evm.AppModuleBasic{},
 			feemarkettypes.ModuleName:     feemarket.AppModuleBasic{},
-			evmutiltypes.ModuleName:       evmutil.AppModuleBasic{},
+			erc20types.ModuleName:         erc20.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -949,7 +946,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
-		evmutiltypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -972,7 +969,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
-		evmutiltypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1004,7 +1001,7 @@ func NewWasmApp(
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
-		evmutiltypes.ModuleName,
+		erc20types.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1390,7 +1387,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
-	paramsKeeper.Subspace(evmutiltypes.ModuleName)
+	paramsKeeper.Subspace(erc20types.ModuleName)
 
 	return paramsKeeper
 }
