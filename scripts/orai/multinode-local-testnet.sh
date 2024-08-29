@@ -2,7 +2,7 @@
 set -u
 
 HIDE_LOGS="/dev/null"
-CHAIN_ID=${CHAIN_ID:-mychain_1-2}
+CHAIN_ID=${CHAIN_ID:-testing}
 ARGS="--keyring-backend test"
 TX_SEND_ARGS="$ARGS --chain-id $CHAIN_ID --gas 200000 --fees 2orai --node http://localhost:26657 --yes"
 
@@ -180,6 +180,6 @@ oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from 
 update_validator ".pubkey[\"key\"]=\"$VALIDATOR3_PUBKEY\""
 update_validator '.moniker="validator3"'
 update_validator '.amount="500000000orai"'
-oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from=validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
+oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
 
 echo "All 3 Validators are up and running!"
