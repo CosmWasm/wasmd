@@ -44,7 +44,8 @@ import (
 var hackatomWasm []byte
 
 var AvailableCapabilities = []string{
-	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0",
+	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -421,7 +422,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bc64), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1bc8f), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -846,7 +847,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
 	types.RegisterMsgServer(router, NewMsgServerImpl(keeper))
-	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, nil, keepers.EncodingConfig.Codec, nil)
+	keeper.messenger = NewDefaultMessageHandler(nil, router, nil, nil, nil, nil, keepers.EncodingConfig.Codec, nil)
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 
@@ -958,7 +959,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1ac6a), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1acb4), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -1222,6 +1223,10 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, keeper.SetAccessConfig(parentCtx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
 	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
 
+	// store hackatom contracts with "migrate_version" attributes
+	hackatom42 := StoreExampleContract(t, parentCtx, keepers, "./testdata/hackatom_42.wasm")
+	hackatom420 := StoreExampleContract(t, parentCtx, keepers, "./testdata/hackatom_420.wasm")
+
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
 	initMsgBz := HackatomExampleInitMsg{
@@ -1350,6 +1355,51 @@ func TestMigrate(t *testing.T) {
 			toCodeID:   newCodeID,
 			migrateMsg: migMsgBz,
 			expErr:     types.ErrMigrationFailed,
+		},
+		"all good with migrate versions": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    hackatom420.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
+		},
+		"all good with no migrate version to migrate version contract": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
+		},
+		"all good with same migrate version": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: fred, // not updated
+		},
+		"all good with migrate version contract to no migrate version contract": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom42.CodeID,
+			toCodeID:    originalCodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
+		},
+		"all good with migration to older migrate version": {
+			admin:       creator,
+			caller:      creator,
+			initMsg:     initMsgBz,
+			fromCodeID:  hackatom420.CodeID,
+			toCodeID:    hackatom42.CodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
 		},
 	}
 

@@ -63,7 +63,10 @@ func setupTest(t *testing.T) testData {
 		InstantiateDefaultPermission: v2.AccessTypeEverybody,
 	}
 
-	ctx, keepers := keeper.CreateTestInput(t, false, []string{"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"})
+	ctx, keepers := keeper.CreateTestInput(t, false, []string{
+		"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
+		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+	})
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()

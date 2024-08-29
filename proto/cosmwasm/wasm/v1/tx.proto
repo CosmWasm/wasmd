@@ -145,7 +145,7 @@ message MsgInstantiateContractResponse {
 }
 
 // MsgInstantiateContract2 create a new smart contract instance for the given
-// code id with a predicable address.
+// code id with a predictable address.
 message MsgInstantiateContract2 {
   option (amino.name) = "wasm/MsgInstantiateContract2";
   option (cosmos.msg.v1.signer) = "sender";

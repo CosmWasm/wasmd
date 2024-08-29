@@ -246,6 +246,18 @@ func TestNewWasmModuleEvent(t *testing.T) {
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("my-real-key", "some-val"))},
 		},
+		"empty value": {
+			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: ""}},
+			exp: sdk.Events{sdk.NewEvent("wasm",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("myKey", ""))},
+		},
+		"whitespace-only value": {
+			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "     "}},
+			exp: sdk.Events{sdk.NewEvent("wasm",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("myKey", ""))},
+		},
 		"empty elements": {
 			src:     make([]wasmvmtypes.EventAttribute, 10),
 			isError: true,

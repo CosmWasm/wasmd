@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmwasm/wasm/v1/types.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -17,27 +18,32 @@ service Query {
   // ContractInfo gets the contract meta data
   rpc ContractInfo(QueryContractInfoRequest)
       returns (QueryContractInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}";
   }
   // ContractHistory gets the contract code history
   rpc ContractHistory(QueryContractHistoryRequest)
       returns (QueryContractHistoryResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contract/{address}/history";
   }
   // ContractsByCode lists all smart contracts for a code id
   rpc ContractsByCode(QueryContractsByCodeRequest)
       returns (QueryContractsByCodeResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}/contracts";
   }
   // AllContractState gets all raw store data for a single contract
   rpc AllContractState(QueryAllContractStateRequest)
       returns (QueryAllContractStateResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/state";
   }
   // RawContractState gets single key from the raw store data of a contract
   rpc RawContractState(QueryRawContractStateRequest)
       returns (QueryRawContractStateResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contract/{address}/raw/{query_data}";
   }
@@ -49,26 +55,31 @@ service Query {
   }
   // Code gets the binary code and metadata for a singe wasm code
   rpc Code(QueryCodeRequest) returns (QueryCodeResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}";
   }
   // Codes gets the metadata for all stored wasm codes
   rpc Codes(QueryCodesRequest) returns (QueryCodesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/code";
   }
 
   // PinnedCodes gets the pinned code ids
   rpc PinnedCodes(QueryPinnedCodesRequest) returns (QueryPinnedCodesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/pinned";
   }
 
   // Params gets the module params
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/params";
   }
 
   // ContractsByCreator gets the contracts by creator
   rpc ContractsByCreator(QueryContractsByCreatorRequest)
       returns (QueryContractsByCreatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get =
         "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
   }
@@ -76,6 +87,7 @@ service Query {
   // BuildAddress builds a contract address
   rpc BuildAddress(QueryBuildAddressRequest)
       returns (QueryBuildAddressResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/cosmwasm/wasm/v1/contract/build_address";
   }
 }
