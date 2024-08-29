@@ -1,4 +1,4 @@
-package keeper_test
+package integration
 
 import (
 	_ "embed"
@@ -20,10 +20,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-//go:embed testdata/reflect_1_5.wasm
+//go:embed ../../../x/wasm/keeper/testdata/reflect_1_5.wasm
 var wasmContract []byte
 
-//go:embed testdata/hackatom.wasm
+//go:embed ../../../x/wasm/keeper/testdata/hackatom.wasm
 var hackatomContract []byte
 
 func TestStoreCode(t *testing.T) {

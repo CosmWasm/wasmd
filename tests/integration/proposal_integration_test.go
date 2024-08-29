@@ -1,4 +1,4 @@
-package keeper
+package integration
 
 import (
 	"encoding/hex"
@@ -18,27 +18,33 @@ import (
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+)
+
+var (
+	CyberpunkCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4"}
+	ReflectCapabilities   = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
 )
 
 func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	capabilities := make([]string, len(ReflectCapabilities)+1)
 	copy(capabilities, ReflectCapabilities)
 	capabilities = append(capabilities, "iterator")
-	pCtx, keepers := CreateTestInput(t, false, capabilities)
+	pCtx, keepers := keeper.CreateTestInput(t, false, capabilities)
 	k := keepers.WasmKeeper
 	keepers.GovKeeper.SetLegacyRouter(v1beta1.NewRouter().
-		AddRoute(types.ModuleName, NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
+		AddRoute(types.ModuleName, keeper.NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
 	)
-	myAddress := RandomAccountAddress(t)
+	myAddress := keeper.RandomAccountAddress(t)
 	keepers.Faucet.Fund(pCtx, myAddress, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewIntFromUint64(100_000_000)))
 	keepers.Faucet.Fund(pCtx, myAddress, sdk.NewCoin("denom", sdkmath.NewIntFromUint64(100_000_000)))
 
-	reflectExample := InstantiateReflectExampleContract(t, pCtx, keepers)
-	burnerCodeID, _, err := k.create(pCtx, myAddress, testdata.BurnerContractWasm(), nil, DefaultAuthorizationPolicy{})
+	reflectExample := keeper.InstantiateReflectExampleContract(t, pCtx, keepers)
+	burnerCodeID, _, err := k.create(pCtx, myAddress, testdata.BurnerContractWasm(), nil, keeper.DefaultAuthorizationPolicy{}) //TODO: what to do here
 	require.NoError(t, err)
-	hackatomExample := InstantiateHackatomExampleContract(t, pCtx, keepers)
+	hackatomExample := keeper.InstantiateHackatomExampleContract(t, pCtx, keepers)
 
 	type StealMsg struct {
 		Recipient string     `json:"recipient"`
@@ -193,7 +199,7 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	}
 }
 
-func mustSubmitAndExecuteLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content, myActorAddress string, keepers TestKeepers) uint64 {
+func mustSubmitAndExecuteLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content, myActorAddress string, keepers keeper.TestKeepers) uint64 {
 	t.Helper()
 	govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)

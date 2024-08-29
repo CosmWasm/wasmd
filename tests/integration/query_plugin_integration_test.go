@@ -1,14 +1,19 @@
-package keeper
+package integration
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
@@ -19,16 +24,22 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/CosmWasm/wasmd/app"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmKeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -75,8 +86,8 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -118,7 +129,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectGrpcQuery(t *testing.T) {
-	queryPlugins := (*reflectPlugins()).Merge(&QueryPlugins{
+	queryPlugins := (*reflectPlugins()).Merge(&wasmKeeper.QueryPlugins{
 		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
 				return &banktypes.QueryAllBalancesResponse{
@@ -128,11 +139,11 @@ func TestReflectGrpcQuery(t *testing.T) {
 			return nil, errors.New("unsupported request")
 		},
 	})
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(&queryPlugins))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(&queryPlugins))
 	keeper := keepers.WasmKeeper
 
-	creator := RandomAccountAddress(t)
+	creator := wasmKeeper.RandomAccountAddress(t)
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -170,13 +181,13 @@ func TestReflectGrpcQuery(t *testing.T) {
 }
 
 func TestReflectTotalSupplyQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 	// upload code
-	codeID := StoreReflectContract(t, ctx, keepers).CodeID
+	codeID := wasmKeeper.StoreReflectContract(t, ctx, keepers).CodeID
 	// creator instantiates a contract and gives it tokens
-	creator := RandomAccountAddress(t)
+	creator := wasmKeeper.RandomAccountAddress(t)
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "testing", nil)
 	require.NoError(t, err)
 
@@ -188,7 +199,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 	}{
 		"known denom": {
 			denom:     "stake",
-			expAmount: ConvertSdkCoinToWasmCoin(currentStakeSupply),
+			expAmount: wasmKeeper.ConvertSdkCoinToWasmCoin(currentStakeSupply),
 		},
 		"unknown denom": {
 			denom:     "unknown",
@@ -221,8 +232,8 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 }
 
 func TestReflectInvalidStargateQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -302,8 +313,8 @@ type reflectState struct {
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -372,8 +383,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -416,7 +427,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 }
 
 func TestQueryDenomsIntegration(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, CyberpunkCapabilities)
+	ctx, keepers := wasmKeeper.CreateTestInput(t, false, CyberpunkCapabilities)
 	ck, k := keepers.ContractKeeper, keepers.WasmKeeper
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
 
@@ -529,11 +540,11 @@ func TestQueryDenomsIntegration(t *testing.T) {
 }
 
 func TestDistributionQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	pCtx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	pCtx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
-	example := InstantiateReflectExampleContract(t, pCtx, keepers)
+	example := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
 	delegator := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))...)
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))...)
 
@@ -698,16 +709,16 @@ func TestDistributionQuery(t *testing.T) {
 }
 
 func TestIBCListChannelsQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
-	pCtx, keepers := CreateTestInput(t, false, ReflectCapabilities, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
+	pCtx, keepers := keeper.CreateTestInput(t, false, ReflectCapabilities, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
-	nonIbcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
-	ibcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
+	nonIbcExample := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
+	ibcExample := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
 	// add an ibc port for testing
 	myIBCPortID := "myValidPortID"
 	cInfo := keeper.GetContractInfo(pCtx, ibcExample.Contract)
 	cInfo.IBCPortID = myIBCPortID
-	keeper.mustStoreContractInfo(pCtx, ibcExample.Contract, cInfo)
+	keeper.mustStoreContractInfo(pCtx, ibcExample.Contract, cInfo) //TODO: what to do here
 	// store a random channel to be ignored in queries
 	unusedChan := channeltypes.Channel{
 		State:    channeltypes.OPEN,
@@ -907,8 +918,8 @@ type capitalizedResponse struct {
 }
 
 // reflectPlugins needs to be registered in test setup to handle custom query callbacks
-func reflectPlugins() *QueryPlugins {
-	return &QueryPlugins{
+func reflectPlugins() *wasmKeeper.QueryPlugins {
+	return &wasmKeeper.QueryPlugins{
 		Custom: performCustomQuery,
 	}
 }
@@ -934,4 +945,221 @@ func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
 	bz, err := json.Marshal(query)
 	require.NoError(t, err)
 	return bz
+}
+
+func TestAcceptListStargateQuerier(t *testing.T) {
+	wasmApp := app.SetupWithEmptyStore(t)
+	ctx := wasmApp.NewUncachedContext(false, cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
+	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	require.NoError(t, err)
+
+	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
+	accepted := wasmKeeper.AcceptedQueries{
+		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
+		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
+	}
+
+	marshal := func(pb proto.Message) []byte {
+		b, err := proto.Marshal(pb)
+		require.NoError(t, err)
+		return b
+	}
+
+	specs := map[string]struct {
+		req     *wasmvmtypes.StargateQuery
+		expErr  bool
+		expResp string
+	}{
+		"in accept list - success result": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.auth.v1beta1.Query/Account",
+				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
+			},
+			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"1","sequence":"0"}}`, addrs[0].String()),
+		},
+		"in accept list - error result": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.auth.v1beta1.Query/Account",
+				Data: marshal(&authtypes.QueryAccountRequest{Address: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String()}),
+			},
+			expErr: true,
+		},
+		"not in accept list": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.bank.v1beta1.Query/AllBalances",
+				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
+			},
+			expErr: true,
+		},
+		"unknown route": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/no/route/to/this",
+				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			q := wasmKeeper.AcceptListStargateQuerier(accepted, wasmApp.GRPCQueryRouter(), wasmApp.AppCodec())
+			gotBz, gotErr := q(ctx, spec.req)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.JSONEq(t, spec.expResp, string(gotBz), string(gotBz))
+		})
+	}
+}
+
+func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
+	appCodec := app.MakeEncodingConfig(t).Codec
+
+	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
+	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
+		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
+		Pagination: &query.PageResponse{
+			NextKey: []byte("foo"),
+		},
+	})
+
+	bz, err := hex.DecodeString("0a090a036261721202333012050a03666f6f")
+	require.NoError(t, err)
+
+	// first marshal
+	response, err := wasmKeeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
+
+	// second marshal
+	response, err = wasmKeeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
+}
+
+// TestDeterministicJsonMarshal tests that we get deterministic JSON marshaled response upon
+// proto struct update in the state machine.
+func TestDeterministicJsonMarshal(t *testing.T) {
+	testCases := []struct {
+		name                string
+		originalResponse    string
+		updatedResponse     string
+		queryPath           string
+		responseProtoStruct proto.Message
+		expectedProto       func() proto.Message
+	}{
+		/**
+		   *
+		   * Origin Response
+		   * 0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f7331346c3268686a6e676c3939367772703935673867646a6871653038326375367a7732706c686b
+		   *
+		   * Updated Response
+		   * 0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f7331646a783375676866736d6b6135386676673076616a6e6533766c72776b7a6a346e6377747271122d636f736d6f7331646a783375676866736d6b6135386676673076616a6e6533766c72776b7a6a346e6377747271
+		  // Origin proto
+		  message QueryAccountResponse {
+		    // account defines the account of the corresponding address.
+		    google.protobuf.Any account = 1 [(cosmos_proto.accepts_interface) = "AccountI"];
+		  }
+		  // Updated proto
+		  message QueryAccountResponse {
+		    // account defines the account of the corresponding address.
+		    google.protobuf.Any account = 1 [(cosmos_proto.accepts_interface) = "AccountI"];
+		    // address is the address to query for.
+		  	string address = 2;
+		  }
+		*/
+		{
+			"Query Account",
+			"0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679",
+			"0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679122d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679",
+			"/cosmos.auth.v1beta1.Query/Account",
+			&authtypes.QueryAccountResponse{},
+			func() proto.Message {
+				account := authtypes.BaseAccount{
+					Address: "cosmos1f8uxultn8sqzhznrsz3q77xwaquhgrsg6jyvfy",
+				}
+				accountResponse, err := codectypes.NewAnyWithValue(&account)
+				require.NoError(t, err)
+				return &authtypes.QueryAccountResponse{
+					Account: accountResponse,
+				}
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
+			appCodec := app.MakeEncodingConfig(t).Codec
+
+			originVersionBz, err := hex.DecodeString(tc.originalResponse)
+			require.NoError(t, err)
+			jsonMarshalledOriginalBz, err := wasmKeeper.ConvertProtoToJSONMarshal(appCodec, tc.responseProtoStruct, originVersionBz)
+			require.NoError(t, err)
+
+			newVersionBz, err := hex.DecodeString(tc.updatedResponse)
+			require.NoError(t, err)
+			jsonMarshalledUpdatedBz, err := wasmKeeper.ConvertProtoToJSONMarshal(appCodec, tc.responseProtoStruct, newVersionBz)
+			require.NoError(t, err)
+
+			// json marshaled bytes should be the same since we use the same proto struct for unmarshalling
+			require.Equal(t, jsonMarshalledOriginalBz, jsonMarshalledUpdatedBz)
+
+			// raw build also make same result
+			jsonMarshalExpectedResponse, err := appCodec.MarshalJSON(tc.expectedProto())
+			require.NoError(t, err)
+			require.Equal(t, jsonMarshalledUpdatedBz, jsonMarshalExpectedResponse)
+		})
+	}
+}
+
+func TestConvertProtoToJSONMarshal(t *testing.T) {
+	testCases := []struct {
+		name                  string
+		queryPath             string
+		protoResponseStruct   proto.Message
+		originalResponse      string
+		expectedProtoResponse proto.Message
+		expectedError         bool
+	}{
+		{
+			name:                "successful conversion from proto response to json marshaled response",
+			queryPath:           "/cosmos.bank.v1beta1.Query/AllBalances",
+			originalResponse:    "0a090a036261721202333012050a03666f6f",
+			protoResponseStruct: &banktypes.QueryAllBalancesResponse{},
+			expectedProtoResponse: &banktypes.QueryAllBalancesResponse{
+				Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
+				Pagination: &query.PageResponse{
+					NextKey: []byte("foo"),
+				},
+			},
+		},
+		{
+			name:                "invalid proto response struct",
+			queryPath:           "/cosmos.bank.v1beta1.Query/AllBalances",
+			originalResponse:    "0a090a036261721202333012050a03666f6f",
+			protoResponseStruct: &authtypes.QueryAccountResponse{},
+			expectedError:       true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
+			originalVersionBz, err := hex.DecodeString(tc.originalResponse)
+			require.NoError(t, err)
+			appCodec := app.MakeEncodingConfig(t).Codec
+
+			jsonMarshalledResponse, err := wasmKeeper.ConvertProtoToJSONMarshal(appCodec, tc.protoResponseStruct, originalVersionBz)
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			// check response by json marshaling proto response into json response manually
+			jsonMarshalExpectedResponse, err := appCodec.MarshalJSON(tc.expectedProtoResponse)
+			require.NoError(t, err)
+			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
+		})
+	}
 }

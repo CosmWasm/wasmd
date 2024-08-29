@@ -1,4 +1,4 @@
-package wasm_test
+package integration
 
 import (
 	"encoding/json"
