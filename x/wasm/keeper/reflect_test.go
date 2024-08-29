@@ -304,12 +304,6 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 	}
 }
 
-func unmarshalReflect[T any](t *testing.T, d []byte) T {
-	var v T
-	mustUnmarshal(t, d, &v)
-	return v
-}
-
 type reflectCustomQuery struct {
 	Ping        *struct{}      `json:"ping,omitempty"`
 	Capitalized *testdata.Text `json:"capitalized,omitempty"`
@@ -318,11 +312,6 @@ type reflectCustomQuery struct {
 // this is from the go code back to the contract (capitalized or ping)
 type customQueryResponse struct {
 	Msg string `json:"msg"`
-}
-
-// this is from the contract to the go code (capitalized or ping)
-type capitalizedResponse struct {
-	Text string `json:"text"`
 }
 
 // reflectPlugins needs to be registered in test setup to handle custom query callbacks

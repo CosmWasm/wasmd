@@ -45,6 +45,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -76,7 +77,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -106,15 +106,24 @@ func MakeTestCodec(t testing.TB) codec.Codec {
 	return MakeEncodingConfig(t).Codec
 }
 
-func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
-	encodingConfig := wasmappparams.MakeEncodingConfig()
+func MakeEncodingConfig(_ testing.TB) moduletestutil.TestEncodingConfig {
+	encodingConfig := moduletestutil.MakeTestEncodingConfig(
+		auth.AppModule{},
+		bank.AppModule{},
+		staking.AppModule{},
+		mint.AppModule{},
+		slashing.AppModule{},
+		gov.AppModule{},
+		crisis.AppModule{},
+		ibc.AppModule{},
+		transfer.AppModule{},
+		vesting.AppModule{},
+	)
 	amino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
 	std.RegisterInterfaces(interfaceRegistry)
-	std.RegisterLegacyAminoCodec(amino)
 
-	moduleBasics.RegisterLegacyAminoCodec(amino)
 	moduleBasics.RegisterInterfaces(interfaceRegistry)
 	// add wasmd types
 	types.RegisterInterfaces(interfaceRegistry)
@@ -188,7 +197,7 @@ type TestKeepers struct {
 	WasmKeeper       *Keeper
 	IBCKeeper        *ibckeeper.Keeper
 	Router           MessageRouter
-	EncodingConfig   wasmappparams.EncodingConfig
+	EncodingConfig   moduletestutil.TestEncodingConfig
 	Faucet           *TestFaucet
 	MultiStore       storetypes.CommitMultiStore
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
