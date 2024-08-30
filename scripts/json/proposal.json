@@ -1,0 +1,20 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "orai10d07y265gmmuvt4z0w9aw880jnsr700jf39xhq",
+      "plan": {
+        "name": "v0.41.3",
+        "time": "0001-01-01T00:00:00Z",
+        "height": "100",
+        "info": "upgrade info",
+        "upgraded_client_state": null
+      }
+    }
+  ],
+  "metadata": "some_metadata",
+  "deposit": "10000000orai",
+  "title": "upgrade title",
+  "summary": "upgrade summary",
+  "expedited": false
+}

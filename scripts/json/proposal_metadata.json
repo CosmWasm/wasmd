@@ -1,0 +1,8 @@
+{
+  "title": "proposal title",
+  "authors": ["validator1"],
+  "summary": "proposal summary",
+  "details": "proposal details",
+  "proposal_forum_url": "",
+  "vote_option_context": "yes, no, abstain, no with veto"
+}
