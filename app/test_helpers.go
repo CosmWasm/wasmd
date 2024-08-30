@@ -367,7 +367,6 @@ func GenesisStateWithValSet(
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
 	genesisState[banktypes.ModuleName] = codec.MustMarshalJSON(bankGenesis)
-	println(string(genesisState[banktypes.ModuleName]))
 	return genesisState, nil
 }
 

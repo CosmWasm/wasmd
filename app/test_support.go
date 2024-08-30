@@ -66,25 +66,25 @@ func (app *WasmApp) FundModuleAccount(ctx sdk.Context, recipientMod string, amou
 
 // InitializeFromGenesisStates calls InitChain on the app using the provided genesis states.
 // If any module genesis states are missing, defaults are used.
-func (app *WasmApp) InitializeFromGenesisStates(ctx sdk.Context, genesisStates ...GenesisState) *WasmApp {
-	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx, emptyTime, SimAppChainID, defaultInitialHeight, genesisStates...)
+func (app *WasmApp) InitializeFromGenesisStates(genesisStates ...GenesisState) *WasmApp {
+	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(emptyTime, SimAppChainID, defaultInitialHeight, genesisStates...)
 }
 
 // InitializeFromGenesisStatesWithTime calls InitChain on the app using the provided genesis states and time.
 // If any module genesis states are missing, defaults are used.
-func (app *WasmApp) InitializeFromGenesisStatesWithTime(ctx sdk.Context, genTime time.Time, genesisStates ...GenesisState) *WasmApp {
-	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx, genTime, SimAppChainID, defaultInitialHeight, genesisStates...)
+func (app *WasmApp) InitializeFromGenesisStatesWithTime(genTime time.Time, genesisStates ...GenesisState) *WasmApp {
+	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(genTime, SimAppChainID, defaultInitialHeight, genesisStates...)
 }
 
 // InitializeFromGenesisStatesWithTimeAndChainID calls InitChain on the app using the provided genesis states, time, and chain id.
 // If any module genesis states are missing, defaults are used.
-func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainID(ctx sdk.Context, genTime time.Time, chainID string, genesisStates ...GenesisState) *WasmApp {
-	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx, genTime, chainID, defaultInitialHeight, genesisStates...)
+func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainID(genTime time.Time, chainID string, genesisStates ...GenesisState) *WasmApp {
+	return app.InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(genTime, chainID, defaultInitialHeight, genesisStates...)
 }
 
 // InitializeFromGenesisStatesWithTimeAndChainIDAndHeight calls InitChain on the app using the provided genesis states and other parameters.
 // If any module genesis states are missing, defaults are used.
-func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(ctx sdk.Context, genTime time.Time, chainID string, initialHeight int64, genesisStates ...GenesisState) *WasmApp {
+func (app *WasmApp) InitializeFromGenesisStatesWithTimeAndChainIDAndHeight(genTime time.Time, chainID string, initialHeight int64, genesisStates ...GenesisState) *WasmApp {
 	// Create a default genesis state and overwrite with provided values
 	genesisState := app.DefaultGenesis()
 	for _, state := range genesisStates {

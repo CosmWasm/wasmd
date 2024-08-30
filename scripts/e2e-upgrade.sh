@@ -4,10 +4,10 @@ set -eu
 
 # setup the network using the old binary
 
-OLD_VERSION=${OLD_VERSION:-"v0.42.1"}
-WASM_PATH=${WASM_PATH:-"$PWD/scripts/orai/wasm_file/swapmap.wasm"}
-ARGS="--chain-id testing -y --keyring-backend test --gas auto --gas-adjustment 1.5 -b block"
-NEW_VERSION=${NEW_VERSION:-"v0.42.2"}
+OLD_VERSION=${OLD_VERSION:-"v0.42.2"}
+WASM_PATH=${WASM_PATH:-"$PWD/scripts/wasm_file/swapmap.wasm"}
+ARGS="--chain-id testing -y --keyring-backend test --gas auto --gas-adjustment 1.5"
+NEW_VERSION=${NEW_VERSION:-"v0.42.3"}
 VALIDATOR_HOME=${VALIDATOR_HOME:-"$HOME/.oraid/validator1"}
 MIGRATE_MSG=${MIGRATE_MSG:-'{}'}
 EXECUTE_MSG=${EXECUTE_MSG:-'{"ping":{}}'}
@@ -19,12 +19,12 @@ pkill oraid && sleep 2
 
 # download current production binary
 current_dir=$PWD
-rm -rf ../orai-old/ && git clone https://github.com/oraichain/orai.git ../orai-old && cd ../orai-old/orai && git checkout $OLD_VERSION && go mod tidy && GOTOOLCHAIN=$GO_VERSION make build
+rm -rf ../orai-old/ && git clone https://github.com/oraichain/orai.git ../../orai-old && cd ../orai-old/orai && git checkout $OLD_VERSION && go mod tidy && GOTOOLCHAIN=$GO_VERSION make install
 
 cd $current_dir
 
 # setup local network
-sh $PWD/scripts/orai/multinode-local-testnet.sh
+sh $PWD/scripts/multinode-local-testnet.sh
 
 # deploy new contract
 store_ret=$(oraid tx wasm store $WASM_PATH --from validator1 --home $VALIDATOR_HOME $ARGS --output json)
@@ -53,9 +53,6 @@ done
 
 # kill all processes
 pkill oraid
-
-# Becasue we have not moved codebase to wasmd yet then we have to take old repo to make new version of oraid
-cd ../orai-old/orai && git checkout $NEW_VERSION
 
 # install new binary for the upgrade
 echo "install new binary"
@@ -125,7 +122,7 @@ if ! [[ $evm_denom =~ "aorai" ]] ; then
    echo "Tests Failed"; exit 1
 fi
 
-sh $PWD/scripts/orai/test_clock_counter_contract.sh
+sh $PWD/scripts/test_clock_counter_contract.sh
 
 # test gasless
 NODE_HOME=$VALIDATOR_HOME USER=validator1 WASM_PATH="$PWD/scripts/wasm_file/counter_high_gas_cost.wasm" sh $PWD/scripts/tests-0.42.1/test-gasless.sh
@@ -133,6 +130,7 @@ NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/tests-0.42.1/test-toke
 NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/tests-0.42.1/test-tokenfactory-bindings.sh
 NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/tests-0.42.1/test-evm-cosmos-mapping.sh
 NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/tests-0.42.1/test-evm-cosmos-mapping-complex.sh
-NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/orai/tests-0.42.2/test-multi-sig.sh
+NODE_HOME=$VALIDATOR_HOME USER=validator1 sh $PWD/scripts/tests-0.42.2/test-multi-sig.sh
+NODE_HOME=$VALIDATOR_HOME sh $PWD/scripts/tests-0.42.3/test-commit-timeout.sh
 
 echo "Tests Passed!!"

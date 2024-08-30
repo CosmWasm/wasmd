@@ -27,7 +27,7 @@ import (
 	evmante "github.com/evmos/ethermint/app/ante"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
-	emvtypes "github.com/evmos/ethermint/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
 )
 
@@ -35,7 +35,7 @@ import (
 // channel keeper.
 type HandlerOptions struct {
 	ante.HandlerOptions
-	AccountKeeper         emvtypes.AccountKeeper
+	AccountKeeper         evmtypes.AccountKeeper
 	IBCKeeper             *keeper.Keeper
 	EvmKeeper             *evmkeeper.Keeper
 	FeeMarketKeeper       feemarketkeeper.Keeper
@@ -45,6 +45,8 @@ type HandlerOptions struct {
 	TxCounterStoreKey     storetypes.StoreKey
 	MaxTxGasWanted        uint64
 	CircuitKeeper         *circuitkeeper.Keeper
+	BankKeeper            evmtypes.BankKeeper
+	DisabledAuthzMsgs     []string
 }
 
 func (options *HandlerOptions) Validate() error {
@@ -103,9 +105,19 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 					anteHandler = newEthAnteHandler(options)
 				case "/ethermint.types.v1.ExtensionOptionsWeb3Tx":
 					// handle as normal Cosmos SDK tx, except signature is checked for EIP712 representation
-					anteHandler = newCosmosAnteHandler(cosmosHandlerOptions{
-						HandlerOptions: options,
-						isEIP712:       true,
+					anteHandler = evmante.NewLegacyCosmosAnteHandlerEip712(evmante.HandlerOptions{
+						AccountKeeper:          options.AccountKeeper,
+						BankKeeper:             options.BankKeeper,
+						SignModeHandler:        options.SignModeHandler,
+						FeegrantKeeper:         options.FeegrantKeeper,
+						SigGasConsumer:         options.SigGasConsumer,
+						IBCKeeper:              options.IBCKeeper,
+						EvmKeeper:              options.EvmKeeper,
+						FeeMarketKeeper:        options.FeeMarketKeeper,
+						MaxTxGasWanted:         options.MaxTxGasWanted,
+						ExtensionOptionChecker: options.ExtensionOptionChecker,
+						TxFeeChecker:           options.TxFeeChecker,
+						DisabledAuthzMsgs:      options.DisabledAuthzMsgs,
 					})
 				default:
 					return ctx, errorsmod.Wrapf(
@@ -121,10 +133,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		// handle as totally normal Cosmos SDK tx
 		switch tx.(type) {
 		case sdk.Tx:
-			anteHandler = newCosmosAnteHandler(cosmosHandlerOptions{
-				HandlerOptions: options,
-				isEIP712:       false,
-			})
+			anteHandler = newCosmosAnteHandler(options)
 		default:
 			return ctx, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "invalid transaction type: %T", tx)
 		}
@@ -133,16 +142,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}, nil
 }
 
-// cosmosHandlerOptions extends HandlerOptions to provide some Cosmos specific configurations
-type cosmosHandlerOptions struct {
-	HandlerOptions
-	isEIP712 bool
-}
-
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
 // numbers, checks signatures & account numbers, and deducts fees from the first
 // signer.
-func newCosmosAnteHandler(options cosmosHandlerOptions) sdk.AnteHandler {
+func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 
 	var sigGasConsumer = options.SigGasConsumer
 	if sigGasConsumer == nil {
@@ -161,8 +164,10 @@ func newCosmosAnteHandler(options cosmosHandlerOptions) sdk.AnteHandler {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		ante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
+		// nil so that it only checks with the min gas price of the chain, not the custom fee checker. For cosmos messages, the default tx fee checker is enough
+		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, nil),
+		// we use evmante.NewSetPubKeyDecorator so that for eth_secp256k1 accs, we can validate the signer using the evm-cosmos mapping logic
+		evmante.NewSetPubKeyDecorator(options.AccountKeeper, options.EvmKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
