@@ -49,7 +49,8 @@ update_genesis '.app_state["staking"]["params"]["unbonding_time"]="240s"'
 # update crisis variable to orai
 update_genesis '.app_state["crisis"]["constant_fee"]["denom"]="orai"'
 # udpate gov genesis
-update_genesis '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="orai"'
+update_genesis '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="orai"'
+update_genesis '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="orai"'
 # update mint genesis
 update_genesis '.app_state["mint"]["params"]["mint_denom"]="orai"'
 update_genesis '.app_state["gov"]["voting_params"]["voting_period"]="5s"'
@@ -185,6 +186,6 @@ oraid tx staking create-validator $PWD/scripts/json/validator.json  --from valid
 update_validator ".pubkey[\"key\"]=\"$VALIDATOR3_PUBKEY\""
 update_validator '.moniker="validator3"'
 update_validator '.amount="500000000orai"'
-oraid tx staking create-validator $PWD/scripts/orai/json/validator.json  --from validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
+oraid tx staking create-validator $PWD/scripts/json/validator.json  --from validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
 
 echo "All 3 Validators are up and running!"
