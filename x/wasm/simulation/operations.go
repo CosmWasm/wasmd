@@ -18,15 +18,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/CosmWasm/wasmd/app/params"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // Simulation operation weights constants
-//
-
 const (
 	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
@@ -35,6 +32,13 @@ const (
 	OpWeightMsgClearAdmin          = "op_weight_msg_clear_admin"
 	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"
 	OpReflectContractPath          = "op_reflect_contract_path"
+
+	DefaultWeightMsgStoreCode           int = 50
+	DefaultWeightMsgInstantiateContract int = 100
+	DefaultWeightMsgExecuteContract     int = 100
+	DefaultWeightMsgUpdateAdmin         int = 25
+	DefaultWeightMsgClearAdmin          int = 10
+	DefaultWeightMsgMigrateContract     int = 50
 )
 
 // WasmKeeper is a subset of the wasm keeper used by simulations
@@ -68,22 +72,22 @@ func WeightedOperations(
 		wasmContractPath             string
 	)
 	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *rand.Rand) {
-		weightMsgStoreCode = params.DefaultWeightMsgStoreCode
+		weightMsgStoreCode = DefaultWeightMsgStoreCode
 	})
 	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
-		weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
+		weightMsgInstantiateContract = DefaultWeightMsgInstantiateContract
 	})
 	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
-		weightMsgExecuteContract = params.DefaultWeightMsgExecuteContract
+		weightMsgExecuteContract = DefaultWeightMsgExecuteContract
 	})
 	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *rand.Rand) {
-		weightMsgUpdateAdmin = params.DefaultWeightMsgUpdateAdmin
+		weightMsgUpdateAdmin = DefaultWeightMsgUpdateAdmin
 	})
 	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *rand.Rand) {
-		weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
+		weightMsgClearAdmin = DefaultWeightMsgClearAdmin
 	})
 	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *rand.Rand) {
-		weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
+		weightMsgMigrateContract = DefaultWeightMsgMigrateContract
 	})
 	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *rand.Rand) {
 		wasmContractPath = ""

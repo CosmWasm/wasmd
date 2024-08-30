@@ -1,4 +1,4 @@
-package keeper_test
+package integration
 
 import (
 	_ "embed"

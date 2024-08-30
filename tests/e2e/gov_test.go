@@ -17,7 +17,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/tests/ibctesting"
 )
 
 func TestGovVoteByContract(t *testing.T) {

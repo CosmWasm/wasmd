@@ -7,7 +7,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -24,13 +23,25 @@ const (
 	WeightUnpinCodesProposal                  = "weight_unpin_codes_proposal"
 	WeightUpdateInstantiateConfigProposal     = "weight_update_instantiate_config_proposal"
 	WeightStoreAndInstantiateContractProposal = "weight_store_and_instantiate_contract_proposal"
+
+	DefaultWeightStoreCodeProposal                   int = 5
+	DefaultWeightInstantiateContractProposal         int = 5
+	DefaultWeightUpdateAdminProposal                 int = 5
+	DefaultWeightExecuteContractProposal             int = 5
+	DefaultWeightClearAdminProposal                  int = 5
+	DefaultWeightMigrateContractProposal             int = 5
+	DefaultWeightSudoContractProposal                int = 5
+	DefaultWeightPinCodesProposal                    int = 5
+	DefaultWeightUnpinCodesProposal                  int = 5
+	DefaultWeightUpdateInstantiateConfigProposal     int = 5
+	DefaultWeightStoreAndInstantiateContractProposal int = 5
 )
 
 func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalMsg {
 	return []simtypes.WeightedProposalMsg{
 		simulation.NewWeightedProposalMsg(
 			WeightInstantiateContractProposal,
-			params.DefaultWeightInstantiateContractProposal,
+			DefaultWeightInstantiateContractProposal,
 			SimulateInstantiateContractProposal(
 				bk,
 				wasmKeeper,
@@ -39,7 +50,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightUpdateAdminProposal,
-			params.DefaultWeightUpdateAdminProposal,
+			DefaultWeightUpdateAdminProposal,
 			SimulateUpdateAdminProposal(
 				wasmKeeper,
 				DefaultSimulateUpdateAdminProposalContractSelector,
@@ -47,7 +58,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightExeContractProposal,
-			params.DefaultWeightExecuteContractProposal,
+			DefaultWeightExecuteContractProposal,
 			SimulateExecuteContractProposal(
 				bk,
 				wasmKeeper,
@@ -58,7 +69,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightClearAdminProposal,
-			params.DefaultWeightClearAdminProposal,
+			DefaultWeightClearAdminProposal,
 			SimulateClearAdminProposal(
 				wasmKeeper,
 				DefaultSimulateContractSelector,
@@ -66,7 +77,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightMigrateContractProposal,
-			params.DefaultWeightMigrateContractProposal,
+			DefaultWeightMigrateContractProposal,
 			SimulateMigrateContractProposal(
 				wasmKeeper,
 				DefaultSimulateContractSelector,
@@ -75,7 +86,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightPinCodesProposal,
-			params.DefaultWeightPinCodesProposal,
+			DefaultWeightPinCodesProposal,
 			SimulatePinContractProposal(
 				wasmKeeper,
 				DefaultSimulationCodeIDSelector,
@@ -83,7 +94,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightUnpinCodesProposal,
-			params.DefaultWeightUnpinCodesProposal,
+			DefaultWeightUnpinCodesProposal,
 			SimulateUnpinContractProposal(
 				wasmKeeper,
 				DefaultSimulationCodeIDSelector,
@@ -91,7 +102,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 		),
 		simulation.NewWeightedProposalMsg(
 			WeightUpdateInstantiateConfigProposal,
-			params.DefaultWeightUpdateInstantiateConfigProposal,
+			DefaultWeightUpdateInstantiateConfigProposal,
 			SimulateUpdateInstantiateConfigProposal(
 				wasmKeeper,
 				DefaultSimulationCodeIDSelector,
