@@ -581,7 +581,7 @@ func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, e
 	assert.Equal(t, expectedNum, len(res.CodeInfos))
 }
 
-func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) { //nolint:unparam
+func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -601,7 +601,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	assert.Equal(t, expectedBytes, rsp.Data)
 }
 
-func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) { //nolint:unparam
+func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -644,7 +644,7 @@ func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Conte
 	assert.Equal(t, expectedBz, rsp.Data)
 }
 
-func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) { //nolint:unparam
+func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractInfoRequest{Address: contractBech32Addr})
 	require.NoError(t, err)
