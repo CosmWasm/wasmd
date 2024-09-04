@@ -34,7 +34,7 @@ cp ~/.oraid/validator1/config/genesis.json .oraid/state_sync/config
 # cp -R ~/.oraid/validator1/wasm .oraid/state_sync/
 
 # reset the node
-oraid tendermint unsafe-reset-all --home=.oraid/state_sync
+oraid comet unsafe-reset-all --home=.oraid/state_sync
 
 # change app.toml values
 STATESYNC_APP_TOML=.oraid/state_sync/config/app.toml
