@@ -48,7 +48,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
@@ -165,6 +164,7 @@ import (
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	protov2 "google.golang.org/protobuf/proto"
 
+	enccodec "github.com/evmos/ethermint/encoding/codec"
 	"github.com/evmos/ethermint/x/erc20"
 	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
 	erc20types "github.com/evmos/ethermint/x/erc20/types"
@@ -349,8 +349,8 @@ func NewWasmApp(
 
 	eip712.SetEncodingConfig(encodingConfig)
 
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
+	enccodec.RegisterLegacyAminoCodec(legacyAmino)
+	enccodec.RegisterInterfaces(interfaceRegistry)
 	clockkeeper.RegisterProposalTypes()
 
 	// Below we could construct and set an application specific mempool and
