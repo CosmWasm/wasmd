@@ -33,6 +33,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	ethermintserver "github.com/evmos/ethermint/server"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -57,7 +58,6 @@ func initCometBFTConfig() *cmtcfg.Config {
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig(denom string) (string, interface{}) {
 	// The following code snippet is just for reference.
-
 	type CustomAppConfig struct {
 		serverconfig.Config
 
@@ -79,9 +79,7 @@ func initAppConfig(denom string) (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In simapp, we set the min gas prices to 0.
-	if denom == "" {
-		srvCfg.MinGasPrices = "0stake"
-	} else {
+	if denom != "" {
 		srvCfg.MinGasPrices = "0" + denom
 	}
 	// srvCfg.BaseConfig.IAVLDisableFastNode = true // disable fastnode by default
@@ -121,6 +119,9 @@ func initRootCmd(
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
 	wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
+
+	// ethermintserver adds additional flags to start the JSON-RPC server for evm support
+	ethermintserver.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(

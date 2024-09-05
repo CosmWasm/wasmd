@@ -8,7 +8,7 @@ HIDE_LOGS="/dev/null"
 # PASSWORD=${PASSWORD:-$1}
 rm -rf .oraid/
 
-oraid init --chain-id "$CHAIN_ID" "$MONIKER" > $HIDE_LOGS
+oraid init --chain-id "$CHAIN_ID" "$MONIKER" >$HIDE_LOGS
 
 oraid keys add $USER --keyring-backend test 2>&1 | tee account.txt
 oraid keys add $USER-eth --keyring-backend test --eth 2>&1 | tee account-eth.txt
@@ -25,5 +25,4 @@ oraid genesis gentx $USER "250000000orai" --chain-id="$CHAIN_ID" -y --keyring-ba
 
 oraid genesis collect-gentxs
 
-oraid start 
-
+oraid start --json-rpc.address="0.0.0.0:8545" --json-rpc.ws-address="0.0.0.0:8546" --json-rpc.api="eth,web3,net,txpool,debug" --json-rpc.enable

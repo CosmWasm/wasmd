@@ -17,12 +17,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/go-bip39"
+	serverconfig "github.com/evmos/ethermint/server/config"
 	"github.com/spf13/cobra"
 )
 
@@ -171,6 +173,13 @@ func initCmd(mbm module.BasicManager, customAppState app.GenesisState, defaultNo
 			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", appState)
 
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+
+			// config for app.toml file with EVM config
+			appConfigTemplate, defaultAppConfig := serverconfig.AppConfig("orai")
+			defaultAppConfig.API.Enable = true
+			srvconfig.SetConfigTemplate(appConfigTemplate)
+			srvconfig.WriteConfigFile(filepath.Join(config.RootDir, "config/app.toml"), defaultAppConfig)
+
 			return displayInfo(toPrint)
 		},
 	}
