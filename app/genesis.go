@@ -47,10 +47,12 @@ func NewDefaultGenesisState(cdc codec.Codec, moduleBasics module.BasicManager) G
 	genesisSate[crisis.ModuleName] = cdc.MustMarshalJSON(crisisGenesis)
 
 	// custom gov genesis state
-	govGenesis.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(appconfig.MinimalDenom, sdk.TokensFromConsensusPower(10, sdkmath.NewInt(1_000_000))))
+	govGenesis.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(appconfig.MinimalDenom, sdk.TokensFromConsensusPower(10, sdkmath.NewInt(10_000_000))))
 	govGenesis.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(appconfig.MinimalDenom, sdk.TokensFromConsensusPower(10, sdkmath.NewInt(1_000_000))))
 	votingDuration := time.Duration(30) * time.Second
+	expeditedVotingPeriod := votingDuration - 5
 	govGenesis.Params.VotingPeriod = &votingDuration
+	govGenesis.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	genesisSate[gov.ModuleName] = cdc.MustMarshalJSON(govGenesis)
 
 	// custom mint genesis state
