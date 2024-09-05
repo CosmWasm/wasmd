@@ -4,10 +4,11 @@ set -ux
 CHAIN_ID=${CHAIN_ID:-testing}
 USER=${USER:-tupt}
 MONIKER=${MONIKER:-node001}
+HIDE_LOGS="/dev/null"
 # PASSWORD=${PASSWORD:-$1}
 rm -rf .oraid/
 
-oraid init --chain-id "$CHAIN_ID" "$MONIKER" 2>&1
+oraid init --chain-id "$CHAIN_ID" "$MONIKER" 2>&1 | tee genesis.json
 
 oraid keys add $USER --keyring-backend test 2>&1 | tee account.txt
 oraid keys add $USER-eth --keyring-backend test --eth 2>&1 | tee account-eth.txt
