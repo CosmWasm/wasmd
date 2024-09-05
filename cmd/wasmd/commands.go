@@ -107,8 +107,11 @@ func initRootCmd(
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
+	customAppState := app.NewDefaultGenesisState(appCodec, basicManager)
+	initCommand := initCmd(basicManager, customAppState, app.DefaultNodeHome)
+
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		initCommand,
 		NewTestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),

@@ -8,7 +8,7 @@ HIDE_LOGS="/dev/null"
 # PASSWORD=${PASSWORD:-$1}
 rm -rf .oraid/
 
-oraid init --chain-id "$CHAIN_ID" "$MONIKER" 2>&1 | tee genesis.json
+oraid init --chain-id "$CHAIN_ID" "$MONIKER" > $HIDE_LOGS
 
 oraid keys add $USER --keyring-backend test 2>&1 | tee account.txt
 oraid keys add $USER-eth --keyring-backend test --eth 2>&1 | tee account-eth.txt
@@ -21,7 +21,7 @@ oraid genesis add-genesis-account orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 "1
 
 # submit a genesis validator tx
 # Workraround for https://github.com/cosmos/cosmos-sdk/issues/8251
-oraid genesis gentx $USER "250000000orai" --chain-id="$CHAIN_ID" --amount="250000000orai" -y --keyring-backend test
+oraid genesis gentx $USER "250000000orai" --chain-id="$CHAIN_ID" -y --keyring-backend test
 
 oraid genesis collect-gentxs
 
