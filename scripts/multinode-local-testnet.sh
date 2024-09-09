@@ -22,7 +22,7 @@ mkdir $VALIDATOR2_HOME
 mkdir $VALIDATOR3_HOME
 
 # init all three validators
-oraid init --chain-id $CHAIN_ID validator1 --home $VALIDATOR1_HOME 2>&1 | tee genesis.json
+oraid init --chain-id $CHAIN_ID validator1 --home $VALIDATOR1_HOME
 oraid init --chain-id $CHAIN_ID validator2 --home $VALIDATOR2_HOME
 oraid init --chain-id $CHAIN_ID validator3 --home $VALIDATOR3_HOME
 
