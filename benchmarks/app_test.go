@@ -33,7 +33,6 @@ import (
 )
 
 func setup(db dbm.DB, withGenesis bool) (*app.WasmApp, app.GenesisState) {
-
 	logLevel := log.LevelOption(zerolog.InfoLevel)
 
 	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
