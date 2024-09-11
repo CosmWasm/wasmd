@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@type": "/juno.clock.v1.MsgUpdateParams",
+      "authority": "orai10d07y265gmmuvt4z0w9aw880jnsr700jf39xhq",
+      "params": {
+        "contract_addresses": [
+          "orai14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9savsjyw"
+        ],
+        "contract_gas_limit": "10000000"
+      }
+    }
+  ],
+  "metadata": "foobar",
+  "deposit": "10000000orai",
+  "title": "Allow a new contract to use the x/clock module for our features",
+  "summary": "foobar"
+}

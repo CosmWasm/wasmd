@@ -349,10 +349,6 @@ func NewWasmApp(
 
 	eip712.SetEncodingConfig(encodingConfig)
 
-	enccodec.RegisterLegacyAminoCodec(legacyAmino)
-	enccodec.RegisterInterfaces(interfaceRegistry)
-	clockkeeper.RegisterProposalTypes()
-
 	// Below we could construct and set an application specific mempool and
 	// ABCI 1.0 PrepareProposal and ProcessProposal handlers. These defaults are
 	// already set in the SDK's BaseApp, this shows an example of how to override
@@ -628,7 +624,6 @@ func NewWasmApp(
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
-		AddRoute(clocktypes.RouterKey, clockkeeper.NewClockProposalHandler(app.ClockKeeper)).
 		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper))
 	govConfig := govtypes.DefaultConfig()
 	/*
@@ -785,6 +780,7 @@ func NewWasmApp(
 		app.keys[clocktypes.StoreKey],
 		appCodec,
 		*app.ContractKeeper,
+		AuthorityAddr,
 	)
 
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
@@ -917,6 +913,9 @@ func NewWasmApp(
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
+	enccodec.RegisterLegacyAminoCodec(legacyAmino)
+	enccodec.RegisterInterfaces(interfaceRegistry)
+	clocktypes.RegisterInterfaces(interfaceRegistry)
 
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(

@@ -261,7 +261,7 @@ replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
-	github.com/CosmosContracts/juno/v18/x/clock => github.com/oraichain/juno/x/clock v0.0.0-20240730044630-b70856e973de
+	github.com/CosmosContracts/juno/v18/x/clock => github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597
 
 	// indexer and timestamp added
 	github.com/cometbft/cometbft => github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4
