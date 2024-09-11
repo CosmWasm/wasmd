@@ -5,7 +5,7 @@ set -eu
 CHAIN_ID=${CHAIN_ID:-testing}
 USER=${USER:-tupt}
 NODE_HOME=${NODE_HOME:-"$PWD/.oraid"}
-ARGS="--from $USER --chain-id $CHAIN_ID -y --keyring-backend test --gas 20000000 -b block --home $NODE_HOME"
+ARGS="--from $USER --chain-id $CHAIN_ID -y --keyring-backend test --gas 20000000 -b sync --home $NODE_HOME"
 HIDE_LOGS="/dev/null"
 
 # add a signer wallet
@@ -20,12 +20,12 @@ multisig_address=$(oraid keys show $multisig --home $NODE_HOME --keyring-backend
 user_address=$(oraid keys show $USER --home $NODE_HOME --keyring-backend test -a)
 
 # send some tokens to the multisign address
-oraid tx send $user_address $multisig_address 100000000orai $ARGS > $HIDE_LOGS
-oraid tx send $user_address $signer_address 100000000orai $ARGS > $HIDE_LOGS
+oraid tx bank send $user_address $multisig_address 100000000orai $ARGS > $HIDE_LOGS
+oraid tx bank send $user_address $signer_address 100000000orai $ARGS > $HIDE_LOGS
 
 # now we test multi-sign
 # generate dry message
-oraid tx send $multisig_address $user_address 1orai --generate-only $ARGS 2>&1 | tee tx.json
+oraid tx bank send $multisig_address $user_address 1orai --generate-only $ARGS 2>&1 | tee tx.json
 
 # sign message
 oraid tx sign --from $user_address --multisig=$multisig_address tx.json $ARGS 2>&1 | tee tx-signed-data.json
