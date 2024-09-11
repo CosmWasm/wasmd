@@ -216,12 +216,12 @@ message QueryCodeRequest {
   uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
 }
 
-// QueryCodeInfoRequest is the request type for the Query/Code RPC method
+// QueryCodeInfoRequest is the request type for the Query/CodeInfo RPC method
 message QueryCodeInfoRequest {
   uint64 code_id = 1; // grpc-gateway_out does not support Go style CodeID
 }
 
-// QueryCodeInfoResponse is the response type for the Query/Code RPC method
+// QueryCodeInfoResponse is the response type for the Query/CodeInfo RPC method
 message QueryCodeInfoResponse {
   option (gogoproto.equal) = true;
 

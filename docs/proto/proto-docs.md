@@ -1071,7 +1071,7 @@ method.
 <a name="cosmwasm.wasm.v1.QueryCodeInfoRequest"></a>
 
 ### QueryCodeInfoRequest
-QueryCodeInfoRequest is the request type for the Query/Code RPC method
+QueryCodeInfoRequest is the request type for the Query/CodeInfo RPC method
 
 
 | Field | Type | Label | Description |
@@ -1086,7 +1086,7 @@ QueryCodeInfoRequest is the request type for the Query/Code RPC method
 <a name="cosmwasm.wasm.v1.QueryCodeInfoResponse"></a>
 
 ### QueryCodeInfoResponse
-QueryCodeInfoResponse is the response type for the Query/Code RPC method
+QueryCodeInfoResponse is the response type for the Query/CodeInfo RPC method
 
 
 | Field | Type | Label | Description |

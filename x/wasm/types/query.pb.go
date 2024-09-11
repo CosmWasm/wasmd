@@ -633,7 +633,7 @@ func (m *QueryCodeRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCodeRequest proto.InternalMessageInfo
 
-// QueryCodeInfoRequest is the request type for the Query/Code RPC method
+// QueryCodeInfoRequest is the request type for the Query/CodeInfo RPC method
 type QueryCodeInfoRequest struct {
 	CodeId uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 }
@@ -676,7 +676,7 @@ func (m *QueryCodeInfoRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCodeInfoRequest proto.InternalMessageInfo
 
-// QueryCodeInfoResponse is the response type for the Query/Code RPC method
+// QueryCodeInfoResponse is the response type for the Query/CodeInfo RPC method
 type QueryCodeInfoResponse struct {
 	CodeID                uint64                                           `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 	Creator               string                                           `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
