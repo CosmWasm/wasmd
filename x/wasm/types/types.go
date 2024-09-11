@@ -429,3 +429,18 @@ func (a AccessConfig) AllAuthorizedAddresses() []string {
 	}
 	return []string{}
 }
+
+type TxContracts map[string]struct{}
+
+func NewTxContracts() TxContracts {
+	return make(TxContracts, 0)
+}
+
+func (a TxContracts) AddContract(checksum string) {
+	a[checksum] = struct{}{}
+}
+
+func (a TxContracts) Exists(checksum string) bool {
+	_, ok := a[checksum]
+	return ok
+}
