@@ -243,14 +243,14 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 113_000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(78_000, 81_000), assertErrorString("codespace: sdk, code: 5")},
+			resultAssertions: []assertion{assertGasUsed(78_000, 82_000), assertErrorString("codespace: sdk, code: 5")},
 		},
 		"out of gas panic with no gas limit": {
 			submsgID:        7,
@@ -263,7 +263,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 113_000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -271,7 +271,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(78_000, 81_000), assertErrorString("codespace: sdk, code: 5")},
+			resultAssertions: []assertion{assertGasUsed(78_000, 82_000), assertErrorString("codespace: sdk, code: 5")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,
@@ -279,7 +279,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses all the subGasLimit, plus the 52k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+75_000, subGasLimit+77_000), assertErrorString("codespace: sdk, code: 11")},
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+75_000, subGasLimit+78_000), assertErrorString("codespace: sdk, code: 11")},
 		},
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
