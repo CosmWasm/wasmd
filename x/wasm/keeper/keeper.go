@@ -258,7 +258,7 @@ func (k Keeper) instantiate(
 		return nil, nil, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 
-	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(sdkCtx, codeID))
+	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(sdkCtx, codeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(initMsg))
 
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: instantiate")
@@ -399,7 +399,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 		return nil, err
 	}
 
-	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
+	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: execute")
@@ -561,7 +561,7 @@ func (k Keeper) callMigrateEntrypoint(
 	msg []byte,
 	newCodeID uint64,
 ) (*wasmvmtypes.Response, error) {
-	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(newChecksum), k.IsPinnedCode(sdkCtx, newCodeID))
+	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, string(newChecksum), k.IsPinnedCode(sdkCtx, newCodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: migrate")
 
@@ -604,7 +604,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 		return nil, err
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
+	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: sudo")
@@ -842,7 +842,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 		return nil, err
 	}
 
-	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
+	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, string(codeInfo.CodeHash), k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(req))
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: query")
 
@@ -1167,7 +1167,7 @@ func (k Keeper) IsPinnedCode(ctx context.Context, codeID uint64) bool {
 	return ok
 }
 
-func (k Keeper) shouldGetDiscount(ctx sdk.Context, checksum string, isPinned bool) (sdk.Context, bool) {
+func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum string, isPinned bool) (sdk.Context, bool) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if isPinned {
 		return sdkCtx, true

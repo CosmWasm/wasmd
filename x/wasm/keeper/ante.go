@@ -128,7 +128,7 @@ func NewTxContractsDecorator() *TxContractsDecorator {
 	return &TxContractsDecorator{}
 }
 
-// AnteHandle adds the gas register to the context.
+// AnteHandle initializes a new TxContracts object to the context.
 func (d TxContractsDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	txContracts := types.NewTxContracts()
 	return next(types.WithTxContracts(ctx, txContracts), tx, simulate)

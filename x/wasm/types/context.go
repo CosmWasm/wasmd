@@ -85,15 +85,15 @@ func GasRegisterFromContext(ctx context.Context) (GasRegister, bool) {
 	return val, ok
 }
 
-// WithGasRegister stores the gas register into the context returned
+// WithTxContracts stores the tx contracts into the context returned
 func WithTxContracts(ctx sdk.Context, c TxContracts) sdk.Context {
 	if c == nil {
-		panic("c must not be nil")
+		panic("tx contracts must not be nil")
 	}
 	return ctx.WithValue(contextKeyTxContracts, c)
 }
 
-// GasRegisterFromContext reads the gas register from the context
+// TxContractsFromContext reads the tx contracts from the context
 func TxContractsFromContext(ctx context.Context) (TxContracts, bool) {
 	val, ok := ctx.Value(contextKeyTxContracts).(TxContracts)
 	return val, ok
