@@ -561,7 +561,6 @@ func (k Keeper) callMigrateEntrypoint(
 	msg []byte,
 	newCodeID uint64,
 ) (*wasmvmtypes.Response, error) {
-
 	sdkCtx, discount := k.shouldGetDiscount(sdkCtx, string(newChecksum), k.IsPinnedCode(sdkCtx, newCodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: migrate")
