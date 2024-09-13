@@ -439,6 +439,12 @@ func ensurePaginationParams(req *query.PageRequest) (*query.PageRequest, error) 
 	return req, nil
 }
 
+func (q GrpcQuerier) WasmLimitsConfig(c context.Context, req *types.QueryWasmLimitsConfigRequest) (*types.QueryWasmLimitsConfigResponse, error) {
+	return &types.QueryWasmLimitsConfigResponse{
+		Config: []byte{}, // TODO: implement
+	}, nil
+}
+
 func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddressRequest) (*types.QueryBuildAddressResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
