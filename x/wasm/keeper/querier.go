@@ -441,7 +441,7 @@ func ensurePaginationParams(req *query.PageRequest) (*query.PageRequest, error) 
 
 func (q GrpcQuerier) WasmLimitsConfig(c context.Context, req *types.QueryWasmLimitsConfigRequest) (*types.QueryWasmLimitsConfigResponse, error) {
 	return &types.QueryWasmLimitsConfigResponse{
-		Config: []byte{}, // TODO: implement
+		Config: "{\"todo\": \"put serialized limits here\"}", // TODO: implement
 	}, nil
 }
 

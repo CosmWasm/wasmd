@@ -1439,13 +1439,13 @@ Query/WasmLimitsConfig RPC method.
 
 ### QueryWasmLimitsConfigResponse
 QueryWasmLimitsConfigResponse is the response type for the
-Query/WasmLimitsConfig RPC method. It contains the MsgPack encoded limits for
+Query/WasmLimitsConfig RPC method. It contains the JSON encoded limits for
 static validation of Wasm files.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `config` | [bytes](#bytes) |  |  |
+| `config` | [string](#string) |  |  |
 
 
 
@@ -1477,7 +1477,7 @@ Query provides defines the gRPC querier service
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
-| `WasmLimitsConfig` | [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest) | [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse) | WasmLimitsConfig gets the configured limits for static validation of Wasm files, encoded in MsgPack. | GET|/cosmwasm/wasm/v1/wasm-limits-config|
+| `WasmLimitsConfig` | [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest) | [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse) | WasmLimitsConfig gets the configured limits for static validation of Wasm files, encoded in JSON. | GET|/cosmwasm/wasm/v1/wasm-limits-config|
 | `BuildAddress` | [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest) | [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse) | BuildAddress builds a contract address | GET|/cosmwasm/wasm/v1/contract/build_address|
 
  <!-- end services -->

@@ -91,7 +91,7 @@ service Query {
   }
 
   // WasmLimitsConfig gets the configured limits for static validation of Wasm
-  // files, encoded in MsgPack.
+  // files, encoded in JSON.
   rpc WasmLimitsConfig(QueryWasmLimitsConfigRequest)
       returns (QueryWasmLimitsConfigResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/wasm-limits-config";
@@ -329,9 +329,9 @@ message QueryContractsByCreatorResponse {
 message QueryWasmLimitsConfigRequest {}
 
 // QueryWasmLimitsConfigResponse is the response type for the
-// Query/WasmLimitsConfig RPC method. It contains the MsgPack encoded limits for
+// Query/WasmLimitsConfig RPC method. It contains the JSON encoded limits for
 // static validation of Wasm files.
-message QueryWasmLimitsConfigResponse { bytes config = 1; }
+message QueryWasmLimitsConfigResponse { string config = 1; }
 
 // QueryBuildAddressRequest is the request type for the Query/BuildAddress RPC
 // method.
