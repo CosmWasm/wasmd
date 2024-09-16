@@ -56,7 +56,6 @@ require (
 	github.com/cosmos/ibc-go/v8 v8.4.0
 	github.com/distribution/reference v0.5.0
 	github.com/evmos/ethermint v0.0.0-00010101000000-000000000000
-	github.com/gogo/protobuf v1.3.2
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
@@ -131,6 +130,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -272,7 +272,7 @@ replace (
 	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 
-	github.com/evmos/ethermint => github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240829001634-8c902f3993bc
+	github.com/evmos/ethermint => github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240909173803-c9157b25caeb
 	// github.com/evmos/ethermint => ../ethermint-cosmos-0.50/
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// See: https://github.com/cosmos/cosmos-sdk/issues/10409
