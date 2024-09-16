@@ -21,7 +21,7 @@ current_cosmos_sequence_after=$(oraid query auth account $user_address --output 
 expected_cosmos_sequence=$((current_cosmos_sequence_before + 1))
 
 if [[ $current_cosmos_sequence_after -ne $expected_cosmos_sequence ]] ; then
-   echo "Cosmos sequences don't match"; exit 1
+   echo "Cosmos sequences don't match. EVM cosmos mapping test failed"; exit 1
 fi
 
 echo "EVM cosmos mapping complex tests passed!"

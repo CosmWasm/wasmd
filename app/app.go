@@ -164,6 +164,7 @@ import (
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	protov2 "google.golang.org/protobuf/proto"
 
+	appconfig "github.com/CosmWasm/wasmd/cmd/config"
 	enccodec "github.com/evmos/ethermint/encoding/codec"
 	"github.com/evmos/ethermint/x/erc20"
 	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
@@ -605,9 +606,10 @@ func NewWasmApp(
 
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+	evmBankKeeper := evmkeeper.NewEvmBankKeeperWithDenoms(app.BankKeeper, app.AccountKeeper, appconfig.EvmDenom, appconfig.CosmosDenom)
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
