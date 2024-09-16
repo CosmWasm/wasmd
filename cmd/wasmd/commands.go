@@ -17,7 +17,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/cmd"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -33,6 +32,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/evmos/ethermint/client/debug"
 	ethermintserver "github.com/evmos/ethermint/server"
 
 	"github.com/CosmWasm/wasmd/app"
