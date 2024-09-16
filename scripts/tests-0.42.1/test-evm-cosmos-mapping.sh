@@ -11,6 +11,8 @@ HIDE_LOGS="/dev/null"
 user_address=$(oraid keys show $USER --home $NODE_HOME --keyring-backend test -a)
 user_pubkey=$(oraid keys show $USER --home $NODE_HOME --keyring-backend test -p | jq '.key' | tr -d '"')
 oraid tx evm set-mapping-evm $user_pubkey $ARGS &>$HIDE_LOGS
+# wait for the tx to be completed
+sleep 2
 
 expected_evm_address=$(oraid debug pubkey-simple $user_pubkey)
 actual_evm_address=$(oraid query evm mappedevm $user_address --output json | jq '.evm_address' | tr -d '"')
