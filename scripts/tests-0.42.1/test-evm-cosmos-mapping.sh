@@ -17,7 +17,7 @@ sleep 2
 expected_evm_address=$(oraid debug pubkey-simple $user_pubkey)
 actual_evm_address=$(oraid query evm mappedevm $user_address --output json | jq '.evm_address' | tr -d '"')
 if ! [[ $actual_evm_address =~ $expected_evm_address ]]; then
-   echo "The evm addresses dont match"
+   echo "The evm addresses dont match. EVM cosmos mapping test failed"
    exit 1
 fi
 
@@ -35,7 +35,7 @@ evm_balance=$(echo "scale=10; ($balance_decimal / $evm_decimals) * $cosmos_decim
 evm_balance_int=$(echo ${evm_balance%.*})
 cosmos_balance=$(oraid query bank balances $user_address --output json | jq '.balances[] | select(.denom | contains("orai")).amount | tonumber')
 if [[ $evm_balance_int -ne $cosmos_balance ]] ; then
-   echo "The evm addresses dont match"; exit 1
+   echo "The evm addresses dont match. EVM cosmos mapping test failed"; exit 1
 fi
 
 test balance change when cosmos address sends some coins to another address
@@ -46,7 +46,7 @@ balance_hex_no_prefix=${balance_hex#0x}
 balance_hex_no_prefix_upper=$(echo "$balance_hex_no_prefix" | tr '[:lower:]' '[:upper:]')
 balance_decimal_after_change=$(echo "ibase=16; ${balance_hex_no_prefix_upper}" | bc)
 if [[ $balance_decimal_after_change -eq $balance_decimal ]] ; then
-   echo "The evm balance does not get updated after the cosmos address sends coin."; exit 1
+   echo "The evm balance does not get updated after the cosmos address sends coin. EVM cosmos mapping test failed"; exit 1
 fi
 
 echo "EVM cosmos mapping tests passed!"
