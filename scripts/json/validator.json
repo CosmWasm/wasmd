@@ -1,7 +1,7 @@
 {
   "pubkey": {
     "@type": "/cosmos.crypto.ed25519.PubKey",
-    "key": "g7N3tACKLrdSAVKRyidc1OyHznSnevUazseR0o7TxH0="
+    "key": "i6hmB1yKqJAcKnHJCcKTPp1b7/NvAMjPv0rQUpVW4Gw="
   },
   "amount": "500000000orai",
   "moniker": "validator3",
