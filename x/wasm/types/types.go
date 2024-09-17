@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"reflect"
 
@@ -430,17 +431,28 @@ func (a AccessConfig) AllAuthorizedAddresses() []string {
 	return []string{}
 }
 
-type TxContracts map[string]struct{}
+type txContracts map[string]struct{}
+
+type TxContracts struct {
+	contracts txContracts
+}
 
 func NewTxContracts() TxContracts {
-	return make(TxContracts, 0)
+	c := make(txContracts, 0)
+	return TxContracts{contracts: c}
 }
 
-func (a TxContracts) AddContract(checksum string) {
-	a[checksum] = struct{}{}
+func (tc TxContracts) AddContract(checksum []byte) {
+	hexHash := hex.EncodeToString(checksum)
+	tc.contracts[hexHash] = struct{}{}
 }
 
-func (a TxContracts) Exists(checksum string) bool {
-	_, ok := a[checksum]
+func (tc TxContracts) Exists(checksum []byte) bool {
+	hexHash := hex.EncodeToString(checksum)
+	_, ok := tc.contracts[hexHash]
 	return ok
+}
+
+func (tc TxContracts) GetContracts() txContracts {
+	return tc.contracts
 }

@@ -86,11 +86,11 @@ func GasRegisterFromContext(ctx context.Context) (GasRegister, bool) {
 }
 
 // WithTxContracts stores the tx contracts into the context returned
-func WithTxContracts(ctx sdk.Context, c TxContracts) sdk.Context {
-	if c == nil {
+func WithTxContracts(ctx sdk.Context, tc TxContracts) sdk.Context {
+	if tc.GetContracts() == nil {
 		panic("tx contracts must not be nil")
 	}
-	return ctx.WithValue(contextKeyTxContracts, c)
+	return ctx.WithValue(contextKeyTxContracts, tc)
 }
 
 // TxContractsFromContext reads the tx contracts from the context
