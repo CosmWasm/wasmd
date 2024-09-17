@@ -19,6 +19,7 @@ oraid init --chain-id "$CHAIN_ID" "$MONIKER" --home $NODE_HOME &>$HIDE_LOGS
 
 # 2s for fast test
 update_genesis '.app_state["gov"]["params"]["voting_period"]="2s"'
+update_genesis '.app_state["gov"]["params"]["expedited_voting_period"]="1.999999995s"'
 
 oraid keys add $USER $ARGS 2>&1 | tee account.txt
 oraid keys add $USER-eth $ARGS --eth 2>&1 | tee account-eth.txt
