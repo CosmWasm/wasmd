@@ -1167,20 +1167,20 @@ func (k Keeper) IsPinnedCode(ctx context.Context, codeID uint64) bool {
 }
 
 func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum []byte, isPinned bool) (sdk.Context, bool) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if isPinned {
-		return sdkCtx, true
+		return ctx, true
 	}
 
 	txContracts, ok := types.TxContractsFromContext(ctx)
-	if !ok {
-		txContracts = types.NewTxContracts()
+	if !ok || txContracts.GetContracts() == nil {
+		// this should never happen because tx contracts are initialized in ante handler
+		panic("tx contracts must not be nil")
 	} else if txContracts.Exists(checksum) {
-		return sdkCtx, true
+		return ctx, true
 	}
 
 	txContracts.AddContract(checksum)
-	return types.WithTxContracts(sdkCtx, txContracts), false
+	return types.WithTxContracts(ctx, txContracts), false
 }
 
 // InitializePinnedCodes updates wasmvm to pin to cache all contracts marked as pinned

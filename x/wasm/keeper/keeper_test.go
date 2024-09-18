@@ -15,13 +15,18 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -333,31 +338,6 @@ func TestCreateWithSimulation(t *testing.T) {
 	code, err := keepers.WasmKeeper.GetByteCode(ctx, contractID)
 	require.NoError(t, err)
 	require.Equal(t, code, hackatomWasm)
-}
-
-func TestIsSimulationMode(t *testing.T) {
-	specs := map[string]struct {
-		ctx sdk.Context
-		exp bool
-	}{
-		"genesis block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
-			exp: false,
-		},
-		"any regular block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewGasMeter(10000000)),
-			exp: false,
-		},
-		"simulation": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
-			exp: true,
-		},
-	}
-	for msg := range specs {
-		t.Run(msg, func(t *testing.T) {
-			// assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
-		})
-	}
 }
 
 func TestCreateWithGzippedPayload(t *testing.T) {
@@ -2717,4 +2697,93 @@ func must[t any](s t, err error) t {
 		panic(err)
 	}
 	return s
+}
+
+func TestCheckDiscountEligibility(t *testing.T) {
+	_, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	specs := map[string]struct {
+		isPinned          bool
+		initCtx           func() sdk.Context
+		checksum          []byte
+		expPanic          bool
+		expDiscount       bool
+		expLenTxContracts int
+	}{
+		"checksum pinned": {
+			isPinned: true,
+			checksum: []byte("pinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, types.NewTxContracts())
+			},
+			expDiscount:       true,
+			expLenTxContracts: 0,
+		},
+		"checksum unpinned - not in ctx": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, types.NewTxContracts())
+			},
+			expDiscount:       false,
+			expLenTxContracts: 1,
+		},
+		"checksum unpinned - already in ctx": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				txContracts := types.NewTxContracts()
+				txContracts.AddContract([]byte("unpinned checksum"))
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, txContracts)
+			},
+			expDiscount:       true,
+			expLenTxContracts: 1,
+		},
+		"panic when tx contracts are not initialized": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return ctx
+			},
+			expPanic: true,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := spec.initCtx()
+			if spec.expPanic {
+				assert.Panics(t, func() {
+					k.checkDiscountEligibility(ctx, spec.checksum, spec.isPinned)
+				})
+				return
+			}
+			ctx, discount := k.checkDiscountEligibility(ctx, spec.checksum, spec.isPinned)
+
+			assert.Equal(t, spec.expDiscount, discount)
+			txContracts, ok := types.TxContractsFromContext(ctx)
+			require.True(t, ok)
+			assert.Equal(t, spec.expLenTxContracts, len(txContracts.GetContracts()))
+		})
+	}
 }

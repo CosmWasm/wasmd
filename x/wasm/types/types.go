@@ -434,6 +434,7 @@ func (a AccessConfig) AllAuthorizedAddresses() []string {
 type txContracts map[string]struct{}
 
 type TxContracts struct {
+	// contracts contains the contracts (identified by checksum) which have already been executed in a transaction
 	contracts txContracts
 }
 
@@ -443,6 +444,9 @@ func NewTxContracts() TxContracts {
 }
 
 func (tc TxContracts) AddContract(checksum []byte) {
+	if len(checksum) == 0 {
+		return
+	}
 	hexHash := hex.EncodeToString(checksum)
 	tc.contracts[hexHash] = struct{}{}
 }
