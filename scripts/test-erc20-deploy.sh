@@ -2,7 +2,7 @@
 
 # This script should be called when there's already a running local network
 
-set -eu
+set -ux
 
 # hard-coded test private key. DO NOT USE!!
 PRIVATE_KEY_ETH=${PRIVATE_KEY_ETH:-"021646C7F742C743E60CC460C56242738A3951667E71C803929CB84B6FA4B0D6"}
