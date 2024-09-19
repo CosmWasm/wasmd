@@ -157,13 +157,17 @@ screen -S validator3 -d -m oraid start --home $VALIDATOR3_HOME
 echo "Waiting 6 seconds to start the validators..."
 sleep 5
 
-oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) $(oraid keys show validator2 -a $ARGS --home $VALIDATOR2_HOME) 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS >$HIDE_LOGS
+VALIDATOR1_ADDRESS=$(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME)
+VALIDATOR2_ADDRESS=$(oraid keys show validator2 -a $ARGS --home $VALIDATOR2_HOME)
+VALIDATOR3_ADDRESS=$(oraid keys show validator3 -a $ARGS --home $VALIDATOR3_HOME)
 
+oraid tx bank send $VALIDATOR1_ADDRESS $VALIDATOR2_ADDRESS 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS >$HIDE_LOGS
 # need to sleep to send fund to validator3
 sleep 1
-oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) $(oraid keys show validator3 -a $ARGS --home $VALIDATOR3_HOME) 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS >$HIDE_LOGS
+oraid tx bank send $VALIDATOR1_ADDRESS $VALIDATOR3_ADDRESS 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS >$HIDE_LOGS
 # send test orai to a test account
-# oraid tx bank send $(oraid keys show validator1 -a $ARGS --home $VALIDATOR1_HOME) orai14n3tx8s5ftzhlxvq0w5962v60vd82h30rha573 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS > $HIDE_LOGS
+sleep 1
+oraid tx bank send $VALIDATOR1_ADDRESS orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 5000000000orai --home $VALIDATOR1_HOME $TX_SEND_ARGS > $HIDE_LOGS
 
 echo "Waiting 1 second to create two new validators..."
 sleep 1
