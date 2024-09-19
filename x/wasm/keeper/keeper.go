@@ -1173,8 +1173,8 @@ func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum []byte, isPin
 
 	txContracts, ok := types.TxContractsFromContext(ctx)
 	if !ok || txContracts.GetContracts() == nil {
-		// this should never happen because tx contracts are initialized in ante handler
-		panic("tx contracts must not be nil")
+		k.Logger(ctx).Warn("cannot get tx contracts from context")
+		return ctx, false
 	} else if txContracts.Exists(checksum) {
 		return ctx, true
 	}

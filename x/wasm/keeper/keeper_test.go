@@ -2710,9 +2710,9 @@ func TestCheckDiscountEligibility(t *testing.T) {
 		isPinned          bool
 		initCtx           func() sdk.Context
 		checksum          []byte
-		expPanic          bool
 		expDiscount       bool
 		expLenTxContracts int
+		expNilContracts   bool
 	}{
 		"checksum pinned": {
 			isPinned: true,
@@ -2755,7 +2755,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			expDiscount:       true,
 			expLenTxContracts: 1,
 		},
-		"panic when tx contracts are not initialized": {
+		"no discount when tx contracts are not initialized": {
 			isPinned: false,
 			checksum: []byte("unpinned checksum"),
 			initCtx: func() sdk.Context {
@@ -2765,24 +2765,25 @@ func TestCheckDiscountEligibility(t *testing.T) {
 				}, false, log.NewNopLogger())
 				return ctx
 			},
-			expPanic: true,
+			expDiscount:     false,
+			expNilContracts: true,
 		},
 	}
 
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			ctx := spec.initCtx()
-			if spec.expPanic {
-				assert.Panics(t, func() {
-					k.checkDiscountEligibility(ctx, spec.checksum, spec.isPinned)
-				})
-				return
-			}
 			ctx, discount := k.checkDiscountEligibility(ctx, spec.checksum, spec.isPinned)
 
 			assert.Equal(t, spec.expDiscount, discount)
 			txContracts, ok := types.TxContractsFromContext(ctx)
+			if spec.expNilContracts {
+				require.False(t, ok)
+				assert.Nil(t, txContracts.GetContracts())
+				return
+			}
 			require.True(t, ok)
+			assert.NotNil(t, txContracts.GetContracts())
 			assert.Equal(t, spec.expLenTxContracts, len(txContracts.GetContracts()))
 		})
 	}

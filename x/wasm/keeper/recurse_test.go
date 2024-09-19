@@ -117,6 +117,8 @@ func TestGasCostOnQuery(t *testing.T) {
 
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
+			// init tx contracts in ctx
+			ctx = types.WithTxContracts(ctx, types.NewTxContracts())
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 			// do the query
@@ -280,6 +282,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
+			// init tx contracts in ctx
+			ctx = types.WithTxContracts(ctx, types.NewTxContracts())
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 			// prepare the query
