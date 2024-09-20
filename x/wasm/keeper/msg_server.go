@@ -485,3 +485,20 @@ func (m msgServer) UpdateContractLabel(ctx context.Context, msg *types.MsgUpdate
 
 	return &types.MsgUpdateContractLabelResponse{}, nil
 }
+
+func (m msgServer) SetGaslessContracts(ctx context.Context, msg *types.MsgSetGaslessContracts) (*types.MsgSetGaslessContractsResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	for _, contract := range msg.Contracts {
+		contractAddress, _ := sdk.AccAddressFromBech32(contract)
+		if err := m.keeper.setGasless(sdkCtx, contractAddress); err != nil {
+			// return nil, errorsmod.Wrapf(err, "set gas less failed for contract \"%s\"", contract)
+			return nil, err
+		}
+	}
+
+	return &types.MsgSetGaslessContractsResponse{}, nil
+}

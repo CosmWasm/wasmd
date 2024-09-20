@@ -85,6 +85,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgRemoveCodeUploadParamsAddresses{},
 		&MsgStoreAndMigrateContract{},
 		&MsgUpdateContractLabel{},
+		&MsgSetGaslessContracts{},
 	)
 	registry.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
 
