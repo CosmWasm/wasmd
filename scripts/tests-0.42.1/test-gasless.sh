@@ -25,7 +25,7 @@ contract_address=$(oraid query wasm list-contract-by-code $code_id --output json
 echo "contract_address: $contract_address"
 
 # try executing something, gas should equal 0
-exec_before=$(oraid tx wasm execute $contract_address $EXECUTE_MSG $ARGS --output json --gas 20000000)
+exec_before=$(oraid tx wasm execute $contract_address $EXECUTE_MSG $ARGS --output json)
 exec_before_txhash=$(echo $exec_before | jq -r '.txhash')
 # wait for tx included in a block
 sleep 2
