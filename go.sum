@@ -944,6 +944,8 @@ github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240919042230-0febf63ba6ef h1
 github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240919042230-0febf63ba6ef/go.mod h1:Qo/mdpsOXOcwIe/QfF//cnJDliBnZMDeNOSfPxgyX3I=
 github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597 h1:vFCKH25Q+BVNWRImFym0rYzno6BW8+l9GplszOdZ9no=
 github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597/go.mod h1:JAaOF+0j23OoyEgd6uhE3cgNDpZcfVZx4/DBbnMjUsc=
+github.com/oraichain/juno/x/globalfee v0.0.0-20240925043856-fe3d1d8b9ad3 h1:/Um//l2b6eGaAcVRwkzv2U7xTAqlYfiyaqG71bUyyac=
+github.com/oraichain/juno/x/globalfee v0.0.0-20240925043856-fe3d1d8b9ad3/go.mod h1:T9g8covTFLipVYRou8cuvfjg+xtPmQINjxFjzRxEbo8=
 github.com/ory/dockertest v3.3.5+incompatible h1:iLLK6SQwIhcbrG783Dghaaa3WPzGc+4Emza6EbVUUGA=
 github.com/ory/dockertest v3.3.5+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnhNrne+V0E6LAcBILJdPs=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
