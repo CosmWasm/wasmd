@@ -121,6 +121,7 @@ func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	return next(types.WithGasRegister(ctx, g.gasRegister), tx, simulate)
 }
 
+// TxContractsDecorator implements an AnteHandler that keeps track of which contracts were already accessed during the current transaction. This allows discounting further calls to those contracts, as they are likely to be in the memory cache of the VM already.
 type TxContractsDecorator struct{}
 
 // NewTxContractsDecorator constructor.
