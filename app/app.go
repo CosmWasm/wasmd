@@ -753,6 +753,7 @@ func NewWasmApp(
 	}
 
 	wasmOpts = append(bindings.RegisterCustomPlugins(&app.BankKeeper, &app.TokenFactoryKeeper), wasmOpts...)
+	wasmOpts = append(RegisterStargateQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
