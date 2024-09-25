@@ -169,6 +169,10 @@ import (
 	"github.com/evmos/ethermint/x/erc20"
 	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
 	erc20types "github.com/evmos/ethermint/x/erc20/types"
+
+	"github.com/CosmosContracts/juno/v18/x/globalfee"
+	globalfeekeeper "github.com/CosmosContracts/juno/v18/x/globalfee/keeper"
+	globalfeetypes "github.com/CosmosContracts/juno/v18/x/globalfee/types"
 )
 
 const appName = "WasmApp"
@@ -288,6 +292,7 @@ type WasmApp struct {
 	EvmKeeper       *evmkeeper.Keeper
 	Erc20Keeper     erc20keeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
+	GlobalFeeKeeper globalfeekeeper.Keeper
 
 	// Middleware wrapper
 	Ics20WasmHooks   *ibchooks.WasmHooks
@@ -398,7 +403,7 @@ func NewWasmApp(
 		// non sdk store keys
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey, clocktypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey, tokenfactorytypes.StoreKey,
+		icacontrollertypes.StoreKey, clocktypes.StoreKey, globalfeetypes.StoreKey, ibchookstypes.StoreKey, packetforwardtypes.StoreKey, tokenfactorytypes.StoreKey,
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
 	)
 
@@ -786,6 +791,12 @@ func NewWasmApp(
 		AuthorityAddr,
 	)
 
+	app.GlobalFeeKeeper = globalfeekeeper.NewKeeper(
+		appCodec,
+		app.keys[globalfeetypes.StoreKey],
+		AuthorityAddr,
+	)
+
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		keys[tokenfactorytypes.StoreKey],
 		app.GetSubspace(tokenfactorytypes.ModuleName),
@@ -884,6 +895,7 @@ func NewWasmApp(
 		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 		clock.NewAppModule(appCodec, app.ClockKeeper),
+		globalfee.NewAppModule(appCodec, app.GlobalFeeKeeper),
 		ibchooks.NewAppModule(app.AccountKeeper),
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper),
@@ -913,6 +925,7 @@ func NewWasmApp(
 			evmtypes.ModuleName:           evm.AppModuleBasic{},
 			feemarkettypes.ModuleName:     feemarket.AppModuleBasic{},
 			erc20types.ModuleName:         erc20.AppModuleBasic{},
+			globalfee.ModuleName:          globalfee.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -947,6 +960,7 @@ func NewWasmApp(
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		globalfee.ModuleName,
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
@@ -970,6 +984,7 @@ func NewWasmApp(
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		globalfee.ModuleName,
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
@@ -1002,6 +1017,7 @@ func NewWasmApp(
 		clocktypes.ModuleName,
 		ibchookstypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		globalfee.ModuleName,
 		tokenfactorytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
@@ -1133,6 +1149,8 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 			BankKeeper:            app.BankKeeper,
 			IBCKeeper:             app.IBCKeeper,
 			EvmKeeper:             app.EvmKeeper,
+			StakingKeeper:         *app.StakingKeeper,
+			GlobalFeeKeeper:       app.GlobalFeeKeeper,
 			FeeMarketKeeper:       app.FeeMarketKeeper,
 			WasmConfig:            &wasmConfig,
 			WasmKeeper:            &app.WasmKeeper,
@@ -1394,6 +1412,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(clocktypes.ModuleName)
+	paramsKeeper.Subspace(globalfeetypes.ModuleName)
 	paramsKeeper.Subspace(ibchookstypes.ModuleName)
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)

@@ -48,6 +48,7 @@ require (
 	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/tx v0.13.4
 	cosmossdk.io/x/upgrade v0.1.4
+	github.com/CosmosContracts/juno/v18/x/globalfee v0.0.0-00010101000000-000000000000
 	github.com/cometbft/cometbft v0.38.11
 	github.com/cosmos/cosmos-db v1.0.2
 	github.com/cosmos/go-bip39 v1.0.0
@@ -56,6 +57,7 @@ require (
 	github.com/cosmos/ibc-go/v8 v8.4.0
 	github.com/distribution/reference v0.5.0
 	github.com/evmos/ethermint v0.0.0-00010101000000-000000000000
+	github.com/gogo/protobuf v1.3.2
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
@@ -130,7 +132,6 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -262,6 +263,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
 	github.com/CosmosContracts/juno/v18/x/clock => github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597
+	github.com/CosmosContracts/juno/v18/x/globalfee => github.com/oraichain/juno/x/globalfee v0.0.0-20240925043856-fe3d1d8b9ad3
 
 	// indexer and timestamp added
 	github.com/cometbft/cometbft => github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4
