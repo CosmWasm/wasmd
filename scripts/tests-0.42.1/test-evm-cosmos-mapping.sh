@@ -38,9 +38,10 @@ if [[ $evm_balance_int -ne $cosmos_balance ]] ; then
    echo "The evm addresses dont match. EVM cosmos mapping test failed"; exit 1
 fi
 
-test balance change when cosmos address sends some coins to another address
+# test balance change when cosmos address sends some coins to another address
 oraid tx bank send $USER orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 1orai $ARGS > $HIDE_LOGS
-# evm balance should be 0
+# need to sleep 2s for tx completed
+sleep 2
 balance_hex=$(curl --no-progress-meter http://localhost:8545/ -X POST -H "Content-Type: application/json" --data '{"method":"eth_getBalance","params":["'"$actual_evm_address"'", "latest"],"id":1,"jsonrpc":"2.0"}' | jq '.result' | bc)
 balance_hex_no_prefix=${balance_hex#0x}
 balance_hex_no_prefix_upper=$(echo "$balance_hex_no_prefix" | tr '[:lower:]' '[:upper:]')
