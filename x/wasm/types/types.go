@@ -326,6 +326,8 @@ type WasmConfig struct {
 	MemoryCacheSize uint32 `mapstructure:"memory_cache_size"`
 	// ContractDebugMode log what contract print
 	ContractDebugMode bool
+	// WasmLimits are the limits that are used for static validation of Wasm binaries.
+	WasmLimits wasmvmtypes.WasmLimits
 }
 
 // DefaultWasmConfig returns the default settings for WasmConfig

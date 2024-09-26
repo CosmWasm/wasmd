@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -56,7 +57,8 @@ func NewKeeper(
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionInstantiate: {},
 		},
-		authority: authority,
+		authority:  authority,
+		wasmLimits: wasmConfig.WasmLimits,
 	}
 	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
@@ -70,7 +72,15 @@ func NewKeeper(
 	// NewVM does a lot, so better not to create it and silently drop it.
 	if keeper.wasmVM == nil {
 		var err error
-		keeper.wasmVM, err = wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+		keeper.wasmVM, err = wasmvm.NewVMWithConfig(wasmvmtypes.VMConfig{
+			Cache: wasmvmtypes.CacheOptions{
+				BaseDir:               filepath.Join(homeDir, "wasm"),
+				AvailableCapabilities: availableCapabilities,
+				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(contractMemoryLimit),
+				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(wasmConfig.MemoryCacheSize),
+			},
+			WasmLimits: wasmConfig.WasmLimits,
+		}, wasmConfig.ContractDebugMode)
 		if err != nil {
 			panic(err)
 		}
