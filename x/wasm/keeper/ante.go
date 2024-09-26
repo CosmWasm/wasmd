@@ -120,3 +120,17 @@ func NewGasRegisterDecorator(gr types.GasRegister) *GasRegisterDecorator {
 func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	return next(types.WithGasRegister(ctx, g.gasRegister), tx, simulate)
 }
+
+// TxContractsDecorator implements an AnteHandler that keeps track of which contracts were already accessed during the current transaction. This allows discounting further calls to those contracts, as they are likely to be in the memory cache of the VM already.
+type TxContractsDecorator struct{}
+
+// NewTxContractsDecorator constructor.
+func NewTxContractsDecorator() *TxContractsDecorator {
+	return &TxContractsDecorator{}
+}
+
+// AnteHandle initializes a new TxContracts object to the context.
+func (d TxContractsDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	txContracts := types.NewTxContracts()
+	return next(types.WithTxContracts(ctx, txContracts), tx, simulate)
+}

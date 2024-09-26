@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"reflect"
 
@@ -428,4 +429,34 @@ func (a AccessConfig) AllAuthorizedAddresses() []string {
 		return a.Addresses
 	}
 	return []string{}
+}
+
+type txContracts map[string]struct{}
+
+type TxContracts struct {
+	// contracts contains the contracts (identified by checksum) which have already been executed in a transaction
+	contracts txContracts
+}
+
+func NewTxContracts() TxContracts {
+	c := make(txContracts, 0)
+	return TxContracts{contracts: c}
+}
+
+func (tc TxContracts) AddContract(checksum []byte) {
+	if len(checksum) == 0 {
+		return
+	}
+	hexHash := hex.EncodeToString(checksum)
+	tc.contracts[hexHash] = struct{}{}
+}
+
+func (tc TxContracts) Exists(checksum []byte) bool {
+	hexHash := hex.EncodeToString(checksum)
+	_, ok := tc.contracts[hexHash]
+	return ok
+}
+
+func (tc TxContracts) GetContracts() txContracts {
+	return tc.contracts
 }

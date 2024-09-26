@@ -20,6 +20,9 @@ const (
 	contextKeyGasRegister = iota
 
 	contextKeyCallDepth contextKey = iota
+
+	// contracts in the current tx
+	contextKeyTxContracts contextKey = iota
 )
 
 // WithTXCounter stores a transaction counter value in the context
@@ -79,5 +82,19 @@ func WithGasRegister(ctx sdk.Context, gr GasRegister) sdk.Context {
 // GasRegisterFromContext reads the gas register from the context
 func GasRegisterFromContext(ctx context.Context) (GasRegister, bool) {
 	val, ok := ctx.Value(contextKeyGasRegister).(GasRegister)
+	return val, ok
+}
+
+// WithTxContracts stores the tx contracts into the context returned
+func WithTxContracts(ctx sdk.Context, tc TxContracts) sdk.Context {
+	if tc.GetContracts() == nil {
+		panic("tx contracts must not be nil")
+	}
+	return ctx.WithValue(contextKeyTxContracts, tc)
+}
+
+// TxContractsFromContext reads the tx contracts from the context
+func TxContractsFromContext(ctx context.Context) (TxContracts, bool) {
+	val, ok := ctx.Value(contextKeyTxContracts).(TxContracts)
 	return val, ok
 }
