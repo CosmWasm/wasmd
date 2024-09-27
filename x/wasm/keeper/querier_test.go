@@ -20,6 +20,7 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -682,6 +683,54 @@ func TestQueryContractInfo(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expRsp, gotRsp)
+		})
+	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
+}
+
+func TestQueryWasmLimitsConfig(t *testing.T) {
+	cfg := types.DefaultWasmConfig()
+
+	specs := map[string]struct {
+		limits  wasmvmtypes.WasmLimits
+		expJSON []byte
+	}{
+		"all 15": {
+			limits: wasmvmtypes.WasmLimits{
+				InitialMemoryLimit:     ptr(uint32(15)),
+				TableSizeLimit:         ptr(uint32(15)),
+				MaxImports:             ptr(uint32(15)),
+				MaxFunctions:           ptr(uint32(15)),
+				MaxFunctionParams:      ptr(uint32(15)),
+				MaxTotalFunctionParams: ptr(uint32(15)),
+				MaxFunctionResults:     ptr(uint32(15)),
+			},
+			expJSON: []byte(`{"initial_memory_limit":15,"table_size_limit":15,"max_imports":15,"max_functions":15,"max_function_params":15,"max_total_function_params":15,"max_function_results":15}`),
+		},
+		"empty": {
+			limits:  wasmvmtypes.WasmLimits{},
+			expJSON: []byte("{}"),
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			cfg.WasmLimits = spec.limits
+
+			ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, dbm.NewMemDB())
+			keeper := keepers.WasmKeeper
+
+			q := Querier(keeper)
+
+			response, err := q.WasmLimitsConfig(ctx, &types.QueryWasmLimitsConfigRequest{})
+			require.NoError(t, err)
+			require.NotNil(t, response)
+
+			assert.Equal(t, string(spec.expJSON), response.Config)
+			// assert.Equal(t, spec.expJSON, []byte(response.Config))
 		})
 	}
 }
