@@ -687,10 +687,6 @@ func TestQueryContractInfo(t *testing.T) {
 	}
 }
 
-func ptr[T any](v T) *T {
-	return &v
-}
-
 func TestQueryWasmLimitsConfig(t *testing.T) {
 	cfg := types.DefaultWasmConfig()
 
