@@ -424,6 +424,11 @@ func (m msgServer) selectAuthorizationPolicy(ctx context.Context, actor string) 
 	if policy, ok := types.SubMsgAuthzPolicy(ctx); ok {
 		return policy
 	}
+	if m.keeper.customAuthPolicy != nil {
+		if policy, ok := m.keeper.customAuthPolicy(ctx, actor); ok {
+			return policy
+		}
+	}
 	return DefaultAuthorizationPolicy{}
 }
 

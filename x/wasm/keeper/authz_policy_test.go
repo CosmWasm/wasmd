@@ -60,12 +60,12 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
 			if !spec.panics {
-				got := policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
+				got := policy.CanCreateCode([]byte{}, spec.chainConfigs, myActorAddress, spec.contractInstConf)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
+				policy.CanCreateCode([]byte{}, spec.chainConfigs, myActorAddress, spec.contractInstConf)
 			})
 		})
 	}
@@ -104,13 +104,15 @@ func TestDefaultAuthzPolicyCanInstantiateContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
+			info := types.NewCodeInfo([]byte{}, RandomAccountAddress(t), spec.config)
+
 			if !spec.panics {
-				got := policy.CanInstantiateContract(spec.config, myActorAddress)
+				got := policy.CanInstantiateContract(&info, myActorAddress)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				policy.CanInstantiateContract(spec.config, myActorAddress)
+				policy.CanInstantiateContract(&info, myActorAddress)
 			})
 		})
 	}
@@ -139,7 +141,8 @@ func TestDefaultAuthzPolicyCanModifyContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
-			got := policy.CanModifyContract(spec.admin, myActorAddress)
+			contract := types.NewContractInfo(1, spec.admin, spec.admin, "", nil)
+			got := policy.CanModifyContract(&contract, myActorAddress)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
@@ -175,7 +178,8 @@ func TestDefaultAuthzPolicyCanModifyCodeAccessConfig(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
-			got := policy.CanModifyCodeAccessConfig(spec.admin, myActorAddress, spec.subset)
+			info := types.NewCodeInfo([]byte{}, spec.admin, types.AccessConfig{})
+			got := policy.CanModifyCodeAccessConfig(&info, myActorAddress, spec.subset)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
@@ -229,7 +233,7 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
+			got := policy.CanCreateCode([]byte{}, spec.chainConfigs, myActorAddress, spec.contractInstConf)
 			assert.True(t, got)
 		})
 	}
@@ -261,7 +265,8 @@ func TestGovAuthzPolicyCanInstantiateContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanInstantiateContract(spec.config, myActorAddress)
+			info := types.NewCodeInfo([]byte{}, RandomAccountAddress(t), spec.config)
+			got := policy.CanInstantiateContract(&info, myActorAddress)
 			assert.True(t, got)
 		})
 	}
@@ -285,7 +290,8 @@ func TestGovAuthzPolicyCanModifyContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanModifyContract(spec.admin, myActorAddress)
+			contract := types.NewContractInfo(1, spec.admin, spec.admin, "", nil)
+			got := policy.CanModifyContract(&contract, myActorAddress)
 			assert.True(t, got)
 		})
 	}
@@ -315,7 +321,8 @@ func TestGovAuthzPolicyCanModifyCodeAccessConfig(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := newGovAuthorizationPolicy(nil)
-			got := policy.CanModifyCodeAccessConfig(spec.admin, myActorAddress, spec.subset)
+			info := types.NewCodeInfo([]byte{}, spec.admin, types.AccessConfig{})
+			got := policy.CanModifyCodeAccessConfig(&info, myActorAddress, spec.subset)
 			assert.True(t, got)
 		})
 	}
@@ -373,7 +380,8 @@ func TestPartialGovAuthorizationPolicyCanInstantiateContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := NewPartialGovAuthorizationPolicy(AlwaysRejectTestAuthZPolicy{}, spec.allowedAction)
-			got := policy.CanInstantiateContract(types.AccessConfig{}, nil)
+			info := types.NewCodeInfo([]byte{}, RandomAccountAddress(t), types.AccessConfig{})
+			got := policy.CanInstantiateContract(&info, nil)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
@@ -399,22 +407,25 @@ func TestPartialGovAuthorizationPolicyCanModifyContract(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := NewPartialGovAuthorizationPolicy(AlwaysRejectTestAuthZPolicy{}, spec.allowedAction)
-			got := policy.CanModifyContract(nil, nil)
+			contract := types.NewContractInfo(1, nil, nil, "", nil)
+			got := policy.CanModifyContract(&contract, nil)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
 }
 
 func TestPartialGovAuthorizationPolicyDelegatedOnly(t *testing.T) {
+	info := types.NewCodeInfo([]byte{}, RandomAccountAddress(t), types.AccessConfig{})
+
 	for _, v := range []types.AuthorizationPolicy{AlwaysRejectTestAuthZPolicy{}, NewGovAuthorizationPolicy()} {
 		policy := NewPartialGovAuthorizationPolicy(v, types.AuthZActionInstantiate)
 
-		got := policy.CanCreateCode(types.ChainAccessConfigs{}, nil, types.AccessConfig{})
-		exp := v.CanCreateCode(types.ChainAccessConfigs{}, nil, types.AccessConfig{})
+		got := policy.CanCreateCode([]byte{}, types.ChainAccessConfigs{}, nil, types.AccessConfig{})
+		exp := v.CanCreateCode([]byte{}, types.ChainAccessConfigs{}, nil, types.AccessConfig{})
 		assert.Equal(t, exp, got)
 
-		got = policy.CanModifyCodeAccessConfig(nil, nil, false)
-		exp = v.CanModifyCodeAccessConfig(nil, nil, false)
+		got = policy.CanModifyCodeAccessConfig(&info, nil, false)
+		exp = v.CanModifyCodeAccessConfig(&info, nil, false)
 		assert.Equal(t, exp, got)
 	}
 }
@@ -431,19 +442,19 @@ var _ types.AuthorizationPolicy = AlwaysRejectTestAuthZPolicy{}
 
 type AlwaysRejectTestAuthZPolicy struct{}
 
-func (a AlwaysRejectTestAuthZPolicy) CanCreateCode(chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+func (a AlwaysRejectTestAuthZPolicy) CanCreateCode(checksum []byte, chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
 	return false
 }
 
-func (a AlwaysRejectTestAuthZPolicy) CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool {
+func (a AlwaysRejectTestAuthZPolicy) CanInstantiateContract(code *types.CodeInfo, actor sdk.AccAddress) bool {
 	return false
 }
 
-func (a AlwaysRejectTestAuthZPolicy) CanModifyContract(admin, actor sdk.AccAddress) bool {
+func (a AlwaysRejectTestAuthZPolicy) CanModifyContract(contract *types.ContractInfo, actor sdk.AccAddress) bool {
 	return false
 }
 
-func (a AlwaysRejectTestAuthZPolicy) CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool {
+func (a AlwaysRejectTestAuthZPolicy) CanModifyCodeAccessConfig(code *types.CodeInfo, actor sdk.AccAddress, isSubset bool) bool {
 	return false
 }
 

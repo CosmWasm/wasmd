@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -56,4 +57,52 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 			assert.Equal(t, spec.exp, got)
 		})
 	}
+}
+
+var _ types.AuthorizationPolicy = TestCustomAuthorizationPolicy{}
+
+type TestCustomAuthorizationPolicy struct{}
+
+func (p TestCustomAuthorizationPolicy) CanCreateCode(checksum []byte, chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+	return true
+}
+
+func (p TestCustomAuthorizationPolicy) CanInstantiateContract(code *types.CodeInfo, actor sdk.AccAddress) bool {
+	return true
+}
+
+func (p TestCustomAuthorizationPolicy) CanModifyContract(contract *types.ContractInfo, actor sdk.AccAddress) bool {
+	return true
+}
+
+func (p TestCustomAuthorizationPolicy) CanModifyCodeAccessConfig(code *types.CodeInfo, actor sdk.AccAddress, isSubset bool) bool {
+	return true
+}
+
+func (p TestCustomAuthorizationPolicy) SubMessageAuthorizationPolicy(_ types.AuthorizationPolicyAction) types.AuthorizationPolicy {
+	return p
+}
+
+func CustomAuthPolicy(ctx context.Context, actor string) (types.AuthorizationPolicy, bool) {
+	return TestCustomAuthorizationPolicy{}, true
+}
+
+func TestSelectCustomAuthorizationPolicy(t *testing.T) {
+	myGovAuthority := RandomAccountAddress(t)
+	m := msgServer{keeper: &Keeper{
+		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
+			types.AuthZActionMigrateContract: {},
+			types.AuthZActionInstantiate:     {},
+		},
+		authority:        myGovAuthority.String(),
+		customAuthPolicy: CustomAuthPolicy,
+	}}
+
+	ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ctx := sdk.NewContext(ms, tmproto.Header{}, false, log.NewNopLogger())
+
+	t.Run("TestSelectCustomAuthorizationPolicy", func(t *testing.T) {
+		got := m.selectAuthorizationPolicy(ctx, RandomAccountAddress(t).String())
+		assert.Equal(t, TestCustomAuthorizationPolicy{}, got)
+	})
 }

@@ -10,20 +10,28 @@ var _ types.AuthorizationPolicy = DefaultAuthorizationPolicy{}
 
 type DefaultAuthorizationPolicy struct{}
 
-func (p DefaultAuthorizationPolicy) CanCreateCode(chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+func (p DefaultAuthorizationPolicy) CanCreateCode(checksum []byte, chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
 	return chainConfigs.Upload.Allowed(actor) &&
 		contractConfig.IsSubset(chainConfigs.Instantiate)
 }
 
-func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessConfig, actor sdk.AccAddress) bool {
-	return config.Allowed(actor)
+func (p DefaultAuthorizationPolicy) CanInstantiateContract(i *types.CodeInfo, actor sdk.AccAddress) bool {
+	return i.InstantiateConfig.Allowed(actor)
 }
 
-func (p DefaultAuthorizationPolicy) CanModifyContract(admin, actor sdk.AccAddress) bool {
+func (p DefaultAuthorizationPolicy) CanModifyContract(contract *types.ContractInfo, actor sdk.AccAddress) bool {
+	admin, err := sdk.AccAddressFromBech32(contract.Admin)
+	if err != nil {
+		return false
+	}
 	return admin != nil && admin.Equals(actor)
 }
 
-func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool {
+func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(code *types.CodeInfo, actor sdk.AccAddress, isSubset bool) bool {
+	creator, err := sdk.AccAddressFromBech32(code.Creator)
+	if err != nil {
+		return false
+	}
 	return creator != nil && creator.Equals(actor) && isSubset
 }
 
@@ -55,19 +63,19 @@ func newGovAuthorizationPolicy(propagate map[types.AuthorizationPolicyAction]str
 }
 
 // CanCreateCode implements AuthorizationPolicy.CanCreateCode to allow gov actions. Always returns true.
-func (p GovAuthorizationPolicy) CanCreateCode(types.ChainAccessConfigs, sdk.AccAddress, types.AccessConfig) bool {
+func (p GovAuthorizationPolicy) CanCreateCode([]byte, types.ChainAccessConfigs, sdk.AccAddress, types.AccessConfig) bool {
 	return true
 }
 
-func (p GovAuthorizationPolicy) CanInstantiateContract(types.AccessConfig, sdk.AccAddress) bool {
+func (p GovAuthorizationPolicy) CanInstantiateContract(*types.CodeInfo, sdk.AccAddress) bool {
 	return true
 }
 
-func (p GovAuthorizationPolicy) CanModifyContract(sdk.AccAddress, sdk.AccAddress) bool {
+func (p GovAuthorizationPolicy) CanModifyContract(*types.ContractInfo, sdk.AccAddress) bool {
 	return true
 }
 
-func (p GovAuthorizationPolicy) CanModifyCodeAccessConfig(sdk.AccAddress, sdk.AccAddress, bool) bool {
+func (p GovAuthorizationPolicy) CanModifyCodeAccessConfig(*types.CodeInfo, sdk.AccAddress, bool) bool {
 	return true
 }
 
@@ -96,26 +104,26 @@ func NewPartialGovAuthorizationPolicy(defaultPolicy types.AuthorizationPolicy, e
 	return PartialGovAuthorizationPolicy{action: entrypoint, defaultPolicy: defaultPolicy}
 }
 
-func (p PartialGovAuthorizationPolicy) CanCreateCode(chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
-	return p.defaultPolicy.CanCreateCode(chainConfigs, actor, contractConfig)
+func (p PartialGovAuthorizationPolicy) CanCreateCode(checksum []byte, chainConfigs types.ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+	return p.defaultPolicy.CanCreateCode(checksum, chainConfigs, actor, contractConfig)
 }
 
-func (p PartialGovAuthorizationPolicy) CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool {
+func (p PartialGovAuthorizationPolicy) CanInstantiateContract(c *types.CodeInfo, actor sdk.AccAddress) bool {
 	if p.action == types.AuthZActionInstantiate {
 		return true
 	}
 	return p.defaultPolicy.CanInstantiateContract(c, actor)
 }
 
-func (p PartialGovAuthorizationPolicy) CanModifyContract(admin, actor sdk.AccAddress) bool {
+func (p PartialGovAuthorizationPolicy) CanModifyContract(contract *types.ContractInfo, actor sdk.AccAddress) bool {
 	if p.action == types.AuthZActionMigrateContract {
 		return true
 	}
-	return p.defaultPolicy.CanModifyContract(admin, actor)
+	return p.defaultPolicy.CanModifyContract(contract, actor)
 }
 
-func (p PartialGovAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool {
-	return p.defaultPolicy.CanModifyCodeAccessConfig(creator, actor, isSubset)
+func (p PartialGovAuthorizationPolicy) CanModifyCodeAccessConfig(code *types.CodeInfo, actor sdk.AccAddress, isSubset bool) bool {
+	return p.defaultPolicy.CanModifyCodeAccessConfig(code, actor, isSubset)
 }
 
 // SubMessageAuthorizationPolicy always returns self

@@ -108,6 +108,8 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	customAuthPolicy func(ctx context.Context, actor string) (types.AuthorizationPolicy, bool)
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
@@ -157,10 +159,6 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 		Upload:      k.getUploadAccessConfig(sdkCtx),
 	}
 
-	if !authZ.CanCreateCode(chainConfigs, creator, *instantiateAccess) {
-		return 0, checksum, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
-	}
-
 	if ioutils.IsGzip(wasmCode) {
 		sdkCtx.GasMeter().ConsumeGas(k.gasRegister.UncompressCosts(len(wasmCode)), "Uncompress gzip bytecode")
 		wasmCode, err = ioutils.Uncompress(wasmCode, int64(types.MaxWasmSize))
@@ -171,6 +169,11 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
 	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gasLeft)
+
+	if !authZ.CanCreateCode(checksum, chainConfigs, creator, *instantiateAccess) {
+		return 0, checksum, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
+	}
+
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
@@ -258,7 +261,7 @@ func (k Keeper) instantiate(
 	if codeInfo == nil {
 		return nil, nil, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
-	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
+	if !authPolicy.CanInstantiateContract(codeInfo, creator) {
 		return nil, nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 	contractAddress := addressGenerator(ctx, codeID, codeInfo.CodeHash)
@@ -452,16 +455,17 @@ func (k Keeper) migrate(
 	if contractInfo == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not migrate")
-	}
 
 	newCodeInfo := k.GetCodeInfo(ctx, newCodeID)
 	if newCodeInfo == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
-	if !authZ.CanInstantiateContract(newCodeInfo.InstantiateConfig, caller) {
+	if !authZ.CanModifyContract(contractInfo, caller) {
+		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not migrate")
+	}
+
+	if !authZ.CanInstantiateContract(newCodeInfo, caller) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "to use new code")
 	}
 
@@ -723,7 +727,7 @@ func (k Keeper) setContractAdmin(ctx context.Context, contractAddress, caller, n
 	if contractInfo == nil {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
+	if !authZ.CanModifyContract(contractInfo, caller) {
 		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
 	newAdminStr := newAdmin.String()
@@ -744,7 +748,7 @@ func (k Keeper) setContractLabel(ctx context.Context, contractAddress, caller sd
 	if contractInfo == nil {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
+	if !authZ.CanModifyContract(contractInfo, caller) {
 		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
 	contractInfo.Label = newLabel
@@ -1178,7 +1182,7 @@ func (k Keeper) setAccessConfig(ctx context.Context, codeID uint64, caller sdk.A
 		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
-	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
+	if !authz.CanModifyCodeAccessConfig(info, caller, isSubset) {
 		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify code access config")
 	}
 
