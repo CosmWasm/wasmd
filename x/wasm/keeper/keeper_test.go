@@ -87,9 +87,10 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 }
 
 func TestWasmLimits(t *testing.T) {
+	one := uint32(1)
 	cfg := types.DefaultWasmConfig()
 	cfg.WasmLimits = wasmvmtypes.WasmLimits{
-		MaxImports: ptr(uint32(1)), // very low limit that every contract will fail
+		MaxImports: &one, // very low limit that every contract will fail
 	}
 	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, dbm.NewMemDB())
 	keeper := keepers.ContractKeeper

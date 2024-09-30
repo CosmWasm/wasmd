@@ -690,19 +690,21 @@ func TestQueryContractInfo(t *testing.T) {
 func TestQueryWasmLimitsConfig(t *testing.T) {
 	cfg := types.DefaultWasmConfig()
 
+	fifteen := uint32(15)
+
 	specs := map[string]struct {
 		limits  wasmvmtypes.WasmLimits
 		expJSON []byte
 	}{
 		"all 15": {
 			limits: wasmvmtypes.WasmLimits{
-				InitialMemoryLimit:     ptr(uint32(15)),
-				TableSizeLimit:         ptr(uint32(15)),
-				MaxImports:             ptr(uint32(15)),
-				MaxFunctions:           ptr(uint32(15)),
-				MaxFunctionParams:      ptr(uint32(15)),
-				MaxTotalFunctionParams: ptr(uint32(15)),
-				MaxFunctionResults:     ptr(uint32(15)),
+				InitialMemoryLimit:     &fifteen,
+				TableSizeLimit:         &fifteen,
+				MaxImports:             &fifteen,
+				MaxFunctions:           &fifteen,
+				MaxFunctionParams:      &fifteen,
+				MaxTotalFunctionParams: &fifteen,
+				MaxFunctionResults:     &fifteen,
 			},
 			expJSON: []byte(`{"initial_memory_limit":15,"table_size_limit":15,"max_imports":15,"max_functions":15,"max_function_params":15,"max_total_function_params":15,"max_function_results":15}`),
 		},
