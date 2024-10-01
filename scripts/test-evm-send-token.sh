@@ -9,13 +9,15 @@ PRIVATE_KEY_ETH=${PRIVATE_KEY_ETH:-"021646C7F742C743E60CC460C56242738A3951667E71
 # run evm send token test
 current_dir=$PWD
 
-clone or pull latest repo
+# clone or pull latest repo
 if [ -d "$PWD/../evm-send-token" ]; then
     cd ../evm-send-token
     git pull origin master
+    git checkout feat/add-evm-send-token
 else
     git clone https://github.com/oraichain/evm-bridge-proxy.git ../evm-send-token
     cd ../evm-send-token
+    git checkout feat/add-evm-send-token
 fi
 
 # prepare env and chain

@@ -1,7 +1,11 @@
 {
   "pubkey": {
     "@type": "/cosmos.crypto.ed25519.PubKey",
+<<<<<<< HEAD
     "key": "reK+WDyVHIvB/CGgQySaRNIR1zZjrRgu+g+Fd+ywE9k="
+=======
+    "key": "bvtks/k25oU4n8Eq4PmGZtby8evFoggc9mrmfZbUB4w="
+>>>>>>> d139df72 (feat: bump to latest ethermint module and remove fee collector from blocked address)
   },
   "amount": "500000000orai",
   "moniker": "validator3",

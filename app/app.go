@@ -615,7 +615,7 @@ func NewWasmApp(
 	evmBankKeeper := evmkeeper.NewEvmBankKeeperWithDenoms(app.BankKeeper, app.AccountKeeper, appconfig.EvmDenom, appconfig.CosmosDenom)
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
-		app.AccountKeeper, app.BankKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
@@ -1388,6 +1388,7 @@ func BlockedAddresses(authorityAddr string) map[string]bool {
 
 	// allow the following addresses to receive funds
 	delete(modAccAddrs, authorityAddr)
+	delete(modAccAddrs, authtypes.NewModuleAddress(authtypes.FeeCollectorName).String())
 
 	return modAccAddrs
 }
