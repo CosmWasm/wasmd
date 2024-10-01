@@ -15,6 +15,8 @@ oraid tx evm set-mapping-evm $user_pubkey $ARGS > $HIDE_LOGS
 private_key=$(oraid keys unsafe-export-cosmos-key $USER --keyring-backend test --home $NODE_HOME)
 user_address=$(oraid keys show $USER --home $NODE_HOME --keyring-backend test -a)
 
+# sleep 2s for not mismatch sequnce
+sleep 2
 current_cosmos_sequence_before=$(oraid query auth account $user_address --output json | jq '.account.value.sequence | tonumber')
 PRIVATE_KEY_ETH=$private_key sh $PWD/scripts/test-erc20-deploy.sh
 current_cosmos_sequence_after=$(oraid query auth account $user_address --output json | jq '.account.value.sequence | tonumber')

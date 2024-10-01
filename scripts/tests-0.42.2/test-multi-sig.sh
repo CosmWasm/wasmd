@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -ux
 
 CHAIN_ID=${CHAIN_ID:-testing}
 USER=${USER:-tupt}
@@ -30,6 +30,8 @@ sleep 2
 oraid tx bank send $multisig_address $user_address 1orai --generate-only $ARGS 2>&1 | tee tx.json
 
 # sign message
+# sleep 2s for not mismatch sequnce
+sleep 2
 oraid tx sign --from $user_address --multisig=$multisig_address tx.json $ARGS 2>&1 | tee tx-signed-data.json
 
 # multisign
