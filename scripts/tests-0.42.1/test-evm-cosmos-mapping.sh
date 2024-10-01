@@ -67,7 +67,7 @@ if [[ $balance_decimal_after_change -eq $balance_decimal_after_send ]]; then
    exit 1
 fi
 
-cosmos_balance_after_send=$(oraid query bank balances $user_address --output json | jq '.balances[] | select(.denom | contains("orai")).amount | tonumber')
+cosmos_balance_after_send=$(oraid query bank balance $user_address orai --output json | jq '.balance.amount | tonumber')
 if [[ $cosmos_balance_before_send -eq $cosmos_balance_after_send ]]; then
    echo "The cosmos balance does not get updated after the evm address sends coin. EVM cosmos mapping test failed"
    exit 1
