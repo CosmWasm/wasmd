@@ -26,10 +26,10 @@ oraid keys add $USER-eth $ARGS --eth 2>&1 | tee account-eth.txt
 oraid keys unsafe-export-eth-key $USER-eth $ARGS 2>&1 | tee priv-eth.txt
 
 # hardcode the validator account for this instance
-oraid genesis add-genesis-account $USER "100000000000000orai" $ARGS
+oraid genesis add-genesis-account $USER "1000000000orai" $ARGS
 
 # submit a genesis validator tx
-oraid genesis gentx $USER "250000000orai" --chain-id="$CHAIN_ID" -y $ARGS &>$HIDE_LOGS
+oraid genesis gentx $USER "2500000orai" --chain-id="$CHAIN_ID" -y $ARGS &>$HIDE_LOGS
 
 oraid genesis collect-gentxs --home $NODE_HOME &>$HIDE_LOGS
 
