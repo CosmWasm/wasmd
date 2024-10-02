@@ -193,3 +193,5 @@ update_validator '.amount="500000000orai"'
 oraid tx staking create-validator $PWD/scripts/json/validator.json  --from validator3 --home $VALIDATOR3_HOME $TX_SEND_ARGS  > $HIDE_LOGS
 
 echo "All 3 Validators are up and running!"
+# cleanup validator.json
+rm $PWD/scripts/json/validator.json
