@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -484,4 +485,26 @@ func (m msgServer) UpdateContractLabel(ctx context.Context, msg *types.MsgUpdate
 	}
 
 	return &types.MsgUpdateContractLabelResponse{}, nil
+}
+
+func (m msgServer) SetGaslessContracts(ctx context.Context, msg *types.MsgSetGaslessContracts) (*types.MsgSetGaslessContractsResponse, error) {
+
+	if m.keeper.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", m.keeper.authority, msg.Authority)
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	for _, contract := range msg.Contracts {
+		contractAddress, _ := sdk.AccAddressFromBech32(contract)
+		if err := m.keeper.setGasless(sdkCtx, contractAddress); err != nil {
+			// return nil, errorsmod.Wrapf(err, "set gas less failed for contract \"%s\"", contract)
+			return nil, err
+		}
+	}
+
+	return &types.MsgSetGaslessContractsResponse{}, nil
 }

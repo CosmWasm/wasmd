@@ -5,6 +5,7 @@
 *.swl
 *.swm
 *.swn
+*.txt
 .vscode
 .idea
 

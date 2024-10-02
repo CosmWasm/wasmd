@@ -553,3 +553,26 @@ func (msg MsgUpdateContractLabel) ValidateBasic() error {
 	}
 	return nil
 }
+
+func (msg MsgSetGaslessContracts) Route() string {
+	return RouterKey
+}
+
+func (msg MsgSetGaslessContracts) Type() string {
+	return "set-gasless-contracts"
+}
+
+func (msg MsgSetGaslessContracts) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+	for i, c := range msg.Contracts {
+		if _, err := sdk.AccAddressFromBech32(c); err != nil {
+			return errorsmod.Wrapf(err, "invalid contract address at %d", i)
+		}
+	}
+	if hasDuplicates(msg.Contracts) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "duplicate contract addresses")
+	}
+	return nil
+}

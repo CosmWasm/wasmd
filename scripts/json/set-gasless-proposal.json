@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmwasm.wasm.v1.MsgSetGaslessContracts",
+      "authority": "orai10d07y265gmmuvt4z0w9aw880jnsr700jf39xhq",
+      "contracts": []
+    }
+  ],
+  "metadata": "foobar",
+  "title": "gasless",
+  "deposit": "10000000orai",
+  "summary": "gasless",
+  "expedited": false
+}
