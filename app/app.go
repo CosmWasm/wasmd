@@ -129,6 +129,7 @@ import (
 	srvflags "github.com/evmos/ethermint/server/flags"
 	"github.com/spf13/cast"
 
+	"github.com/CosmWasm/wasmd/precompile/registry"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -614,7 +615,7 @@ func NewWasmApp(
 	evmBankKeeper := evmkeeper.NewEvmBankKeeperWithDenoms(app.BankKeeper, app.AccountKeeper, appconfig.EvmDenom, appconfig.CosmosDenom)
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], Authority,
-		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, app.BankKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
@@ -1131,6 +1132,8 @@ func NewWasmApp(
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
+
+	registry.InitializePrecompiles(app.ContractKeeper, app.WasmKeeper, app.EvmKeeper, app.BankKeeper, app.AccountKeeper)
 
 	return app
 }

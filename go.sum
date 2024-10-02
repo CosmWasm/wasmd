@@ -477,8 +477,6 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.m
 github.com/envoyproxy/go-control-plane v0.9.10-0.20210907150352-cf90f659a021/go.mod h1:AFq3mo9L8Lqqiid3OhADV3RfLJnjiw63cSpi+fDTRC0=
 github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.mod h1:KJwIaB5Mv44NWtYuAOFCVOjcI94vtpEz2JU/D2v6IjE=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
-github.com/ethereum/go-ethereum v1.10.26 h1:i/7d9RBBwiXCEuyduBQzJw/mKmnvzsN14jqBmytw72s=
-github.com/ethereum/go-ethereum v1.10.26/go.mod h1:EYFyF19u3ezGLD4RqOkLq+ZCXzYbLoNDdZlMt7kyKFg=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
@@ -940,8 +938,8 @@ github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4 h1:xxiGoC9su
 github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240829195733-cae2f186c240 h1:gI8De1YbmwnzVo6g/GIN0WNC0bAJFKxJDdliDUmHlH8=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240829195733-cae2f186c240/go.mod h1:84xDDJEHttRT7NDGwBaUOLVOMN0JNE9x7NbsYIxXs1s=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240919042230-0febf63ba6ef h1:bAvEDf8b6U7ur/LKvZrsE4T+HtwjyOgU8hfH8tUcShI=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240919042230-0febf63ba6ef/go.mod h1:Qo/mdpsOXOcwIe/QfF//cnJDliBnZMDeNOSfPxgyX3I=
+github.com/oraichain/go-ethereum v0.0.0-20240919025041-184f816b9d65 h1:oumbt8qiUC1AAt9MgHHnn/deseV5oYdg3T/PoYqsGeM=
+github.com/oraichain/go-ethereum v0.0.0-20240919025041-184f816b9d65/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597 h1:vFCKH25Q+BVNWRImFym0rYzno6BW8+l9GplszOdZ9no=
 github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597/go.mod h1:JAaOF+0j23OoyEgd6uhE3cgNDpZcfVZx4/DBbnMjUsc=
 github.com/oraichain/juno/x/globalfee v0.0.0-20240925043856-fe3d1d8b9ad3 h1:/Um//l2b6eGaAcVRwkzv2U7xTAqlYfiyaqG71bUyyac=
