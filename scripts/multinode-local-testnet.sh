@@ -173,8 +173,13 @@ oraid tx bank send $VALIDATOR1_ADDRESS orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7
 echo "Waiting 1 second to create two new validators..."
 sleep 1
 
+validator='{"pubkey":{"@type":"/cosmos.crypto.ed25519.PubKey","key":"xj740yWkYQbJCNkof2m7hQWpyaO6eFQ8qvGmYrtsqjQ="},"amount":"500000000orai","moniker":"validator3","identity":"","website":"","security":"","details":"","commission-rate":"0.1","commission-max-rate":"0.2","commission-max-change-rate":"0.05","min-self-delegation":"500000000"}'
+validator_info_temp_path=$PWD/scripts/json/validator.json
+
+echo $validator > $validator_info_temp_path
+
 update_validator () {
-    cat $PWD/scripts/json/validator.json | jq "$1" > $PWD/scripts/json/temp_validator.json && mv $PWD/scripts/json/temp_validator.json $PWD/scripts/json/validator.json
+    cat $validator_info_temp_path | jq "$1" > $PWD/scripts/json/temp_validator.json && mv $PWD/scripts/json/temp_validator.json $validator_info_temp_path
 }
 
 VALIDATOR2_PUBKEY=$(oraid comet show-validator --home $VALIDATOR2_HOME | jq -r '.key')
@@ -194,4 +199,4 @@ oraid tx staking create-validator $PWD/scripts/json/validator.json  --from valid
 
 echo "All 3 Validators are up and running!"
 # cleanup validator.json
-rm $PWD/scripts/json/validator.json
+rm $validator_info_temp_path
