@@ -51,7 +51,7 @@ update_genesis '.app_state["crisis"]["constant_fee"]["denom"]="orai"'
 # udpate gov genesis
 update_genesis '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="orai"'
 update_genesis '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="orai"'
-update_genesis '.app_state["gov"]["params"]["voting_period"]="5s"'
+update_genesis '.app_state["gov"]["params"]["voting_period"]="6s"'
 # update mint genesis
 update_genesis '.app_state["mint"]["params"]["mint_denom"]="orai"'
 # port key (validator1 uses default ports)
