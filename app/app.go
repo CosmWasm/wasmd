@@ -129,6 +129,7 @@ import (
 	srvflags "github.com/evmos/ethermint/server/flags"
 	"github.com/spf13/cast"
 
+	"github.com/CosmWasm/wasmd/precompile/registry"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -1132,7 +1133,7 @@ func NewWasmApp(
 		}
 	}
 
-	// registry.InitializePrecompiles(app.ContractKeeper, app.WasmKeeper, app.EvmKeeper, app.BankKeeper, app.AccountKeeper)
+	registry.InitializePrecompiles(app.ContractKeeper, app.WasmKeeper, app.EvmKeeper, app.BankKeeper, app.AccountKeeper)
 
 	return app
 }
