@@ -30,8 +30,7 @@ func NewPrecompileDecorator(
 	}
 }
 
-// AnteHandle creates an EVM from the message and calls the BlockContext CanTransfer function to
-// see if the address can execute the transaction.
+// AnteHandle initialize precompile contracts with dependent keepers
 func (pc PrecompileDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	registry.InitializePrecompiles(pc.WasmdKeeper, pc.WasmdViewKeeper, pc.EvmKeeper, pc.BankKeeper, pc.AccountKeeper)
 
