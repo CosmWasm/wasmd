@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -48,11 +49,12 @@ type HandlerOptions struct {
 	FeeMarketKeeper       feemarketkeeper.Keeper
 	WasmConfig            *wasmTypes.WasmConfig
 	WasmKeeper            *wasmkeeper.Keeper
+	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	TXCounterStoreService corestoretypes.KVStoreService
 	TxCounterStoreKey     storetypes.StoreKey
 	MaxTxGasWanted        uint64
 	CircuitKeeper         *circuitkeeper.Keeper
-	BankKeeper            evmtypes.BankKeeper
+	BankKeeper            *bankkeeper.BaseKeeper
 	DisabledAuthzMsgs     []string
 	BypassMinFeeMsgTypes  []string
 }
@@ -78,6 +80,16 @@ func (options *HandlerOptions) Validate() error {
 	}
 	if options.EvmKeeper == nil {
 		return errors.New("evm keeper is required for ante builder")
+	}
+	if options.WasmKeeper == nil {
+		return errors.New("wasm keeper is required for ante builder")
+	}
+	if options.ContractKeeper == nil {
+		return errors.New("contract keeper is required for ante builder")
+	}
+	if &options.GlobalFeeKeeper == nil {
+		return errors.New("globalfee keeper is required for ante builder")
+		
 	}
 	return nil
 }
@@ -197,6 +209,7 @@ func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		evmante.NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted),
 		evmante.NewCanTransferDecorator(options.EvmKeeper),
 		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper, options.EvmKeeper), // innermost AnteDecorator.
+		NewPrecompileDecorator(options.AccountKeeper, options.BankKeeper, options.EvmKeeper, options.ContractKeeper, options.WasmKeeper),
 	)
 }
 

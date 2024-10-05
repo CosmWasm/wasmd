@@ -33,13 +33,11 @@ type BankKeeper interface {
 	GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 	GetDenomMetaData(ctx context.Context, denom string) (banktypes.Metadata, bool)
 	GetSupply(ctx context.Context, denom string) sdk.Coin
-	LockedCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 }
 
 type AccountKeeper interface {
 	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
-	HasAccount(ctx context.Context, addr sdk.AccAddress) bool
 	SetAccount(ctx context.Context, acc sdk.AccountI)
 	RemoveAccount(ctx context.Context, acc sdk.AccountI)
 	NewAccountWithAddress(ctx context.Context, addr sdk.AccAddress) sdk.AccountI

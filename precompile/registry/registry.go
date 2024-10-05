@@ -24,30 +24,39 @@ var (
 // init registers stateful precompile contracts with the global precompile registry
 // defined in kava-labs/go-ethereum/precompile/modules
 func InitializePrecompiles(wasmdKeeper pcommon.WasmdKeeper, wasmdViewKeeper pcommon.WasmdViewKeeper, evmKeeper pcommon.EVMKeeper, bankKeeper pcommon.BankKeeper, accountKeeper pcommon.AccountKeeper) {
-	wasmdContract, err := wasmd.NewContract(wasmdKeeper, wasmdViewKeeper, evmKeeper)
-	if err != nil {
-		panic(fmt.Errorf("error creating contract for address %s: %w", WasmdContractAddress, err))
+
+	if !moduleIsAlreadyRegistered(WasmdContractAddress) {
+		wasmdContract, err := wasmd.NewContract(wasmdKeeper, wasmdViewKeeper, evmKeeper)
+		if err != nil {
+			panic(fmt.Errorf("error creating contract for address %s: %w", WasmdContractAddress, err))
+		}
+		register(WasmdContractAddress, wasmdContract)
 	}
 
-	jsonContract, err := json.NewContract()
-	if err != nil {
-		panic(fmt.Errorf("error creating json helper for address %s: %w", JsonContractAddress, err))
+	if !moduleIsAlreadyRegistered(JsonContractAddress) {
+		jsonContract, err := json.NewContract()
+		if err != nil {
+			panic(fmt.Errorf("error creating json helper for address %s: %w", JsonContractAddress, err))
+		}
+		register(JsonContractAddress, jsonContract)
 	}
 
-	addrContract, err := addr.NewContract(evmKeeper)
-	if err != nil {
-		panic(fmt.Errorf("error creating addr helper for solidity contract %s: %w", AddrContractAddress, err))
+	if !moduleIsAlreadyRegistered(AddrContractAddress) {
+		addrContract, err := addr.NewContract(evmKeeper)
+		if err != nil {
+			panic(fmt.Errorf("error creating addr helper for solidity contract %s: %w", AddrContractAddress, err))
+		}
+		register(AddrContractAddress, addrContract)
 	}
 
-	bankContract, err := bank.NewContract(evmKeeper, bankKeeper, accountKeeper)
-	if err != nil {
-		panic(fmt.Errorf("error creating bank helper for solidity contract %s: %w", BankContractAddress, err))
-	}
+	if !moduleIsAlreadyRegistered(BankContractAddress) {
+		bankContract, err := bank.NewContract(evmKeeper, bankKeeper, accountKeeper)
+		if err != nil {
+			panic(fmt.Errorf("error creating bank helper for solidity contract %s: %w", BankContractAddress, err))
+		}
 
-	register(WasmdContractAddress, wasmdContract)
-	register(JsonContractAddress, jsonContract)
-	register(AddrContractAddress, addrContract)
-	register(BankContractAddress, bankContract)
+		register(BankContractAddress, bankContract)
+	}
 }
 
 // register accepts a 0x address string and a stateful precompile contract constructor, instantiates the
@@ -56,13 +65,6 @@ func InitializePrecompiles(wasmdKeeper pcommon.WasmdKeeper, wasmdViewKeeper pcom
 // This panics if the contract can not be created or the module can not be registered
 func register(moduleAddress common.Address, contract contract.StatefulPrecompiledContract) {
 
-	// if already found then return
-	_, found := modules.GetPrecompileModuleByAddress(moduleAddress)
-
-	if found {
-		return
-	}
-
 	module := modules.Module{
 		Address:  moduleAddress,
 		Contract: contract,
@@ -70,4 +72,11 @@ func register(moduleAddress common.Address, contract contract.StatefulPrecompile
 
 	modules.RegisterModule(module)
 
+}
+
+func moduleIsAlreadyRegistered(moduleAddress common.Address) bool {
+	// if already found then return
+	_, found := modules.GetPrecompileModuleByAddress(moduleAddress)
+
+	return found
 }

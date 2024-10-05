@@ -66,9 +66,9 @@ if ! [ $balance_of == "1000000000" ] ; then
 fi
 
 # try querying decimals -> get decimals from cosmwasm contract
-orai_balance_before_transfer=$(oraid query bank balances orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 --denom orai --output json | jq '.amount')
+orai_balance_before_transfer=$(oraid query bank balance orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 orai --output json | jq '.balance.amount')
 ERC20_ADDRESS=$contract_addr yarn hardhat run scripts/cw20erc20-transfer.ts --network testing
-orai_balance_after_transfer=$(oraid query bank balances orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 --denom orai --output json | jq '.amount')
+orai_balance_after_transfer=$(oraid query bank balance orai1kzkf6gttxqar9yrkxfe34ye4vg5v4m588ew7c9 orai --output json | jq '.balance.amount')
 
 # try querying balance of owner after transfer -> should drop
 output=$(ERC20_ADDRESS=$contract_addr yarn hardhat run scripts/cw20erc20-query-balance-of.ts --network testing)

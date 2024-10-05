@@ -21,11 +21,8 @@ echo "Waiting for the REST & JSONRPC servers to be up ..."
 sleep 5
 
 oraid_version=$(oraid version)
-# temp version before we get tag for repo
-NEW_VERSION=$(git describe --tags | sed 's/^v//')
-if [[ $oraid_version != $NEW_VERSION ]]; then
-   echo "The chain version is not latest yet. There's something wrong!"
-   exit 1
+if [[ $oraid_version =~ $NEW_VERSION ]] ; then
+   echo "The chain version is not latest yet. There's something wrong!"; exit 1
 fi
 
 inflation=$(curl --no-progress-meter http://localhost:1317/cosmos/mint/v1beta1/inflation | jq '.inflation | tonumber')

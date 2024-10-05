@@ -938,8 +938,6 @@ github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4 h1:xxiGoC9su
 github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4/go.mod h1:jHPx9vQpWzPHEAiYI/7EDKaB1NXhK6o3SArrrY8ExKc=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240829195733-cae2f186c240 h1:gI8De1YbmwnzVo6g/GIN0WNC0bAJFKxJDdliDUmHlH8=
 github.com/oraichain/cosmos-sdk v0.50.5-0.20240829195733-cae2f186c240/go.mod h1:84xDDJEHttRT7NDGwBaUOLVOMN0JNE9x7NbsYIxXs1s=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20241004011336-3c8d318e25d6 h1:sIf5QkLQoNRry1CxHmc3HxX5eAMb2OU5ia6FesDfYXc=
-github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20241004011336-3c8d318e25d6/go.mod h1:Qo/mdpsOXOcwIe/QfF//cnJDliBnZMDeNOSfPxgyX3I=
 github.com/oraichain/go-ethereum v0.0.0-20240919025041-184f816b9d65 h1:oumbt8qiUC1AAt9MgHHnn/deseV5oYdg3T/PoYqsGeM=
 github.com/oraichain/go-ethereum v0.0.0-20240919025041-184f816b9d65/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/oraichain/juno/x/clock v0.0.0-20240911045127-feca1b18c597 h1:vFCKH25Q+BVNWRImFym0rYzno6BW8+l9GplszOdZ9no=

@@ -129,7 +129,6 @@ import (
 	srvflags "github.com/evmos/ethermint/server/flags"
 	"github.com/spf13/cast"
 
-	"github.com/CosmWasm/wasmd/precompile/registry"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -1133,8 +1132,6 @@ func NewWasmApp(
 		}
 	}
 
-	registry.InitializePrecompiles(app.ContractKeeper, app.WasmKeeper, app.EvmKeeper, app.BankKeeper, app.AccountKeeper)
-
 	return app
 }
 
@@ -1149,7 +1146,7 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 				TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
 			},
 			AccountKeeper:         app.AccountKeeper,
-			BankKeeper:            app.BankKeeper,
+			BankKeeper:            &app.BankKeeper,
 			IBCKeeper:             app.IBCKeeper,
 			EvmKeeper:             app.EvmKeeper,
 			StakingKeeper:         *app.StakingKeeper,
@@ -1157,6 +1154,7 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 			FeeMarketKeeper:       app.FeeMarketKeeper,
 			WasmConfig:            &wasmConfig,
 			WasmKeeper:            &app.WasmKeeper,
+			ContractKeeper:        app.ContractKeeper,
 			TXCounterStoreService: runtime.NewKVStoreService(txCounterStoreKey),
 			CircuitKeeper:         &app.CircuitKeeper,
 			DisabledAuthzMsgs: []string{

@@ -191,6 +191,7 @@ func (p PrecompileExecutor) queryCosmWasm(
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			fmt.Println("rerr: ", rerr)
 			return
 		}
 	}()

@@ -33,7 +33,7 @@ evm_decimals="10^18"
 cosmos_decimals="10^6"
 evm_balance=$(echo "scale=10; ($balance_decimal / $evm_decimals) * $cosmos_decimals" | bc)
 evm_balance_int=$(echo ${evm_balance%.*})
-cosmos_balance=$(oraid query bank balances $user_address --output json | jq '.balances[] | select(.denom | contains("orai")).amount | tonumber')
+cosmos_balance=$(oraid query bank balance $user_address orai --output json | jq '.balance.amount | tonumber')
 if [[ $evm_balance_int -ne $cosmos_balance ]]; then
    echo "The evm addresses dont match. EVM cosmos mapping test failed"
    exit 1
@@ -53,7 +53,7 @@ if [[ $balance_decimal_after_change -eq $balance_decimal ]]; then
 fi
 
 # test balance change when evm address sends some coins to another address
-cosmos_balance_before_send=$(oraid query bank balances $user_address --output json | jq '.balances[] | select(.denom | contains("orai")).amount | tonumber')
+cosmos_balance_before_send=$(oraid query bank balance $user_address orai --output json | jq '.balance.amount | tonumber')
 private_key=$(oraid keys unsafe-export-cosmos-key $USER --keyring-backend test --home $NODE_HOME)
 PRIVATE_KEY_ETH=$private_key sh $PWD/scripts/test-evm-send-token.sh
 

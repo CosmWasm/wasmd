@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ux
+set -u
 
 HIDE_LOGS="/dev/null"
 CHAIN_ID=${CHAIN_ID:-testing}
