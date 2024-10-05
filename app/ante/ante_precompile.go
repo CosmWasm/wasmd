@@ -1,4 +1,4 @@
-package app
+package ante
 
 import (
 	pcommon "github.com/CosmWasm/wasmd/precompile/common"

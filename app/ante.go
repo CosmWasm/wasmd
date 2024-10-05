@@ -17,9 +17,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
+	wasmdante "github.com/CosmWasm/wasmd/app/ante"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -89,7 +90,7 @@ func (options *HandlerOptions) Validate() error {
 	}
 	if &options.GlobalFeeKeeper == nil {
 		return errors.New("globalfee keeper is required for ante builder")
-		
+
 	}
 	return nil
 }
@@ -209,7 +210,7 @@ func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		evmante.NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted),
 		evmante.NewCanTransferDecorator(options.EvmKeeper),
 		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper, options.EvmKeeper), // innermost AnteDecorator.
-		NewPrecompileDecorator(options.AccountKeeper, options.BankKeeper, options.EvmKeeper, options.ContractKeeper, options.WasmKeeper),
+		wasmdante.NewPrecompileDecorator(options.AccountKeeper, options.BankKeeper, options.EvmKeeper, options.ContractKeeper, options.WasmKeeper),
 	)
 }
 
