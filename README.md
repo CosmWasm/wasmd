@@ -1,4 +1,4 @@
-# Wasm Zone
+# Wasm Zone *Zero*
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/main)
 [![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
@@ -9,6 +9,11 @@
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
+
+**In contrast to the original at [github.com/CosmWasm/wasmd](https://github.com/CosmWasm/wasmd),
+this version uses a pure Go based WASM VM called 
+[wazero](https://github.com/tetratelabs/wazero). It has no Cgo interface or dependency on the 
+Rust toolchain.**
 
 This code was forked from the `cosmos/gaia` repository as a basis and then we added `x/wasm` and cleaned up
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
