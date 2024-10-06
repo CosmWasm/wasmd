@@ -1,9 +1,14 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/precompile/contract"
+	"github.com/evmos/ethermint/x/evm/statedb"
 )
 
 func ValidateArgsLength(args []interface{}, length int) error {
@@ -20,4 +25,12 @@ func ValidateNonPayable(value *big.Int) error {
 	}
 
 	return nil
+}
+
+func GetPrecompileCtx(accessibleState contract.AccessibleState) (sdk.Context, error) {
+	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
+	if !ok {
+		return sdk.UnwrapSDKContext(context.Background()), errors.New("cannot get context from EVM")
+	}
+	return ctxer.Ctx(), nil
 }

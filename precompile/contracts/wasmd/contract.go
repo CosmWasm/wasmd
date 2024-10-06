@@ -12,7 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/precompile/contract"
-	"github.com/evmos/ethermint/x/evm/statedb"
 )
 
 // Singleton StatefulPrecompiledContract.
@@ -40,11 +39,17 @@ func (p PrecompileExecutor) instantiateCosmWasm(
 	value *big.Int,
 ) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			ctx.Logger().Error("Error instantiating cosmwasm using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -74,13 +79,6 @@ func (p PrecompileExecutor) instantiateCosmWasm(
 
 	// unmarshal funds
 	deposit := UnmarshalCosmWasmDeposit(funds)
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	creator := p.evmKeeper.GetCosmosAddressMapping(ctx, caller)
 
@@ -115,11 +113,17 @@ func (p PrecompileExecutor) executeCosmWasm(
 	value *big.Int,
 ) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			ctx.Logger().Error("Error executing cosmwasm using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -142,13 +146,6 @@ func (p PrecompileExecutor) executeCosmWasm(
 
 	// unmarshal funds
 	deposit := UnmarshalCosmWasmDeposit(funds)
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	senderAddr := p.evmKeeper.GetCosmosAddressMapping(ctx, caller)
 
@@ -186,12 +183,18 @@ func (p PrecompileExecutor) queryCosmWasm(
 	value *big.Int,
 ) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
 			fmt.Println("rerr: ", rerr)
+			ctx.Logger().Error("Error querying cosmwasm using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -211,13 +214,6 @@ func (p PrecompileExecutor) queryCosmWasm(
 
 	contractAddress := res[0].(string)
 	req := res[1].([]byte)
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	// addresses will be sent in Cosmos format
 	contractAddr, err := sdk.AccAddressFromBech32(contractAddress)

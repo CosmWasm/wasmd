@@ -14,6 +14,7 @@ import (
 	"github.com/CosmWasm/wasmd/precompile/contracts/wasmd"
 	"github.com/CosmWasm/wasmd/precompile/registry"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +28,6 @@ import (
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 type MockWasmer struct {
@@ -125,6 +125,7 @@ func TestExecuteAndQuery(t *testing.T) {
 	require.Nil(t, err)
 
 	p, _ := modules.GetPrecompileModuleByAddress(registry.WasmdContractAddress)
+	require.NotNil(t, p.Contract)
 
 	evm := vm.EVM{
 		StateDB: statedb.New(ctx, tApp.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash()))),

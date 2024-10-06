@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	pcommon "github.com/CosmWasm/wasmd/precompile/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -13,8 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/precompile/contract"
 	"github.com/evmos/ethermint/x/evm/statedb"
-	sdkmath "cosmossdk.io/math"
-
 )
 
 // Singleton StatefulPrecompiledContract.
@@ -114,7 +113,10 @@ func (p PrecompileExecutor) send(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
-	fmt.Println("in here send")
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -161,13 +163,6 @@ func (p PrecompileExecutor) send(accessibleState contract.AccessibleState,
 		return
 	}
 
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
-
 	senderCosmosAddr := p.evmKeeper.GetCosmosAddressMapping(ctx, caller)
 	receiverCosmosAddr := p.evmKeeper.GetCosmosAddressMapping(ctx, receiverEvmAddr)
 	if err := p.bankKeeper.SendCoins(ctx, senderCosmosAddr, receiverCosmosAddr, sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(amount)))); err != nil {
@@ -188,11 +183,17 @@ func (p PrecompileExecutor) balance(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying balance using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -213,13 +214,6 @@ func (p PrecompileExecutor) balance(accessibleState contract.AccessibleState,
 		rerr = err
 		return
 	}
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	evmAddr := args[0].(common.Address)
 	cosmosAddr := p.evmKeeper.GetCosmosAddressMapping(ctx, evmAddr)
@@ -245,11 +239,17 @@ func (p PrecompileExecutor) allBalances(accessibleState contract.AccessibleState
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying allBalances using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -270,13 +270,6 @@ func (p PrecompileExecutor) allBalances(accessibleState contract.AccessibleState
 		rerr = err
 		return
 	}
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	evmAddr := args[0].(common.Address)
 	cosmosAddr := p.evmKeeper.GetCosmosAddressMapping(ctx, evmAddr)
@@ -305,22 +298,21 @@ func (p PrecompileExecutor) name(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying name using precompile: ", rerr.Error())
 			return
 		}
 	}()
 	method := ABI.Methods[NameMethod]
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	metadata, err := p.getMetadata(accessibleState, method, packedInput, value)
 	if err != nil {
@@ -341,22 +333,21 @@ func (p PrecompileExecutor) symbol(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying symbol using precompile: ", rerr.Error())
 			return
 		}
 	}()
 	method := ABI.Methods[SymbolMethod]
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	metadata, err := p.getMetadata(accessibleState, method, packedInput, value)
 	if err != nil {
@@ -377,11 +368,17 @@ func (p PrecompileExecutor) decimals(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying decimals using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -400,11 +397,17 @@ func (p PrecompileExecutor) supply(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying supply using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -425,13 +428,6 @@ func (p PrecompileExecutor) supply(accessibleState contract.AccessibleState,
 		rerr = err
 		return
 	}
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	denom := args[0].(string)
 	coin := p.bankKeeper.GetSupply(ctx, denom)

@@ -9,14 +9,13 @@ import (
 	"math/big"
 	"strings"
 
+	pcommon "github.com/CosmWasm/wasmd/precompile/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/precompile/contract"
-	"github.com/evmos/ethermint/x/evm/statedb"
-	pcommon "github.com/CosmWasm/wasmd/precompile/common"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
@@ -90,11 +89,17 @@ func (p PrecompileExecutor) getCosmosAddr(accessibleState contract.AccessibleSta
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			ctx.Logger().Error("Error querying getCosmosAddr using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -117,13 +122,6 @@ func (p PrecompileExecutor) getCosmosAddr(accessibleState contract.AccessibleSta
 	}
 	evmAddress := args[0].(common.Address)
 
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
-
 	cosmosAddress := p.evmKeeper.GetCosmosAddressMapping(ctx, evmAddress)
 
 	ret, rerr = method.Outputs.Pack(cosmosAddress.String())
@@ -139,11 +137,17 @@ func (p PrecompileExecutor) getEvmAddr(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error querying getEvmAddr using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -171,13 +175,6 @@ func (p PrecompileExecutor) getEvmAddr(accessibleState contract.AccessibleState,
 		return
 	}
 
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
-
 	evmAddress, err := p.evmKeeper.GetEvmAddressMapping(ctx, cosmosAddress)
 	if err != nil {
 		rerr = fmt.Errorf("cosmos address %s is not associated\n", cosmosAddress)
@@ -197,11 +194,17 @@ func (p PrecompileExecutor) associate(accessibleState contract.AccessibleState,
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error associating using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -235,13 +238,6 @@ func (p PrecompileExecutor) associate(accessibleState contract.AccessibleState,
 	r := args[1].(string)
 	s := args[2].(string)
 	customMessage := args[3].(string)
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	rBytes, err := decodeHexString(r)
 	if err != nil {
@@ -292,12 +288,17 @@ func (p PrecompileExecutor) associatePublicKey(accessibleState contract.Accessib
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
-			fmt.Println("error associate pubkey: ", rerr)
+			ctx.Logger().Error("Error associating public key using precompile: ", rerr.Error())
 			return
 		}
 	}()
@@ -332,13 +333,6 @@ func (p PrecompileExecutor) associatePublicKey(accessibleState contract.Accessib
 		rerr = err
 		return
 	}
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	cosmosAddress, evmAddress, err := p.associateAddresses(ctx, caller, pubKeyBytes)
 	if err != nil {

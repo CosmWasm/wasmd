@@ -3,7 +3,6 @@ package json
 import (
 	_ "embed"
 	gjson "encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -11,7 +10,6 @@ import (
 	pcommon "github.com/CosmWasm/wasmd/precompile/common"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/precompile/contract"
-	"github.com/evmos/ethermint/x/evm/statedb"
 )
 
 // Singleton StatefulPrecompiledContract.
@@ -77,11 +75,17 @@ func (p PrecompileExecutor) extractAsBytes(accessibleState contract.AccessibleSt
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			ctx.Logger().Error("Error Extracting as bytes: ", rerr.Error())
 			return
 		}
 	}()
@@ -117,13 +121,6 @@ func (p PrecompileExecutor) extractAsBytes(accessibleState contract.AccessibleSt
 		return
 	}
 
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
-
 	// in the case of a string value, remove the quotes
 	if len(result) >= 2 && result[0] == '"' && result[len(result)-1] == '"' {
 		result = result[1 : len(result)-1]
@@ -142,11 +139,17 @@ func (p PrecompileExecutor) extractAsBytesList(accessibleState contract.Accessib
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s\n", err)
+			ctx.Logger().Error("Error Extracting as bytes list: ", rerr.Error())
 			return
 		}
 	}()
@@ -182,13 +185,6 @@ func (p PrecompileExecutor) extractAsBytesList(accessibleState contract.Accessib
 		return
 	}
 
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
-
 	decodedResult := []gjson.RawMessage{}
 	if err := gjson.Unmarshal(result, &decodedResult); err != nil {
 		rerr = err
@@ -213,21 +209,20 @@ func (p PrecompileExecutor) ExtractAsUint256(accessibleState contract.Accessible
 	readOnly bool,
 	value *big.Int) (ret []byte, remainingGas uint64, rerr error) {
 
+	ctx, rerr := pcommon.GetPrecompileCtx(accessibleState)
+	if rerr != nil {
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			ret = nil
 			remainingGas = 0
 			rerr = fmt.Errorf("%s", err)
+			ctx.Logger().Error("Error Extracting as uint256: ", rerr.Error())
 			return
 		}
 	}()
-
-	ctxer, ok := accessibleState.GetStateDB().(*statedb.StateDB)
-	if !ok {
-		rerr = errors.New("cannot get context from EVM")
-		return
-	}
-	ctx := ctxer.Ctx()
 
 	byteArr := make([]byte, 32)
 	uint_, err := p.extractAsUint256(packedInput, value)
