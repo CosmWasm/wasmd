@@ -315,6 +315,12 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 	return wasmCoins
 }
 
+// VMConfig contains configurations that are passed on to CosmWasm VM.
+type VMConfig struct {
+	// WasmLimits are the limits that are used for static validation of Wasm binaries.
+	WasmLimits wasmvmtypes.WasmLimits
+}
+
 // NodeConfig is the extra config required for wasm
 type NodeConfig struct {
 	// SimulationGasLimit is the max gas to be used in a tx simulation call.

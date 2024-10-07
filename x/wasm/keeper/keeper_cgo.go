@@ -34,6 +34,7 @@ func NewKeeper(
 	_ GRPCQueryRouter,
 	homeDir string,
 	nodeConfig types.NodeConfig,
+	vmConfig types.VMConfig,
 	availableCapabilities []string,
 	authority string,
 	opts ...Option,
@@ -58,7 +59,7 @@ func NewKeeper(
 			types.AuthZActionInstantiate: {},
 		},
 		authority:  authority,
-		wasmLimits: nodeConfig.WasmLimits,
+		wasmLimits: vmConfig.WasmLimits,
 	}
 	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
@@ -79,7 +80,7 @@ func NewKeeper(
 				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(contractMemoryLimit),
 				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
 			},
-			WasmLimits: nodeConfig.WasmLimits,
+			WasmLimits: vmConfig.WasmLimits,
 		}, nodeConfig.ContractDebugMode)
 		if err != nil {
 			panic(err)

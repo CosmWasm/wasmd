@@ -28,6 +28,7 @@ func NewKeeper(
 	_ GRPCQueryRouter,
 	homeDir string,
 	nodeConfig types.NodeConfig,
+	vmConfig types.VMConfig,
 	availableCapabilities string,
 	authority string,
 	opts ...Option,

@@ -688,7 +688,7 @@ func TestQueryContractInfo(t *testing.T) {
 }
 
 func TestQueryWasmLimitsConfig(t *testing.T) {
-	cfg := types.DefaultNodeConfig()
+	cfg := types.VMConfig{}
 
 	fifteen := uint32(15)
 
@@ -718,7 +718,7 @@ func TestQueryWasmLimitsConfig(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			cfg.WasmLimits = spec.limits
 
-			ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, dbm.NewMemDB())
+			ctx, keepers := createTestInput(t, false, AvailableCapabilities, types.DefaultNodeConfig(), cfg, dbm.NewMemDB())
 			keeper := keepers.WasmKeeper
 
 			q := Querier(keeper)

@@ -89,10 +89,11 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 func TestWasmLimits(t *testing.T) {
 	one := uint32(1)
 	cfg := types.DefaultNodeConfig()
-	cfg.WasmLimits = wasmvmtypes.WasmLimits{
-		MaxImports: &one, // very low limit that every contract will fail
-	}
-	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, dbm.NewMemDB())
+	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, types.VMConfig{
+		WasmLimits: wasmvmtypes.WasmLimits{
+			MaxImports: &one, // very low limit that every contract will fail
+		},
+	}, dbm.NewMemDB())
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1))
