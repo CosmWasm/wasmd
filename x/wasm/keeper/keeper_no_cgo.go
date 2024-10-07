@@ -27,7 +27,7 @@ func NewKeeper(
 	router MessageRouter,
 	_ GRPCQueryRouter,
 	homeDir string,
-	wasmConfig types.WasmConfig,
+	nodeConfig types.NodeConfig,
 	availableCapabilities string,
 	authority string,
 	opts ...Option,

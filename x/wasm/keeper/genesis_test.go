@@ -680,7 +680,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	// also registering gov interfaces for nested Any type
 	v1beta1.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
-	wasmConfig := types.DefaultWasmConfig()
+	nodeConfig := types.DefaultNodeConfig()
 
 	srcKeeper := NewKeeper(
 		encodingConfig.Codec,
@@ -697,7 +697,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		nil,
 		nil,
 		tempDir,
-		wasmConfig,
+		nodeConfig,
 		AvailableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

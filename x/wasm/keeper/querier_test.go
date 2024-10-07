@@ -688,7 +688,7 @@ func TestQueryContractInfo(t *testing.T) {
 }
 
 func TestQueryWasmLimitsConfig(t *testing.T) {
-	cfg := types.DefaultWasmConfig()
+	cfg := types.DefaultNodeConfig()
 
 	fifteen := uint32(15)
 

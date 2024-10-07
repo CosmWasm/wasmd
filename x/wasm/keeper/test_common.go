@@ -212,7 +212,7 @@ func CreateDefaultTestInput(t testing.TB) (sdk.Context, TestKeepers) {
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities []string, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
-	return createTestInput(t, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
+	return createTestInput(t, isCheckTx, availableCapabilities, types.DefaultNodeConfig(), dbm.NewMemDB(), opts...)
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -220,7 +220,7 @@ func createTestInput(
 	t testing.TB,
 	isCheckTx bool,
 	availableCapabilities []string,
-	wasmConfig types.WasmConfig,
+	nodeConfig types.NodeConfig,
 	db dbm.DB,
 	opts ...Option,
 ) (sdk.Context, TestKeepers) {
@@ -405,7 +405,7 @@ func createTestInput(
 		msgRouter,
 		querier,
 		tempDir,
-		wasmConfig,
+		nodeConfig,
 		availableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,

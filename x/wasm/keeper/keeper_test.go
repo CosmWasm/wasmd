@@ -88,7 +88,7 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 
 func TestWasmLimits(t *testing.T) {
 	one := uint32(1)
-	cfg := types.DefaultWasmConfig()
+	cfg := types.DefaultNodeConfig()
 	cfg.WasmLimits = wasmvmtypes.WasmLimits{
 		MaxImports: &one, // very low limit that every contract will fail
 	}

@@ -315,8 +315,8 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 	return wasmCoins
 }
 
-// WasmConfig is the extra config required for wasm
-type WasmConfig struct {
+// NodeConfig is the extra config required for wasm
+type NodeConfig struct {
 	// SimulationGasLimit is the max gas to be used in a tx simulation call.
 	// When not set the consensus max block gas is used instead
 	SimulationGasLimit *uint64 `mapstructure:"simulation_gas_limit"`
@@ -326,13 +326,11 @@ type WasmConfig struct {
 	MemoryCacheSize uint32 `mapstructure:"memory_cache_size"`
 	// ContractDebugMode log what contract print
 	ContractDebugMode bool
-	// WasmLimits are the limits that are used for static validation of Wasm binaries.
-	WasmLimits wasmvmtypes.WasmLimits
 }
 
-// DefaultWasmConfig returns the default settings for WasmConfig
-func DefaultWasmConfig() WasmConfig {
-	return WasmConfig{
+// DefaultNodeConfig returns the default settings for NodeConfig
+func DefaultNodeConfig() NodeConfig {
+	return NodeConfig{
 		SmartQueryGasLimit: defaultSmartQueryGasLimit,
 		MemoryCacheSize:    defaultMemoryCacheSize,
 		ContractDebugMode:  defaultContractDebugMode,
@@ -341,11 +339,11 @@ func DefaultWasmConfig() WasmConfig {
 
 // DefaultConfigTemplate toml snippet with default values for app.toml
 func DefaultConfigTemplate() string {
-	return ConfigTemplate(DefaultWasmConfig())
+	return ConfigTemplate(DefaultNodeConfig())
 }
 
 // ConfigTemplate toml snippet for app.toml
-func ConfigTemplate(c WasmConfig) string {
+func ConfigTemplate(c NodeConfig) string {
 	simGasLimit := `# simulation_gas_limit =`
 	if c.SimulationGasLimit != nil {
 		simGasLimit = fmt.Sprintf(`simulation_gas_limit = %d`, *c.SimulationGasLimit)

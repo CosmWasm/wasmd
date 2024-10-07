@@ -33,7 +33,7 @@ func NewKeeper(
 	router MessageRouter,
 	_ GRPCQueryRouter,
 	homeDir string,
-	wasmConfig types.WasmConfig,
+	nodeConfig types.NodeConfig,
 	availableCapabilities []string,
 	authority string,
 	opts ...Option,
@@ -48,7 +48,7 @@ func NewKeeper(
 		accountPruner:        NewVestingCoinBurner(bankKeeper),
 		portKeeper:           portKeeper,
 		capabilityKeeper:     capabilityKeeper,
-		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
+		queryGasLimit:        nodeConfig.SmartQueryGasLimit,
 		gasRegister:          types.NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		maxCallDepth:         types.DefaultMaxCallDepth,
@@ -58,7 +58,7 @@ func NewKeeper(
 			types.AuthZActionInstantiate: {},
 		},
 		authority:  authority,
-		wasmLimits: wasmConfig.WasmLimits,
+		wasmLimits: nodeConfig.WasmLimits,
 	}
 	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
@@ -77,10 +77,10 @@ func NewKeeper(
 				BaseDir:               filepath.Join(homeDir, "wasm"),
 				AvailableCapabilities: availableCapabilities,
 				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(contractMemoryLimit),
-				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(wasmConfig.MemoryCacheSize),
+				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
 			},
-			WasmLimits: wasmConfig.WasmLimits,
-		}, wasmConfig.ContractDebugMode)
+			WasmLimits: nodeConfig.WasmLimits,
+		}, nodeConfig.ContractDebugMode)
 		if err != nil {
 			panic(err)
 		}
