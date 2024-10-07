@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"runtime/debug"
 
@@ -437,6 +438,17 @@ func ensurePaginationParams(req *query.PageRequest) (*query.PageRequest, error) 
 		req.Limit = maxResultEntries
 	}
 	return req, nil
+}
+
+func (q GrpcQuerier) WasmLimitsConfig(c context.Context, req *types.QueryWasmLimitsConfigRequest) (*types.QueryWasmLimitsConfigResponse, error) {
+	json, err := json.Marshal(q.keeper.GetWasmLimits())
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryWasmLimitsConfigResponse{
+		Config: string(json),
+	}, nil
 }
 
 func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddressRequest) (*types.QueryBuildAddressResponse, error) {

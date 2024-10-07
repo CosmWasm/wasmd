@@ -109,6 +109,9 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	// wasmLimits contains the limits sent to wasmvm on init
+	wasmLimits wasmvmtypes.WasmLimits
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
@@ -117,6 +120,10 @@ func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
 
 func (k Keeper) getInstantiateAccessConfig(ctx context.Context) types.AccessType {
 	return k.GetParams(ctx).InstantiateDefaultPermission
+}
+
+func (k Keeper) GetWasmLimits() wasmvmtypes.WasmLimits {
+	return k.wasmLimits
 }
 
 // GetParams returns the total set of wasm parameters.

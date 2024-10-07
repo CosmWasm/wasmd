@@ -51,7 +51,7 @@ var (
 	// Deprecated: Do not use.
 	NewWasmCoins = types.NewWasmCoins
 	// Deprecated: Do not use.
-	DefaultWasmConfig = types.DefaultWasmConfig
+	DefaultNodeConfig = types.DefaultNodeConfig
 	// Deprecated: Do not use.
 	DefaultParams = types.DefaultParams
 	// Deprecated: Do not use.
@@ -174,7 +174,7 @@ type (
 	// Deprecated: Do not use.
 	CreatedAt = types.AbsoluteTxPosition
 	// Deprecated: Do not use.
-	Config = types.WasmConfig
+	Config = types.NodeConfig
 	// Deprecated: Do not use.
 	CodeInfoResponse = types.CodeInfoResponse
 	// Deprecated: Do not use.
