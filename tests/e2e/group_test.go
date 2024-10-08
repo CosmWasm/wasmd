@@ -10,10 +10,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	banktypes "cosmossdk.io/x/bank/types"
+	"cosmossdk.io/x/group"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/group"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/tests/ibctesting"

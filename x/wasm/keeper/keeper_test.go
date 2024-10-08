@@ -29,6 +29,8 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
+	banktypes "cosmossdk.io/x/bank/types"
+	distributiontypes "cosmossdk.io/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,8 +39,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"

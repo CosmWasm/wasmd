@@ -13,12 +13,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	banktypes "cosmossdk.io/x/bank/types"
+	distributiontypes "cosmossdk.io/x/distribution/types"
+	govv1 "cosmossdk.io/x/gov/types/v1"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"

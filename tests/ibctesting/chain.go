@@ -30,6 +30,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	banktypes "cosmossdk.io/x/bank/types"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
+	"cosmossdk.io/x/staking/testutil"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,11 +44,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"

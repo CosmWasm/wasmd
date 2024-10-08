@@ -9,13 +9,13 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
+	paramskeeper "cosmossdk.io/x/params/keeper"
+	paramstypes "cosmossdk.io/x/params/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
