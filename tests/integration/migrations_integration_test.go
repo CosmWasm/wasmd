@@ -3,7 +3,7 @@ package integration
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	"cosmossdk.io/math/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +20,7 @@ import (
 
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
-	myAddress := sdk.AccAddress(rand.Bytes(address.Len))
+	myAddress := sdk.AccAddress(unsafe.Bytes(address.Len))
 
 	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)

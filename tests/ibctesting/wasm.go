@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"cosmossdk.io/math/unsafe"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ var wasmIdent = []byte("\x00\x61\x73\x6D")
 // Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmEngine
 // for using a contract mock in Go.
 func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
-	pInstResp := chain.StoreCode(append(wasmIdent, rand.Bytes(10)...))
+	pInstResp := chain.StoreCode(append(wasmIdent, unsafe.Bytes(10)...))
 	codeID := pInstResp.CodeID
 
 	anyAddressStr := chain.SenderAccount.GetAddress().String()
