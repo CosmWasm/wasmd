@@ -259,16 +259,16 @@ replace (
 	github.com/cometbft/cometbft => github.com/cometbft/cometbft v1.0.0-rc1.0.20240908111210-ab0be101882f
 	// pseudo version lower than the latest tag
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.52.0-beta.1
-	github.com/cosmos/cosmos-sdk/x/authz => cosmossdk.io/x/authz v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/bank => cosmossdk.io/x/bank v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/consensus => cosmossdk.io/x/consensus v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/distribution => cosmossdk.io/x/distribution v0.0.0-20241008092614-5dc8768ef14a
-	github.com/cosmos/cosmos-sdk/x/gov => cosmossdk.io/x/gov v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/group => cosmossdk.io/x/group v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/mint => cosmossdk.io/x/mint v0.0.0-20240909082436-01c0e9ba3581
-	github.com/cosmos/cosmos-sdk/x/params => cosmossdk.io/x/params v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/slashing => cosmossdk.io/x/slashing v0.0.0-20240911130545-9e7848985491
-	github.com/cosmos/cosmos-sdk/x/staking => cosmossdk.io/x/staking v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/authz => cosmossdk.io/x/authz v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/bank => cosmossdk.io/x/bank v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/consensus => cosmossdk.io/x/consensus v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/distribution => cosmossdk.io/x/distribution v0.0.0-20241008092614-5dc8768ef14a
+	cosmossdk.io/x/gov => cosmossdk.io/x/gov v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/group => cosmossdk.io/x/group v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/mint => cosmossdk.io/x/mint v0.0.0-20240909082436-01c0e9ba3581
+	cosmossdk.io/x/params => cosmossdk.io/x/params v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/slashing => cosmossdk.io/x/slashing v0.0.0-20240911130545-9e7848985491
+	cosmossdk.io/x/staking => cosmossdk.io/x/staking v0.0.0-20240911130545-9e7848985491
 
 	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/cosmos/ibc-go/modules/apps/callbacks ba0f7ce07d19f935aecfd3834521368921d8d45a
 	//github.com/cosmos/ibc-go/modules/capability => github.com/cosmos/ibc-go/modules/capability ba0f7ce07d19f935aecfd3834521368921d8d45a
