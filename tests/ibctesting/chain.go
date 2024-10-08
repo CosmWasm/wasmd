@@ -13,8 +13,6 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmttypes "github.com/cometbft/cometbft/types"
 	tmversion "github.com/cometbft/cometbft/version"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
@@ -68,7 +66,6 @@ type ChainApp interface {
 	GetBaseApp() *baseapp.BaseApp
 
 	TxConfig() client.TxConfig
-	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
 	GetIBCKeeper() *ibckeeper.Keeper
 	GetBankKeeper() bankkeeper.Keeper
 	GetStakingKeeper() *stakingkeeper.Keeper
@@ -628,61 +625,6 @@ func MakeBlockID(hash []byte, partSetSize uint32, partSetHash []byte) cmttypes.B
 			Hash:  partSetHash,
 		},
 	}
-}
-
-// CreatePortCapability binds and claims a capability for the given portID if it does not
-// already exist. This function will fail testing on any resulting error.
-// NOTE: only creation of a capability for a transfer or mock port is supported
-// Other applications must bind to the port in InitGenesis or modify this code.
-func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID string) {
-	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
-	if !ok {
-		// create capability using the IBC capability keeper
-		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), host.PortPath(portID))
-		require.NoError(chain.t, err)
-
-		// claim capability using the scopedKeeper
-		err = scopedKeeper.ClaimCapability(chain.GetContext(), portCap, host.PortPath(portID))
-		require.NoError(chain.t, err)
-	}
-
-	chain.Coordinator.CommitBlock(chain)
-}
-
-// GetPortCapability returns the port capability for the given portID. The capability must
-// exist, otherwise testing will fail.
-func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capability {
-	portCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
-	require.True(chain.t, ok)
-
-	return portCap
-}
-
-// CreateChannelCapability binds and claims a capability for the given portID and channelID
-// if it does not already exist. This function will fail testing on any resulting error. The
-// scoped keeper passed in will claim the new capability.
-func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID, channelID string) {
-	capName := host.ChannelCapabilityPath(portID, channelID)
-	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), capName)
-	if !ok {
-		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), capName)
-		require.NoError(chain.t, err)
-		err = scopedKeeper.ClaimCapability(chain.GetContext(), portCap, capName)
-		require.NoError(chain.t, err)
-	}
-
-	chain.Coordinator.CommitBlock(chain)
-}
-
-// GetChannelCapability returns the channel capability for the given portID and channelID.
-// The capability must exist, otherwise testing will fail.
-func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilitytypes.Capability {
-	chanCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
-	require.True(chain.t, ok)
-
-	return chanCap
 }
 
 // GetTimeoutHeight is a convenience function which returns a IBC packet timeout height

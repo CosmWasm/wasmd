@@ -14,9 +14,6 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	"github.com/cosmos/ibc-go/v9/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v9/modules/core"
@@ -83,7 +80,6 @@ import (
 var moduleBasics = module.NewBasicManager(
 	auth.AppModuleBasic{},
 	bank.AppModuleBasic{},
-	capability.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	mint.AppModuleBasic{},
 	distribution.AppModuleBasic{},
@@ -184,20 +180,19 @@ func (f *TestFaucet) NewFundedRandomAccount(ctx sdk.Context, amounts ...sdk.Coin
 }
 
 type TestKeepers struct {
-	AccountKeeper    authkeeper.AccountKeeper
-	StakingKeeper    *stakingkeeper.Keeper
-	DistKeeper       distributionkeeper.Keeper
-	BankKeeper       bankkeeper.Keeper
-	GovKeeper        *govkeeper.Keeper
-	ContractKeeper   types.ContractOpsKeeper
-	WasmKeeper       *Keeper
-	IBCKeeper        *ibckeeper.Keeper
-	Router           MessageRouter
-	EncodingConfig   moduletestutil.TestEncodingConfig
-	Faucet           *TestFaucet
-	MultiStore       storetypes.CommitMultiStore
-	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
-	WasmStoreKey     *storetypes.KVStoreKey
+	AccountKeeper  authkeeper.AccountKeeper
+	StakingKeeper  *stakingkeeper.Keeper
+	DistKeeper     distributionkeeper.Keeper
+	BankKeeper     bankkeeper.Keeper
+	GovKeeper      *govkeeper.Keeper
+	ContractKeeper types.ContractOpsKeeper
+	WasmKeeper     *Keeper
+	IBCKeeper      *ibckeeper.Keeper
+	Router         MessageRouter
+	EncodingConfig moduletestutil.TestEncodingConfig
+	Faucet         *TestFaucet
+	MultiStore     storetypes.CommitMultiStore
+	WasmStoreKey   *storetypes.KVStoreKey
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -227,7 +222,7 @@ func createTestInput(
 		minttypes.StoreKey, distributiontypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey,
-		capabilitytypes.StoreKey, feegrant.StoreKey, authzkeeper.StoreKey,
+		feegrant.StoreKey, authzkeeper.StoreKey,
 		types.StoreKey,
 	)
 	logger := log.NewTestLogger(t)
@@ -240,7 +235,7 @@ func createTestInput(
 		ms.MountStoreWithDB(v, storetypes.StoreTypeTransient, db)
 	}
 
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys()
 	for _, v := range memKeys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeMemory, db)
 	}
@@ -270,7 +265,6 @@ func createTestInput(
 		distributiontypes.ModuleName,
 		slashingtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		capabilitytypes.ModuleName,
 		ibcexported.ModuleName,
 		govtypes.ModuleName,
 		types.ModuleName,
@@ -359,14 +353,6 @@ func createTestInput(
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
 	faucet.Fund(ctx, distrAcc.GetAddress(), sdk.NewCoin("stake", sdkmath.NewInt(2000000)))
 	accountKeeper.SetModuleAccount(ctx, distrAcc)
-
-	capabilityKeeper := capabilitykeeper.NewKeeper(
-		appCodec,
-		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.MemStoreKey],
-	)
-	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,

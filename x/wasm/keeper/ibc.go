@@ -3,7 +3,6 @@ package keeper
 import (
 	"strings"
 
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
 
 	errorsmod "cosmossdk.io/errors"
@@ -44,15 +43,4 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
-}
-
-// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
-func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool {
-	return k.capabilityKeeper.AuthenticateCapability(ctx, cap, name)
-}
-
-// ClaimCapability allows the transfer module to claim a capability
-// that IBC module passes to it
-func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.capabilityKeeper.ClaimCapability(ctx, cap, name)
 }

@@ -4,7 +4,6 @@ import (
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v9/modules/core/05-port/types"
@@ -50,7 +49,6 @@ func (i IBCHandler) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -101,7 +99,6 @@ func (i IBCHandler) OnChanOpenTry(
 	order channeltypes.Order,
 	connectionHops []string,
 	portID, channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {

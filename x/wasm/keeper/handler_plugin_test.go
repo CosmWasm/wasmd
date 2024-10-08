@@ -7,7 +7,6 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
@@ -247,7 +246,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	var capturedPacketAck *CapturedPacket
 
 	capturingICS4Mock := &wasmtesting.MockICS4Wrapper{
-		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+		SendPacketFn: func(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 			capturedPacketSent = &CapturedPacket{
 				sourcePort:       sourcePort,
 				sourceChannel:    sourceChannel,
@@ -257,7 +256,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			}
 			return 1, nil
 		},
-		WriteAcknowledgementFn: func(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error {
+		WriteAcknowledgementFn: func(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error {
 			capturedPacketAck = &CapturedPacket{
 				sourcePort:       packet.GetSourcePort(),
 				sourceChannel:    packet.GetSourceChannel(),
@@ -279,11 +278,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			}, true
 		},
 	}
-	capKeeper := &wasmtesting.MockCapabilityKeeper{
-		GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
-			return &capabilitytypes.Capability{}, true
-		},
-	}
+
 	contractKeeper := wasmtesting.IBCContractKeeperMock{}
 	// also store a packet to be acked
 	ackPacket := channeltypes.Packet{
@@ -338,12 +333,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				},
 			},
 			chanKeeper: chanKeeper,
-			capKeeper: wasmtesting.MockCapabilityKeeper{
-				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
-					return nil, false
-				},
-			},
-			expErr: channeltypes.ErrChannelCapabilityNotFound,
+			expErr:     channeltypes.ErrChannelCapabilityNotFound,
 		},
 		"async ack, all good": {
 			srcMsg: wasmvmtypes.IBCMsg{
