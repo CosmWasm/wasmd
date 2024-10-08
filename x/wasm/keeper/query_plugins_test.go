@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
@@ -552,7 +551,7 @@ func TestQueryErrors(t *testing.T) {
 				return nil, spec.src
 			})
 			ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-			ctx := sdk.NewContext(ms, cmtproto.Header{}, false, log.NewTestLogger(t)).WithGasMeter(storetypes.NewInfiniteGasMeter())
+			ctx := sdk.NewContext(ms, false, log.NewTestLogger(t)).WithGasMeter(storetypes.NewInfiniteGasMeter())
 			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, types.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)

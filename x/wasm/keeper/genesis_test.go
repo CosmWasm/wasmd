@@ -11,7 +11,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	abci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
@@ -22,14 +22,14 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
-	govtypes "cosmossdk.io/x/gov/types"
-	"cosmossdk.io/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -97,13 +97,13 @@ func TestGenesisExportImport(t *testing.T) {
 	// export
 	exportedState := ExportGenesis(srcCtx, wasmKeeper)
 	// order should not matter
-	rand.Shuffle(len(exportedState.Codes), func(i, j int) {
+	unsafe.Shuffle(len(exportedState.Codes), func(i, j int) {
 		exportedState.Codes[i], exportedState.Codes[j] = exportedState.Codes[j], exportedState.Codes[i]
 	})
-	rand.Shuffle(len(exportedState.Contracts), func(i, j int) {
+	unsafe.Shuffle(len(exportedState.Contracts), func(i, j int) {
 		exportedState.Contracts[i], exportedState.Contracts[j] = exportedState.Contracts[j], exportedState.Contracts[i]
 	})
-	rand.Shuffle(len(exportedState.Sequences), func(i, j int) {
+	unsafe.Shuffle(len(exportedState.Sequences), func(i, j int) {
 		exportedState.Sequences[i], exportedState.Sequences[j] = exportedState.Sequences[j], exportedState.Sequences[i]
 	})
 	exportedGenesis, err := wasmKeeper.cdc.MarshalJSON(exportedState)
@@ -293,7 +293,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},
@@ -322,7 +322,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},
@@ -333,7 +333,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -357,7 +357,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -381,7 +381,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -392,7 +392,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{"other":"value"}`),
 							},
 						},
@@ -426,7 +426,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -472,7 +472,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},

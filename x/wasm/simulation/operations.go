@@ -71,25 +71,25 @@ func WeightedOperations(
 		weightMsgMigrateContract     int
 		wasmContractPath             string
 	)
-	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *unsafe.Rand) {
 		weightMsgStoreCode = DefaultWeightMsgStoreCode
 	})
-	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *unsafe.Rand) {
 		weightMsgInstantiateContract = DefaultWeightMsgInstantiateContract
 	})
-	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *unsafe.Rand) {
 		weightMsgExecuteContract = DefaultWeightMsgExecuteContract
 	})
-	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *unsafe.Rand) {
 		weightMsgUpdateAdmin = DefaultWeightMsgUpdateAdmin
 	})
-	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *unsafe.Rand) {
 		weightMsgClearAdmin = DefaultWeightMsgClearAdmin
 	})
-	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *unsafe.Rand) {
 		weightMsgMigrateContract = DefaultWeightMsgMigrateContract
 	})
-	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *unsafe.Rand) {
 		wasmContractPath = ""
 	})
 
@@ -193,7 +193,7 @@ func SimulateMsgMigrateContract(
 	codeIDSelector MsgMigrateCodeIDSelector,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accs []simtypes.Account,
@@ -242,7 +242,7 @@ func SimulateMsgClearAdmin(
 	contractSelector MsgClearAdminContractSelector,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accounts []simtypes.Account,
@@ -287,7 +287,7 @@ func SimulateMsgUpdateAmin(
 	contractSelector MsgUpdateAdminContractSelector,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accs []simtypes.Account,
@@ -322,7 +322,7 @@ func SimulateMsgStoreCode(
 	wasmBz []byte,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accs []simtypes.Account,
@@ -371,7 +371,7 @@ func SimulateMsgInstantiateContract(
 	codeSelector CodeIDSelector,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accs []simtypes.Account,
@@ -425,7 +425,7 @@ func SimulateMsgExecuteContract(
 	payloader MsgExecutePayloader,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand,
+		r *unsafe.Rand,
 		app *baseapp.BaseApp,
 		ctx sdk.Context,
 		accs []simtypes.Account,
@@ -466,7 +466,7 @@ func SimulateMsgExecuteContract(
 
 // BuildOperationInput helper to build object
 func BuildOperationInput(
-	r *rand.Rand,
+	r *unsafe.Rand,
 	app *baseapp.BaseApp,
 	ctx sdk.Context,
 	msg interface {

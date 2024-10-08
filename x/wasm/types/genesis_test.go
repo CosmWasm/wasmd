@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const invalidAddress = "invalid address"
@@ -164,8 +164,8 @@ func TestContractValidateBasic(t *testing.T) {
 }
 
 func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
-	var myAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
+	var myAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
+	var myOtherAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
 	anyPos := AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
 
 	anyTime := time.Now().UTC()

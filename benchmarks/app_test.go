@@ -180,7 +180,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := unsafe.New(unsafe.NewSource(time.Now().UnixNano()))
 	storeTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
 	_, _, err = wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
@@ -245,7 +245,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 	fees := sdk.Coins{sdk.NewInt64Coin(info.Denom, 0)}
 	txs := make([]sdk.Tx, numToGenerate)
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := unsafe.New(unsafe.NewSource(time.Now().UnixNano()))
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
 		require.NoError(b, err)

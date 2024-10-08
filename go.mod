@@ -270,9 +270,9 @@ replace (
 	github.com/cosmos/cosmos-sdk/x/slashing => cosmossdk.io/x/slashing v0.0.0-20240911130545-9e7848985491
 	github.com/cosmos/cosmos-sdk/x/staking => cosmossdk.io/x/staking v0.0.0-20240911130545-9e7848985491
 
-	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/cosmos/ibc-go/modules/apps/callbacks v0.0.0-20240924103722-ba0f7ce07d19
+	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/cosmos/ibc-go/modules/apps/callbacks ba0f7ce07d19f935aecfd3834521368921d8d45a
 	//github.com/cosmos/ibc-go/modules/capability => github.com/cosmos/ibc-go/modules/capability ba0f7ce07d19f935aecfd3834521368921d8d45a
-	github.com/cosmos/ibc-go/v9 => github.com/cosmos/ibc-go/v9 v9.0.0-20240924103722-ba0f7ce07d19
+	github.com/cosmos/ibc-go/v9 => github.com/cosmos/ibc-go/v9 ba0f7ce07d19f935aecfd3834521368921d8d45a
 
 )
 
