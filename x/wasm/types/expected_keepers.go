@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v9/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
@@ -79,7 +78,7 @@ type StakingKeeper interface {
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
-	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
+	ChanCloseInit(ctx sdk.Context, portID, channelID string) error
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
@@ -98,7 +97,6 @@ type ICS4Wrapper interface {
 	// is returned if one occurs.
 	SendPacket(
 		ctx sdk.Context,
-		channelCap *capabilitytypes.Capability,
 		sourcePort string,
 		sourceChannel string,
 		timeoutHeight clienttypes.Height,
@@ -108,7 +106,6 @@ type ICS4Wrapper interface {
 
 	WriteAcknowledgement(
 		ctx sdk.Context,
-		chanCap *capabilitytypes.Capability,
 		packet ibcexported.PacketI,
 		acknowledgement ibcexported.Acknowledgement,
 	) error
@@ -126,13 +123,6 @@ type ConnectionKeeper interface {
 
 // PortKeeper defines the expected IBC port keeper
 type PortKeeper interface {
-	BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability
-}
-
-type CapabilityKeeper interface {
-	GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
-	AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool
 }
 
 // ICS20TransferPortSource is a subset of the ibc transfer keeper.
