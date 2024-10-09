@@ -66,12 +66,11 @@ type StakingKeeper interface {
 	GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error)
 	// GetAllDelegatorDelegations return all delegations for a delegator
 	GetAllDelegatorDelegations(ctx context.Context, delegator sdk.AccAddress) ([]stakingtypes.Delegation, error)
-	// GetDelegation return a specific delegation
-	GetDelegation(ctx context.Context,
-		delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error)
 	// HasReceivingRedelegation check if validator is receiving a redelegation
 	HasReceivingRedelegation(ctx context.Context,
 		delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) (bool, error)
+	// Delegation gets the delegation interface for a particular set of delegator and validator addresses
+	Delegation(ctx context.Context, addrDel sdk.AccAddress, addrVal sdk.ValAddress) (sdk.DelegationI, error)
 }
 
 // ChannelKeeper defines the expected IBC channel keeper
