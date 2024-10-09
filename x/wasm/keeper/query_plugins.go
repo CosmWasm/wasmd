@@ -356,7 +356,7 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := handler(ctx, &abci.RequestQuery{
+		res, err := handler(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -406,7 +406,7 @@ func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQuery
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := route(ctx, &abci.RequestQuery{
+		res, err := route(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -501,7 +501,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			}
 
 			var res wasmvmtypes.DelegationResponse
-			d, err := keeper.GetDelegation(ctx, delegator, validator)
+			d, err := keeper.Delegation(ctx, delegator, validator)
 			switch {
 			case stakingtypes.ErrNoDelegation.Is(err): // return empty result for backwards compatibility. Changed in SDK 50
 			case err != nil:
@@ -552,12 +552,12 @@ func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations [
 	return result, nil
 }
 
-func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) (*wasmvmtypes.FullDelegation, error) {
-	delAddr, err := sdk.AccAddressFromBech32(delegation.DelegatorAddress)
+func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper types.DistributionKeeper, delegation sdk.DelegationI) (*wasmvmtypes.FullDelegation, error) {
+	delAddr, err := sdk.AccAddressFromBech32(delegation.GetDelegatorAddr())
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "delegator address")
 	}
-	valAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
+	valAddr, err := sdk.ValAddressFromBech32(delegation.GetValidatorAddr())
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "validator address")
 	}
@@ -570,7 +570,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 		return nil, errorsmod.Wrap(err, "bond denom")
 	}
 
-	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
+	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.GetShares()).TruncateInt())
 
 	delegationCoins := ConvertSdkCoinToWasmCoin(amount)
 
@@ -608,11 +608,11 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 
 // FIXME: simplify this enormously when
 // https://github.com/cosmos/cosmos-sdk/issues/7466 is merged
-func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) ([]wasmvmtypes.Coin, error) {
+func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper, delegation sdk.DelegationI) ([]wasmvmtypes.Coin, error) {
 	// Try to get *delegator* reward info!
 	params := distributiontypes.QueryDelegationRewardsRequest{
-		DelegatorAddress: delegation.DelegatorAddress,
-		ValidatorAddress: delegation.ValidatorAddress,
+		DelegatorAddress: delegation.GetDelegatorAddr(),
+		ValidatorAddress: delegation.GetValidatorAddr(),
 	}
 	cache, _ := ctx.CacheContext()
 	qres, err := distKeeper.DelegationRewards(cache, &params)

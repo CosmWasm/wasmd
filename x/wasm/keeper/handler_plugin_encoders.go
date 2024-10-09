@@ -11,6 +11,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 
 	banktypes "cosmossdk.io/x/bank/types"
 	distributiontypes "cosmossdk.io/x/distribution/types"
@@ -44,7 +45,7 @@ type MessageEncoders struct {
 	Gov          func(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error)
 }
 
-func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
+func DefaultEncoders(unpacker gogoprotoany.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
 	return MessageEncoders{
 		Bank:         EncodeBankMsg,
 		Custom:       NoCustomMsg,
@@ -204,7 +205,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 	}
 }
 
-func EncodeAnyMsg(unpacker codectypes.AnyUnpacker) AnyEncoder {
+func EncodeAnyMsg(unpacker gogoprotoany.AnyUnpacker) AnyEncoder {
 	return func(sender sdk.AccAddress, msg *wasmvmtypes.AnyMsg) ([]sdk.Msg, error) {
 		codecAny := codectypes.Any{
 			TypeUrl: msg.TypeURL,
@@ -333,7 +334,7 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 		if err != nil {
 			return nil, errorsmod.Wrap(err, "vote option")
 		}
-		m := v1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption, "")
+		m := v1.NewMsgVote(sender.String(), msg.Vote.ProposalId, voteOption, "")
 		return []sdk.Msg{m}, nil
 	case msg.VoteWeighted != nil:
 		opts := make([]*v1.WeightedVoteOption, len(msg.VoteWeighted.Options))
@@ -348,7 +349,7 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 			}
 			opts[i] = &v1.WeightedVoteOption{Option: voteOption, Weight: weight.String()}
 		}
-		m := v1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts, "")
+		m := v1.NewMsgVoteWeighted(sender.String(), msg.VoteWeighted.ProposalId, opts, "")
 		return []sdk.Msg{m}, nil
 
 	default:
