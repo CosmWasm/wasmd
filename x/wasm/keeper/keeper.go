@@ -502,7 +502,7 @@ func (k Keeper) migrate(
 	if report.ContractMigrateVersion == nil ||
 		oldReport.ContractMigrateVersion == nil ||
 		*report.ContractMigrateVersion != *oldReport.ContractMigrateVersion {
-		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, newCodeID)
+		response, err = k.callMigrateEntrypoint(sdkCtx, contractAddress, wasmvmtypes.Checksum(newCodeInfo.CodeHash), msg, newCodeID, caller, oldReport.ContractMigrateVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -560,6 +560,8 @@ func (k Keeper) callMigrateEntrypoint(
 	newChecksum wasmvmtypes.Checksum,
 	msg []byte,
 	newCodeID uint64,
+	senderAddress sdk.AccAddress,
+	oldMigrateVersion *uint64,
 ) (*wasmvmtypes.Response, error) {
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, newChecksum, k.IsPinnedCode(sdkCtx, newCodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
@@ -573,7 +575,13 @@ func (k Keeper) callMigrateEntrypoint(
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	vmStore := types.NewStoreAdapter(prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(sdkCtx)), prefixStoreKey))
 	gasLeft := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, err := k.wasmVM.Migrate(newChecksum, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+
+	migrateInfo := wasmvmtypes.MigrateInfo{
+		Sender:            senderAddress.String(),
+		OldMigrateVersion: oldMigrateVersion,
+	}
+	res, gasUsed, err := k.wasmVM.MigrateWithInfo(newChecksum, env, msg, migrateInfo, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
