@@ -94,10 +94,11 @@ func TestCountTxDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.CacheMultiStore(), cmtproto.Header{
-				Height: myCurrentBlockHeight,
-				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
-			}, false, log.NewNopLogger())
+			ctx := sdk.NewContext(ms.CacheMultiStore(), false, log.NewNopLogger()).WithBlockHeader(
+				cmtproto.Header{
+					Height: myCurrentBlockHeight,
+					Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
+				})
 
 			spec.setupDB(t, ctx)
 			var anyTx sdk.Tx
@@ -217,10 +218,12 @@ func TestGasRegisterDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms, cmtproto.Header{
-				Height: 100,
-				Time:   time.Now(),
-			}, false, log.NewNopLogger())
+			ctx := sdk.NewContext(ms, false, log.NewNopLogger()).WithBlockHeader(
+				cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				},
+			)
 			var anyTx sdk.Tx
 
 			// when
@@ -289,10 +292,11 @@ func TestTxContractsDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms, cmtproto.Header{
-				Height: 100,
-				Time:   time.Now(),
-			}, false, log.NewNopLogger())
+			ctx := sdk.NewContext(ms, false, log.NewNopLogger()).WithBlockHeader(
+				cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				})
 
 			if !spec.empty {
 				contracts := types.NewTxContracts()

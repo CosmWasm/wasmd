@@ -48,7 +48,7 @@ func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID str
 	if m.ChanCloseInitFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.ChanCloseInitFn(ctx, portID, channelID, chanCap)
+	return m.ChanCloseInitFn(ctx, portID, channelID)
 }
 
 func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel {
@@ -76,7 +76,7 @@ func (m *MockICS4Wrapper) SendPacket(ctx sdk.Context, sourcePort, sourceChannel 
 	if m.SendPacketFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.SendPacketFn(ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	return m.SendPacketFn(ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
 func (m *MockICS4Wrapper) WriteAcknowledgement(
@@ -87,7 +87,7 @@ func (m *MockICS4Wrapper) WriteAcknowledgement(
 	if m.WriteAcknowledgementFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.WriteAcknowledgementFn(ctx, chanCap, packet, acknowledgement)
+	return m.WriteAcknowledgementFn(ctx, packet, acknowledgement)
 }
 
 func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {

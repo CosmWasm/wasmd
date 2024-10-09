@@ -98,13 +98,13 @@ func TestGenesisExportImport(t *testing.T) {
 	// export
 	exportedState := ExportGenesis(srcCtx, wasmKeeper)
 	// order should not matter
-	unsafe.Shuffle(len(exportedState.Codes), func(i, j int) {
+	rand.Shuffle(len(exportedState.Codes), func(i, j int) {
 		exportedState.Codes[i], exportedState.Codes[j] = exportedState.Codes[j], exportedState.Codes[i]
 	})
-	unsafe.Shuffle(len(exportedState.Contracts), func(i, j int) {
+	rand.Shuffle(len(exportedState.Contracts), func(i, j int) {
 		exportedState.Contracts[i], exportedState.Contracts[j] = exportedState.Contracts[j], exportedState.Contracts[i]
 	})
-	unsafe.Shuffle(len(exportedState.Sequences), func(i, j int) {
+	rand.Shuffle(len(exportedState.Sequences), func(i, j int) {
 		exportedState.Sequences[i], exportedState.Sequences[j] = exportedState.Sequences[j], exportedState.Sequences[i]
 	})
 	exportedGenesis, err := wasmKeeper.cdc.MarshalJSON(exportedState)
@@ -294,7 +294,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},
@@ -323,7 +323,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},
@@ -334,7 +334,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -358,7 +358,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -382,7 +382,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -393,7 +393,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{"other":"value"}`),
 							},
 						},
@@ -427,7 +427,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
@@ -473,7 +473,7 @@ func TestGenesisInit(t *testing.T) {
 							{
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()},
+								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
 								Msg:       []byte(`{}`),
 							},
 						},
@@ -667,10 +667,12 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, cmtproto.Header{
-		Height: 1234567,
-		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
-	}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, false, log.NewNopLogger()).WithBlockHeader(
+		cmtproto.Header{
+			Height: 1234567,
+			Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		},
+	)
 
 	encodingConfig := MakeEncodingConfig(t)
 	// register an example extension. must be protobuf
@@ -689,7 +691,6 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},
-		nil,
 		nil,
 		nil,
 		nil,
