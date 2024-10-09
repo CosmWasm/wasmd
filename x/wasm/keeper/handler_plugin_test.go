@@ -349,7 +349,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacketAck = nil
 
 			// when
-			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper, spec.chanKeeper, spec.capKeeper)
+			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper, spec.chanKeeper)
 			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg}) //nolint:gosec
 
 			// then
