@@ -11,6 +11,7 @@ import (
 
 	paramskeeper "cosmossdk.io/x/params/keeper"
 	paramstypes "cosmossdk.io/x/params/types"
+	codectestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +24,7 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	cfg := moduletestutil.MakeTestEncodingConfig(wasm.AppModuleBasic{})
+	cfg := moduletestutil.MakeTestEncodingConfig(codectestutil.CodecOptions{}, wasm.AppModule{})
 	cdc := cfg.Codec
 	var (
 		wasmStoreKey    = storetypes.NewKVStoreKey(types.StoreKey)
