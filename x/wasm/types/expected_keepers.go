@@ -25,7 +25,7 @@ type BankViewKeeper interface {
 
 // Burner is a subset of the sdk bank keeper methods
 type Burner interface {
-	BurnCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+	BurnCoins(ctx context.Context, address []byte, amounts sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 }
 

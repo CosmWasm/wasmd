@@ -81,7 +81,12 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&storeCodeMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&storeCodeMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -171,7 +176,12 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{instantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{instantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -234,7 +244,12 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				FixMsg: fixMsg,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{instantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{instantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -359,7 +374,12 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&storeAndInstantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&storeAndInstantiateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -408,7 +428,12 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&migrateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&migrateMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -463,7 +488,12 @@ func ProposalExecuteContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -508,7 +538,12 @@ func ProposalSudoContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -547,7 +582,12 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&upgradeAdminMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&upgradeAdminMsg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -589,7 +629,12 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -636,7 +681,12 @@ func ProposalPinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -694,7 +744,12 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -807,7 +862,12 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 				msgs[i] = msg
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -846,7 +906,12 @@ func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 				Addresses: args,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -885,7 +950,12 @@ func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
 				Addresses: args,
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
@@ -976,7 +1046,12 @@ func ProposalStoreAndMigrateContractCmd() *cobra.Command {
 				Contract:              args[1],
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, expedite)
+			proposalType := v1.ProposalType_PROPOSAL_TYPE_STANDARD
+			if expedite {
+				proposalType = v1.ProposalType_PROPOSAL_TYPE_EXPEDITED
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, proposalType)
 			if err != nil {
 				return err
 			}
