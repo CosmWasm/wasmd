@@ -1,63 +1,63 @@
 package types
 
 import (
+	"cosmossdk.io/core/registry"
 	"cosmossdk.io/x/authz"
 	"cosmossdk.io/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 // RegisterLegacyAminoCodec registers the concrete types and interface
-func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode", nil)
-	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
-	cdc.RegisterConcrete(&MsgInstantiateContract2{}, "wasm/MsgInstantiateContract2", nil)
-	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/MsgExecuteContract", nil)
-	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/MsgMigrateContract", nil)
-	cdc.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/MsgUpdateAdmin", nil)
-	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/MsgClearAdmin", nil)
-	cdc.RegisterConcrete(&MsgUpdateInstantiateConfig{}, "wasm/MsgUpdateInstantiateConfig", nil)
-	cdc.RegisterConcrete(&MsgUpdateParams{}, "wasm/MsgUpdateParams", nil)
-	cdc.RegisterConcrete(&MsgSudoContract{}, "wasm/MsgSudoContract", nil)
-	cdc.RegisterConcrete(&MsgPinCodes{}, "wasm/MsgPinCodes", nil)
-	cdc.RegisterConcrete(&MsgUnpinCodes{}, "wasm/MsgUnpinCodes", nil)
-	cdc.RegisterConcrete(&MsgStoreAndInstantiateContract{}, "wasm/MsgStoreAndInstantiateContract", nil)
-	cdc.RegisterConcrete(&MsgAddCodeUploadParamsAddresses{}, "wasm/MsgAddCodeUploadParamsAddresses", nil)
-	cdc.RegisterConcrete(&MsgRemoveCodeUploadParamsAddresses{}, "wasm/MsgRemoveCodeUploadParamsAddresses", nil)
-	cdc.RegisterConcrete(&MsgStoreAndMigrateContract{}, "wasm/MsgStoreAndMigrateContract", nil)
-	cdc.RegisterConcrete(&MsgUpdateContractLabel{}, "wasm/MsgUpdateContractLabel", nil)
+func RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
+	registrar.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode")
+	registrar.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract")
+	registrar.RegisterConcrete(&MsgInstantiateContract2{}, "wasm/MsgInstantiateContract2")
+	registrar.RegisterConcrete(&MsgExecuteContract{}, "wasm/MsgExecuteContract")
+	registrar.RegisterConcrete(&MsgMigrateContract{}, "wasm/MsgMigrateContract")
+	registrar.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/MsgUpdateAdmin")
+	registrar.RegisterConcrete(&MsgClearAdmin{}, "wasm/MsgClearAdmin")
+	registrar.RegisterConcrete(&MsgUpdateInstantiateConfig{}, "wasm/MsgUpdateInstantiateConfig")
+	registrar.RegisterConcrete(&MsgUpdateParams{}, "wasm/MsgUpdateParams")
+	registrar.RegisterConcrete(&MsgSudoContract{}, "wasm/MsgSudoContract")
+	registrar.RegisterConcrete(&MsgPinCodes{}, "wasm/MsgPinCodes")
+	registrar.RegisterConcrete(&MsgUnpinCodes{}, "wasm/MsgUnpinCodes")
+	registrar.RegisterConcrete(&MsgStoreAndInstantiateContract{}, "wasm/MsgStoreAndInstantiateContract")
+	registrar.RegisterConcrete(&MsgAddCodeUploadParamsAddresses{}, "wasm/MsgAddCodeUploadParamsAddresses")
+	registrar.RegisterConcrete(&MsgRemoveCodeUploadParamsAddresses{}, "wasm/MsgRemoveCodeUploadParamsAddresses")
+	registrar.RegisterConcrete(&MsgStoreAndMigrateContract{}, "wasm/MsgStoreAndMigrateContract")
+	registrar.RegisterConcrete(&MsgUpdateContractLabel{}, "wasm/MsgUpdateContractLabel")
 
-	cdc.RegisterInterface((*ContractInfoExtension)(nil), nil)
+	registrar.RegisterInterface((*ContractInfoExtension)(nil), nil)
 
-	cdc.RegisterInterface((*ContractAuthzFilterX)(nil), nil)
-	cdc.RegisterConcrete(&AllowAllMessagesFilter{}, "wasm/AllowAllMessagesFilter", nil)
-	cdc.RegisterConcrete(&AcceptedMessageKeysFilter{}, "wasm/AcceptedMessageKeysFilter", nil)
-	cdc.RegisterConcrete(&AcceptedMessagesFilter{}, "wasm/AcceptedMessagesFilter", nil)
+	registrar.RegisterInterface((*ContractAuthzFilterX)(nil), nil)
+	registrar.RegisterConcrete(&AllowAllMessagesFilter{}, "wasm/AllowAllMessagesFilter")
+	registrar.RegisterConcrete(&AcceptedMessageKeysFilter{}, "wasm/AcceptedMessageKeysFilter")
+	registrar.RegisterConcrete(&AcceptedMessagesFilter{}, "wasm/AcceptedMessagesFilter")
 
-	cdc.RegisterInterface((*ContractAuthzLimitX)(nil), nil)
-	cdc.RegisterConcrete(&MaxCallsLimit{}, "wasm/MaxCallsLimit", nil)
-	cdc.RegisterConcrete(&MaxFundsLimit{}, "wasm/MaxFundsLimit", nil)
-	cdc.RegisterConcrete(&CombinedLimit{}, "wasm/CombinedLimit", nil)
+	registrar.RegisterInterface((*ContractAuthzLimitX)(nil), nil)
+	registrar.RegisterConcrete(&MaxCallsLimit{}, "wasm/MaxCallsLimit")
+	registrar.RegisterConcrete(&MaxFundsLimit{}, "wasm/MaxFundsLimit")
+	registrar.RegisterConcrete(&CombinedLimit{}, "wasm/CombinedLimit")
 
-	cdc.RegisterConcrete(&StoreCodeAuthorization{}, "wasm/StoreCodeAuthorization", nil)
-	cdc.RegisterConcrete(&ContractExecutionAuthorization{}, "wasm/ContractExecutionAuthorization", nil)
-	cdc.RegisterConcrete(&ContractMigrationAuthorization{}, "wasm/ContractMigrationAuthorization", nil)
+	registrar.RegisterConcrete(&StoreCodeAuthorization{}, "wasm/StoreCodeAuthorization")
+	registrar.RegisterConcrete(&ContractExecutionAuthorization{}, "wasm/ContractExecutionAuthorization")
+	registrar.RegisterConcrete(&ContractMigrationAuthorization{}, "wasm/ContractMigrationAuthorization")
 
 	// legacy gov v1beta1 types that may be used for unmarshalling stored gov data
-	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
-	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
-	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
-	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
-	cdc.RegisterConcrete(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal", nil)
-	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
-	cdc.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
-	cdc.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal", nil)
-	cdc.RegisterConcrete(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal", nil)
-	cdc.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
-	cdc.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal", nil)
-	cdc.RegisterConcrete(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal", nil)
+	registrar.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal")
+	registrar.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
+	registrar.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
+	registrar.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
+	registrar.RegisterConcrete(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal")
+	registrar.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
+	registrar.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal")
+	registrar.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
+	registrar.RegisterConcrete(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
+	registrar.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
+	registrar.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
+	registrar.RegisterConcrete(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal")
 }
 
 // RegisterInterfaces registers the concrete proto types and interfaces with the SDK interface registry

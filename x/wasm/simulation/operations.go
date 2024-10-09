@@ -10,7 +10,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,25 +70,25 @@ func WeightedOperations(
 		weightMsgMigrateContract     int
 		wasmContractPath             string
 	)
-	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *rand.Rand) {
 		weightMsgStoreCode = DefaultWeightMsgStoreCode
 	})
-	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
 		weightMsgInstantiateContract = DefaultWeightMsgInstantiateContract
 	})
-	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
 		weightMsgExecuteContract = DefaultWeightMsgExecuteContract
 	})
-	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *rand.Rand) {
 		weightMsgUpdateAdmin = DefaultWeightMsgUpdateAdmin
 	})
-	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *rand.Rand) {
 		weightMsgClearAdmin = DefaultWeightMsgClearAdmin
 	})
-	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *rand.Rand) {
 		weightMsgMigrateContract = DefaultWeightMsgMigrateContract
 	})
-	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *unsafe.Rand) {
+	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *rand.Rand) {
 		wasmContractPath = ""
 	})
 
@@ -193,8 +192,8 @@ func SimulateMsgMigrateContract(
 	codeIDSelector MsgMigrateCodeIDSelector,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accs []simtypes.Account,
 		chainID string,
@@ -242,8 +241,8 @@ func SimulateMsgClearAdmin(
 	contractSelector MsgClearAdminContractSelector,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accounts []simtypes.Account,
 		chainID string,
@@ -287,8 +286,8 @@ func SimulateMsgUpdateAmin(
 	contractSelector MsgUpdateAdminContractSelector,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accs []simtypes.Account,
 		chainID string,
@@ -322,8 +321,8 @@ func SimulateMsgStoreCode(
 	wasmBz []byte,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accs []simtypes.Account,
 		chainID string,
@@ -371,8 +370,8 @@ func SimulateMsgInstantiateContract(
 	codeSelector CodeIDSelector,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accs []simtypes.Account,
 		chainID string,
@@ -425,8 +424,8 @@ func SimulateMsgExecuteContract(
 	payloader MsgExecutePayloader,
 ) simtypes.Operation {
 	return func(
-		r *unsafe.Rand,
-		app *baseapp.BaseApp,
+		r *rand.Rand,
+		app simtypes.AppEntrypoint,
 		ctx sdk.Context,
 		accs []simtypes.Account,
 		chainID string,
@@ -466,8 +465,8 @@ func SimulateMsgExecuteContract(
 
 // BuildOperationInput helper to build object
 func BuildOperationInput(
-	r *unsafe.Rand,
-	app *baseapp.BaseApp,
+	r *rand.Rand,
+	app simtypes.AppEntrypoint,
 	ctx sdk.Context,
 	msg interface {
 		sdk.Msg
@@ -479,7 +478,8 @@ func BuildOperationInput(
 	deposit sdk.Coins,
 ) simulation.OperationInput {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
-	txConfig := tx.NewTxConfig(codec.NewProtoCodec(interfaceRegistry), tx.DefaultSignModes)
+	signingCtx := interfaceRegistry.SigningContext()
+	txConfig := tx.NewTxConfig(codec.NewProtoCodec(interfaceRegistry), signingCtx.AddressCodec(), signingCtx.ValidatorAddressCodec(), tx.DefaultSignModes)
 	return simulation.OperationInput{
 		R:               r,
 		App:             app,
