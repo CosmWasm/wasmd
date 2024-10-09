@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/cosmos/cosmos-sdk/codec/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -22,7 +23,7 @@ func TestMigrate3To4(t *testing.T) {
 	AvailableCapabilities := []string{"iterator", "staking", "stargate", "cosmwasm_1_1"}
 	ctx, keepers := keeper.CreateTestInput(t, false, AvailableCapabilities)
 	store := ctx.KVStore(keepers.WasmStoreKey)
-	cdc := moduletestutil.MakeTestEncodingConfig(wasm.AppModuleBasic{}).Codec
+	cdc := moduletestutil.MakeTestEncodingConfig(testutil.CodecOptions{}, wasm.AppModule{}).Codec
 	wasmKeeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

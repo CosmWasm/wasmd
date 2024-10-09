@@ -299,7 +299,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	specs := map[string]struct {
 		srcMsg        wasmvmtypes.IBCMsg
 		chanKeeper    types.ChannelKeeper
-		capKeeper     types.CapabilityKeeper
 		expPacketSent *CapturedPacket
 		expPacketAck  *CapturedPacket
 		expAck        []byte
@@ -315,7 +314,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				},
 			},
 			chanKeeper: chanKeeper,
-			capKeeper:  capKeeper,
 			expPacketSent: &CapturedPacket{
 				sourcePort:    ibcPort,
 				sourceChannel: "channel-1",
@@ -323,17 +321,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				data:          []byte("myData"),
 			},
 			expResp: &sendResponse,
-		},
-		"send packet, capability not found returns error": {
-			srcMsg: wasmvmtypes.IBCMsg{
-				SendPacket: &wasmvmtypes.SendPacketMsg{
-					ChannelID: "channel-1",
-					Data:      []byte("myData"),
-					Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
-				},
-			},
-			chanKeeper: chanKeeper,
-			expErr:     channeltypes.ErrChannelCapabilityNotFound,
 		},
 		"async ack, all good": {
 			srcMsg: wasmvmtypes.IBCMsg{
@@ -344,7 +331,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				},
 			},
 			chanKeeper: chanKeeper,
-			capKeeper:  capKeeper,
 			expPacketAck: &CapturedPacket{
 				sourcePort:       ackPacket.SourcePort,
 				sourceChannel:    ackPacket.SourceChannel,
