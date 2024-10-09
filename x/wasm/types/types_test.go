@@ -9,6 +9,7 @@ import (
 
 	"cosmossdk.io/math/unsafe"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	v1 "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -304,7 +305,7 @@ func TestNewEnv(t *testing.T) {
 		exp    wasmvmtypes.Env
 	}{
 		"all good with tx counter": {
-			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
+			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeader(v1.Header{Height: 1, Time: myTime}).WithChainID("testing").WithContext(context.Background()), 0),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,
@@ -318,7 +319,7 @@ func TestNewEnv(t *testing.T) {
 			},
 		},
 		"without tx counter": {
-			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()),
+			srcCtx: sdk.Context{}.WithBlockHeader(v1.Header{Height: 1, Time: myTime}).WithChainID("testing").WithContext(context.Background()),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,

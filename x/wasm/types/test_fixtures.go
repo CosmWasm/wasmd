@@ -49,7 +49,7 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 
 func randBytes(n int) []byte {
 	r := make([]byte, n)
-	unsafe.Read(r) //nolint:staticcheck
+	rand.Read(r) //nolint:staticcheck
 	return r
 }
 
@@ -106,7 +106,7 @@ func OnlyGenesisFields(info *ContractInfo) {
 }
 
 func RandCreatedFields(info *ContractInfo) {
-	info.Created = &AbsoluteTxPosition{BlockHeight: unsafe.Uint64(), TxIndex: unsafe.Uint64()}
+	info.Created = &AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()}
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {

@@ -13,8 +13,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
-	authztypes "cosmossdk.io/x/authz"
+	"cosmossdk.io/x/authz"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authztypes "github.com/cosmos/cosmos-sdk/types/authz"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -542,7 +543,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 	myContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
 	otherContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
 	specs := map[string]struct {
-		auth      authztypes.Authorization
+		auth      authz.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
 		expErr    *errorsmod.Error
@@ -874,7 +875,7 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		auth      authztypes.Authorization
+		auth      authz.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
 		expErr    *errorsmod.Error

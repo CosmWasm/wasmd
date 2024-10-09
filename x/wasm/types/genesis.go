@@ -3,8 +3,8 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 )
 
 func (s Sequence) ValidateBasic() error {
@@ -83,10 +83,10 @@ func ValidateGenesis(data GenesisState) error {
 	return data.ValidateBasic()
 }
 
-var _ codectypes.UnpackInterfacesMessage = GenesisState{}
+var _ gogoprotoany.UnpackInterfacesMessage = GenesisState{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (s GenesisState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (s GenesisState) UnpackInterfaces(unpacker gogoprotoany.AnyUnpacker) error {
 	for _, v := range s.Contracts {
 		if err := v.UnpackInterfaces(unpacker); err != nil {
 			return err
@@ -95,9 +95,9 @@ func (s GenesisState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	return nil
 }
 
-var _ codectypes.UnpackInterfacesMessage = &Contract{}
+var _ gogoprotoany.UnpackInterfacesMessage = &Contract{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (c *Contract) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (c *Contract) UnpackInterfaces(unpacker gogoprotoany.AnyUnpacker) error {
 	return c.ContractInfo.UnpackInterfaces(unpacker)
 }
