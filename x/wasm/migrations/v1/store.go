@@ -28,7 +28,7 @@ func NewMigrator(k wasmKeeper, fn AddToSecondIndexFn) Migrator {
 }
 
 // Migrate1to2 migrates from version 1 to 2.
-func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+func (m Migrator) Migrate1to2(ctx context.Context) error {
 	m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
 		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
 		err := m.addToSecondIndexFn(ctx, creator, contractInfo.Created, contractAddr)
