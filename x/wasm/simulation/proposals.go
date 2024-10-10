@@ -189,10 +189,10 @@ func SimulateExecuteContractProposal(
 	}
 }
 
-type UpdateAdminContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+type UpdateAdminContractSelector func(context.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
 
 func DefaultSimulateUpdateAdminProposalContractSelector(
-	ctx sdk.Context,
+	ctx context.Context,
 	wasmKeeper WasmKeeper,
 	adminAddress string,
 ) (sdk.AccAddress, types.ContractInfo) {
@@ -227,10 +227,10 @@ func SimulateUpdateAdminProposal(wasmKeeper WasmKeeper, contractSelector UpdateA
 	}
 }
 
-type ClearAdminContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
+type ClearAdminContractSelector func(context.Context, WasmKeeper) sdk.AccAddress
 
 func DefaultSimulateContractSelector(
-	ctx sdk.Context,
+	ctx context.Context,
 	wasmKeeper WasmKeeper,
 ) sdk.AccAddress {
 	var contractAddr sdk.AccAddress
@@ -257,7 +257,7 @@ func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdm
 	}
 }
 
-type MigrateContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
+type MigrateContractProposalContractSelector func(context.Context, WasmKeeper) sdk.AccAddress
 
 // Simulate migrate contract proposal
 func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector MigrateContractProposalContractSelector, codeSelector CodeIDSelector) simtypes.MsgSimulatorFnX {
@@ -283,7 +283,7 @@ func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector Mig
 	}
 }
 
-type SudoContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
+type SudoContractProposalContractSelector func(context.Context, WasmKeeper) sdk.AccAddress
 
 // Simulate sudo contract proposal
 func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoContractProposalContractSelector) simtypes.MsgSimulatorFnX {

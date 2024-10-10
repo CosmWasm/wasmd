@@ -245,7 +245,7 @@ type ContractAuthzFactory interface {
 
 // AcceptGrantedMessage determines whether this grant permits the provided sdk.Msg to be performed,
 // and if so provides an upgraded authorization instance.
-func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []ContractGrant, msg sdk.Msg, factory ContractAuthzFactory) (authztypes.AcceptResponse, error) {
+func AcceptGrantedMessage[T AuthzableWasmMsg](ctx context.Context, grants []ContractGrant, msg sdk.Msg, factory ContractAuthzFactory) (authztypes.AcceptResponse, error) {
 	exec, ok := msg.(T)
 	if !ok {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("type mismatch")
@@ -317,7 +317,7 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 // ContractAuthzLimitX  define execution limits that are enforced and updated when the grant
 // is applied. When the limit lapsed the grant is removed.
 type ContractAuthzLimitX interface {
-	Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error)
+	Accept(ctx context.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error)
 	ValidateBasic() error
 }
 
@@ -336,7 +336,7 @@ type ContractAuthzLimitAcceptResult struct {
 // operation is prohibited.
 type ContractAuthzFilterX interface {
 	// Accept returns applicable or error
-	Accept(ctx sdk.Context, msg RawContractMessage) (bool, error)
+	Accept(ctx context.Context, msg RawContractMessage) (bool, error)
 	ValidateBasic() error
 }
 
@@ -433,7 +433,7 @@ func (g ContractGrant) ValidateBasic() error {
 type UndefinedFilter struct{}
 
 // Accept always returns error
-func (f *UndefinedFilter) Accept(_ sdk.Context, _ RawContractMessage) (bool, error) {
+func (f *UndefinedFilter) Accept(_ context.Context, _ RawContractMessage) (bool, error) {
 	return false, sdkerrors.ErrNotFound.Wrapf("undefined filter")
 }
 
@@ -448,7 +448,7 @@ func NewAllowAllMessagesFilter() *AllowAllMessagesFilter {
 }
 
 // Accept accepts any valid json message content.
-func (f *AllowAllMessagesFilter) Accept(_ sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *AllowAllMessagesFilter) Accept(_ context.Context, msg RawContractMessage) (bool, error) {
 	return true, msg.ValidateBasic()
 }
 
@@ -463,9 +463,10 @@ func NewAcceptedMessageKeysFilter(acceptedKeys ...string) *AcceptedMessageKeysFi
 }
 
 // Accept only payload messages which contain one of the accepted key names in the json object.
-func (f *AcceptedMessageKeysFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *AcceptedMessageKeysFilter) Accept(ctx context.Context, msg RawContractMessage) (bool, error) {
 	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
-	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
 
 	ok, err := isJSONObjectWithTopLevelKey(msg, f.Keys)
 	if err != nil {
@@ -501,7 +502,7 @@ func NewAcceptedMessagesFilter(msgs ...RawContractMessage) *AcceptedMessagesFilt
 }
 
 // Accept only payload messages which are equal to the granted one.
-func (f *AcceptedMessagesFilter) Accept(_ sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *AcceptedMessagesFilter) Accept(_ context.Context, msg RawContractMessage) (bool, error) {
 	for _, v := range f.Messages {
 		if v.Equal(msg) {
 			return true, nil
@@ -547,7 +548,7 @@ func (u UndefinedLimit) ValidateBasic() error {
 }
 
 // Accept always returns error
-func (u UndefinedLimit) Accept(_ sdk.Context, _ AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+func (u UndefinedLimit) Accept(_ context.Context, _ AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
 }
 
@@ -557,7 +558,7 @@ func NewMaxCallsLimit(number uint64) *MaxCallsLimit {
 }
 
 // Accept only the defined number of message calls. No token transfers to the contract allowed.
-func (m MaxCallsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+func (m MaxCallsLimit) Accept(_ context.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	if !msg.GetFunds().Empty() {
 		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil
 	}
@@ -586,7 +587,7 @@ func NewMaxFundsLimit(max ...sdk.Coin) *MaxFundsLimit {
 }
 
 // Accept until the defined budget for token transfers to the contract is spent
-func (m MaxFundsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+func (m MaxFundsLimit) Accept(_ context.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	if msg.GetFunds().Empty() { // no state changes required
 		return &ContractAuthzLimitAcceptResult{Accepted: true}, nil
 	}
@@ -618,7 +619,7 @@ func NewCombinedLimit(maxCalls uint64, maxAmounts ...sdk.Coin) *CombinedLimit {
 }
 
 // Accept until the max calls is reached or the token budget is spent.
-func (l CombinedLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+func (l CombinedLimit) Accept(_ context.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	transferFunds := msg.GetFunds()
 	if !transferFunds.IsAllLTE(l.Amounts) {
 		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil // does not apply
