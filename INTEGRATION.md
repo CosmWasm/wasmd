@@ -100,7 +100,7 @@ from upstream on all future `wasmd` releases, and this should be as simple
 as possible.
 
 If, for example, you have forked the standard SDK libs, you just want to
-change the imports (from eg. `github.com/cosmos/cosmos-sdk/x/bank` to
+change the imports (from eg. `cosmossdk.io/x/bank` to
 `github.com/YOUR/APP/x/bank`), and adjust any calls if there are compiler 
 errors due to differing APIs (maybe you use Decimals not Ints for currencies?).
 

@@ -11,14 +11,14 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	distributionkeeper "cosmossdk.io/x/distribution/keeper"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -258,9 +258,9 @@ func TestBonding(t *testing.T) {
 	assert.Equal(t, sdkmath.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
 
 	// check the delegation itself
-	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, err := stakingKeeper.Delegation(ctx, contractAddr, valAddr)
 	require.NoError(t, err)
-	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("80000"))
+	assert.Equal(t, d.GetShares(), sdkmath.LegacyMustNewDecFromStr("80000"))
 
 	// check we have the desired balance
 	assertBalance(t, ctx, keeper, contractAddr, bob, "80000")
@@ -316,9 +316,9 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, sdkmath.NewInt(53000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
 
 	// check the delegation itself
-	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, err := stakingKeeper.Delegation(ctx, contractAddr, valAddr)
 	require.NoError(t, err)
-	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("53000"))
+	assert.Equal(t, d.GetShares(), sdkmath.LegacyMustNewDecFromStr("53000"))
 
 	// check there is unbonding in progress
 	un, err := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
@@ -380,10 +380,10 @@ func TestReinvest(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
 	// check the delegation itself
-	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, err := stakingKeeper.Delegation(ctx, contractAddr, valAddr)
 	require.NoError(t, err)
 	// we started with 200k and added 36k
-	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("236000"))
+	assert.Equal(t, d.GetShares(), sdkmath.LegacyMustNewDecFromStr("236000"))
 
 	// make sure the proper number of tokens have been bonded (80k + 40k = 120k)
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
@@ -434,7 +434,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
-	origReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	origReward, err := distKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
 	require.NoError(t, err)
 
 	// STEP 2: Prepare the mask contract
@@ -576,7 +576,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
-	finalReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	finalReward, err := distKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
 	require.NoError(t, err)
 	require.Equal(t, origReward, finalReward)
 }
@@ -614,7 +614,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
-	origReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	origReward, err := distKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
 	require.NoError(t, err)
 
 	// Step 2: Try out the query plugins
@@ -644,7 +644,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
-	finalReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	finalReward, err := distKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
 	require.NoError(t, err)
 	require.Equal(t, origReward, finalReward)
 

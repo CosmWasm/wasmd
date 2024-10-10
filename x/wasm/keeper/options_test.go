@@ -11,12 +11,12 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -155,7 +155,7 @@ func TestConstructorOptions(t *testing.T) {
 			opt := spec.srcOpt
 			_, gotPostOptMarker := opt.(postOptsFn)
 			require.Equal(t, spec.isPostOpt, gotPostOptMarker)
-			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}
