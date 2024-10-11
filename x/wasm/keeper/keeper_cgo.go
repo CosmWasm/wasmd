@@ -77,8 +77,8 @@ func NewKeeper(
 			Cache: wasmvmtypes.CacheOptions{
 				BaseDir:               filepath.Join(homeDir, "wasm"),
 				AvailableCapabilities: availableCapabilities,
-				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(contractMemoryLimit),
-				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
+				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
+				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(contractMemoryLimit),
 			},
 			WasmLimits: vmConfig.WasmLimits,
 		}, nodeConfig.ContractDebugMode)
