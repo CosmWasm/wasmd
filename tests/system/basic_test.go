@@ -122,3 +122,38 @@ func TestMultiContract(t *testing.T) {
 	assert.Equal(t, int64(0), cli.QueryBalance(hackatomContractAddr, "stake"))
 	assert.Equal(t, int64(70), cli.QueryBalance(bobAddr, "stake"))
 }
+
+func TestNFTSubmessages(t *testing.T) {
+	// Given a cw721_base contract and a compatible contract as receiver
+	// and a nft minted
+	// when a send_nft is executed on the base contract, a submessage is emitted
+	// and handled by the receiver contract
+
+	sut.ResetChain(t)
+	sut.StartChain(t)
+
+	cli := NewWasmdCLI(t, sut, verbose)
+
+	minterAddress := cli.GetKeyAddr(defaultSrcAddr)
+
+	t.Log("Upload cw721-base code")
+	codeID := cli.WasmStore("../e2e/testdata/cw721_base.wasm.gz", "--from=node0", "--gas=auto", "--gas-adjustment=1.4", "--fees=4stake")
+	t.Log("Instantiate cw721-base code")
+	msg := fmt.Sprintf(`{"name":"Reece #00001", "symbol":"juno-reece-test-#00001", "minter":"%s"}`, minterAddress)
+	senderContractAddr := cli.WasmInstantiate(codeID, msg, "--admin="+defaultSrcAddr, "--label=reflect_contract", "--from="+defaultSrcAddr, "--amount=100stake")
+
+	t.Log("Upload cw721-receiver code")
+	codeID = cli.WasmStore("../e2e/testdata/cw721_receiver.wasm.gz", "--from=node0", "--gas=auto", "--gas-adjustment=1.4", "--fees=4stake")
+	t.Log("Instantiate cw721-receiver code")
+	receiverContractAddr := cli.WasmInstantiate(codeID, "{}", "--admin="+defaultSrcAddr, "--label=reflect_contract", "--from="+defaultSrcAddr, "--amount=100stake")
+
+	// and token minted
+	msg = fmt.Sprintf(`{"mint":{"token_id":"00000", "owner":"%s"}}`, minterAddress)
+	rsp := cli.WasmExecute(senderContractAddr, msg, defaultSrcAddr, "--gas=auto", "--gas-adjustment=1.4", "--fees=4stake")
+	RequireTxSuccess(t, rsp)
+
+	// when submessages is emitted
+	msg = fmt.Sprintf(`{"send_nft": { "contract": "%s", "token_id": "00000", "msg": "%s" }}`, receiverContractAddr, base64.RawStdEncoding.EncodeToString([]byte(`"succeed"`)))
+	rsp = cli.WasmExecute(senderContractAddr, msg, defaultSrcAddr, "--gas=auto", "--gas-adjustment=1.4", "--fees=4stake")
+	RequireTxSuccess(t, rsp)
+}
