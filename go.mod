@@ -225,6 +225,9 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
+// local wasmvm
+replace github.com/CosmWasm/wasmvm/v2 => ../wasmvm
+
 retract (
 	// see https://github.com/CosmWasm/wasmd/issues/1713
 	v0.44.0
