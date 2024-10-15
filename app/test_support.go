@@ -28,7 +28,7 @@ func (app *WasmApp) GetStakingKeeper() *stakingkeeper.Keeper {
 }
 
 func (app *WasmApp) GetAccountKeeper() authkeeper.AccountKeeper {
-	return app.AccountKeeper
+	return app.AuthKeeper
 }
 
 func (app *WasmApp) GetWasmKeeper() wasmkeeper.Keeper {

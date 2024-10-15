@@ -27,7 +27,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -104,7 +103,7 @@ func addTestnetFlagsToCmd(cmd *cobra.Command) {
 
 // NewTestnetCmd creates a root testnet command with subcommands to run an in-process testnet or initialize
 // validator configuration files for running a multi-validator testnet in a separate process
-func NewTestnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
+func NewTestnetCmd(moduleManager *module.Manager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
 	testnetCmd := &cobra.Command{
 		Use:                        "testnet",
 		Short:                      "subcommands for starting or configuring local testnets",
@@ -114,13 +113,13 @@ func NewTestnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBala
 	}
 
 	testnetCmd.AddCommand(testnetStartCmd())
-	testnetCmd.AddCommand(testnetInitFilesCmd(mbm, genBalIterator))
+	testnetCmd.AddCommand(testnetInitFilesCmd(moduleManager, genBalIterator))
 
 	return testnetCmd
 }
 
 // testnetInitFilesCmd returns a cmd to initialize all files for CometBFT testnet and application
-func testnetInitFilesCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
+func testnetInitFilesCmd(moduleManager *module.Manager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init-files",
 		Short: "Initialize config directories & files for a multi-validator testnet running locally via separate processes (e.g. Docker Compose or similar)",
@@ -160,7 +159,7 @@ Example:
 			if err != nil {
 				return err
 			}
-			return initTestnetFiles(clientCtx, cmd, config, mbm, genBalIterator, clientCtx.TxConfig.SigningContext().ValidatorAddressCodec(), args)
+			return initTestnetFiles(clientCtx, cmd, config, *moduleManager, genBalIterator, args)
 		},
 	}
 
@@ -220,9 +219,8 @@ func initTestnetFiles(
 	clientCtx client.Context,
 	cmd *cobra.Command,
 	nodeConfig *cmtconfig.Config,
-	mbm module.BasicManager,
+	mbm module.Manager,
 	genBalIterator banktypes.GenesisBalancesIterator,
-	valAddrCodec runtime.ValidatorAddressCodec,
 	args initArgs,
 ) error {
 	if args.chainID == "" {
@@ -273,7 +271,7 @@ func initTestnetFiles(
 
 		appConfig.API.Address = fmt.Sprintf("tcp://0.0.0.0:%d", apiPort+portOffset)
 		appConfig.GRPC.Address = fmt.Sprintf("0.0.0.0:%d", grpcPort+portOffset)
-		appConfig.GRPCWeb.Enable = true
+		appConfig.GRPC.Enable = true
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(args.outputDir)
@@ -286,7 +284,7 @@ func initTestnetFiles(
 			return err
 		}
 
-		nodeIDs[i], valPubKeys[i], err = genutil.InitializeNodeValidatorFiles(nodeConfig)
+		nodeIDs[i], valPubKeys[i], err = genutil.InitializeNodeValidatorFiles(nodeConfig, args.algo)
 		if err != nil {
 			_ = os.RemoveAll(args.outputDir)
 			return err
@@ -306,7 +304,7 @@ func initTestnetFiles(
 			return err
 		}
 
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
+		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo, sdk.GetFullBIP44Path())
 		if err != nil {
 			_ = os.RemoveAll(args.outputDir)
 			return err
@@ -334,7 +332,7 @@ func initTestnetFiles(
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		valStr, err := valAddrCodec.BytesToString(sdk.ValAddress(addr))
+		valStr, err := clientCtx.ValidatorAddressCodec.BytesToString(sdk.ValAddress(addr))
 		if err != nil {
 			return err
 		}
@@ -365,7 +363,7 @@ func initTestnetFiles(
 			WithKeybase(kb).
 			WithTxConfig(clientCtx.TxConfig)
 
-		if err := tx.Sign(cmd.Context(), txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err := tx.Sign(clientCtx, txFactory, nodeDirName, txBuilder, true); err != nil {
 			return err
 		}
 
@@ -388,7 +386,7 @@ func initTestnetFiles(
 
 	err := collectGenFiles(
 		clientCtx, nodeConfig, args.chainID, nodeIDs, valPubKeys, args.numValidators,
-		args.outputDir, args.nodeDirPrefix, args.nodeDaemonHome, genBalIterator, valAddrCodec,
+		args.outputDir, args.nodeDirPrefix, args.nodeDaemonHome, genBalIterator,
 		rpcPort, p2pPortStart, args.singleMachine,
 	)
 	if err != nil {
@@ -400,11 +398,11 @@ func initTestnetFiles(
 }
 
 func initGenFiles(
-	clientCtx client.Context, mbm module.BasicManager, chainID string,
+	clientCtx client.Context, mm module.Manager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
 	genFiles []string, numValidators int,
 ) error {
-	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
+	appGenState := mm.DefaultGenesis()
 
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
@@ -422,7 +420,7 @@ func initGenFiles(
 	var bankGenState banktypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[banktypes.ModuleName], &bankGenState)
 
-	bankGenState.Balances = banktypes.SanitizeGenesisBalances(genBalances)
+	bankGenState.Balances, err = banktypes.SanitizeGenesisBalances(genBalances, clientCtx.AddressCodec)
 	for _, bal := range bankGenState.Balances {
 		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
 	}
@@ -446,7 +444,7 @@ func initGenFiles(
 func collectGenFiles(
 	clientCtx client.Context, nodeConfig *cmtconfig.Config, chainID string,
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
-	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator, valAddrCodec runtime.ValidatorAddressCodec,
+	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 	rpcPortStart, p2pPortStart int,
 	singleMachine bool,
 ) error {
@@ -476,8 +474,8 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, appGenesis, genBalIterator, genutiltypes.DefaultMessageValidator,
-			valAddrCodec)
+		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, appGenesis, genutiltypes.DefaultMessageValidator,
+			clientCtx.ValidatorAddressCodec, clientCtx.AddressCodec)
 		if err != nil {
 			return err
 		}

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"

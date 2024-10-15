@@ -323,7 +323,7 @@ func (i IBCHandler) OnTimeoutPacket(ctx context.Context, channelVersion string, 
 // IBCSendPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCSendPacketCallback(
-	cachedCtx context.Context,
+	cachedCtx sdk.Context,
 	sourcePort string,
 	sourceChannel string,
 	timeoutHeight clienttypes.Height,
@@ -331,6 +331,7 @@ func (i IBCHandler) IBCSendPacketCallback(
 	packetData []byte,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	_, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -344,12 +345,13 @@ func (i IBCHandler) IBCSendPacketCallback(
 // IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
-	cachedCtx context.Context,
+	cachedCtx sdk.Context,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -374,11 +376,12 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 // IBCOnTimeoutPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCOnTimeoutPacketCallback(
-	cachedCtx context.Context,
+	cachedCtx sdk.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -401,10 +404,11 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 // IBCReceivePacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCReceivePacketCallback(
-	cachedCtx context.Context,
+	cachedCtx sdk.Context,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 	contractAddress string,
+	version string,
 ) error {
 	// sender validation makes no sense here, as the receiver is never the sender
 	contractAddr, err := sdk.AccAddressFromBech32(contractAddress)

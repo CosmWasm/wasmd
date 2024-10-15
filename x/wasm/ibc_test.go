@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/math/unsafe"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"

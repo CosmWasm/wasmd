@@ -22,6 +22,7 @@ import (
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/params"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 )
 
 // NewRootCmd creates a new root command for wasmd. It is called once in the
@@ -50,7 +51,12 @@ func NewRootCmd() *cobra.Command {
 		WithInput(os.Stdin).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper("") // In wasmd, we don't use any prefix for env variables.
+		WithViper(""). // In wasmd, we don't use any prefix for env variables.
+		WithAddressCodec(addresscodec.NewBech32Codec(app.Bech32PrefixAccAddr)).
+		WithValidatorAddressCodec(addresscodec.NewBech32Codec(app.Bech32PrefixValAddr)).
+		WithConsensusAddressCodec(addresscodec.NewBech32Codec(app.Bech32PrefixConsAddr)).
+		WithAddressPrefix(app.Bech32PrefixAccAddr).
+		WithValidatorPrefix(app.Bech32PrefixValAddr)
 
 	rootCmd := &cobra.Command{
 		Use:           version.AppName,
@@ -103,7 +109,7 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig.TxConfig, encodingConfig.InterfaceRegistry, encodingConfig.Codec, tempApp.BasicModuleManager)
+	initRootCmd(rootCmd, encodingConfig.TxConfig, encodingConfig.InterfaceRegistry, encodingConfig.Codec, tempApp.ModuleManager)
 
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()

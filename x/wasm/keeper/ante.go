@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"encoding/binary"
 
 	corestoretypes "cosmossdk.io/core/store"
@@ -27,7 +26,7 @@ func NewCountTXDecorator(s corestoretypes.KVStoreService) *CountTXDecorator {
 // global rollback behavior instead of keeping state in the handler itself.
 // The ante handler passes the counter value via sdk.Context upstream. See `types.TXCounter(ctx)` to read the value.
 // Simulations don't get a tx counter value assigned.
-func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	if simulate {
 		return next(ctx, tx, simulate)
 	}
@@ -85,7 +84,7 @@ func NewLimitSimulationGasDecorator(gasLimit *storetypes.Gas) *LimitSimulationGa
 // simulations but may have effect on client user experience.
 //
 // When no custom value is set then the max block gas is used as default limit.
-func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	if !simulate {
 		// Wasm code is not executed in checkTX so that we don't need to limit it further.
 		// Tendermint rejects the TX afterwards when the tx.gas > max block gas.
@@ -118,7 +117,7 @@ func NewGasRegisterDecorator(gr types.GasRegister) *GasRegisterDecorator {
 }
 
 // AnteHandle adds the gas register to the context.
-func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	return next(types.WithGasRegister(ctx, g.gasRegister), tx, simulate)
 }
 
@@ -131,7 +130,7 @@ func NewTxContractsDecorator() *TxContractsDecorator {
 }
 
 // AnteHandle initializes a new TxContracts object to the context.
-func (d TxContractsDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (d TxContractsDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	txContracts := types.NewTxContracts()
 	return next(types.WithTxContracts(ctx, txContracts), tx, simulate)
 }
