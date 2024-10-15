@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/core/appmodule"
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
@@ -47,7 +48,7 @@ type Option interface {
 // WasmVMQueryHandler is an extension point for custom query handler implementations
 type WasmVMQueryHandler interface {
 	// HandleQuery executes the requested query
-	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
+	HandleQuery(ctx context.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
 }
 
 type CoinTransferrer interface {
@@ -84,13 +85,13 @@ var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
 
 // Keeper will have a reference to Wasm Engine with it's own data directory.
 type Keeper struct {
+	appmodule.Environment
 	// The (unexposed) keys used to access the stores from the Context.
 	storeService          corestoretypes.KVStoreService
 	cdc                   codec.Codec
 	accountKeeper         types.AccountKeeper
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
-	capabilityKeeper      types.CapabilityKeeper
 	wasmVM                types.WasmEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
@@ -265,10 +266,10 @@ func (k Keeper) instantiate(
 		return nil, nil, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 
-	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(sdkCtx, codeID))
+	ctx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, codeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(initMsg))
 
-	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: instantiate")
+	k.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: instantiate")
 
 	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
 		return nil, nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
@@ -287,14 +288,14 @@ func (k Keeper) instantiate(
 	// But not all account types of other modules are known or may make sense for contracts, therefore we kept this
 	// decision logic also very flexible and extendable. We provide new options to overwrite the default settings via WithAcceptedAccountTypesOnContractInstantiation and
 	// WithPruneAccountTypesOnContractInstantiation as constructor arguments
-	existingAcct := k.accountKeeper.GetAccount(sdkCtx, contractAddress)
+	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		if existingAcct.GetSequence() != 0 || existingAcct.GetPubKey() != nil {
 			return nil, nil, types.ErrAccountExists.Wrap("address is claimed by external account")
 		}
 		if _, accept := k.acceptedAccountTypes[reflect.TypeOf(existingAcct)]; accept {
 			// keep account and balance as it is
-			k.Logger(sdkCtx).Info("instantiate contract with existing account", "address", contractAddress.String())
+			k.Logger(ctx).Info("instantiate contract with existing account", "address", contractAddress.String())
 		} else {
 			// consider an account in the wasmd namespace spam and overwrite it.
 			k.Logger(sdkCtx).Info("pruning existing account for contract instantiation", "address", contractAddress.String())
@@ -875,7 +876,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 	return queryResult.Ok, nil
 }
 
-func checkAndIncreaseQueryStackSize(ctx context.Context, maxQueryStackSize uint32) (sdk.Context, error) {
+func checkAndIncreaseQueryStackSize(ctx sdk.Context, maxQueryStackSize uint32) (sdk.Context, error) {
 	var queryStackSize uint32 = 0
 	if size, ok := types.QueryStackSize(ctx); ok {
 		queryStackSize = size
@@ -893,7 +894,7 @@ func checkAndIncreaseQueryStackSize(ctx context.Context, maxQueryStackSize uint3
 	return types.WithQueryStackSize(sdk.UnwrapSDKContext(ctx), queryStackSize), nil
 }
 
-func checkAndIncreaseCallDepth(ctx context.Context, maxCallDepth uint32) (sdk.Context, error) {
+func checkAndIncreaseCallDepth(ctx sdk.Context, maxCallDepth uint32) (sdk.Context, error) {
 	var callDepth uint32 = 0
 	if size, ok := types.CallDepth(ctx); ok {
 		callDepth = size
@@ -1195,7 +1196,7 @@ func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum []byte, isPin
 	}
 
 	txContracts.AddContract(checksum)
-	return types.WithTxContracts(ctx, txContracts), false
+	return types.WithTxContracts(sdk.UnwrapSDKContext(ctx), txContracts), false
 }
 
 // InitializePinnedCodes updates wasmvm to pin to cache all contracts marked as pinned
@@ -1384,7 +1385,7 @@ func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress,
 	return k.importContractState(ctx, contractAddr, state)
 }
 
-func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress) QueryHandler {
+func (k Keeper) newQueryHandler(ctx context.Context, contractAddress sdk.AccAddress) QueryHandler {
 	return NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddress, k.gasRegister)
 }
 
@@ -1409,12 +1410,13 @@ func (k Keeper) gasMeter(ctx sdk.Context) MultipliedGasMeter {
 }
 
 // Logger returns a module-specific logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return moduleLogger(ctx)
 }
 
-func moduleLogger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+func moduleLogger(ctx context.Context) log.Logger {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	return sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // Querier creates a new grpc querier instance
@@ -1495,7 +1497,7 @@ func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc s
 	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
 		return false, errorsmod.Wrap(err, "prune account balance")
 	}
-	if err := b.bank.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+	if err := b.bank.BurnCoins(ctx, []byte(types.ModuleName), coinsToBurn); err != nil {
 		return false, errorsmod.Wrap(err, "burn account balance")
 	}
 	return true, nil

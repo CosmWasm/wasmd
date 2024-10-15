@@ -71,7 +71,7 @@ func NewLegacyWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTyp
 }
 
 //nolint:staticcheck
-func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreCodeProposal) error {
+func handleStoreCodeProposal(ctx context.Context, k types.ContractOpsKeeper, p types.StoreCodeProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.E
 }
 
 //nolint:staticcheck
-func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
+func handleUpdateAdminProposal(ctx context.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 }
 
 //nolint:staticcheck
-func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ClearAdminProposal) error {
+func handleClearAdminProposal(ctx context.Context, k types.ContractOpsKeeper, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 }
 
 //nolint:staticcheck
-func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
+func handlePinCodesProposal(ctx context.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -317,7 +317,7 @@ func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.
 }
 
 //nolint:staticcheck
-func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UnpinCodesProposal) error {
+func handleUnpinCodesProposal(ctx context.Context, k types.ContractOpsKeeper, p types.UnpinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 }
 
 //nolint:staticcheck
-func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
+func handleUpdateInstantiateConfigProposal(ctx context.Context, k types.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -228,7 +229,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	assert.Nil(t, gotData)
 }
 
-func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+func checkAccount(t *testing.T, ctx context.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)
@@ -321,7 +322,7 @@ func reflectPlugins() *QueryPlugins {
 	}
 }
 
-func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+func performCustomQuery(_ context.Context, request json.RawMessage) ([]byte, error) {
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {

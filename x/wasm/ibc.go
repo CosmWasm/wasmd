@@ -1,13 +1,13 @@
 package wasm
 
 import (
+	"context"
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v9/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
@@ -29,7 +29,7 @@ var _ porttypes.IBCModule = IBCHandler{}
 // internal interface that is implemented by ibc middleware
 type appVersionGetter interface {
 	// GetAppVersion returns the application level version with all middleware data stripped out
-	GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool)
+	GetAppVersion(ctx context.Context, portID, channelID string) (string, bool)
 }
 
 type IBCHandler struct {
@@ -44,7 +44,7 @@ func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVers
 
 // OnChanOpenInit implements the IBCModule interface
 func (i IBCHandler) OnChanOpenInit(
-	ctx sdk.Context,
+	ctx context.Context,
 	order channeltypes.Order,
 	connectionHops []string,
 	portID string,
@@ -75,7 +75,7 @@ func (i IBCHandler) OnChanOpenInit(
 	}
 
 	// Allow contracts to return a version (or default to proposed version if unset)
-	acceptedVersion, err := i.keeper.OnOpenChannel(ctx, contractAddr, msg)
+	acceptedVersion, err := i.keeper.OnOpenChannel(sdk.UnwrapSDKContext(ctx), contractAddr, msg)
 	if err != nil {
 		return "", err
 	}
@@ -86,16 +86,12 @@ func (i IBCHandler) OnChanOpenInit(
 		acceptedVersion = version
 	}
 
-	// Claim channel capability passed back by IBC module
-	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return "", errorsmod.Wrap(err, "claim capability")
-	}
 	return acceptedVersion, nil
 }
 
 // OnChanOpenTry implements the IBCModule interface
 func (i IBCHandler) OnChanOpenTry(
-	ctx sdk.Context,
+	ctx context.Context,
 	order channeltypes.Order,
 	connectionHops []string,
 	portID, channelID string,
@@ -134,23 +130,12 @@ func (i IBCHandler) OnChanOpenTry(
 		version = counterpartyVersion
 	}
 
-	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
-	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
-	// If module can already authenticate the capability then module already owns it, so we don't need to claim
-	// Otherwise, module does not have channel capability, and we must claim it from IBC
-	if !i.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
-		// Only claim channel capability passed back by IBC module if we do not already own it
-		if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-			return "", errorsmod.Wrap(err, "claim capability")
-		}
-	}
-
 	return version, nil
 }
 
 // OnChanOpenAck implements the IBCModule interface
 func (i IBCHandler) OnChanOpenAck(
-	ctx sdk.Context,
+	ctx context.Context,
 	portID, channelID string,
 	counterpartyChannelID string,
 	counterpartyVersion string,
@@ -180,7 +165,7 @@ func (i IBCHandler) OnChanOpenAck(
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
-func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string) error {
+func (i IBCHandler) OnChanOpenConfirm(ctx context.Context, portID, channelID string) error {
 	contractAddr, err := keeper.ContractFromPortID(portID)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
@@ -202,16 +187,17 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 }
 
 // OnChanCloseInit implements the IBCModule interface
-func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) error {
+func (i IBCHandler) OnChanCloseInit(ctx context.Context, portID, channelID string) error {
 	contractAddr, err := keeper.ContractFromPortID(portID)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
 	}
-	channelInfo, ok := i.channelKeeper.GetChannel(ctx, portID, channelID)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	channelInfo, ok := i.channelKeeper.GetChannel(sdkCtx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.appVersionGetter.GetAppVersion(sdkCtx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
@@ -219,7 +205,7 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 	msg := wasmvmtypes.IBCChannelCloseMsg{
 		CloseInit: &wasmvmtypes.IBCCloseInit{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
-	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
+	err = i.keeper.OnCloseChannel(sdkCtx, contractAddr, msg)
 	if err != nil {
 		return err
 	}
@@ -229,17 +215,18 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
-func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string) error {
+func (i IBCHandler) OnChanCloseConfirm(ctx context.Context, portID, channelID string) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// counterparty has closed the channel
 	contractAddr, err := keeper.ContractFromPortID(portID)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
 	}
-	channelInfo, ok := i.channelKeeper.GetChannel(ctx, portID, channelID)
+	channelInfo, ok := i.channelKeeper.GetChannel(sdkCtx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.appVersionGetter.GetAppVersion(sdkCtx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
@@ -247,7 +234,7 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	msg := wasmvmtypes.IBCChannelCloseMsg{
 		CloseConfirm: &wasmvmtypes.IBCCloseConfirm{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
-	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
+	err = i.keeper.OnCloseChannel(sdkCtx, contractAddr, msg)
 	if err != nil {
 		return err
 	}
@@ -268,7 +255,8 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel,
 
 // OnRecvPacket implements the IBCModule interface
 func (i IBCHandler) OnRecvPacket(
-	ctx sdk.Context,
+	ctx context.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
@@ -280,14 +268,15 @@ func (i IBCHandler) OnRecvPacket(
 
 	em := sdk.NewEventManager()
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
-	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
+	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
 		ack = CreateErrorAcknowledgement(err)
 		// the state gets reverted, so we drop all captured events
 	} else if ack == nil || ack.Success() {
 		// emit all contract and submessage events on success
 		// nil ack is a success case, see: https://github.com/cosmos/ibc-go/blob/v7.0.0/modules/core/keeper/msg_server.go#L453
-		ctx.EventManager().EmitEvents(em.Events())
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		sdkCtx.EventManager().EmitEvents(em.Events())
 	}
 	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
 	return ack
@@ -295,7 +284,8 @@ func (i IBCHandler) OnRecvPacket(
 
 // OnAcknowledgementPacket implements the IBCModule interface
 func (i IBCHandler) OnAcknowledgementPacket(
-	ctx sdk.Context,
+	ctx context.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -305,7 +295,7 @@ func (i IBCHandler) OnAcknowledgementPacket(
 		return errorsmod.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
+	err = i.keeper.OnAckPacket(sdk.UnwrapSDKContext(ctx), contractAddr, wasmvmtypes.IBCPacketAckMsg{
 		Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
 		OriginalPacket:  newIBCPacket(packet),
 		Relayer:         relayer.String(),
@@ -317,13 +307,13 @@ func (i IBCHandler) OnAcknowledgementPacket(
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+func (i IBCHandler) OnTimeoutPacket(ctx context.Context, channelVersion string, packet channeltypes.Packet, relayer sdk.AccAddress) error {
 	contractAddr, err := keeper.ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
 	}
 	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
-	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
+	err = i.keeper.OnTimeoutPacket(sdk.UnwrapSDKContext(ctx), contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on timeout")
 	}
@@ -333,7 +323,7 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 // IBCSendPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCSendPacketCallback(
-	cachedCtx sdk.Context,
+	cachedCtx context.Context,
 	sourcePort string,
 	sourceChannel string,
 	timeoutHeight clienttypes.Height,
@@ -354,7 +344,7 @@ func (i IBCHandler) IBCSendPacketCallback(
 // IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
-	cachedCtx sdk.Context,
+	cachedCtx context.Context,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -373,7 +363,7 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 			Relayer:         relayer.String(),
 		},
 	}
-	err = i.keeper.IBCSourceCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCSourceCallback(sdk.UnwrapSDKContext(cachedCtx), contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on source chain callback ack")
 	}
@@ -384,7 +374,7 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 // IBCOnTimeoutPacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCOnTimeoutPacketCallback(
-	cachedCtx sdk.Context,
+	cachedCtx context.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 	contractAddress,
@@ -401,7 +391,7 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 			Relayer: relayer.String(),
 		},
 	}
-	err = i.keeper.IBCSourceCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCSourceCallback(sdk.UnwrapSDKContext(cachedCtx), contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on source chain callback timeout")
 	}
@@ -411,7 +401,7 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 // IBCReceivePacketCallback implements the IBC Callbacks ContractKeeper interface
 // see https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md#contractkeeper
 func (i IBCHandler) IBCReceivePacketCallback(
-	cachedCtx sdk.Context,
+	cachedCtx context.Context,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 	contractAddress string,
@@ -427,7 +417,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		Packet: newIBCPacket(packet),
 	}
 
-	err = i.keeper.IBCDestinationCallback(cachedCtx, contractAddr, msg)
+	err = i.keeper.IBCDestinationCallback(sdk.UnwrapSDKContext(cachedCtx), contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on destination chain callback")
 	}

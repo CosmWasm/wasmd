@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -246,7 +247,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	var capturedPacketAck *CapturedPacket
 
 	capturingICS4Mock := &wasmtesting.MockICS4Wrapper{
-		SendPacketFn: func(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+		SendPacketFn: func(ctx context.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 			capturedPacketSent = &CapturedPacket{
 				sourcePort:       sourcePort,
 				sourceChannel:    sourceChannel,
@@ -256,7 +257,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			}
 			return 1, nil
 		},
-		WriteAcknowledgementFn: func(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error {
+		WriteAcknowledgementFn: func(ctx context.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error {
 			capturedPacketAck = &CapturedPacket{
 				sourcePort:       packet.GetSourcePort(),
 				sourceChannel:    packet.GetSourceChannel(),
@@ -269,7 +270,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 	}
 	chanKeeper := &wasmtesting.MockChannelKeeper{
-		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
+		GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
 			return channeltypes.Channel{
 				Counterparty: channeltypes.NewCounterparty(
 					"other-port",
@@ -429,7 +430,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			expErr: true,
 		},
 	}
-	parentCtx := ctx
+	parentCtx := sdk.UnwrapSDKContext(ctx)
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			ctx, _ = parentCtx.CacheContext()
