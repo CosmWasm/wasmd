@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
@@ -53,7 +53,7 @@ func TestBlockedAddrs(t *testing.T) {
 			if modAddr, err := sdk.AccAddressFromBech32(acc); err == nil {
 				addr = modAddr
 			} else {
-				addr = gapp.AccountKeeper.GetModuleAddress(acc)
+				addr = gapp.AuthKeeper.GetModuleAddress(acc)
 			}
 			require.True(t, gapp.BankKeeper.BlockedAddr(addr), "ensure that blocked addresses are properly set in bank keeper")
 		})

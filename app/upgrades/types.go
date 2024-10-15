@@ -5,6 +5,8 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 
+	"cosmossdk.io/core/appmodule"
+	corestore "cosmossdk.io/core/store"
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
@@ -24,8 +26,8 @@ type AppKeepers struct {
 	IBCKeeper             *ibckeeper.Keeper
 }
 type ModuleManager interface {
-	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM module.VersionMap) (module.VersionMap, error)
-	GetVersionMap() module.VersionMap
+	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM appmodule.VersionMap) (appmodule.VersionMap, error)
+	GetVersionMap() appmodule.VersionMap
 }
 
 // Upgrade defines a struct containing necessary fields that a SoftwareUpgradeProposal
@@ -38,5 +40,5 @@ type Upgrade struct {
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
 	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
-	StoreUpgrades        storetypes.StoreUpgrades
+	StoreUpgrades        corestore.StoreUpgrades
 }

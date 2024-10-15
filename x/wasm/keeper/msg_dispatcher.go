@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"

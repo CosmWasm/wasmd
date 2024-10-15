@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -9,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmttypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
@@ -105,7 +106,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 
 		// Initialize the chain
 		_, err = app.InitChain(
-			&abci.RequestInitChain{
+			&abci.InitChainRequest{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: simtestutil.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
@@ -165,7 +166,7 @@ func SetupWithGenesisValSet(
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simtestutil.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
-	_, err = app.InitChain(&abci.RequestInitChain{
+	_, err = app.InitChain(&abci.InitChainRequest{
 		ChainId:         chainID,
 		Time:            time.Now().UTC(),
 		Validators:      []abci.ValidatorUpdate{},
@@ -175,7 +176,7 @@ func SetupWithGenesisValSet(
 	})
 	require.NoError(t, err)
 
-	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err = app.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height:             app.LastBlockHeight() + 1,
 		Hash:               app.LastCommitID().Hash,
 		NextValidatorsHash: valSet.Hash(),
@@ -223,11 +224,11 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 
 // AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
 // initial balance of accAmt in random order
-func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int) []sdk.AccAddress {
+func AddTestAddrsIncremental(app *WasmApp, ctx context.Context, accNum int, accAmt sdkmath.Int) []sdk.AccAddress {
 	return addTestAddrs(app, ctx, accNum, accAmt, simtestutil.CreateIncrementalAccounts)
 }
 
-func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
+func addTestAddrs(app *WasmApp, ctx context.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 	bondDenom, err := app.StakingKeeper.BondDenom(ctx)
 	if err != nil {
@@ -243,7 +244,7 @@ func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int,
 	return testAddrs
 }
 
-func initAccountWithCoins(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+func initAccountWithCoins(app *WasmApp, ctx context.Context, addr sdk.AccAddress, coins sdk.Coins) {
 	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
 	if err != nil {
 		panic(err)
@@ -268,12 +269,12 @@ func NewTestNetworkFixture() network.TestFixture {
 	app := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
 	appCtr := func(val network.ValidatorI) servertypes.Application {
 		return NewWasmApp(
-			val.GetCtx().Logger, dbm.NewMemDB(), nil, true,
-			simtestutil.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir),
+			log.NewNopLogger(), dbm.NewMemDB(), nil, true,
+			simtestutil.NewAppOptionsWithFlagHome(val.GetClientCtx().HomeDir),
 			emptyWasmOptions,
 			bam.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 			bam.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
-			bam.SetChainID(val.GetCtx().Viper.GetString(flags.FlagChainID)),
+			bam.SetChainID(val.GetClientCtx().Viper.GetString(flags.FlagChainID)),
 		)
 	}
 
@@ -290,9 +291,9 @@ func NewTestNetworkFixture() network.TestFixture {
 }
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
+func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.FinalizeBlockResponse, error) {
 	tx, err := simtestutil.GenSignedMockTx(
-		unsafe.New(unsafe.NewSource(time.Now().UnixNano())),
+		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
 		fees,
@@ -307,7 +308,7 @@ func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.B
 	bz, err := txCfg.TxEncoder()(tx)
 	require.NoError(t, err)
 
-	return app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	return app.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height: app.LastBlockHeight() + 1,
 		Time:   blockTime,
 		Txs:    [][]byte{bz},

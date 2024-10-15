@@ -3,18 +3,19 @@ package keeper
 import (
 	"context"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
 // ValidatorSetSource is a subset of the staking keeper
 type ValidatorSetSource interface {
-	ApplyAndReturnValidatorSetUpdates(context.Context) (updates []abci.ValidatorUpdate, err error)
+	ApplyAndReturnValidatorSetUpdates(context.Context) (updates []module.ValidatorUpdate, err error)
 }
 
 // InitGenesis sets supply information for genesis.
