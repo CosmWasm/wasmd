@@ -304,7 +304,7 @@ func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest
 	}, nil
 }
 
-func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
+func queryContractInfo(ctx context.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
 		return nil, types.ErrNoSuchContractFn(addr.String()).
@@ -316,7 +316,7 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	}, nil
 }
 
-func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
+func queryCode(ctx context.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
 	info := queryCodeInfo(ctx, codeID, keeper)
 	if info == nil {
 		// nil, nil leads to 404 in rest handler
@@ -331,7 +331,7 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 	return &types.QueryCodeResponse{CodeInfoResponse: info, Data: code}, nil
 }
 
-func queryCodeInfo(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) *types.CodeInfoResponse {
+func queryCodeInfo(ctx context.Context, codeID uint64, keeper types.ViewKeeper) *types.CodeInfoResponse {
 	if codeID == 0 {
 		return nil
 	}

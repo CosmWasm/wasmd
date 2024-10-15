@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -40,7 +41,7 @@ func TestInstantiate2(t *testing.T) {
 		myLabel = "my label"
 	)
 	// create instances for duplicate checks
-	exampleContract := func(t *testing.T, ctx sdk.Context, fixMsg bool) {
+	exampleContract := func(t *testing.T, ctx context.Context, fixMsg bool) {
 		_, _, err := keepers.ContractKeeper.Instantiate2(
 			ctx,
 			example.CodeID,
@@ -54,14 +55,14 @@ func TestInstantiate2(t *testing.T) {
 		)
 		require.NoError(t, err)
 	}
-	exampleWithFixMsg := func(t *testing.T, ctx sdk.Context) {
+	exampleWithFixMsg := func(t *testing.T, ctx context.Context) {
 		exampleContract(t, ctx, true)
 	}
-	exampleWithoutFixMsg := func(t *testing.T, ctx sdk.Context) {
+	exampleWithoutFixMsg := func(t *testing.T, ctx context.Context) {
 		exampleContract(t, ctx, false)
 	}
 	specs := map[string]struct {
-		setup   func(t *testing.T, ctx sdk.Context)
+		setup   func(t *testing.T, ctx context.Context)
 		codeID  uint64
 		sender  sdk.AccAddress
 		salt    []byte

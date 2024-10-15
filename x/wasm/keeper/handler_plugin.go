@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -20,7 +21,7 @@ import (
 // msgEncoder is an extension point to customize encodings
 type msgEncoder interface {
 	// Encode converts wasmvm message to n cosmos message types
-	Encode(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Msg, error)
+	Encode(ctx context.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Msg, error)
 }
 
 // MessageRouter ADR 031 request type routing
@@ -70,8 +71,9 @@ func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddr
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	for _, sdkMsg := range sdkMsgs {
-		res, err := h.handleSdkMessage(ctx, contractAddr, sdkMsg)
+		res, err := h.handleSdkMessage(sdkCtx, contractAddr, sdkMsg)
 		if err != nil {
 			return nil, nil, nil, err
 		}

@@ -56,7 +56,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
+				GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{
 						State:    channeltypes.OPEN,
 						Ordering: channeltypes.UNORDERED,
@@ -97,7 +97,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
+				GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{
 						State:    channeltypes.OPEN,
 						Ordering: channeltypes.UNORDERED,
@@ -134,7 +134,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
+				GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{
 						State:    channeltypes.INIT,
 						Ordering: channeltypes.UNORDERED,
@@ -156,7 +156,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
+				GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{
 						State:    channeltypes.CLOSED,
 						Ordering: channeltypes.ORDERED,
@@ -179,7 +179,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
+				GetChannelFn: func(ctx context.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{}, false
 				},
 			},
@@ -547,7 +547,7 @@ func TestQueryErrors(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			mock := keeper.WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+			mock := keeper.WasmVMQueryHandlerFn(func(ctx context.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 				return nil, spec.src
 			})
 			ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())

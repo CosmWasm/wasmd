@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -711,7 +712,7 @@ type StakingKeeperMock struct {
 	gotCalls        int
 }
 
-func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ context.Context) ([]abci.ValidatorUpdate, error) {
 	s.gotCalls++
 	return s.validatorUpdate, s.err
 }

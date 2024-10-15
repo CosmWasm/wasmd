@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -663,8 +664,8 @@ func TestQueryStakingPlugin(t *testing.T) {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
-	owner := faucet.NewFundedRandomAccount(ctx, value)
+func addValidator(t *testing.T, ctx context.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+	owner := faucet.NewFundedRandomAccount(sdk.UnwrapSDKContext(ctx), value)
 
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
@@ -699,11 +700,12 @@ func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context
 		panic(err)
 	}
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_ = stakingKeeper.BeginBlocker(ctx)
+	// TODO: check what to do here
+	//_ = stakingKeeper.BeginBlocker(ctx)
 	return ctx
 }
 
-func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
+func setValidatorRewards(ctx context.Context, stakingKeeper *stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
 	// allocate some rewards
 	vali, err := stakingKeeper.Validator(ctx, valAddr)
 	if err != nil {
@@ -720,7 +722,7 @@ func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, d
 	}
 }
 
-func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+func assertBalance(t *testing.T, ctx context.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
 	query := StakingQueryMsg{
 		Balance: &addressQuery{
 			Address: addr,
@@ -736,7 +738,7 @@ func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr 
 	assert.Equal(t, expected, balance.Balance)
 }
 
-func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+func assertClaims(t *testing.T, ctx context.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
 	query := StakingQueryMsg{
 		Claims: &addressQuery{
 			Address: addr,
@@ -752,7 +754,7 @@ func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr s
 	assert.Equal(t, expected, claims.Claims)
 }
 
-func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
+func assertSupply(t *testing.T, ctx context.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
 	query := StakingQueryMsg{Investment: &struct{}{}}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)

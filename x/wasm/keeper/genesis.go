@@ -20,7 +20,7 @@ type ValidatorSetSource interface {
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]abci.ValidatorUpdate, error) {
+func InitGenesis(ctx context.Context, keeper *Keeper, data types.GenesisState) ([]abci.ValidatorUpdate, error) {
 	contractKeeper := NewGovPermissionKeeper(keeper)
 	err := keeper.SetParams(ctx, data.Params)
 	if err != nil {
@@ -70,7 +70,8 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeySequenceCodeID), seqVal, maxCodeID)
 	}
 	// ensure next classic address is unused so that we know the sequence is good
-	rCtx, _ := ctx.CacheContext()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	rCtx, _ := sdkCtx.CacheContext()
 	seqVal, err = keeper.PeekAutoIncrementID(rCtx, types.KeySequenceInstanceID)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
-func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
+func ExportGenesis(ctx context.Context, keeper *Keeper) *types.GenesisState {
 	var genState types.GenesisState
 
 	genState.Params = keeper.GetParams(ctx)

@@ -118,7 +118,7 @@ func NewGasRegisterDecorator(gr types.GasRegister) *GasRegisterDecorator {
 }
 
 // AnteHandle adds the gas register to the context.
-func (g GasRegisterDecorator) AnteHandle(ctx context.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
 	return next(types.WithGasRegister(ctx, g.gasRegister), tx, simulate)
 }
 
@@ -131,7 +131,7 @@ func NewTxContractsDecorator() *TxContractsDecorator {
 }
 
 // AnteHandle initializes a new TxContracts object to the context.
-func (d TxContractsDecorator) AnteHandle(ctx context.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
+func (d TxContractsDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (context.Context, error) {
 	txContracts := types.NewTxContracts()
 	return next(types.WithTxContracts(ctx, txContracts), tx, simulate)
 }

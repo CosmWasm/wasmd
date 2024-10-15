@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
@@ -476,7 +477,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 					},
 				},
 			},
-			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx context.Context) string {
 				return "myTransferPort"
 			}},
 			output: []sdk.Msg{
@@ -509,7 +510,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 					},
 				},
 			},
-			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx context.Context) string {
 				return "transfer"
 			}},
 			output: []sdk.Msg{
@@ -542,7 +543,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 					},
 				},
 			},
-			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx context.Context) string {
 				return "transfer"
 			}},
 			output: []sdk.Msg{
@@ -577,7 +578,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 					},
 				},
 			},
-			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx context.Context) string {
 				return "myTransferPort"
 			}},
 			output: []sdk.Msg{
