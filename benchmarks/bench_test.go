@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -108,7 +108,7 @@ func BenchmarkTxSending(b *testing.B) {
 					require.NoError(b, err)
 					xxx[j] = bz
 				}
-				_, err := appInfo.App.FinalizeBlock(&abci.RequestFinalizeBlock{Txs: xxx, Height: height, Time: time.Now()})
+				_, err := appInfo.App.FinalizeBlock(&abci.FinalizeBlockRequest{Txs: xxx, Height: height, Time: time.Now()})
 				require.NoError(b, err)
 
 				_, err = appInfo.App.Commit()
@@ -123,7 +123,7 @@ func bankSendMsg(info *AppInfo) ([]sdk.Msg, error) {
 	// Precompute all txs
 	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	coins := sdk.Coins{sdk.NewInt64Coin(info.Denom, 100)}
-	sendMsg := banktypes.NewMsgSend(info.MinterAddr, rcpt, coins)
+	sendMsg := banktypes.NewMsgSend(info.MinterAddr.String(), rcpt.String(), coins)
 	return []sdk.Msg{sendMsg}, nil
 }
 
