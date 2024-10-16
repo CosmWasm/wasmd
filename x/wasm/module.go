@@ -18,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,7 +33,7 @@ import (
 )
 
 var (
-	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleBasic      = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
 )
 
@@ -46,14 +45,11 @@ const (
 	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
-// AppModuleBasic defines the basic application module used by the wasm module.
-type AppModuleBasic struct{}
-
-func (b AppModuleBasic) RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
+func (b AppModule) RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
 	types.RegisterLegacyAminoCodec(registrar)
 }
 
-func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
+func (b AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
 	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 	if err != nil {
 		panic(err)
@@ -61,20 +57,20 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serv
 }
 
 // Name returns the wasm module's name.
-func (AppModuleBasic) Name() string {
+func (AppModule) Name() string {
 	return types.ModuleName
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the wasm
 // module.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+func (AppModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(&types.GenesisState{
 		Params: types.DefaultParams(),
 	})
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.
-func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEncodingConfig, message json.RawMessage) error {
+func (b AppModule) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEncodingConfig, message json.RawMessage) error {
 	var data types.GenesisState
 	err := marshaler.UnmarshalJSON(message, &data)
 	if err != nil {
@@ -84,17 +80,17 @@ func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEn
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
-func (b AppModuleBasic) GetTxCmd() *cobra.Command {
+func (b AppModule) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the wasm module.
-func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
+func (b AppModule) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaces implements InterfaceModule
-func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+func (b AppModule) RegisterInterfaces(registry registry.InterfaceRegistrar) {
 	types.RegisterInterfaces(registry)
 }
 
@@ -103,7 +99,6 @@ var _ appmodule.AppModule = AppModule{}
 
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
-	AppModuleBasic
 	cdc                codec.Codec
 	keeper             *keeper.Keeper
 	validatorSetSource keeper.ValidatorSetSource
@@ -125,7 +120,6 @@ func NewAppModule(
 	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic:     AppModuleBasic{},
 		cdc:                cdc,
 		keeper:             keeper,
 		validatorSetSource: validatorSetSource,

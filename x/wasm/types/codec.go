@@ -4,7 +4,6 @@ import (
 	"cosmossdk.io/core/registry"
 	"cosmossdk.io/x/authz"
 	"cosmossdk.io/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
@@ -61,8 +60,8 @@ func RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
 }
 
 // RegisterInterfaces registers the concrete proto types and interfaces with the SDK interface registry
-func RegisterInterfaces(registry types.InterfaceRegistry) {
-	registry.RegisterImplementations(
+func RegisterInterfaces(registrar registry.InterfaceRegistrar) {
+	registrar.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgStoreCode{},
 		&MsgInstantiateContract{},
@@ -84,35 +83,35 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgStoreAndMigrateContract{},
 		&MsgUpdateContractLabel{},
 	)
-	registry.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
+	registrar.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
 
-	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
-	registry.RegisterImplementations(
+	registrar.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
+	registrar.RegisterImplementations(
 		(*ContractAuthzFilterX)(nil),
 		&AllowAllMessagesFilter{},
 		&AcceptedMessageKeysFilter{},
 		&AcceptedMessagesFilter{},
 	)
 
-	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzLimitX", (*ContractAuthzLimitX)(nil))
-	registry.RegisterImplementations(
+	registrar.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzLimitX", (*ContractAuthzLimitX)(nil))
+	registrar.RegisterImplementations(
 		(*ContractAuthzLimitX)(nil),
 		&MaxCallsLimit{},
 		&MaxFundsLimit{},
 		&CombinedLimit{},
 	)
 
-	registry.RegisterImplementations(
+	registrar.RegisterImplementations(
 		(*authz.Authorization)(nil),
 		&StoreCodeAuthorization{},
 		&ContractExecutionAuthorization{},
 		&ContractMigrationAuthorization{},
 	)
 
-	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
+	msgservice.RegisterMsgServiceDesc(registrar, &_Msg_serviceDesc)
 
 	// legacy gov v1beta1 types that may be used for unmarshalling stored gov data
-	registry.RegisterImplementations(
+	registrar.RegisterImplementations(
 		(*v1beta1.Content)(nil),
 		&StoreCodeProposal{},
 		&InstantiateContractProposal{},
