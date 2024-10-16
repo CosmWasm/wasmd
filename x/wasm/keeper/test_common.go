@@ -445,7 +445,7 @@ func createTestInput(
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
 		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
-		distribution.NewAppModule(appCodec, distKeeper, stakingKeeper),
+		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
 		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper, poolKeeper),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier)) //nolint:errcheck
