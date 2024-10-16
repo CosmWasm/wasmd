@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"cosmossdk.io/x/authz"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/authz"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -542,7 +542,7 @@ $ %s tx grant contract <grantee_addr> execution <contract_addr> --allow-all-mess
 				return err
 			}
 
-			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress().String(), grantee.String(), authorization, expire)
 			if err != nil {
 				return err
 			}
@@ -594,7 +594,7 @@ $ %s tx grant store-code <grantee_addr> *:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx5
 				return err
 			}
 
-			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress().String(), grantee.String(), authorization, expire)
 			if err != nil {
 				return err
 			}

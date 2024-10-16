@@ -10,10 +10,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	distributiontypes "cosmossdk.io/x/distribution/types"
+	v1 "cosmossdk.io/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"

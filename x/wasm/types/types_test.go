@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math/unsafe"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	v1 "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {
@@ -174,8 +175,8 @@ func TestContractInfoSetExtension(t *testing.T) {
 }
 
 func TestContractInfoMarshalUnmarshal(t *testing.T) {
-	var myAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
+	var myAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
+	var myOtherAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
 	anyPos := AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
 
 	anyTime := time.Now().UTC()
@@ -304,7 +305,7 @@ func TestNewEnv(t *testing.T) {
 		exp    wasmvmtypes.Env
 	}{
 		"all good with tx counter": {
-			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
+			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeader(v1.Header{Height: 1, Time: myTime}).WithChainID("testing").WithContext(context.Background()), 0),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,
@@ -318,7 +319,7 @@ func TestNewEnv(t *testing.T) {
 			},
 		},
 		"without tx counter": {
-			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()),
+			srcCtx: sdk.Context{}.WithBlockHeader(v1.Header{Height: 1, Time: myTime}).WithChainID("testing").WithContext(context.Background()),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,

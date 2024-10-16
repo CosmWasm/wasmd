@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -21,8 +23,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -12,13 +13,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	banktypes "cosmossdk.io/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -228,7 +229,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	assert.Nil(t, gotData)
 }
 
-func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+func checkAccount(t *testing.T, ctx context.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)
@@ -321,7 +322,7 @@ func reflectPlugins() *QueryPlugins {
 	}
 }
 
-func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+func performCustomQuery(_ context.Context, request json.RawMessage) ([]byte, error) {
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {

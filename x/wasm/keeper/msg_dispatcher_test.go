@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -93,7 +93,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			}},
 			replyer: &mockReplyer{
 				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
-					ctx.EventManager().EmitEvent(sdk.NewEvent("wasm-reply"))
+					sdkCtx := sdk.UnwrapSDKContext(ctx)
+					sdkCtx.EventManager().EmitEvent(sdk.NewEvent("wasm-reply"))
 					return []byte("myReplyData"), nil
 				},
 			},
@@ -323,7 +324,8 @@ func TestDispatchSubmessages(t *testing.T) {
 					}
 
 					// let's add a custom event here and see if it makes it out
-					ctx.EventManager().EmitEvent(sdk.NewEvent("wasm-reply"))
+					sdkCtx := sdk.UnwrapSDKContext(ctx)
+					sdkCtx.EventManager().EmitEvent(sdk.NewEvent("wasm-reply"))
 
 					// update data from what we got in
 					return res.Data, nil
@@ -390,7 +392,8 @@ func TestDispatchSubmessages(t *testing.T) {
 					}
 
 					// let's add a custom event here and see if it makes it out
-					ctx.EventManager().EmitEvent(sdk.NewEvent("stargate-reply"))
+					sdkCtx := sdk.UnwrapSDKContext(ctx)
+					sdkCtx.EventManager().EmitEvent(sdk.NewEvent("stargate-reply"))
 
 					// update data from what we got in
 					return res.Data, nil

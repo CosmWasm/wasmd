@@ -4,23 +4,23 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math/unsafe"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	hosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	icacontrollertypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/types"
+	hosttypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 
+	banktypes "cosmossdk.io/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
@@ -100,7 +100,7 @@ func TestICA(t *testing.T) {
 			hostChain.Fund(icaAddr, sdkmath.NewInt(1_000))
 
 			// submit a tx
-			targetAddr := sdk.AccAddress(rand.Bytes(address.Len))
+			targetAddr := sdk.AccAddress(unsafe.Bytes(address.Len))
 			sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 			payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
 			rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, spec.encoding)

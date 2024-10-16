@@ -13,8 +13,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	paramtypes "cosmossdk.io/x/params/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )

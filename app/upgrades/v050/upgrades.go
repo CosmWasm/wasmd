@@ -3,7 +3,8 @@ package v050
 import (
 	"context"
 
-	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/core/appmodule"
+	corestore "cosmossdk.io/core/store"
 	circuittypes "cosmossdk.io/x/circuit/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
@@ -18,7 +19,7 @@ const UpgradeName = "v0.50"
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades: storetypes.StoreUpgrades{
+	StoreUpgrades: corestore.StoreUpgrades{
 		Added: []string{
 			circuittypes.ModuleName,
 		},
@@ -32,7 +33,7 @@ func CreateUpgradeHandler(
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	// sdk 47 to sdk 50
-	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	return func(ctx context.Context, plan upgradetypes.Plan, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) {
 		return mm.RunMigrations(ctx, configurator, fromVM)
 	}
 }

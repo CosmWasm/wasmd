@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	cmtypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/rs/zerolog"
@@ -16,6 +16,8 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 
+	banktypes "cosmossdk.io/x/bank/types"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -25,17 +27,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	codectestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 )
 
 func setup(db dbm.DB, withGenesis bool) (*app.WasmApp, app.GenesisState) {
 	logLevel := log.LevelOption(zerolog.InfoLevel)
 
-	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
+	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.NewAppOptionsWithFlagHome(""), nil)
 
 	if withGenesis {
 		return wasmApp, wasmApp.DefaultGenesis()
@@ -112,14 +114,14 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
 
 	_, err = wasmApp.InitChain(
-		&abci.RequestInitChain{
+		&abci.InitChainRequest{
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: consensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
 	require.NoError(b, err)
-	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: wasmApp.LastBlockHeight() + 1})
+	_, err = wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: wasmApp.LastBlockHeight() + 1})
 	require.NoError(b, err)
 
 	return wasmApp
@@ -169,8 +171,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 
 	// add wasm contract
 	height := int64(1)
-	txGen := moduletestutil.MakeTestEncodingConfig().TxConfig
-	_, err := wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height, Time: time.Now()})
+	txGen := moduletestutil.MakeTestEncodingConfig(codectestutil.CodecOptions{}, wasm.AppModule{}).TxConfig
+	_, err := wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: height, Time: time.Now()})
 	require.NoError(b, err)
 
 	// upload the code
@@ -224,7 +226,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	evt := res.Events[len(res.Events)-1]
 	attr := evt.Attributes[0]
 	contractAddr := attr.Value
-	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
+	_, err = wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: height})
 	require.NoError(b, err)
 	_, err = wasmApp.Commit()
 	require.NoError(b, err)
@@ -237,7 +239,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Denom:        denom,
 		AccNum:       0,
 		SeqNum:       2,
-		TxConfig:     moduletestutil.MakeTestEncodingConfig().TxConfig,
+		TxConfig:     moduletestutil.MakeTestEncodingConfig(codectestutil.CodecOptions{}, wasm.AppModule{}).TxConfig,
 	}
 }
 

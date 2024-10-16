@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -34,7 +33,7 @@ func NewMigrator(k wasmKeeper, fn StoreCodeInfoFn) Migrator {
 }
 
 // Migrate3to4 migrates from version 3 to 4.
-func (m Migrator) Migrate3to4(ctx sdk.Context, storeService corestoretypes.KVStoreService, cdc codec.BinaryCodec) error {
+func (m Migrator) Migrate3to4(ctx context.Context, storeService corestoretypes.KVStoreService, cdc codec.BinaryCodec) error {
 	var legacyParams Params
 	store := storeService.OpenKVStore(ctx)
 	bz, err := store.Get(types.ParamsKey)

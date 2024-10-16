@@ -3,19 +3,20 @@ package v2_test
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	"cosmossdk.io/math/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
 
+	paramskeeper "cosmossdk.io/x/params/keeper"
+	paramstypes "cosmossdk.io/x/params/types"
+	codectestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
@@ -23,13 +24,13 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	cfg := moduletestutil.MakeTestEncodingConfig(wasm.AppModuleBasic{})
+	cfg := moduletestutil.MakeTestEncodingConfig(codectestutil.CodecOptions{}, wasm.AppModule{})
 	cdc := cfg.Codec
 	var (
 		wasmStoreKey    = storetypes.NewKVStoreKey(types.StoreKey)
 		paramsStoreKey  = storetypes.NewKVStoreKey(paramstypes.StoreKey)
 		paramsTStoreKey = storetypes.NewTransientStoreKey(paramstypes.TStoreKey)
-		myAddress       = sdk.AccAddress(rand.Bytes(address.Len))
+		myAddress       = sdk.AccAddress(unsafe.Bytes(address.Len))
 	)
 	specs := map[string]struct {
 		src v2.Params
@@ -47,7 +48,7 @@ func TestMigrate(t *testing.T) {
 			src: v2.Params{
 				CodeUploadAccess: v2.AccessConfig{
 					Permission: v2.AccessTypeAnyOfAddresses,
-					Addresses:  []string{myAddress.String(), sdk.AccAddress(rand.Bytes(address.Len)).String()},
+					Addresses:  []string{myAddress.String(), sdk.AccAddress(unsafe.Bytes(address.Len)).String()},
 				},
 				InstantiateDefaultPermission: v2.AccessTypeEverybody,
 			},

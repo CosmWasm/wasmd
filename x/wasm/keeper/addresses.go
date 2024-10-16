@@ -50,9 +50,6 @@ func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, sa
 	if len(checksum) != 32 {
 		panic("invalid checksum")
 	}
-	if err := sdk.VerifyAddressFormat(creator); err != nil {
-		panic(fmt.Sprintf("creator: %s", err))
-	}
 	if err := types.ValidateSalt(salt); err != nil {
 		panic(fmt.Sprintf("salt: %s", err))
 	}

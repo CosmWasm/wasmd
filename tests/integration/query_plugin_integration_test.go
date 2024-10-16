@@ -11,23 +11,23 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
+	banktypes "cosmossdk.io/x/bank/types"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"

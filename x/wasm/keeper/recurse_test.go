@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -43,7 +44,7 @@ var totalWasmQueryCounter int
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
 	t.Helper()
 	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
-		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+		return WasmVMQueryHandlerFn(func(ctx context.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++
 			return realWasmQuerier.HandleQuery(ctx, caller, request)
 		})

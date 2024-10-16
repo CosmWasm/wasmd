@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -10,8 +11,8 @@ import (
 	"time"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
@@ -22,15 +23,15 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	govtypes "cosmossdk.io/x/gov/types"
+	"cosmossdk.io/x/gov/types/v1beta1"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -666,10 +667,12 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, cmtproto.Header{
-		Height: 1234567,
-		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
-	}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, false, log.NewNopLogger()).WithBlockHeader(
+		cmtproto.Header{
+			Height: 1234567,
+			Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		},
+	)
 
 	encodingConfig := MakeEncodingConfig(t)
 	// register an example extension. must be protobuf
@@ -695,7 +698,6 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		nil,
 		nil,
 		nil,
-		nil,
 		tempDir,
 		wasmConfig,
 		AvailableCapabilities,
@@ -710,7 +712,7 @@ type StakingKeeperMock struct {
 	gotCalls        int
 }
 
-func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ context.Context) ([]abci.ValidatorUpdate, error) {
 	s.gotCalls++
 	return s.validatorUpdate, s.err
 }

@@ -8,28 +8,31 @@ import (
 
 	// simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
+	cmtprotoversion "github.com/cometbft/cometbft/api/cometbft/version/v1"
 	"github.com/cometbft/cometbft/crypto/tmhash"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmtprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	cmttypes "github.com/cometbft/cometbft/types"
 	tmversion "github.com/cometbft/cometbft/version"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v9/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	"github.com/cosmos/ibc-go/v9/modules/core/types"
+	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	banktypes "cosmossdk.io/x/bank/types"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
+	"cosmossdk.io/x/staking/testutil"
+	stakingtypes "cosmossdk.io/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,11 +42,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -68,7 +66,6 @@ type ChainApp interface {
 	GetBaseApp() *baseapp.BaseApp
 
 	TxConfig() client.TxConfig
-	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
 	GetIBCKeeper() *ibckeeper.Keeper
 	GetBankKeeper() bankkeeper.Keeper
 	GetStakingKeeper() *stakingkeeper.Keeper
@@ -628,61 +625,6 @@ func MakeBlockID(hash []byte, partSetSize uint32, partSetHash []byte) cmttypes.B
 			Hash:  partSetHash,
 		},
 	}
-}
-
-// CreatePortCapability binds and claims a capability for the given portID if it does not
-// already exist. This function will fail testing on any resulting error.
-// NOTE: only creation of a capability for a transfer or mock port is supported
-// Other applications must bind to the port in InitGenesis or modify this code.
-func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID string) {
-	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
-	if !ok {
-		// create capability using the IBC capability keeper
-		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), host.PortPath(portID))
-		require.NoError(chain.t, err)
-
-		// claim capability using the scopedKeeper
-		err = scopedKeeper.ClaimCapability(chain.GetContext(), portCap, host.PortPath(portID))
-		require.NoError(chain.t, err)
-	}
-
-	chain.Coordinator.CommitBlock(chain)
-}
-
-// GetPortCapability returns the port capability for the given portID. The capability must
-// exist, otherwise testing will fail.
-func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capability {
-	portCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
-	require.True(chain.t, ok)
-
-	return portCap
-}
-
-// CreateChannelCapability binds and claims a capability for the given portID and channelID
-// if it does not already exist. This function will fail testing on any resulting error. The
-// scoped keeper passed in will claim the new capability.
-func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID, channelID string) {
-	capName := host.ChannelCapabilityPath(portID, channelID)
-	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), capName)
-	if !ok {
-		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), capName)
-		require.NoError(chain.t, err)
-		err = scopedKeeper.ClaimCapability(chain.GetContext(), portCap, capName)
-		require.NoError(chain.t, err)
-	}
-
-	chain.Coordinator.CommitBlock(chain)
-}
-
-// GetChannelCapability returns the channel capability for the given portID and channelID.
-// The capability must exist, otherwise testing will fail.
-func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilitytypes.Capability {
-	chanCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
-	require.True(chain.t, ok)
-
-	return chanCap
 }
 
 // GetTimeoutHeight is a convenience function which returns a IBC packet timeout height

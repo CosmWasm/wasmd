@@ -10,9 +10,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 )
 
 const (
@@ -121,7 +121,7 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 			return err
 		}
 	}
-	codecAny, err := codectypes.NewAnyWithValue(ext)
+	codecAny, err := gogoprotoany.NewAnyWithCacheWithValue(ext)
 	if err != nil {
 		return errorsmod.Wrap(sdkerrors.ErrPackAny, err.Error())
 	}
@@ -193,15 +193,15 @@ type ContractInfoExtension interface {
 	String() string
 }
 
-var _ codectypes.UnpackInterfacesMessage = &ContractInfo{}
+var _ gogoprotoany.UnpackInterfacesMessage = &ContractInfo{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (c *ContractInfo) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (c *ContractInfo) UnpackInterfaces(unpacker gogoprotoany.AnyUnpacker) error {
 	var details ContractInfoExtension
 	if err := unpacker.UnpackAny(c.Extension, &details); err != nil {
 		return err
 	}
-	return codectypes.UnpackInterfaces(details, unpacker)
+	return gogoprotoany.UnpackInterfaces(details, unpacker)
 }
 
 // NewAbsoluteTxPosition gets a block position from the context

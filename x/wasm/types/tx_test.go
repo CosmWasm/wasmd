@@ -21,7 +21,6 @@ const (
 func TestStoreCodeValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, ContractAddrLen)).String()
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 	cases := map[string]struct {
 		msg   MsgStoreCode
 		valid bool
@@ -82,7 +81,6 @@ func TestStoreCodeValidation(t *testing.T) {
 func TestInstantiateContractValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgInstantiateContract
@@ -223,7 +221,6 @@ func TestInstantiateContractValidation(t *testing.T) {
 func TestInstantiateContract2Validation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgInstantiateContract2
@@ -1139,7 +1136,6 @@ func TestMsgSudoContractValidation(t *testing.T) {
 func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgStoreAndInstantiateContract
@@ -1307,7 +1303,6 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 func TestMsgStoreAndMigrateContractValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgStoreAndMigrateContract
