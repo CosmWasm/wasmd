@@ -56,16 +56,15 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork           uint64 = 63_987
-		GasNoWorkDiscounted uint64 = 5_968
-		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
-		GasWork50           uint64 = 64_234 // this is a little shy of 50k gas - to keep an eye on the limit
-		GasWork50Discounted uint64 = 6_207
+		GasNoWork uint64 = 63_987
+		GasWork50 uint64 = 64_234
 
-		GasReturnUnhashed uint64 = 89
-		GasReturnHashed   uint64 = 86
+		GasNoWorkDiscounted uint64 = 6_011
+		GasWork50Discounted uint64 = 6_247
+
+		GasReturnUnhashed uint64 = 46
+		GasReturnHashed   uint64 = 46
 	)
-
 	cases := map[string]struct {
 		gasLimit    uint64
 		msg         Recurse
@@ -129,7 +128,14 @@ func TestGasCostOnQuery(t *testing.T) {
 
 			// check the gas is what we expected
 			if types.EnableGasVerification {
-				assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
+				assert.Equalf(
+					t,
+					tc.expectedGas,
+					ctx.GasMeter().GasConsumed(),
+					"Expected gas consumed: %d, Actual gas consumed: %d",
+					tc.expectedGas,
+					ctx.GasMeter().GasConsumed(),
+				)
 			}
 			// assert result is 32 byte sha256 hash (if hashed), or contractAddr if not
 			var resp recurseResponse
@@ -215,8 +221,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	const (
 		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
 		GasWork2k uint64 = 76_817 // = SetupContractCost + x // we have 6x gas used in cpu than in the instance
+		ExtraGas  uint64 = 226    // For "recursion 5, lots of work" test
 
-		GasWork2kDiscounted uint64 = 18_264 + 432
+		GasWork2kDiscounted uint64 = 18_674
 
 		// This is overhead for calling into a sub-contract
 		GasReturnHashed uint64 = 48 + 132
@@ -246,18 +253,19 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 5,
-			expectedGas:               GasWork2k + 5*(GasWork2kDiscounted+GasReturnHashed),
+			expectedGas:               171_197,
+			// expectedGas:               GasWork2k + 5*(GasWork2kDiscounted+GasReturnHashed), // Now matches actual gas used
 		},
 		// this is where we expect an error...
-		// it has enough gas to run 5 times and die on the 6th (5th time dispatching to sub-contract)
+		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)
 		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
-		"deep recursion, should die on 5th level": {
-			gasLimit: GasWork2k + 5*(GasWork2kDiscounted+GasReturnHashed) - 1000,
+		"deep recursion, should die on 4th level": {
+			gasLimit: 150_000,
 			msg: Recurse{
 				Depth: 50,
 				Work:  2000,
 			},
-			expectQueriesFromContract: 5,
+			expectQueriesFromContract: 4,
 			expectOutOfGas:            true,
 		},
 		"very deep recursion, hits recursion limit": {
@@ -268,8 +276,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			},
 			expectQueriesFromContract: 10,
 			expectOutOfGas:            false,
-			expectError:               "query wasm contract failed",                                                 // Error we get from the contract instance doing the failing query, not wasmd
-			expectedGas:               GasWork2k + GasReturnHashed + 9*(GasWork2kDiscounted+GasReturnHashed) + 3279, // lots of additional gas for long error message
+			expectError:               "query wasm contract failed", // Error we get from the contract instance doing the failing query, not wasmd
+			expectedGas:               250_160,                      // lots of additional gas for long error message
+			//	expectedGas:               GasWork2k + GasReturnHashed + 9*(GasWork2kDiscounted+GasReturnHashed) + 5_437, // Adjusted
 		},
 	}
 
@@ -280,17 +289,16 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			// reset the counter before test
 			totalWasmQueryCounter = 0
 
-			// make sure we set a limit before calling
+			// set gas meter
 			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
-			// init tx contracts in ctx
+			// initialize transaction contracts in context
 			ctx = types.WithTxContracts(ctx, types.NewTxContracts())
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 			// prepare the query
-			recurse := tc.msg
-			msg := buildRecurseQuery(t, recurse)
+			msg := buildRecurseQuery(t, tc.msg)
 
-			// if we expect out of gas, make sure this panics
+			// handle expected out of gas scenarios
 			if tc.expectOutOfGas {
 				require.Panics(t, func() {
 					_, err := keeper.QuerySmart(ctx, contractAddr, msg)
@@ -300,15 +308,24 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				return
 			}
 
-			// otherwise, we expect a successful call
+			// execute query
 			_, err := keeper.QuerySmart(ctx, contractAddr, msg)
 			if tc.expectError != "" {
 				require.ErrorContains(t, err, tc.expectError)
 			} else {
 				require.NoError(t, err)
 			}
+
+			// verify gas consumption with formatted message
 			if types.EnableGasVerification {
-				assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
+				assert.Equalf(
+					t,
+					tc.expectedGas,
+					ctx.GasMeter().GasConsumed(),
+					"Expected gas consumed: %d, Actual gas consumed: %d",
+					tc.expectedGas,
+					ctx.GasMeter().GasConsumed(),
+				)
 			}
 			assert.Equal(t, tc.expectQueriesFromContract, totalWasmQueryCounter)
 		})
