@@ -171,7 +171,13 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 	}
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
-	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gasLeft)
+	var gasUsed uint64
+	if sdkCtx.ExecMode() == sdk.ExecModeSimulate {
+		// only simulate storing the code, no files are written
+		checksum, gasUsed, err = k.wasmVM.SimulateStoreCode(wasmCode, gasLeft)
+	} else {
+		checksum, gasUsed, err = k.wasmVM.StoreCode(wasmCode, gasLeft)
+	}
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
