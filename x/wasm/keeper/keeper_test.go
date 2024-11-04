@@ -50,7 +50,7 @@ var hackatomWasm []byte
 
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -1372,14 +1372,14 @@ func TestMigrate(t *testing.T) {
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
-		"all good with migration to older migrate version": {
-			admin:       creator,
-			caller:      creator,
-			initMsg:     initMsgBz,
-			fromCodeID:  hackatom420.CodeID,
-			toCodeID:    hackatom42.CodeID,
-			migrateMsg:  migMsgBz,
-			expVerifier: newVerifierAddr,
+		"contract returns error when downgrading version": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: hackatom420.CodeID,
+			toCodeID:   hackatom42.CodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
 		},
 	}
 
@@ -1599,7 +1599,10 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
 	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
-	}}
+	},
+		MigrateWithInfoFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, migrateInfo wasmvmtypes.MigrateInfo, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		}}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
