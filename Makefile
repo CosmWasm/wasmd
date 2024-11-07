@@ -55,11 +55,12 @@ build_tags_comma_sep := $(subst $(empty),$(comma),$(build_tags))
 
 # process linker flags
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
-		  -X github.com/cosmos/cosmos-sdk/version.AppName=wasmd \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=layer \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=layerd \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=wasm \
+		  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=layer \
+		  -X github.com/CosmWasm/wasmd/app.NodeDir=.layer \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq ($(WITH_CLEVELDB),yes)
@@ -91,6 +92,7 @@ build-windows-client: go.sum
 
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
+	mv ${GOPATH}/bin/wasmd ${GOPATH}/bin/layerd
 
 ########################################
 ### Tools & dependencies
