@@ -30,7 +30,7 @@ RUN echo "Ensuring binary is statically linked ..." \
 # --------------------------------------------------------
 FROM alpine:3.18
 
-COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
+COPY --from=go-builder /code/build/wasmd /usr/bin/layerd
 
 COPY docker/* /opt/
 RUN chmod +x /opt/*.sh
@@ -39,9 +39,14 @@ WORKDIR /opt
 
 # rest server
 EXPOSE 1317
+# grpc server
+EXPOSE 9090
+# grpc-web server
+EXPOSE 9091
 # tendermint p2p
 EXPOSE 26656
 # tendermint rpc
 EXPOSE 26657
 
-CMD ["/usr/bin/wasmd", "version"]
+ENTRYPOINT ["/usr/bin/layerd"]
+CMD ["start"]
