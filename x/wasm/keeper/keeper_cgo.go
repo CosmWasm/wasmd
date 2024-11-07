@@ -75,10 +75,10 @@ func NewKeeper(
 		var err error
 		keeper.wasmVM, err = wasmvm.NewVMWithConfig(wasmvmtypes.VMConfig{
 			Cache: wasmvmtypes.CacheOptions{
-				BaseDir:               filepath.Join(homeDir, "wasm"),
-				AvailableCapabilities: availableCapabilities,
-				MemoryCacheSize:       wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
-				InstanceMemoryLimit:   wasmvmtypes.NewSizeMebi(contractMemoryLimit),
+				BaseDir:                  filepath.Join(homeDir, "wasm"),
+				AvailableCapabilities:    availableCapabilities,
+				MemoryCacheSizeBytes:     wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
+				InstanceMemoryLimitBytes: wasmvmtypes.NewSizeMebi(contractMemoryLimit),
 			},
 			WasmLimits: vmConfig.WasmLimits,
 		}, nodeConfig.ContractDebugMode)

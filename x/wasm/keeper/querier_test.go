@@ -698,15 +698,15 @@ func TestQueryWasmLimitsConfig(t *testing.T) {
 	}{
 		"all 15": {
 			limits: wasmvmtypes.WasmLimits{
-				InitialMemoryLimit:     &fifteen,
-				TableSizeLimit:         &fifteen,
-				MaxImports:             &fifteen,
-				MaxFunctions:           &fifteen,
-				MaxFunctionParams:      &fifteen,
-				MaxTotalFunctionParams: &fifteen,
-				MaxFunctionResults:     &fifteen,
+				InitialMemoryLimitPages: &fifteen,
+				TableSizeLimitElements:  &fifteen,
+				MaxImports:              &fifteen,
+				MaxFunctions:            &fifteen,
+				MaxFunctionParams:       &fifteen,
+				MaxTotalFunctionParams:  &fifteen,
+				MaxFunctionResults:      &fifteen,
 			},
-			expJSON: []byte(`{"initial_memory_limit":15,"table_size_limit":15,"max_imports":15,"max_functions":15,"max_function_params":15,"max_total_function_params":15,"max_function_results":15}`),
+			expJSON: []byte(`{"initial_memory_limit_pages":15,"table_size_limit_elements":15,"max_imports":15,"max_functions":15,"max_function_params":15,"max_total_function_params":15,"max_function_results":15}`),
 		},
 		"empty": {
 			limits:  wasmvmtypes.WasmLimits{},
