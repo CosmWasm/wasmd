@@ -2,6 +2,7 @@ package exported
 
 import (
 	paramtypes "cosmossdk.io/x/params/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

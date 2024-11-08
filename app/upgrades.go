@@ -3,8 +3,6 @@ package app
 import (
 	"fmt"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-
 	banktypes "cosmossdk.io/x/bank/types"
 	distrtypes "cosmossdk.io/x/distribution/types"
 	govtypes "cosmossdk.io/x/gov/types"
@@ -13,6 +11,8 @@ import (
 	paramstypes "cosmossdk.io/x/params/types"
 	slashingtypes "cosmossdk.io/x/slashing/types"
 	stakingtypes "cosmossdk.io/x/staking/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -28,7 +28,7 @@ var Upgrades = []upgrades.Upgrade{v050.Upgrade}
 
 // RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app *WasmApp) RegisterUpgradeHandlers() {
-	//setupLegacyKeyTables(&app.ParamsKeeper)
+	// setupLegacyKeyTables(&app.ParamsKeeper)
 	if len(Upgrades) == 0 {
 		// always have a unique upgrade registered for the current version to test in system tests
 		Upgrades = append(Upgrades, noop.NewUpgrade(app.Version()))
@@ -80,19 +80,19 @@ func setupLegacyKeyTables(k *paramskeeper.Keeper) {
 		var keyTable paramstypes.KeyTable
 		switch subspace.Name() {
 		case authtypes.ModuleName:
-			//keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
 		case banktypes.ModuleName:
-			//keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 		case stakingtypes.ModuleName:
-			//keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
 		case minttypes.ModuleName:
-			//keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
 		case distrtypes.ModuleName:
-			//keyTable = distrtypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = distrtypes.ParamKeyTable() //nolint:staticcheck
 		case slashingtypes.ModuleName:
-			//keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
+			// keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
 		case govtypes.ModuleName:
-			//keyTable = govv1.ParamKeyTable() //nolint:staticcheck
+			// keyTable = govv1.ParamKeyTable() //nolint:staticcheck
 			// wasm
 		case wasmtypes.ModuleName:
 			keyTable = v2.ParamKeyTable() //nolint:staticcheck

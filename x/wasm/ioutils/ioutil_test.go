@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"cosmossdk.io/math/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math/unsafe"
 )
 
 func TestUncompress(t *testing.T) {

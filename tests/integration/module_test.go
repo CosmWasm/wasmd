@@ -15,6 +15,7 @@ import (
 
 	bankkeeper "cosmossdk.io/x/bank/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"

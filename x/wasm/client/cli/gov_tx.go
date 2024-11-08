@@ -16,6 +16,7 @@ import (
 
 	"cosmossdk.io/x/gov/client/cli"
 	v1 "cosmossdk.io/x/gov/types/v1"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

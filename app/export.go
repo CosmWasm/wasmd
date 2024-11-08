@@ -6,18 +6,17 @@ import (
 	"log"
 
 	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
-
 	slashingtypes "cosmossdk.io/x/slashing/types"
 	"cosmossdk.io/x/staking"
 	stakingtypes "cosmossdk.io/x/staking/types"
+
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	cmttypes "github.com/cometbft/cometbft/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis

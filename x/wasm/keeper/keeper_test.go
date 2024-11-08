@@ -29,9 +29,9 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-
 	banktypes "cosmossdk.io/x/bank/types"
 	distributiontypes "cosmossdk.io/x/distribution/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -2348,8 +2348,8 @@ func TestAppendToContractHistory(t *testing.T) {
 
 func TestCoinBurnerPruneBalances(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	//amts := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-	//senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
+	// amts := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	// senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
 
 	// create vesting account
 	var vestingAddr sdk.AccAddress = unsafe.Bytes(types.ContractAddrLen)

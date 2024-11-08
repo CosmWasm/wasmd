@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math/unsafe"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	v1 "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math/unsafe"
 	"cosmossdk.io/x/gov/types/v1beta1"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

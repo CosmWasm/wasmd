@@ -11,6 +11,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	banktypes "cosmossdk.io/x/bank/types"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

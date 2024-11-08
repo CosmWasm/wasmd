@@ -13,6 +13,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"cosmossdk.io/x/authz"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

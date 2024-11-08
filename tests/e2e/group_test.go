@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
-
+	"cosmossdk.io/math/unsafe"
 	banktypes "cosmossdk.io/x/bank/types"
 	"cosmossdk.io/x/group"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 

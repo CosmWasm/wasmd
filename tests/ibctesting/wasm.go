@@ -9,11 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"cosmossdk.io/math/unsafe"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math/unsafe"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

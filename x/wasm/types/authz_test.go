@@ -12,8 +12,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-
 	"cosmossdk.io/x/authz"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authztypes "github.com/cosmos/cosmos-sdk/types/authz"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

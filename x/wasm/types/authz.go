@@ -10,13 +10,12 @@ import (
 	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/x/authz"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authztypes "github.com/cosmos/cosmos-sdk/types/authz"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"cosmossdk.io/x/authz"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 )

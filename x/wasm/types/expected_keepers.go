@@ -11,6 +11,7 @@ import (
 	banktypes "cosmossdk.io/x/bank/types"
 	distrtypes "cosmossdk.io/x/distribution/types"
 	stakingtypes "cosmossdk.io/x/staking/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -121,8 +122,7 @@ type ConnectionKeeper interface {
 }
 
 // PortKeeper defines the expected IBC port keeper
-type PortKeeper interface {
-}
+type PortKeeper interface{}
 
 // ICS20TransferPortSource is a subset of the ibc transfer keeper.
 type ICS20TransferPortSource interface {

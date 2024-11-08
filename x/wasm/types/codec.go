@@ -4,6 +4,7 @@ import (
 	"cosmossdk.io/core/registry"
 	"cosmossdk.io/x/authz"
 	"cosmossdk.io/x/gov/types/v1beta1"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )

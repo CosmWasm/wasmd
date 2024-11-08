@@ -6,18 +6,18 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	gogoprotoany "github.com/cosmos/gogoproto/types/any"
-
 	banktypes "cosmossdk.io/x/bank/types"
 	distributiontypes "cosmossdk.io/x/distribution/types"
 	v1 "cosmossdk.io/x/gov/types/v1"
 	stakingtypes "cosmossdk.io/x/staking/types"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

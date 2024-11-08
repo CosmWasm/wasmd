@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"cosmossdk.io/core/appmodule"
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/core/appmodule"
 	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"

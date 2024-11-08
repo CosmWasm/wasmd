@@ -5,6 +5,7 @@ import (
 
 	bankkeeper "cosmossdk.io/x/bank/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
