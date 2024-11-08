@@ -5,7 +5,7 @@ orbs:
 executors:
   golang:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.23
 
 commands:
   make:
@@ -80,13 +80,12 @@ jobs:
 
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.54.2
+      - image: golangci/golangci-lint:v1.60.3
     steps:
       - checkout
       - run:
           name: Lint
           command: |
-            golangci-lint run --version
             golangci-lint run --tests=false --timeout=5m0s
 
   test-cover:

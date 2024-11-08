@@ -792,7 +792,7 @@ func (k Keeper) appendToContractHistory(ctx context.Context, contractAddr sdk.Ac
 	for _, e := range newEntries {
 		pos++
 		key := types.GetContractCodeHistoryElementKey(contractAddr, pos)
-		if err := store.Set(key, k.cdc.MustMarshal(&e)); err != nil { //nolint:gosec
+		if err := store.Set(key, k.cdc.MustMarshal(&e)); err != nil {
 			return err
 		}
 	}

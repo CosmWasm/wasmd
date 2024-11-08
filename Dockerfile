@@ -1,9 +1,7 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
 
-# Using Alpine 3.19+ as the build system is currently broken,
-# see https://github.com/CosmWasm/wasmvm/issues/523
-FROM golang:1.21-alpine3.18 AS go-builder
+FROM golang:1.23-alpine3.19 AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
