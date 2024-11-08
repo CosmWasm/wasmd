@@ -8,7 +8,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// AddToSecondIndexFn creates a secondary index entry for the creator fo the contract
+// AddToSecondIndexFn creates a secondary index entry for the creator of the contract
 type AddToSecondIndexFn func(ctx context.Context, creatorAddress sdk.AccAddress, position *types.AbsoluteTxPosition, contractAddress sdk.AccAddress) error
 
 // Keeper abstract keeper

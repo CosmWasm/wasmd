@@ -132,7 +132,7 @@ type WasmEngine interface {
 	// Sudo runs an existing contract in read/write mode (like Execute), but is never exposed to external callers
 	// (either transactions or government proposals), but can only be called by other native Go modules directly.
 	//
-	// This allows a contract to expose custom "super user" functions or priviledged operations that can be
+	// This allows a contract to expose custom "super user" functions or privileged operations that can be
 	// deeply integrated with native modules.
 	Sudo(
 		checksum wasmvm.Checksum,

@@ -403,8 +403,8 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
-			contracts = append(contracts, accAddres.String())
+			accAddress := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
+			contracts = append(contracts, accAddress.String())
 		}
 		return true, nil
 	})

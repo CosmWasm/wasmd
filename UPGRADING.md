@@ -142,7 +142,7 @@ docker run --rm -it \
 
 ## Take majority control of the chain
 
-In genesis we have a valiator with 250 million `ustake` bonded. We want to be easily
+In genesis we have a validator with 250 million `ustake` bonded. We want to be easily
 able to pass a proposal with our client. Let us bond 700 million `ustake` to ensure
 we have > 67% of the voting power and will pass with the validator not voting.
 
@@ -167,7 +167,7 @@ docker run --rm -it \
 ## Vote on the upgrade
 
 Now that we see the chain is running and producing blocks, and our client has
-enough token to control the netwrok, let's create a governance
+enough token to control the network, let's create a governance
 upgrade proposal for the new chain to move to `musselnet-v2` (this must be the
 same name as we use in the handler we created above, change this to match what
 you put in your handler):
@@ -298,7 +298,7 @@ docker run --rm -it \
 After this, we just let the chain run and open the terminal so you can see the log files.
 It should keep producing blocks until it hits height 500 (or whatever you set there),
 when the process will print a huge stacktrace and hang. Immediately before the stack trace, you
-should see a line like this (burried under tons of tendermint logs):
+should see a line like this (buried under tons of tendermint logs):
 
 `8:50PM ERR UPGRADE "musselnet-v2" NEEDED at height: 100:`
 

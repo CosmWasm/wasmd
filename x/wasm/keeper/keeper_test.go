@@ -239,7 +239,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	onlyOther := types.AccessTypeAnyOfAddresses.With(other)
 
 	specs := map[string]struct {
-		defaultPermssion    types.AccessType
+		defaultPermission   types.AccessType
 		requestedPermission *types.AccessConfig
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
@@ -247,42 +247,42 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		expError *errorsmod.Error
 	}{
 		"override everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"default to everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"explicitly set everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &types.AccessConfig{Permission: types.AccessTypeEverybody},
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"cannot override nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: &onlyCreator,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
 		"default to nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
 		},
 		"only defaults to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: nil,
 			grantedPermission:   onlyCreator,
 		},
 		"can explicitly set to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"cannot override which address in only": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyOther,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
@@ -290,7 +290,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.InstantiateDefaultPermission = spec.defaultPermssion
+			params.InstantiateDefaultPermission = spec.defaultPermission
 			err := keeper.SetParams(ctx, params)
 			require.NoError(t, err)
 			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
@@ -1647,7 +1647,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 
 type sudoMsg struct {
 	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-	// Here we show that some priviledged Go module can make a call that should never be exposed
+	// Here we show that some privileged Go module can make a call that should never be exposed
 	// to end users (via Tx/Execute).
 	//
 	// The contract developer can choose to expose anything to sudo. This functionality is not a true
@@ -1693,7 +1693,7 @@ func TestSudo(t *testing.T) {
 	// now the community wants to get paid via sudo
 	msg := sudoMsg{
 		// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-		// Here we show that some priviledged Go module can make a call that should never be exposed
+		// Here we show that some privileged Go module can make a call that should never be exposed
 		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
@@ -2498,7 +2498,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 			creatorAddr:   mockAddress2,
 			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
 		},
-		"contractAdress": {
+		"contractAddress": {
 			creatorAddr:   gotAddr1,
 			contractsAddr: []string{gotAddr3.String()},
 		},

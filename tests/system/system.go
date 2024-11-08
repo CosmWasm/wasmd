@@ -374,7 +374,7 @@ func (s *SystemUnderTest) BuildNewBinary() {
 	}
 }
 
-// AwaitBlockHeight blocks until te target height is reached. An optional timout parameter can be passed to abort early
+// AwaitBlockHeight blocks until te target height is reached. An optional timeout parameter can be passed to abort early
 func (s *SystemUnderTest) AwaitBlockHeight(t *testing.T, targetHeight int64, timeout ...time.Duration) {
 	t.Helper()
 	require.Greater(t, targetHeight, s.currentHeight)

@@ -399,7 +399,7 @@ message MsgStoreAndInstantiateContract {
   bool unpin_code = 5;
   // Admin is an optional address that can execute migrations
   string admin = 6 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // Label is optional metadata to be stored with a constract instance.
+  // Label is optional metadata to be stored with a contract instance.
   string label = 7;
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 8 [

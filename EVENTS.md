@@ -46,7 +46,7 @@ consistent order (and avoid dictionaries/hashes). Here is a simple Event in JSON
     "type": "wasm", 
     "attributes": [
         {"key": "_contract_address", "value": "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6"}, 
-        {"key": "transfered", "value": "777000"}
+        {"key": "transferred", "value": "777000"}
     ]
 }
 ```
@@ -321,10 +321,10 @@ action emitting events, so we define a structure to flatten this event tree:
 * All events are returned in execution order as [defined by CosmWasm docs](https://github.com/CosmWasm/cosmwasm/blob/main/SEMANTICS.md#dispatching-messages)
 * `x/wasm` keeper emits a custom event for each call to a contract entry point. Not just `execute`, `instantiate`,
   and `migrate`, but also `reply`, `sudo` and all ibc entry points.
-* This means all `wasm*` events are preceeded by the cosmwasm entry point that returned them. 
+* This means all `wasm*` events are preceded by the cosmwasm entry point that returned them. 
 
 To make this more clear, I will provide an example of executing a contract, which returns two messages, one to instantiate a new
-contract and the other to set the withdrawl address, while also using `ReplyOnSuccess` for the instantiation (to get the
+contract and the other to set the withdrawal address, while also using `ReplyOnSuccess` for the instantiation (to get the
 address). It will emit a series of events that looks something like this:
 
 ```go
@@ -335,7 +335,7 @@ sdk.NewEvent(
     sdk.NewAttribute("sender", msg.Sender),  
 ),
 
-// top-level exection call
+// top-level execution call
 sdk.NewEvent(
     "execute",
     sdk.NewAttribute("_contract_address", contractAddr.String()),

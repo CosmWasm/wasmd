@@ -746,10 +746,10 @@ a v1 governance proposal.
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's enviroment as sender |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encode message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 | `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
@@ -776,7 +776,7 @@ a v1 governance proposal.
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 
@@ -847,7 +847,7 @@ the x/gov module via a v1 governance proposal.
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 | `source` | [string](#string) |  | Source is the URL where the code is hosted |
@@ -1762,7 +1762,7 @@ Since: 0.40
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional. As default the uploaded contract is pinned to cache. |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred from the authority account to the contract on instantiation |
 | `source` | [string](#string) |  | Source is the URL where the code is hosted |

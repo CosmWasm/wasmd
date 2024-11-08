@@ -31,7 +31,7 @@ type StakingInitMsg struct {
 	Validator sdk.ValAddress    `json:"validator"`
 	ExitTax   sdkmath.LegacyDec `json:"exit_tax"`
 	// MinWithdrawal is uint128 encoded as a string (use math.Int?)
-	MinWithdrawl string `json:"min_withdrawal"`
+	MinWithdrawal string `json:"min_withdrawal"`
 }
 
 // StakingHandleMsg is used to encode handle messages
@@ -88,8 +88,8 @@ type InvestmentResponse struct {
 	Owner        sdk.AccAddress    `json:"owner"`
 	Validator    sdk.ValAddress    `json:"validator"`
 	ExitTax      sdkmath.LegacyDec `json:"exit_tax"`
-	// MinWithdrawl is uint128 encoded as a string (use math.Int?)
-	MinWithdrawl string `json:"min_withdrawal"`
+	// MinWithdrawal is uint128 encoded as a string (use math.Int?)
+	MinWithdrawal string `json:"min_withdrawal"`
 }
 
 func TestInitializeStaking(t *testing.T) {
@@ -114,12 +114,12 @@ func TestInitializeStaking(t *testing.T) {
 
 	// register to a valid address
 	initMsg := StakingInitMsg{
-		Name:         "Staking Derivatives",
-		Symbol:       "DRV",
-		Decimals:     0,
-		Validator:    valAddr,
-		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Staking Derivatives",
+		Symbol:        "DRV",
+		Decimals:      0,
+		Validator:     valAddr,
+		ExitTax:       sdkmath.LegacyMustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
@@ -134,12 +134,12 @@ func TestInitializeStaking(t *testing.T) {
 	// try to register with a validator not on the list and it fails
 	_, bob := keyPubAddr()
 	badInitMsg := StakingInitMsg{
-		Name:         "Missing Validator",
-		Symbol:       "MISS",
-		Decimals:     0,
-		Validator:    sdk.ValAddress(bob),
-		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Missing Validator",
+		Symbol:        "MISS",
+		Decimals:      0,
+		Validator:     sdk.ValAddress(bob),
+		ExitTax:       sdkmath.LegacyMustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
@@ -191,12 +191,12 @@ func initializeStaking(t *testing.T) initInfo {
 
 	// register to a valid address
 	initMsg := StakingInitMsg{
-		Name:         "Staking Derivatives",
-		Symbol:       "DRV",
-		Decimals:     0,
-		Validator:    valAddr,
-		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Staking Derivatives",
+		Symbol:        "DRV",
+		Decimals:      0,
+		Validator:     valAddr,
+		ExitTax:       sdkmath.LegacyMustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)

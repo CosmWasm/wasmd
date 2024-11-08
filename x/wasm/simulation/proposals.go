@@ -112,7 +112,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 }
 
 // simulate store code proposal (unused now)
-// Current problem: out of gas (defaul gaswanted config of gov SimulateMsgSubmitProposal is 10_000_000)
+// Current problem: out of gas (default gaswanted config of gov SimulateMsgSubmitProposal is 10_000_000)
 // but this proposal may need more than it
 func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
