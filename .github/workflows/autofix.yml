@@ -1,0 +1,27 @@
+name: autofix.ci # needed to securely identify the workflow
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  autofix-protobuf:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cosmos/proto-builder:0.14.0
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix permissions
+        run: git config --global --add safe.directory "$PWD"
+      - name: Format protobuf
+        run: find ./ -name "*.proto" -exec clang-format -i {} \;
+      - name: Generate protobuf
+        run: sh ./scripts/protocgen.sh
+      - name: Format
+        run: make format
+
+      # Get latest version from https://autofix.ci/setup
+      - uses: autofix-ci/action@dd55f44df8f7cdb7a6bf74c78677eb8acd40cd0a
