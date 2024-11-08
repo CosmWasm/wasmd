@@ -27,6 +27,7 @@ type ViewKeeper interface {
 	GetByteCode(ctx context.Context, codeID uint64) ([]byte, error)
 	IsPinnedCode(ctx context.Context, codeID uint64) bool
 	GetParams(ctx context.Context) Params
+	GetWasmLimits() wasmvmtypes.WasmLimits
 }
 
 // ContractOpsKeeper contains mutable operations on a contract.

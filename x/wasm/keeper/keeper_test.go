@@ -86,6 +86,24 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 	require.Error(t, err, "nil creator is not allowed")
 }
 
+func TestWasmLimits(t *testing.T) {
+	one := uint32(1)
+	cfg := types.DefaultNodeConfig()
+	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, types.VMConfig{
+		WasmLimits: wasmvmtypes.WasmLimits{
+			MaxImports: &one, // very low limit that every contract will fail
+		},
+	}, dbm.NewMemDB())
+	keeper := keepers.ContractKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+
+	_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "Import")
+}
+
 func TestCreateNilWasmCode(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
