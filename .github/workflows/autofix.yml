@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/cosmos/proto-builder:0.14.0
-      options: --user root
+      options: --user root # workaround for a problem during actions/checkout, see https://github.com/actions/checkout/issues/1014
     steps:
       - uses: actions/checkout@v4
-      - name: Fix permissions
+      - name: Fix permissions # needed because of root user fix above
         run: git config --global --add safe.directory "$PWD"
       - name: Format protobuf
         run: find ./ -name "*.proto" -exec clang-format -i {} \;
