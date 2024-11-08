@@ -1615,12 +1615,14 @@ func TestIterateContractsByCode(t *testing.T) {
 
 func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
-	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
-		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
-	},
+	mockWasmVM := wasmtesting.MockWasmEngine{
+		MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		},
 		MigrateWithInfoFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, migrateInfo wasmvmtypes.MigrateInfo, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
-		}}
+		},
+	}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
