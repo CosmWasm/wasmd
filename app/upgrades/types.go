@@ -3,8 +3,6 @@ package upgrades
 import (
 	"context"
 
-	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
-
 	"cosmossdk.io/core/appmodule"
 	corestore "cosmossdk.io/core/store"
 	storetypes "cosmossdk.io/store/types"
@@ -15,6 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 )
 
 type AppKeepers struct {
@@ -24,6 +24,7 @@ type AppKeepers struct {
 	Codec                 codec.Codec
 	GetStoreKey           func(storeKey string) *storetypes.KVStoreKey
 	IBCKeeper             *ibckeeper.Keeper
+	AuthKeeper            authkeeper.AccountKeeper
 }
 type ModuleManager interface {
 	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM appmodule.VersionMap) (appmodule.VersionMap, error)

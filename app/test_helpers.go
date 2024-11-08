@@ -16,6 +16,8 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
+	corestore "cosmossdk.io/core/store"
+	coretesting "cosmossdk.io/core/testing"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
@@ -49,13 +51,14 @@ import (
 // SetupOptions defines arguments that are passed into `WasmApp` constructor.
 type SetupOptions struct {
 	Logger   log.Logger
-	DB       *dbm.MemDB
+	DB       corestore.KVStoreWithBatch
 	AppOpts  servertypes.AppOptions
 	WasmOpts []wasmkeeper.Option
 }
 
 func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*WasmApp, GenesisState) {
-	db := dbm.NewMemDB()
+	db := coretesting.NewMemDB()
+
 	nodeHome := t.TempDir()
 	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
 
@@ -86,17 +89,21 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 	validator := cmttypes.NewValidator(pubKey, 1)
 	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
+	app := NewWasmApp(options.Logger, options.DB, nil, true, options.AppOpts, options.WasmOpts)
+
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	accAddr, err := app.InterfaceRegistry().SigningContext().AddressCodec().BytesToString(acc.GetAddress())
+	require.NoError(t, err)
+
 	balance := banktypes.Balance{
-		Address: acc.GetAddress().String(),
+		Address: accAddr,
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 	}
 
-	app := NewWasmApp(options.Logger, options.DB, nil, true, options.AppOpts, options.WasmOpts)
 	genesisState := app.DefaultGenesis()
-	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
+	genesisState, err = simtestutil.GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 	require.NoError(t, err)
 
 	if !isCheckTx {
@@ -132,6 +139,7 @@ func Setup(t *testing.T, opts ...wasmkeeper.Option) *WasmApp {
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
@@ -208,15 +216,17 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	accAddr, err := app.interfaceRegistry.SigningContext().AddressCodec().BytesToString(acc.GetAddress())
+	require.NoError(t, err)
 	balances := []banktypes.Balance{
 		{
-			Address: acc.GetAddress().String(),
+			Address: accAddr,
 			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 		},
 	}
 
 	genesisState := app.DefaultGenesis()
-	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
+	genesisState, err = simtestutil.GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
 	require.NoError(t, err)
 
 	return genesisState
@@ -266,15 +276,15 @@ func NewTestNetworkFixture() network.TestFixture {
 	}
 	defer os.RemoveAll(dir)
 
-	app := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
+	app := NewWasmApp(log.NewNopLogger(), coretesting.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
 	appCtr := func(val network.ValidatorI) servertypes.Application {
 		return NewWasmApp(
-			log.NewNopLogger(), dbm.NewMemDB(), nil, true,
+			val.GetLogger(), coretesting.NewMemDB(), nil, true,
 			simtestutil.NewAppOptionsWithFlagHome(val.GetClientCtx().HomeDir),
 			emptyWasmOptions,
 			bam.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 			bam.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
-			bam.SetChainID(val.GetClientCtx().Viper.GetString(flags.FlagChainID)),
+			bam.SetChainID(val.GetViper().GetString(flags.FlagChainID)),
 		)
 	}
 

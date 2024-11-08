@@ -9,10 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/cosmos/ibc-go/v9/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v9/modules/core"
@@ -28,6 +32,10 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/accounts"
+	"cosmossdk.io/x/accounts/accountstd"
+	baseaccount "cosmossdk.io/x/accounts/defaults/base"
+	"cosmossdk.io/x/accounts/defaults/lockup"
+	"cosmossdk.io/x/accounts/defaults/multisig"
 	authzkeeper "cosmossdk.io/x/authz/keeper"
 	"cosmossdk.io/x/bank"
 	bankkeeper "cosmossdk.io/x/bank/keeper"
@@ -57,13 +65,17 @@ import (
 	"cosmossdk.io/x/staking"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
 	stakingtypes "cosmossdk.io/x/staking/types"
+	txdecode "cosmossdk.io/x/tx/decode"
+	"cosmossdk.io/x/tx/signing"
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codecaddress "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/testutil"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -74,12 +86,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var moduleBasics = module.NewManager(
@@ -298,12 +307,45 @@ func createTestInput(
 		types.ModuleName:               {authtypes.Burner},
 	}
 
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: signing.Options{
+			AddressCodec:          codecaddress.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+			ValidatorAddressCodec: codecaddress.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		},
+	})
+
+	signingCtx := interfaceRegistry.SigningContext()
+	txDecoder, err := txdecode.NewDecoder(txdecode.Options{
+		SigningContext: signingCtx,
+		ProtoCodec:     appCodec,
+	})
+	if err != nil {
+		panic(err)
+	}
+	txConfig := authtx.NewTxConfig(appCodec, signingCtx.AddressCodec(), signingCtx.ValidatorAddressCodec(), authtx.DefaultSignModes)
+
+	msgRouter := baseapp.NewMsgServiceRouter()
+	msgRouter.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
+	querier := baseapp.NewGRPCQueryRouter()
+	querier.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
+
 	accountsKeeper, err := accounts.NewKeeper(
 		appCodec,
-		runtime.NewEnvironment(runtime.NewKVStoreService(keys[accounts.StoreKey]), logger.With(log.ModuleKey, "x/accounts")),
-		appCodec.InterfaceRegistry().SigningContext().AddressCodec(),
+		runtime.NewEnvironment(runtime.NewKVStoreService(keys[accounts.StoreKey]), logger.With(log.ModuleKey, "x/accounts"), runtime.EnvWithMsgRouterService(msgRouter), runtime.EnvWithQueryRouterService(querier)),
+		signingCtx.AddressCodec(),
 		appCodec.InterfaceRegistry(),
+		txDecoder,
+		// Lockup account
+		accountstd.AddAccount(lockup.CONTINUOUS_LOCKING_ACCOUNT, lockup.NewContinuousLockingAccount),
+		accountstd.AddAccount(lockup.PERIODIC_LOCKING_ACCOUNT, lockup.NewPeriodicLockingAccount),
+		accountstd.AddAccount(lockup.DELAYED_LOCKING_ACCOUNT, lockup.NewDelayedLockingAccount),
+		accountstd.AddAccount(lockup.PERMANENT_LOCKING_ACCOUNT, lockup.NewPermanentLockingAccount),
+		accountstd.AddAccount("multisig", multisig.NewAccount),
+		// PRODUCTION: add
+		baseaccount.NewAccount("base", txConfig.SignModeHandler(), baseaccount.WithSecp256K1PubKey()),
 	)
+
 	if err != nil {
 		panic(err)
 	}
@@ -394,10 +436,6 @@ func createTestInput(
 		upgradeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	querier := baseapp.NewGRPCQueryRouter()
-	querier.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
-	msgRouter := baseapp.NewMsgServiceRouter()
-	msgRouter.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
 
 	keeper := NewKeeper(
 		appCodec,
@@ -443,11 +481,11 @@ func createTestInput(
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
-		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
-		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
+		staking.NewAppModule(appCodec, stakingKeeper),
+		distribution.NewAppModule(appCodec, distKeeper, stakingKeeper),
 		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper, poolKeeper),
 	)
-	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier)) //nolint:errcheck
+	require.NoError(t, am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier)))
 	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(&keeper))
 	types.RegisterQueryServer(querier, NewGrpcQuerier(appCodec, runtime.NewKVStoreService(keys[types.ModuleName]), keeper, keeper.queryGasLimit))
 

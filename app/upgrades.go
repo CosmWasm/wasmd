@@ -3,32 +3,18 @@ package app
 import (
 	"fmt"
 
-	banktypes "cosmossdk.io/x/bank/types"
-	distrtypes "cosmossdk.io/x/distribution/types"
-	govtypes "cosmossdk.io/x/gov/types"
-	minttypes "cosmossdk.io/x/mint/types"
-	paramskeeper "cosmossdk.io/x/params/keeper"
-	paramstypes "cosmossdk.io/x/params/types"
-	slashingtypes "cosmossdk.io/x/slashing/types"
-	stakingtypes "cosmossdk.io/x/staking/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
 	"github.com/CosmWasm/wasmd/app/upgrades/noop"
-	v050 "github.com/CosmWasm/wasmd/app/upgrades/v050"
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	v052 "github.com/CosmWasm/wasmd/app/upgrades/v052"
 )
 
 // Upgrades list of chain upgrades
-var Upgrades = []upgrades.Upgrade{v050.Upgrade}
+var Upgrades = []upgrades.Upgrade{v052.Upgrade}
 
 // RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app *WasmApp) RegisterUpgradeHandlers() {
-	// setupLegacyKeyTables(&app.ParamsKeeper)
 	if len(Upgrades) == 0 {
 		// always have a unique upgrade registered for the current version to test in system tests
 		Upgrades = append(Upgrades, noop.NewUpgrade(app.Version()))
@@ -36,6 +22,7 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 
 	keepers := upgrades.AppKeepers{
 		AccountKeeper:         &app.AuthKeeper,
+		AuthKeeper:            app.AuthKeeper,
 		ParamsKeeper:          &app.ParamsKeeper,
 		ConsensusParamsKeeper: &app.ConsensusParamsKeeper,
 		IBCKeeper:             app.IBCKeeper,
@@ -71,40 +58,4 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 			break
 		}
 	}
-}
-
-func setupLegacyKeyTables(k *paramskeeper.Keeper) {
-	for _, subspace := range k.GetSubspaces() {
-		subspace := subspace
-
-		var keyTable paramstypes.KeyTable
-		switch subspace.Name() {
-		case authtypes.ModuleName:
-			// keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
-		case banktypes.ModuleName:
-			// keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
-		case stakingtypes.ModuleName:
-			// keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
-		case minttypes.ModuleName:
-			// keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
-		case distrtypes.ModuleName:
-			// keyTable = distrtypes.ParamKeyTable() //nolint:staticcheck
-		case slashingtypes.ModuleName:
-			// keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
-		case govtypes.ModuleName:
-			// keyTable = govv1.ParamKeyTable() //nolint:staticcheck
-			// wasm
-		case wasmtypes.ModuleName:
-			keyTable = v2.ParamKeyTable() //nolint:staticcheck
-		default:
-			continue
-		}
-
-		if !subspace.HasKeyTable() {
-			subspace.WithKeyTable(keyTable)
-		}
-	}
-	// sdk 47
-	k.Subspace(baseapp.Paramspace).
-		WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 }
