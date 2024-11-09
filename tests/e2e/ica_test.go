@@ -69,7 +69,7 @@ func TestICA(t *testing.T) {
 			icaControllerAddr := sdk.AccAddress(icaControllerKey.PubKey().Address().Bytes())
 			controllerChain.Fund(icaControllerAddr, sdkmath.NewInt(1_000))
 
-			msg := icacontrollertypes.NewMsgRegisterInterchainAccount(path.EndpointA.ConnectionID, icaControllerAddr.String(), spec.icaVersion)
+			msg := icacontrollertypes.NewMsgRegisterInterchainAccount(path.EndpointA.ConnectionID, icaControllerAddr.String(), spec.icaVersion, channeltypes.UNORDERED)
 			res, err := controllerChain.SendNonDefaultSenderMsgs(icaControllerKey, msg)
 			require.NoError(t, err)
 			chanID, portID, version := parseIBCChannelEvents(t, res)
@@ -102,7 +102,7 @@ func TestICA(t *testing.T) {
 			// submit a tx
 			targetAddr := sdk.AccAddress(unsafe.Bytes(address.Len))
 			sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
-			payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
+			payloadMsg := banktypes.NewMsgSend(icaAddr.String(), targetAddr.String(), sdk.NewCoins(sendCoin))
 			rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, spec.encoding)
 			require.NoError(t, err)
 			payloadPacket := icatypes.InterchainAccountPacketData{

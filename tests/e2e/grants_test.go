@@ -92,7 +92,7 @@ func TestGrants(t *testing.T) {
 			require.NoError(t, err)
 			authorization := types.NewContractExecutionAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			grantMsg, err := authz.NewMsgGrant(granterAddr.String(), granteeAddr.String(), authorization, &expiry)
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestGrants(t *testing.T) {
 
 			// when
 			anyValidReflectMsg := []byte(fmt.Sprintf(`{"reflect_msg": {"msgs": [{"bank":{"burn":{"amount":[{"denom":%q, "amount": %q}]}}}]}}`, sdk.DefaultBondDenom, myAmount.Amount.String()))
-			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgExecuteContract{
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().String(), []sdk.Msg{&types.MsgExecuteContract{
 				Sender:   granterAddr.String(),
 				Contract: contractAddr.String(),
 				Msg:      anyValidReflectMsg,
@@ -185,13 +185,13 @@ func TestStoreCodeGrant(t *testing.T) {
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			grantMsg, err := authz.NewMsgGrant(granterAddr.String(), granteeAddr.String(), authorization, &expiry)
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
 
 			// when
-			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().String(), []sdk.Msg{&types.MsgStoreCode{
 				Sender:                granterAddr.String(),
 				WASMByteCode:          reflectWasmCode,
 				InstantiatePermission: &types.AllowEverybody,
@@ -273,13 +273,13 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			grantMsg, err := authz.NewMsgGrant(granterAddr.String(), granteeAddr.String(), authorization, &expiry)
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
 
 			// when
-			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().String(), []sdk.Msg{&types.MsgStoreCode{
 				Sender:                granterAddr.String(),
 				WASMByteCode:          hackatomGzipWasmCode,
 				InstantiatePermission: &types.AllowEverybody,
@@ -322,13 +322,13 @@ func TestBrokenGzipStoreCodeGrant(t *testing.T) {
 	require.NoError(t, err)
 	authorization := types.NewStoreCodeAuthorization(*grant)
 	expiry := time.Now().Add(time.Hour)
-	grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+	grantMsg, err := authz.NewMsgGrant(granterAddr.String(), granteeAddr.String(), authorization, &expiry)
 	require.NoError(t, err)
 	_, err = chain.SendMsgs(grantMsg)
 	require.NoError(t, err)
 
 	// when
-	execMsg := authz.NewMsgExec(senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+	execMsg := authz.NewMsgExec(senderKey.PubKey().Address().String(), []sdk.Msg{&types.MsgStoreCode{
 		Sender:                granterAddr.String(),
 		WASMByteCode:          brokenGzipWasmCode,
 		InstantiatePermission: &types.AllowEverybody,

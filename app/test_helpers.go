@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	corestore "cosmossdk.io/core/store"
-	coretesting "cosmossdk.io/core/testing"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
@@ -57,7 +56,7 @@ type SetupOptions struct {
 }
 
 func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*WasmApp, GenesisState) {
-	db := coretesting.NewMemDB()
+	db := dbm.NewMemDB()
 
 	nodeHome := t.TempDir()
 	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
@@ -155,21 +154,21 @@ func Setup(t *testing.T, opts ...wasmkeeper.Option) *WasmApp {
 // of one consensus engine unit in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
 func SetupWithGenesisValSet(
-	t *testing.T,
+	tb testing.TB,
 	valSet *cmttypes.ValidatorSet,
 	genAccs []authtypes.GenesisAccount,
 	chainID string,
 	opts []wasmkeeper.Option,
 	balances ...banktypes.Balance,
 ) *WasmApp {
-	t.Helper()
+	tb.Helper()
 
-	app, genesisState := setup(t, chainID, true, 5, opts...)
+	app, genesisState := setup(tb, chainID, true, 5, opts...)
 	genesisState, err := GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, genAccs, balances...)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simtestutil.DefaultConsensusParams
@@ -182,14 +181,14 @@ func SetupWithGenesisValSet(
 		InitialHeight:   app.LastBlockHeight() + 1,
 		AppStateBytes:   stateBytes,
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	_, err = app.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height:             app.LastBlockHeight() + 1,
 		Hash:               app.LastCommitID().Hash,
 		NextValidatorsHash: valSet.Hash(),
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return app
 }
@@ -276,10 +275,10 @@ func NewTestNetworkFixture() network.TestFixture {
 	}
 	defer os.RemoveAll(dir)
 
-	app := NewWasmApp(log.NewNopLogger(), coretesting.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
+	app := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
 	appCtr := func(val network.ValidatorI) servertypes.Application {
 		return NewWasmApp(
-			val.GetLogger(), coretesting.NewMemDB(), nil, true,
+			val.GetLogger(), dbm.NewMemDB(), nil, true,
 			simtestutil.NewAppOptionsWithFlagHome(val.GetClientCtx().HomeDir),
 			emptyWasmOptions,
 			bam.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
@@ -301,7 +300,7 @@ func NewTestNetworkFixture() network.TestFixture {
 }
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.FinalizeBlockResponse, error) {
+func SignAndDeliverWithoutCommit(t testing.TB, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.FinalizeBlockResponse, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,

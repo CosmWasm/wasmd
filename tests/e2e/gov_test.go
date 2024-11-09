@@ -46,8 +46,8 @@ func TestGovVoteByContract(t *testing.T) {
 
 	signer := chain.SenderAccount.GetAddress().String()
 	app := chain.App.(*app.WasmApp)
-	govKeeper, accountKeeper := app.GovKeeper, app.AccountKeeper
-	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), distributiontypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
+	govKeeper, authKeeper := app.GovKeeper, app.AuthKeeper
+	communityPoolBalance := chain.Balance(authKeeper.GetModuleAccount(chain.GetContext(), distributiontypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
 	require.False(t, communityPoolBalance.IsZero())
 
 	gParams, err := govKeeper.Params.Get(chain.GetContext())
@@ -101,7 +101,7 @@ func TestGovVoteByContract(t *testing.T) {
 				"",
 				"my proposal",
 				"testing",
-				false,
+				v1.ProposalType_PROPOSAL_TYPE_STANDARD,
 			)
 			require.NoError(t, err)
 			rsp, gotErr := chain.SendMsgs(msg)
@@ -112,7 +112,7 @@ func TestGovVoteByContract(t *testing.T) {
 			propID := got.ProposalId
 
 			// with other delegators voted yes
-			_, err = chain.SendMsgs(v1.NewMsgVote(chain.SenderAccount.GetAddress(), propID, v1.VoteOption_VOTE_OPTION_YES, ""))
+			_, err = chain.SendMsgs(v1.NewMsgVote(chain.SenderAccount.GetAddress().String(), propID, v1.VoteOption_VOTE_OPTION_YES, ""))
 			require.NoError(t, err)
 
 			// when contract votes

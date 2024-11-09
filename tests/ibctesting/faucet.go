@@ -11,7 +11,7 @@ import (
 
 // Fund an address with the given amount in default denom
 func (chain *TestChain) Fund(addr sdk.AccAddress, amount math.Int) {
-	require.NoError(chain.t, chain.sendMsgs(&banktypes.MsgSend{
+	require.NoError(chain.TB, chain.sendMsgs(&banktypes.MsgSend{
 		FromAddress: chain.SenderAccount.GetAddress().String(),
 		ToAddress:   addr.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),

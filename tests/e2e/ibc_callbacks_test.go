@@ -40,15 +40,17 @@ func TestIBCCallbacks(t *testing.T) {
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
+	metadata, err := ibcfee.MetadataFromVersion(ibcfee.Version)
+	require.NoError(t, err)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&metadata)),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&metadata)),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
@@ -184,15 +186,17 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 
 	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1))
 
+	metadata, err := ibcfee.MetadataFromVersion(ibcfee.Version)
+	require.NoError(t, err)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&metadata)),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&metadata)),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
@@ -212,7 +216,7 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 				ChannelID: path.EndpointA.ChannelID,
 				Amount:    wasmvmtypes.NewCoin(oneToken.Amount.Uint64(), oneToken.Denom),
 				Timeout: wasmvmtypes.IBCTimeout{
-					Timestamp: uint64(chainA.LastHeader.GetTime().Add(time.Second * 100).UnixNano()),
+					Timestamp: uint64(chainA.LatestCommittedHeader.GetTime().Add(time.Second * 100).UnixNano()),
 				},
 				Memo: memo,
 			},

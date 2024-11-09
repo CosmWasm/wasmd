@@ -56,7 +56,7 @@ func TestIBCReflectContract(t *testing.T) {
 	coordinator.CommitBlock(chainA, chainB)
 	coordinator.UpdateTime()
 
-	require.Equal(t, chainA.CurrentHeader.Time, chainB.CurrentHeader.Time)
+	require.Equal(t, chainA.ProposedHeader.Time, chainB.ProposedHeader.Time)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,

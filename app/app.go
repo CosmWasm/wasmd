@@ -532,6 +532,10 @@ func NewWasmApp(
 		),
 	)
 
+	app.IBCKeeper = ibckeeper.NewKeeper(
+		appCodec, runtime.NewKVStoreService(keys[ibcexported.StoreKey]), app.GetSubspace(ibcexported.ModuleName), app.UpgradeKeeper, govModuleAddr,
+	)
+
 	// IBC Fee Module keeper
 	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
 		appCodec,
@@ -817,6 +821,7 @@ func NewWasmApp(
 
 	// initialize stores
 	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
