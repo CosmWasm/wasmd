@@ -1,24 +1,9 @@
 package ibctesting
 
 import (
-	govkeeper "cosmossdk.io/x/gov/keeper"
 	"fmt"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	banktypes "cosmossdk.io/x/bank/types"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
@@ -26,15 +11,6 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmttypes "github.com/cometbft/cometbft/types"
 	cmtversion "github.com/cometbft/cometbft/version"
-
-	storetypes "cosmossdk.io/store/types"
-	bankkeeper "cosmossdk.io/x/bank/keeper"
-	stakingkeeper "cosmossdk.io/x/staking/keeper"
-	"github.com/CosmWasm/wasmd/app"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
@@ -42,6 +18,30 @@ import (
 	"github.com/cosmos/ibc-go/v9/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
+	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/core/header"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	banktypes "cosmossdk.io/x/bank/types"
+	govkeeper "cosmossdk.io/x/gov/keeper"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/CosmWasm/wasmd/app"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 var MaxAccounts = 10
@@ -240,7 +240,17 @@ func NewTestChainWithValSet(tb testing.TB, coord *Coordinator, appFactory ChainA
 
 // GetContext returns the current context for the application.
 func (chain *TestChain) GetContext() sdk.Context {
-	return chain.App.NewUncachedContext(false, chain.ProposedHeader)
+	ctx := chain.App.NewUncachedContext(false, chain.ProposedHeader)
+	if ctx.HeaderInfo().ChainID == "" {
+		// workaround until https://github.com/cosmos/cosmos-sdk/issues/22507 is fixed
+		ctx = ctx.WithHeaderInfo(header.Info{
+			Time:    chain.ProposedHeader.Time,
+			Height:  chain.ProposedHeader.Height,
+			ChainID: chain.ProposedHeader.ChainID,
+			AppHash: chain.ProposedHeader.AppHash,
+		})
+	}
+	return ctx
 }
 
 // QueryProof performs an abci query with the given key and returns the proto encoded merkle proof
@@ -387,7 +397,6 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	}
 
 	rsp, gotErr := chain.sendWithSigner(chain.SenderPrivKey, chain.SenderAccount, msgs...)
-	require.NoError(chain.TB, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
 	return rsp, gotErr
 }
 

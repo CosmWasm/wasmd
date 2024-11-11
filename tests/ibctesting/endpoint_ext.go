@@ -14,7 +14,7 @@ func (endpoint *Endpoint) ChanCloseConfirm() error {
 		endpoint.ChannelConfig.PortID, endpoint.ChannelID,
 		proof, proofHeight,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
-		endpoint.Counterparty.GetChannelUpgrade().NextSequenceSend, // or 0 ?
+		0,
 	)
 	return endpoint.Chain.sendMsgs(msg)
 }

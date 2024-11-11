@@ -14,6 +14,28 @@ import (
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/gogoproto/proto"
+	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
+	ica "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
+	"github.com/cosmos/ibc-go/v9/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v9/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v9/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v9/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v9/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -118,29 +140,6 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
-	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
-	ica "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
-	"github.com/cosmos/ibc-go/v9/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v9/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v9/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v9/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v9/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -538,45 +537,38 @@ func NewWasmApp(
 
 	// IBC Fee Module keeper
 	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[ibcfeetypes.StoreKey]),
-		app.IBCFeeKeeper,
+		appCodec, runtime.NewKVStoreService(keys[ibcfeetypes.StoreKey]),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.AuthKeeper,
-		app.BankKeeper,
-	)
-
-	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCFeeKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		app.AuthKeeper,
-		app.BankKeeper,
-		govModuleAddr,
+		app.AuthKeeper, app.BankKeeper,
 	)
 
-	app.ICAHostKeeper = icahostkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
-		app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.AuthKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		govModuleAddr,
-	)
-
+	// ICA Controller keeper
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
-		app.GetSubspace(icacontrollertypes.SubModuleName),
+		appCodec, runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]), app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCFeeKeeper, // use ics29 fee as ics4Wrapper in middleware stack
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
+		govModuleAddr,
+	)
+
+	// ICA Host keeper
+	app.ICAHostKeeper = icahostkeeper.NewKeeper(
+		appCodec, runtime.NewKVStoreService(keys[icahosttypes.StoreKey]), app.GetSubspace(icahosttypes.SubModuleName),
+		app.IBCFeeKeeper, // use ics29 fee as ics4Wrapper in middleware stack
+		app.IBCKeeper.ChannelKeeper, app.AuthKeeper,
+		app.MsgServiceRouter(), app.GRPCQueryRouter(),
+		govModuleAddr,
+	)
+
+	// Create Transfer Keeper and pass IBCFeeKeeper as expected Channel and PortKeeper
+	// since fee middleware will wrap the IBCKeeper for underlying application.
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]), app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCFeeKeeper, // ISC4 Wrapper: fee IBC middleware
+		app.IBCKeeper.ChannelKeeper,
+		app.AuthKeeper, app.BankKeeper,
 		govModuleAddr,
 	)
 
@@ -590,6 +582,7 @@ func NewWasmApp(
 	// if we want to allow any custom callbacks
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
+		runtime.NewEnvironment(runtime.NewKVStoreService(keys[wasmtypes.StoreKey]), logger.With(log.ModuleKey, "x/wasm"), runtime.EnvWithMsgRouterService(app.MsgServiceRouter()), runtime.EnvWithQueryRouterService(app.GRPCQueryRouter())),
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		app.AuthKeeper,
 		app.BankKeeper,
@@ -651,6 +644,12 @@ func NewWasmApp(
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
+
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
+
 	/****  Module Options ****/
 
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -683,7 +682,7 @@ func NewWasmApp(
 		transfer.NewAppModule(appCodec, app.TransferKeeper),
 		ibcfee.NewAppModule(appCodec, app.IBCFeeKeeper),
 		ica.NewAppModule(appCodec, &app.ICAControllerKeeper, &app.ICAHostKeeper),
-		ibctm.AppModule{},
+		ibctm.NewAppModule(tmLightClientModule),
 	)
 
 	app.ModuleManager.RegisterLegacyAminoCodec(legacyAmino)
@@ -874,9 +873,8 @@ func NewWasmApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			panic(fmt.Errorf("error loading last version: %w", err))
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
-
 		// Initialize pinned codes in wasmvm as they are not persisted there
+		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}

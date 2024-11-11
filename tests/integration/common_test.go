@@ -77,7 +77,6 @@ func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context
 		panic(err)
 	}
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_ = stakingKeeper.BeginBlocker(ctx)
 	return ctx
 }
 

@@ -1,14 +1,14 @@
 package app
 
 import (
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+
 	bankkeeper "cosmossdk.io/x/bank/keeper"
 	govkeeper "cosmossdk.io/x/gov/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-
-	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )

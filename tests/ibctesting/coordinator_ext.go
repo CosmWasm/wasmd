@@ -1,10 +1,11 @@
 package ibctesting
 
 import (
+	"testing"
+
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
 	"github.com/stretchr/testify/require"
-	"testing"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )

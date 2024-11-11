@@ -261,11 +261,12 @@ replace (
 // v0.0.0-20241106165340-4eb943897eaa = ibc-go marko/gomod_change branch
 // v1.0.0-alpha.5.0.20241108095921-406f977be0b9 = sdk main branch
 // v9.0.0-20241108113619-eedadcc9a686 =  ibc-go custom branch with updates
+// v1.0.0-rc.0.0.20241106093505-9611c5a0e6e3 // sdk main
 replace (
-	cosmossdk.io/api => cosmossdk.io/api v0.7.3-0.20241108095921-406f977be0b9 // main
+	cosmossdk.io/api => cosmossdk.io/api v0.7.3-0.20241108095921-406f977be0b9
 	cosmossdk.io/client/v2 => cosmossdk.io/client/v2 v2.0.0-20241108061010-a0458127fccf
-	cosmossdk.io/core => cosmossdk.io/core v1.0.0-alpha.5.0.20241108095921-406f977be0b9 // main
-	cosmossdk.io/store => cosmossdk.io/store v1.0.0-rc.0.0.20240906090851-36d9b25e8981 // main
+	cosmossdk.io/core => cosmossdk.io/core v1.0.0-alpha.5.0.20241108095921-406f977be0b9
+	cosmossdk.io/store => cosmossdk.io/store v1.0.0-rc.0.0.20241108095921-406f977be0b9
 	cosmossdk.io/x/accounts => cosmossdk.io/x/accounts v0.0.0-20241108061010-a0458127fccf
 	cosmossdk.io/x/accounts/defaults/lockup => cosmossdk.io/x/accounts/defaults/lockup v0.0.0-20241108061010-a0458127fccf
 	cosmossdk.io/x/accounts/defaults/multisig => cosmossdk.io/x/accounts/defaults/multisig v0.0.0-20241108061010-a0458127fccf
@@ -290,8 +291,8 @@ replace (
 	// pseudo version lower than the latest tag
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.0.0-20241108061010-a0458127fccf
 
-	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/alpe/ibc-go/modules/apps/callbacks v0.0.0-20241108113619-eedadcc9a686
-	github.com/cosmos/ibc-go/v9 => /Users/alex/workspace/cosmos/ibc-go/
+	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/alpe/ibc-go/modules/apps/callbacks v0.0.0-20241109123747-a8b8a35b6521
+	github.com/cosmos/ibc-go/v9 => github.com/alpe/ibc-go/v9 v9.0.0-20241109123747-a8b8a35b6521
 )
 
 retract (

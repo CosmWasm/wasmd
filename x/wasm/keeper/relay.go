@@ -37,7 +37,7 @@ func (k Keeper) OnOpenChannel(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -72,7 +72,7 @@ func (k Keeper) OnConnectChannel(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -111,11 +111,11 @@ func (k Keeper) OnCloseChannel(
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	params := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, sdkCtx.GasMeter(), gasLeft, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, sdkCtx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -150,7 +150,7 @@ func (k Keeper) OnRecvPacket(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(sdkCtx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -225,7 +225,7 @@ func (k Keeper) OnAckPacket(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -261,7 +261,7 @@ func (k Keeper) OnTimeoutPacket(
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -296,7 +296,7 @@ func (k Keeper) IBCSourceCallback(
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
@@ -331,7 +331,7 @@ func (k Keeper) IBCDestinationCallback(
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)

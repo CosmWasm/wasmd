@@ -74,12 +74,12 @@ func TestPinPong(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  counterpartyPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
 	coordinator.SetupConnections(path)

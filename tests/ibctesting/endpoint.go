@@ -3,18 +3,9 @@ package ibctesting
 import (
 	"errors"
 	"fmt"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"strings"
 
-	"github.com/stretchr/testify/require"
-
-	govtypesv1 "cosmossdk.io/x/gov/types/v1"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
-
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v9/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
@@ -22,6 +13,13 @@ import (
 	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
 	"github.com/cosmos/ibc-go/v9/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
+	"github.com/stretchr/testify/require"
+
+	govtypesv1 "cosmossdk.io/x/gov/types/v1"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Endpoint is a which represents a channel endpoint and its associated

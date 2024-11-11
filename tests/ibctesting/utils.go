@@ -2,6 +2,7 @@ package ibctesting
 
 import (
 	"fmt"
+
 	"github.com/stretchr/testify/require"
 
 	govtypesv1 "cosmossdk.io/x/gov/types/v1"

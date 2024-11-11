@@ -3,12 +3,11 @@ package ibctesting
 import (
 	"bytes"
 	"errors"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 
 	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
-
 	transfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	ibcmock "github.com/cosmos/ibc-go/v9/testing/mock"
 )
 

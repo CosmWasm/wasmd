@@ -230,16 +230,15 @@ func TestRustPanicIsHandled(t *testing.T) {
 }
 
 func checkAccount(t *testing.T, ctx context.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
-	acct := accKeeper.GetAccount(ctx, addr)
+	gotBalance := bankKeeper.GetAllBalances(ctx, addr)
 	if expected == nil {
-		assert.Nil(t, acct)
+		assert.True(t, gotBalance.Empty())
 	} else {
-		assert.NotNil(t, acct)
 		if expected.Empty() {
 			// there is confusion between nil and empty slice... let's just treat them the same
-			assert.True(t, bankKeeper.GetAllBalances(ctx, acct.GetAddress()).Empty())
+			assert.True(t, gotBalance.Empty())
 		} else {
-			assert.Equal(t, bankKeeper.GetAllBalances(ctx, acct.GetAddress()), expected)
+			assert.Equal(t, expected.String(), gotBalance.String())
 		}
 	}
 }

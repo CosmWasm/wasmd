@@ -2,11 +2,11 @@ package ibctesting
 
 import (
 	"fmt"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"strconv"
 	"testing"
 	"time"
 
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
 )
 

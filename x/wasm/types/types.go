@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 
+	"cosmossdk.io/core/header"
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -269,21 +271,21 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+func NewEnv(ctx context.Context, header header.Info, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	// safety checks before casting below
-	if ctx.BlockHeight() < 0 {
+	if header.Height < 0 {
 		panic("Block height must never be negative")
 	}
-	nano := ctx.BlockTime().UnixNano()
+	nano := header.Time.UnixNano()
 	if nano < 1 {
 		panic("Block (unix) time must never be empty or negative ")
 	}
 
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
-			Height:  uint64(ctx.BlockHeight()),
+			Height:  uint64(header.Height),
 			Time:    wasmvmtypes.Uint64(nano),
-			ChainID: ctx.ChainID(),
+			ChainID: header.ChainID,
 		},
 		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),

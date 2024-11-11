@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
+	coretesting "cosmossdk.io/core/testing"
 	"cosmossdk.io/log"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -21,7 +21,8 @@ import (
 var emptyWasmOpts []wasmkeeper.Option
 
 func TestWasmdExport(t *testing.T) {
-	db := dbm.NewMemDB()
+	db := coretesting.NewMemDB()
+
 	logger := log.NewTestLogger(t)
 	gapp := NewWasmAppWithCustomOptions(t, false, SetupOptions{
 		Logger:  logger.With("instance", "first"),
@@ -63,7 +64,6 @@ func TestBlockedAddrs(t *testing.T) {
 			fmt.Sprintf("ensure that blocked addresses are properly set in bank keeper: %s should be blocked", acc),
 		)
 	}
-
 }
 
 func TestGetMaccPerms(t *testing.T) {

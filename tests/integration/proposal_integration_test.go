@@ -224,7 +224,7 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 		"",
 		content.GetTitle(),
 		content.GetDescription(),
-		false,
+		v1.ProposalType_PROPOSAL_TYPE_STANDARD,
 	)
 	require.NoError(t, err)
 

@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -522,6 +523,10 @@ func TestReadWasmConfig(t *testing.T) {
 
 type AppOptionsMock map[string]interface{}
 
+func (a AppOptionsMock) GetString(s string) string {
+	return fmt.Sprintf("%v", a[s])
+}
+
 func (a AppOptionsMock) Get(s string) interface{} {
 	return a[s]
 }
@@ -567,7 +572,7 @@ func assertAttribute(t *testing.T, key, value string, attr abci.EventAttribute) 
 func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, expectedNum int, marshaler codec.Codec) {
 	t.Helper()
 	path := "/cosmwasm.wasm.v1.Query/Codes"
-	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path})
+	resp, sdkerr := q.Route(path)(ctx, &abci.QueryRequest{Path: path})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 
@@ -588,7 +593,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/Code"
-	resp, err := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
+	resp, err := q.Route(path)(ctx, &abci.QueryRequest{Path: path, Data: bz})
 	if len(expectedBytes) == 0 {
 		require.Equal(t, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID).Error(), err.Error())
 		return
@@ -608,7 +613,7 @@ func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/ContractsByCode"
-	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.QueryRequest{Path: path, Data: bz})
 	if len(expContractAddrs) == 0 {
 		assert.ErrorIs(t, err, types.ErrNotFound)
 		return
@@ -633,7 +638,7 @@ func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Conte
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/RawContractState"
-	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.QueryRequest{Path: path, Data: bz})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 	bz = resp.Value
@@ -651,7 +656,7 @@ func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, err)
 
 	path := "/cosmwasm.wasm.v1.Query/ContractInfo"
-	resp, sdkerr := q.Route(path)(ctx, &abci.RequestQuery{Path: path, Data: bz})
+	resp, sdkerr := q.Route(path)(ctx, &abci.QueryRequest{Path: path, Data: bz})
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 	bz = resp.Value

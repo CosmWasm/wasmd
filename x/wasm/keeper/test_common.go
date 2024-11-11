@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
+	icacontrollertypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v9/modules/apps/27-interchain-accounts/host/types"
+	ibcfeetypes "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v9/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v9/modules/core"
@@ -24,6 +24,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/core/header"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
@@ -40,12 +41,14 @@ import (
 	"cosmossdk.io/x/bank"
 	bankkeeper "cosmossdk.io/x/bank/keeper"
 	banktypes "cosmossdk.io/x/bank/types"
+	circuittypes "cosmossdk.io/x/circuit/types"
 	consensusparamkeeper "cosmossdk.io/x/consensus/keeper"
 	consensusparamtypes "cosmossdk.io/x/consensus/types"
 	"cosmossdk.io/x/distribution"
 	distributionkeeper "cosmossdk.io/x/distribution/keeper"
 	distributiontypes "cosmossdk.io/x/distribution/types"
 	distrtypes "cosmossdk.io/x/distribution/types"
+	epochstypes "cosmossdk.io/x/epochs/types"
 	"cosmossdk.io/x/evidence"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	"cosmossdk.io/x/feegrant"
@@ -55,6 +58,7 @@ import (
 	govv1 "cosmossdk.io/x/gov/types/v1"
 	"cosmossdk.io/x/mint"
 	minttypes "cosmossdk.io/x/mint/types"
+	nftkeeper "cosmossdk.io/x/nft/keeper"
 	"cosmossdk.io/x/params"
 	paramskeeper "cosmossdk.io/x/params/keeper"
 	paramstypes "cosmossdk.io/x/params/types"
@@ -89,6 +93,10 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var moduleBasics = module.NewManager(
@@ -149,14 +157,15 @@ var TestingStakeParams = stakingtypes.Params{
 type TestFaucet struct {
 	t                testing.TB
 	bankKeeper       bankkeeper.Keeper
+	accountKeeper    types.AccountKeeper
 	sender           sdk.AccAddress
 	balance          sdk.Coins
 	minterModuleName string
 }
 
-func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
+func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, accKeeper types.AccountKeeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
 	require.NotEmpty(t, initialAmount)
-	r := &TestFaucet{t: t, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
+	r := &TestFaucet{t: t, bankKeeper: bankKeeper, minterModuleName: minterModuleName, accountKeeper: accKeeper}
 	_, addr := keyPubAddr()
 	r.sender = addr
 	r.Mint(ctx, addr, initialAmount...)
@@ -174,6 +183,7 @@ func (f *TestFaucet) Mint(parentCtx sdk.Context, addr sdk.AccAddress, amounts ..
 	f.balance = f.balance.Add(amounts...)
 }
 
+// Fund creates a bank balance and default account type if none exists already
 func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amounts ...sdk.Coin) {
 	require.NotEmpty(f.t, amounts)
 	// ensure faucet is always filled
@@ -184,6 +194,11 @@ func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amount
 	err := f.bankKeeper.SendCoins(ctx, f.sender, receiver, amounts)
 	require.NoError(f.t, err)
 	f.balance = f.balance.Sub(amounts...)
+	if !f.accountKeeper.HasAccount(ctx, receiver) {
+		// bank module has changed and does not create a base account out of the box.
+		// but for testing purpose, we do this again
+		f.accountKeeper.SetAccount(ctx, f.accountKeeper.NewAccountWithAddress(ctx, receiver))
+	}
 }
 
 func (f *TestFaucet) NewFundedRandomAccount(ctx sdk.Context, amounts ...sdk.Coin) sdk.AccAddress {
@@ -206,6 +221,7 @@ type TestKeepers struct {
 	Faucet         *TestFaucet
 	MultiStore     storetypes.CommitMultiStore
 	WasmStoreKey   *storetypes.KVStoreKey
+	AddressCodec   signing.AddressCodec
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -232,11 +248,15 @@ func createTestInput(
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
-		minttypes.StoreKey, distributiontypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
-		evidencetypes.StoreKey, ibctransfertypes.StoreKey,
-		feegrant.StoreKey, authzkeeper.StoreKey,
-		types.StoreKey,
+		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
+		govtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
+		evidencetypes.StoreKey, circuittypes.StoreKey, paramstypes.StoreKey,
+		authzkeeper.StoreKey, nftkeeper.StoreKey, pooltypes.StoreKey,
+		accounts.StoreKey, epochstypes.StoreKey,
+		// non sdk store keys
+		ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
+		types.StoreKey, icahosttypes.StoreKey,
+		icacontrollertypes.StoreKey,
 	)
 	logger := log.NewTestLogger(t)
 	ms := store.NewCommitMultiStore(db, logger, storemetrics.NewNoOpMetrics())
@@ -260,7 +280,11 @@ func createTestInput(
 			Height: 1234567,
 			Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 		},
-	)
+	).WithHeaderInfo(header.Info{
+		Height:  1234567,
+		Time:    time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		ChainID: "testing",
+	})
 	ctx = types.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(t)
@@ -296,15 +320,20 @@ func createTestInput(
 		require.True(t, ok)
 		return r
 	}
-	maccPerms := map[string][]string{ // module account permissions
-		authtypes.FeeCollectorName:     nil,
-		distributiontypes.ModuleName:   nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		types.ModuleName:               {authtypes.Burner},
+	maccPerms := map[string][]string{
+		authtypes.FeeCollectorName:         nil,
+		distrtypes.ModuleName:              nil,
+		pooltypes.ModuleName:               nil,
+		pooltypes.StreamAccount:            nil,
+		pooltypes.ProtocolPoolDistrAccount: nil,
+		minttypes.ModuleName:               {authtypes.Minter},
+		stakingtypes.BondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:     {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                {authtypes.Burner},
+		// non sdk modules
+		ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:      nil,
+		types.ModuleName:            {authtypes.Burner},
 	}
 
 	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
@@ -314,6 +343,7 @@ func createTestInput(
 			ValidatorAddressCodec: codecaddress.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		},
 	})
+	require.NoError(t, err)
 
 	signingCtx := interfaceRegistry.SigningContext()
 	txDecoder, err := txdecode.NewDecoder(txdecode.Options{
@@ -345,7 +375,6 @@ func createTestInput(
 		// PRODUCTION: add
 		baseaccount.NewAccount("base", txConfig.SignModeHandler(), baseaccount.WithSecp256K1PubKey()),
 	)
-
 	if err != nil {
 		panic(err)
 	}
@@ -422,7 +451,7 @@ func createTestInput(
 		consensusParamsKeeper,
 	)
 
-	faucet := NewTestFaucet(t, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdkmath.NewInt(100_000_000_000)))
+	faucet := NewTestFaucet(t, ctx, bankKeeper, accountKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdkmath.NewInt(100_000_000_000)))
 
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
@@ -439,6 +468,7 @@ func createTestInput(
 
 	keeper := NewKeeper(
 		appCodec,
+		runtime.NewEnvironment(runtime.NewKVStoreService(keys[types.StoreKey]), logger.With(log.ModuleKey, "x/wasm"), runtime.EnvWithMsgRouterService(msgRouter), runtime.EnvWithQueryRouterService(querier)),
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		accountKeeper,
 		bankKeeper,
@@ -503,6 +533,7 @@ func createTestInput(
 		Faucet:         faucet,
 		MultiStore:     ms,
 		WasmStoreKey:   keys[types.StoreKey],
+		AddressCodec:   signingCtx.AddressCodec(),
 	}
 	return ctx, keepers
 }
@@ -844,7 +875,7 @@ func (m BurnerExampleInitMsg) GetBytes(t testing.TB) []byte {
 func fundAccounts(t testing.TB, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	NewTestFaucet(t, ctx, bank, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
+	NewTestFaucet(t, ctx, bank, am, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
 }
 
 var keyCounter uint64

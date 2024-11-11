@@ -3,6 +3,9 @@ package app
 import (
 	"errors"
 
+	ibcante "github.com/cosmos/ibc-go/v9/modules/core/ante"
+	"github.com/cosmos/ibc-go/v9/modules/core/keeper"
+
 	corestoretypes "cosmossdk.io/core/store"
 	circuitante "cosmossdk.io/x/circuit/ante"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -10,9 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante/unorderedtx"
-
-	ibcante "github.com/cosmos/ibc-go/v9/modules/core/ante"
-	"github.com/cosmos/ibc-go/v9/modules/core/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"

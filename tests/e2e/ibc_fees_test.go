@@ -43,19 +43,18 @@ func TestIBCFeesTransfer(t *testing.T) {
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
 	path := wasmibctesting.NewPath(chainA, chainB)
-	metadata := must(ibcfee.MetadataFromVersion(ibcfee.Version))
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&metadata)),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&metadata)),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
-	coord.Setup(path)
+	path.Setup()
 	appA := chainA.App.(*app.WasmApp)
 	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID))
 	// and with a payee registered on both chains
@@ -138,20 +137,19 @@ func TestIBCFeesWasm(t *testing.T) {
 	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
-	metadata := must(ibcfee.MetadataFromVersion(ibcfee.Version))
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibcContractPortID,
-		Version: string(marshaler.MustMarshalJSON(&metadata)),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&metadata)),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-29 fee enabled channel setup between both chains
-	coord.Setup(path)
+	path.Setup()
 	appA := chainA.App.(*app.WasmApp)
 	appB := chainB.App.(*app.WasmApp)
 	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibcContractPortID, path.EndpointA.ChannelID))
