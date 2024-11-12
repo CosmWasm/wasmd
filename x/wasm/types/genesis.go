@@ -1,10 +1,11 @@
 package types
 
 import (
+	gogoprotoany "github.com/cosmos/gogoproto/types/any"
+
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gogoprotoany "github.com/cosmos/gogoproto/types/any"
 )
 
 func (s Sequence) ValidateBasic() error {

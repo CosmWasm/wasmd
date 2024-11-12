@@ -8,10 +8,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	distributionkeeper "cosmossdk.io/x/distribution/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
 	stakingtypes "cosmossdk.io/x/staking/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -77,7 +77,6 @@ func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context
 		panic(err)
 	}
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_ = stakingKeeper.BeginBlocker(ctx)
 	return ctx
 }
 

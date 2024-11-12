@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"cosmossdk.io/core/appmodule"
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/core/appmodule"
+	gas "cosmossdk.io/core/gas"
 	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -322,7 +323,7 @@ func (k Keeper) instantiate(
 	}
 
 	// prepare params for contract instantiate call
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddress)
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
@@ -410,7 +411,9 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 
-	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: execute")
+	if err := k.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: execute"); err != nil {
+		return nil, err
+	}
 
 	// add more funds
 	if !coins.IsZero() {
@@ -419,7 +422,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 		}
 	}
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddress)
 	info := types.NewInfo(caller, coins)
 
 	// prepare querier
@@ -573,9 +576,11 @@ func (k Keeper) callMigrateEntrypoint(
 ) (*wasmvmtypes.Response, error) {
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, newChecksum, k.IsPinnedCode(sdkCtx, newCodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
-	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: migrate")
+	if err := k.GasService.GasMeter(sdkCtx).Consume(setupCost, "Loading CosmWasm module: migrate"); err != nil {
+		return nil, err
+	}
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(sdkCtx, k.Environment.HeaderService.HeaderInfo(sdkCtx), contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
@@ -623,9 +628,11 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 
-	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: sudo")
+	if err := k.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: sudo"); err != nil {
+		return nil, err
+	}
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
@@ -667,7 +674,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	replyCosts := k.gasRegister.ReplyCosts(true, reply)
 	ctx.GasMeter().ConsumeGas(replyCosts, "Loading CosmWasm module: reply")
 
-	env := types.NewEnv(ctx, contractAddress)
+	env := types.NewEnv(ctx, k.Environment.HeaderService.HeaderInfo(ctx), contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -859,12 +866,14 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(req))
-	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: query")
+	if err := k.Environment.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: query"); err != nil {
+		return nil, err
+	}
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddr)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(ctx, k.HeaderService.HeaderInfo(sdkCtx), contractAddr)
 	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), k.runtimeGasForContract(sdkCtx), costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if qErr != nil {
@@ -1301,6 +1310,7 @@ func (k Keeper) runtimeGasForContract(ctx sdk.Context) uint64 {
 
 func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	consumed := k.gasRegister.FromWasmVMGas(gas)
+
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
 	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
 	if ctx.GasMeter().IsOutOfGas() {
@@ -1391,22 +1401,22 @@ func (k Keeper) newQueryHandler(ctx context.Context, contractAddress sdk.AccAddr
 
 // MultipliedGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
 type MultipliedGasMeter struct {
-	originalMeter storetypes.GasMeter
+	originalMeter gas.Meter
 	GasRegister   types.GasRegister
 }
 
-func NewMultipliedGasMeter(originalMeter storetypes.GasMeter, gr types.GasRegister) MultipliedGasMeter {
+func NewMultipliedGasMeter(originalMeter gas.Meter, gr types.GasRegister) MultipliedGasMeter {
 	return MultipliedGasMeter{originalMeter: originalMeter, GasRegister: gr}
 }
 
 var _ wasmvm.GasMeter = MultipliedGasMeter{}
 
 func (m MultipliedGasMeter) GasConsumed() storetypes.Gas {
-	return m.GasRegister.ToWasmVMGas(m.originalMeter.GasConsumed())
+	return m.GasRegister.ToWasmVMGas(m.originalMeter.Consumed())
 }
 
 func (k Keeper) gasMeter(ctx sdk.Context) MultipliedGasMeter {
-	return NewMultipliedGasMeter(ctx.GasMeter(), k.gasRegister)
+	return NewMultipliedGasMeter(k.GasService.GasMeter(ctx), k.gasRegister)
 }
 
 // Logger returns a module-specific logger.
@@ -1470,15 +1480,16 @@ var _ AccountPruner = VestingCoinBurner{}
 
 // VestingCoinBurner default implementation for AccountPruner to burn the coins
 type VestingCoinBurner struct {
-	bank types.BankKeeper
+	bank              types.BankKeeper
+	moduleAccountAddr sdk.AccAddress
 }
 
 // NewVestingCoinBurner constructor
-func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
+func NewVestingCoinBurner(bank types.BankKeeper, modAcc sdk.AccAddress) VestingCoinBurner {
 	if bank == nil {
 		panic("bank keeper must not be nil")
 	}
-	return VestingCoinBurner{bank: bank}
+	return VestingCoinBurner{bank: bank, moduleAccountAddr: modAcc}
 }
 
 // CleanupExistingAccount accepts only vesting account types to burns all their original vesting coin balances.
@@ -1497,7 +1508,7 @@ func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc s
 	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
 		return false, errorsmod.Wrap(err, "prune account balance")
 	}
-	if err := b.bank.BurnCoins(ctx, []byte(types.ModuleName), coinsToBurn); err != nil {
+	if err := b.bank.BurnCoins(ctx, b.moduleAccountAddr, coinsToBurn); err != nil {
 		return false, errorsmod.Wrap(err, "burn account balance")
 	}
 	return true, nil

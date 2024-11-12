@@ -4,7 +4,9 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 
 	bankkeeper "cosmossdk.io/x/bank/keeper"
+	govkeeper "cosmossdk.io/x/gov/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
@@ -33,4 +35,8 @@ func (app *WasmApp) GetAccountKeeper() authkeeper.AccountKeeper {
 
 func (app *WasmApp) GetWasmKeeper() wasmkeeper.Keeper {
 	return app.WasmKeeper
+}
+
+func (app *WasmApp) GetGovKeeper() govkeeper.Keeper {
+	return app.GovKeeper
 }

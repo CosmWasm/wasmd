@@ -9,10 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/core/appmodule"
 	storetypes "cosmossdk.io/store/types"
-
 	bankkeeper "cosmossdk.io/x/bank/keeper"
 	stakingkeeper "cosmossdk.io/x/staking/keeper"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -155,7 +156,7 @@ func TestConstructorOptions(t *testing.T) {
 			opt := spec.srcOpt
 			_, gotPostOptMarker := opt.(postOptsFn)
 			require.Equal(t, spec.isPostOpt, gotPostOptMarker)
-			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultNodeConfig(), types.VMConfig{}, AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(codec, appmodule.Environment{}, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultNodeConfig(), types.VMConfig{}, AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

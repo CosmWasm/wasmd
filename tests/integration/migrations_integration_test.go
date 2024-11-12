@@ -3,15 +3,15 @@ package integration
 import (
 	"testing"
 
-	"cosmossdk.io/math/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/math/unsafe"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/CosmWasm/wasmd/app"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
@@ -22,7 +22,7 @@ func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
 	myAddress := sdk.AccAddress(unsafe.Bytes(address.Len))
 
-	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 
@@ -41,12 +41,10 @@ func TestModuleMigrations(t *testing.T) {
 
 				// upgrade code shipped with v0.40
 				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
-				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
-				keyTable := v2.ParamKeyTable()
-				if !sp.HasKeyTable() {
-					sp.WithKeyTable(keyTable)
-				}
-
+				sp, ok := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				require.False(t, ok)
+				sp = wasmApp.ParamsKeeper.Subspace(types.ModuleName).
+					WithKeyTable(v2.ParamKeyTable())
 				sp.SetParamSet(ctx, &params)
 			},
 			exp: types.Params{
@@ -64,7 +62,8 @@ func TestModuleMigrations(t *testing.T) {
 
 				// upgrade code shipped with v0.40
 				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
-				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				sp, ok := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				require.True(t, ok)
 				keyTable := v2.ParamKeyTable()
 				if !sp.HasKeyTable() {
 					sp.WithKeyTable(keyTable)
@@ -114,7 +113,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 
 	wasmApp := app.Setup(t)
 
-	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 

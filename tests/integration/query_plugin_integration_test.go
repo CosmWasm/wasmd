@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -20,9 +21,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	banktypes "cosmossdk.io/x/bank/types"
 	stakingtypes "cosmossdk.io/x/staking/types"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -129,7 +130,7 @@ func TestReflectStargateQuery(t *testing.T) {
 
 func TestReflectGrpcQuery(t *testing.T) {
 	queryPlugins := (*reflectPlugins()).Merge(&wasmKeeper.QueryPlugins{
-		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
+		Grpc: func(ctx context.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
 				return &banktypes.QueryAllBalancesResponse{
 					Balances: sdk.NewCoins(),
@@ -155,7 +156,8 @@ func TestReflectGrpcQuery(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// now grpc query for the bank balance
-	cosmosBankQuery := banktypes.NewQueryAllBalancesRequest(creator, nil, false)
+	creatorStr := must(keepers.AddressCodec.BytesToString(creator))
+	cosmosBankQuery := banktypes.NewQueryAllBalancesRequest(creatorStr, nil, false)
 	cosmosBankQueryBz, err := proto.Marshal(cosmosBankQuery)
 	require.NoError(t, err)
 	reflectQuery := wasmvmtypes.QueryRequest{
@@ -921,7 +923,7 @@ func reflectPlugins() *wasmKeeper.QueryPlugins {
 	}
 }
 
-func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+func performCustomQuery(_ context.Context, request json.RawMessage) ([]byte, error) {
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {
@@ -947,8 +949,6 @@ func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
 	ctx := wasmApp.NewUncachedContext(false, cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
-	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
-	require.NoError(t, err)
 
 	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
 	accepted := wasmKeeper.AcceptedQueries{

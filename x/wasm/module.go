@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/appmodule/v2"
+	"cosmossdk.io/core/registry"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,7 +25,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"cosmossdk.io/core/registry"
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -33,8 +33,14 @@ import (
 )
 
 var (
-	_ module.AppModuleBasic      = AppModule{}
+	_ module.HasAminoCodec       = AppModule{}
+	_ module.HasGRPCGateway      = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
+
+	_ appmodule.AppModule             = AppModule{}
+	_ appmodule.HasMigrations         = AppModule{}
+	_ appmodule.HasRegisterInterfaces = AppModule{}
+	_ appmodule.HasGenesis            = AppModule{}
 )
 
 // Module init related flags
@@ -45,11 +51,11 @@ const (
 	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
-func (b AppModule) RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
+func (am AppModule) RegisterLegacyAminoCodec(registrar registry.AminoRegistrar) {
 	types.RegisterLegacyAminoCodec(registrar)
 }
 
-func (b AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
+func (am AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
 	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 	if err != nil {
 		panic(err)
@@ -61,36 +67,18 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the wasm
-// module.
-func (AppModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(&types.GenesisState{
-		Params: types.DefaultParams(),
-	})
-}
-
-// ValidateGenesis performs genesis state validation for the wasm module.
-func (b AppModule) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEncodingConfig, message json.RawMessage) error {
-	var data types.GenesisState
-	err := marshaler.UnmarshalJSON(message, &data)
-	if err != nil {
-		return err
-	}
-	return types.ValidateGenesis(data)
-}
-
 // GetTxCmd returns the root tx command for the wasm module.
-func (b AppModule) GetTxCmd() *cobra.Command {
+func (am AppModule) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the wasm module.
-func (b AppModule) GetQueryCmd() *cobra.Command {
+func (am AppModule) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaces implements InterfaceModule
-func (b AppModule) RegisterInterfaces(registry registry.InterfaceRegistrar) {
+func (am AppModule) RegisterInterfaces(registry registry.InterfaceRegistrar) {
 	types.RegisterInterfaces(registry)
 }
 
@@ -107,6 +95,19 @@ type AppModule struct {
 	router             keeper.MessageRouter
 	// legacySubspace is used solely for migration of x/params managed parameters
 	legacySubspace exported.Subspace
+}
+
+func (am AppModule) RegisterMigrations(cfg appmodulev2.MigrationRegistrar) error {
+	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
+	err := cfg.Register(types.ModuleName, 1, m.Migrate1to2)
+	if err != nil {
+		return err
+	}
+	err = cfg.Register(types.ModuleName, 2, m.Migrate2to3)
+	if err != nil {
+		return err
+	}
+	return cfg.Register(types.ModuleName, 3, m.Migrate3to4)
 }
 
 // NewAppModule creates a new AppModule object
@@ -147,20 +148,6 @@ func (AppModule) ConsensusVersion() uint64 { return 4 }
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier(am.keeper))
-
-	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
-	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
-	if err != nil {
-		panic(err)
-	}
-	err = cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3)
-	if err != nil {
-		panic(err)
-	}
-	err = cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4)
-	if err != nil {
-		panic(err)
-	}
 }
 
 // RegisterInvariants registers the wasm module invariants.
@@ -171,23 +158,40 @@ func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute
 }
 
+// DefaultGenesis returns default genesis state as raw bytes for the wasm
+// module.
+func (am AppModule) DefaultGenesis() json.RawMessage {
+	return am.cdc.MustMarshalJSON(&types.GenesisState{
+		Params: types.DefaultParams(),
+	})
+}
+
+// ValidateGenesis performs genesis state validation for the wasm module.
+func (am AppModule) ValidateGenesis(message json.RawMessage) error {
+	var data types.GenesisState
+	err := am.cdc.UnmarshalJSON(message, &data)
+	if err != nil {
+		return err
+	}
+	return types.ValidateGenesis(data)
+}
+
 // InitGenesis performs genesis initialization for the wasm module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx context.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx context.Context, data json.RawMessage) error {
 	var genesisState types.GenesisState
-	cdc.MustUnmarshalJSON(data, &genesisState)
-	validators, err := keeper.InitGenesis(ctx, am.keeper, genesisState)
-	if err != nil {
-		panic(err)
-	}
-	return validators
+	am.cdc.MustUnmarshalJSON(data, &genesisState)
+	return keeper.InitGenesis(ctx, am.keeper, genesisState)
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the wasm
 // module.
-func (am AppModule) ExportGenesis(ctx context.Context, cdc codec.JSONCodec) json.RawMessage {
-	gs := keeper.ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(gs)
+func (am AppModule) ExportGenesis(ctx context.Context) (json.RawMessage, error) {
+	gs, err := keeper.ExportGenesis(ctx, am.keeper)
+	if err != nil {
+		return nil, err
+	}
+	return am.cdc.MarshalJSON(gs)
 }
 
 // ____________________________________________________________________________

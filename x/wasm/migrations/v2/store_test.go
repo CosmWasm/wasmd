@@ -3,17 +3,20 @@ package v2_test
 import (
 	"testing"
 
-	"cosmossdk.io/math/unsafe"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/math/unsafe"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-
 	paramskeeper "cosmossdk.io/x/params/keeper"
 	paramstypes "cosmossdk.io/x/params/types"
+
 	codectestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -73,7 +76,7 @@ func TestMigrate(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			paramsKeeper := paramskeeper.NewKeeper(cdc, cfg.Amino, paramsStoreKey, paramsTStoreKey)
-			ctx := testutil.DefaultContextWithKeys(
+			ctx := defaultContextWithKeys(
 				map[string]*storetypes.KVStoreKey{
 					paramstypes.StoreKey: paramsStoreKey,
 					types.StoreKey:       wasmStoreKey,
@@ -99,4 +102,32 @@ func TestMigrate(t *testing.T) {
 			assert.Equal(t, params, res)
 		})
 	}
+}
+
+func defaultContextWithKeys(
+	keys map[string]*storetypes.KVStoreKey,
+	transKeys map[string]*storetypes.TransientStoreKey,
+	memKeys map[string]*storetypes.MemoryStoreKey,
+) sdk.Context {
+	db := dbm.NewMemDB()
+	cms := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+
+	for _, key := range keys {
+		cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
+	}
+
+	for _, tKey := range transKeys {
+		cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
+	}
+
+	for _, memkey := range memKeys {
+		cms.MountStoreWithDB(memkey, storetypes.StoreTypeMemory, db)
+	}
+
+	err := cms.LoadLatestVersion()
+	if err != nil {
+		panic(err)
+	}
+
+	return sdk.NewContext(cms, false, log.NewNopLogger())
 }

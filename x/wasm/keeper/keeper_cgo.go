@@ -9,6 +9,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/core/appmodule"
 	corestoretypes "cosmossdk.io/core/store"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,6 +21,7 @@ import (
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(
 	cdc codec.Codec,
+	env appmodule.Environment,
 	storeService corestoretypes.KVStoreService,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -40,12 +42,13 @@ func NewKeeper(
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	keeper := &Keeper{
+		Environment:          env,
 		storeService:         storeService,
 		cdc:                  cdc,
 		wasmVM:               nil,
 		accountKeeper:        accountKeeper,
 		bank:                 NewBankCoinTransferrer(bankKeeper),
-		accountPruner:        NewVestingCoinBurner(bankKeeper),
+		accountPruner:        NewVestingCoinBurner(bankKeeper, accountKeeper.GetModuleAddress(types.ModuleName)),
 		portKeeper:           portKeeper,
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
 		gasRegister:          types.NewDefaultWasmGasRegister(),
@@ -59,7 +62,7 @@ func NewKeeper(
 		authority:  authority,
 		wasmLimits: vmConfig.WasmLimits,
 	}
-	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, bankKeeper, cdc, portSource)
+	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, bankKeeper, accountKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	preOpts, postOpts := splitOpts(opts)
 	for _, o := range preOpts {

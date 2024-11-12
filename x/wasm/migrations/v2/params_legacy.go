@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/gogoproto/jsonpb"
 
 	errorsmod "cosmossdk.io/errors"
-
 	paramtypes "cosmossdk.io/x/params/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
