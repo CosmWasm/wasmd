@@ -814,7 +814,7 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 		},
-		"Gov weighted vote: splitted": {
+		"Gov weighted vote: split": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{

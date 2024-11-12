@@ -64,7 +64,7 @@ $(STATIK):
 	@(cd /tmp && go install github.com/rakyll/statik@v0.1.6)
 
 # Install the runsim binary with a temporary workaround of entering an outside
-# directory as the "go get" command ignores the -mod option and will polute the
+# directory as the "go get" command ignores the -mod option and will pollute the
 # go.{mod, sum} files.
 #
 # ref: https://github.com/golang/go/issues/30515

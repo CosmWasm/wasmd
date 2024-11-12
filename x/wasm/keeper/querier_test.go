@@ -1024,13 +1024,13 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 		return ctx
 	}
 
-	var allExpecedContracts []string
+	var allExpectedContracts []string
 	// create 10 contracts with real block/gas setup
 	for i := 0; i < 10; i++ {
 		ctx = setBlock(ctx, h)
 		h++
 		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
-		allExpecedContracts = append(allExpecedContracts, contract.String())
+		allExpectedContracts = append(allExpectedContracts, contract.String())
 		require.NoError(t, err)
 	}
 
@@ -1043,7 +1043,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 			srcQuery: &types.QueryContractsByCreatorRequest{
 				CreatorAddress: creator.String(),
 			},
-			expContractAddr: allExpecedContracts,
+			expContractAddr: allExpectedContracts,
 			expErr:          nil,
 		},
 		"with pagination offset": {
@@ -1062,19 +1062,19 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 					Limit: 1,
 				},
 			},
-			expContractAddr: allExpecedContracts[0:1],
+			expContractAddr: allExpectedContracts[0:1],
 			expErr:          nil,
 		},
 		"nil creator": {
 			srcQuery: &types.QueryContractsByCreatorRequest{
 				Pagination: &query.PageRequest{},
 			},
-			expContractAddr: allExpecedContracts,
+			expContractAddr: allExpectedContracts,
 			expErr:          errors.New("empty address string is not allowed"),
 		},
 		"nil req": {
 			srcQuery:        nil,
-			expContractAddr: allExpecedContracts,
+			expContractAddr: allExpectedContracts,
 			expErr:          status.Error(codes.InvalidArgument, "empty request"),
 		},
 	}
