@@ -298,8 +298,8 @@ replace (
 	// pseudo version lower than the latest tag
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.0.0-20241108061010-a0458127fccf
 
-	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/alpe/ibc-go/modules/apps/callbacks v0.0.0-20241109123747-a8b8a35b6521
-	github.com/cosmos/ibc-go/v9 => github.com/alpe/ibc-go/v9 v9.0.0-20241109123747-a8b8a35b6521
+	github.com/cosmos/ibc-go/modules/apps/callbacks => github.com/pinosu/ibc-go/modules/apps/callbacks v0.0.0-20241113155047-e87c7ed6c158
+	github.com/cosmos/ibc-go/v9 => github.com/pinosu/ibc-go/v9 v9.0.0-20241113155047-e87c7ed6c158
 )
 
 retract (
