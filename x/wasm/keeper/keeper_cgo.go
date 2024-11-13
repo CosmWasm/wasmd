@@ -50,7 +50,7 @@ func NewKeeper(
 		bank:                 NewBankCoinTransferrer(bankKeeper),
 		accountPruner:        NewVestingCoinBurner(bankKeeper, accountKeeper.GetModuleAddress(types.ModuleName)),
 		portKeeper:           portKeeper,
-		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
+		queryGasLimit:        nodeConfig.SmartQueryGasLimit,
 		gasRegister:          types.NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		maxCallDepth:         types.DefaultMaxCallDepth,
