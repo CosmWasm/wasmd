@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"cosmossdk.io/log"
-
 	"cosmossdk.io/x/tx/signing"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
