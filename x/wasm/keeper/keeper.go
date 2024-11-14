@@ -270,7 +270,9 @@ func (k Keeper) instantiate(
 	ctx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, codeID))
 	setupCost := k.gasRegister.SetupContractCost(discount, len(initMsg))
 
-	k.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: instantiate")
+	if err := k.GasService.GasMeter(ctx).Consume(setupCost, "Loading CosmWasm module: instantiate"); err != nil {
+		return nil, nil, err
+	}
 
 	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
 		return nil, nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")

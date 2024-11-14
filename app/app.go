@@ -322,11 +322,11 @@ func NewWasmApp(
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
 	// create and set dummy vote extension handler
-	//voteExtOp := func(bApp *baseapp.BaseApp) {
+	// voteExtOp := func(bApp *baseapp.BaseApp) {
 	//	voteExtHandler := NewVoteExtensionHandler()
 	//	voteExtHandler.SetHandlers(bApp)
 	//}
-	//baseAppOptions = append(baseAppOptions, voteExtOp)
+	// baseAppOptions = append(baseAppOptions, voteExtOp)
 
 	// enable optimistic execution
 	baseAppOptions = append(baseAppOptions, baseapp.SetOptimisticExecution())
@@ -613,7 +613,6 @@ func NewWasmApp(
 	var icaControllerStack porttypes.IBCModule
 	// integration point for custom authentication modules
 	// see https://medium.com/the-interchain-foundation/ibc-go-v6-changes-to-interchain-accounts-and-how-it-impacts-your-chain-806c185300d7
-	icaControllerStack = icacontroller.NewIBCMiddleware(app.ICAControllerKeeper)
 	// app.ICAAuthModule = icaControllerStack.(ibcmock.IBCModule)
 	icaControllerStack = icacontroller.NewIBCMiddleware(app.ICAControllerKeeper)
 	icaControllerStack = ibccallbacks.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper, wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas)
@@ -953,7 +952,7 @@ func (app *WasmApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 	return app.ModuleManager.EndBlock(ctx)
 }
 
-func (a *WasmApp) Configurator() module.Configurator {
+func (a *WasmApp) Configurator() module.Configurator { //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	return a.configurator
 }
 

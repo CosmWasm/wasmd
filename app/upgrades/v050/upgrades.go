@@ -29,7 +29,7 @@ var Upgrade = upgrades.Upgrade{
 
 func CreateUpgradeHandler(
 	mm upgrades.ModuleManager,
-	configurator module.Configurator,
+	configurator module.Configurator, //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	// sdk 47 to sdk 50

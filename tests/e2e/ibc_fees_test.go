@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
@@ -246,12 +247,12 @@ func TestIBCFeesReflect(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-29 fee enabled channel setup between both chains
@@ -331,7 +332,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	// and on chain B
 	pendingIncentivisedPackages = appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID)
 	assert.Len(t, pendingIncentivisedPackages, 0)
-	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sdk.DefaultBondDenom, sdkmath.NewInt(10))
+	expBalance := GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sdk.DefaultBondDenom, sdkmath.NewInt(10))
 	gotBalance := chainB.Balance(actorChainB, expBalance.Denom)
 	assert.Equal(t, expBalance.String(), gotBalance.String(), chainB.AllBalances(actorChainB))
 }

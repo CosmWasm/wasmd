@@ -46,7 +46,6 @@ import (
 	consensusparamtypes "cosmossdk.io/x/consensus/types"
 	"cosmossdk.io/x/distribution"
 	distributionkeeper "cosmossdk.io/x/distribution/keeper"
-	distributiontypes "cosmossdk.io/x/distribution/types"
 	distrtypes "cosmossdk.io/x/distribution/types"
 	epochstypes "cosmossdk.io/x/epochs/types"
 	"cosmossdk.io/x/evidence"
@@ -307,7 +306,7 @@ func createTestInput(
 		banktypes.ModuleName,
 		stakingtypes.ModuleName,
 		minttypes.ModuleName,
-		distributiontypes.ModuleName,
+		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -438,8 +437,8 @@ func createTestInput(
 		authtypes.FeeCollectorName,
 		govModuleAddr)
 
-	require.NoError(t, distKeeper.Params.Set(ctx, distributiontypes.DefaultParams()))
-	require.NoError(t, distKeeper.FeePool.Set(ctx, distributiontypes.InitialFeePool()))
+	require.NoError(t, distKeeper.Params.Set(ctx, distrtypes.DefaultParams()))
+	require.NoError(t, distKeeper.FeePool.Set(ctx, distrtypes.InitialFeePool()))
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
 	upgradeKeeper := upgradekeeper.NewKeeper(

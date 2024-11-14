@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/core/appmodule/v2"
+	appmodulev2 "cosmossdk.io/core/appmodule/v2"
 	"cosmossdk.io/core/registry"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -145,7 +145,7 @@ func (am AppModule) IsAppModule() { // marker
 // should be set to 1.
 func (AppModule) ConsensusVersion() uint64 { return 4 }
 
-func (am AppModule) RegisterServices(cfg module.Configurator) {
+func (am AppModule) RegisterServices(cfg module.Configurator) { //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier(am.keeper))
 }

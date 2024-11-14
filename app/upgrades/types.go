@@ -27,7 +27,7 @@ type AppKeepers struct {
 	AuthKeeper            authkeeper.AccountKeeper
 }
 type ModuleManager interface {
-	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM appmodule.VersionMap) (appmodule.VersionMap, error)
+	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	GetVersionMap() appmodule.VersionMap
 }
 
@@ -40,6 +40,6 @@ type Upgrade struct {
 	UpgradeName string
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
-	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
+	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	StoreUpgrades        corestore.StoreUpgrades
 }

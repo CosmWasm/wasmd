@@ -372,12 +372,19 @@ func initTestnetFiles(
 			return err
 		}
 
-		if err := writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
+		err = writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz)
+		if err != nil {
 			return err
 		}
 
-		srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate)
-		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appConfig)
+		err = srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate)
+		if err != nil {
+			return err
+		}
+		err = srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appConfig)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := initGenFiles(clientCtx, mbm, args.chainID, genAccounts, genBalances, genFiles, args.numValidators); err != nil {
@@ -421,6 +428,9 @@ func initGenFiles(
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[banktypes.ModuleName], &bankGenState)
 
 	bankGenState.Balances, err = banktypes.SanitizeGenesisBalances(genBalances, clientCtx.AddressCodec)
+	if err != nil {
+		return err
+	}
 	for _, bal := range bankGenState.Balances {
 		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
 	}

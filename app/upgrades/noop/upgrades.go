@@ -26,7 +26,7 @@ func NewUpgrade(semver string) upgrades.Upgrade {
 
 func CreateUpgradeHandler(
 	mm upgrades.ModuleManager,
-	configurator module.Configurator,
+	configurator module.Configurator, //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) {
