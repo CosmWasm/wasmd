@@ -8,14 +8,17 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/core/header"
+	"cosmossdk.io/math/unsafe"
+	"cosmossdk.io/x/gov/types/v1beta1"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {
@@ -174,8 +177,8 @@ func TestContractInfoSetExtension(t *testing.T) {
 }
 
 func TestContractInfoMarshalUnmarshal(t *testing.T) {
-	var myAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
+	var myAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
+	var myOtherAddr sdk.AccAddress = unsafe.Bytes(ContractAddrLen)
 	anyPos := AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
 
 	anyTime := time.Now().UTC()
@@ -297,14 +300,17 @@ func TestContractInfoReadExtension(t *testing.T) {
 
 func TestNewEnv(t *testing.T) {
 	myTime := time.Unix(0, 1619700924259075000)
-	t.Logf("++ unix: %d", myTime.UnixNano())
 	var myContractAddr sdk.AccAddress = randBytes(ContractAddrLen)
 	specs := map[string]struct {
 		srcCtx sdk.Context
 		exp    wasmvmtypes.Env
 	}{
 		"all good with tx counter": {
-			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
+			srcCtx: WithTXCounter(sdk.Context{}.WithHeaderInfo(header.Info{
+				Height:  1,
+				Time:    myTime,
+				ChainID: "testing",
+			}).WithContext(context.Background()), 0),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,
@@ -318,7 +324,11 @@ func TestNewEnv(t *testing.T) {
 			},
 		},
 		"without tx counter": {
-			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()),
+			srcCtx: sdk.Context{}.WithHeaderInfo(header.Info{
+				Height:  1,
+				Time:    myTime,
+				ChainID: "testing",
+			}).WithContext(context.Background()),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,
@@ -333,7 +343,8 @@ func TestNewEnv(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, spec.exp, NewEnv(spec.srcCtx, myContractAddr))
+			headerInfo := runtime.HeaderService{}.HeaderInfo(spec.srcCtx)
+			assert.Equal(t, spec.exp, NewEnv(spec.srcCtx, headerInfo, myContractAddr))
 		})
 	}
 }

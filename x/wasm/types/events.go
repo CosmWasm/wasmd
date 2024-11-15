@@ -1,9 +1,10 @@
 package types
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
+	"github.com/cosmos/ibc-go/v9/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -32,7 +33,7 @@ const (
 
 // EmitAcknowledgementEvent emits an event signaling a successful or failed acknowledgement and including the error
 // details if any.
-func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack exported.Acknowledgement, err error) {
+func EmitAcknowledgementEvent(ctx context.Context, contractAddr sdk.AccAddress, ack exported.Acknowledgement, err error) {
 	success := err == nil && (ack == nil || ack.Success())
 	attributes := []sdk.Attribute{
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
@@ -44,7 +45,9 @@ func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack 
 		attributes = append(attributes, sdk.NewAttribute(AttributeKeyAckError, err.Error()))
 	}
 
-	ctx.EventManager().EmitEvent(
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	sdkCtx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			EventTypePacketRecv,
 			attributes...,

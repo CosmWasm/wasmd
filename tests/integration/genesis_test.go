@@ -79,14 +79,15 @@ func TestInitGenesis(t *testing.T) {
 	}, data.encConf.Codec)
 
 	// export into genstate
-	genState := keeper.ExportGenesis(data.ctx, &data.keeper)
+	genState, err := keeper.ExportGenesis(data.ctx, &data.keeper)
+	require.NoError(t, err)
 
 	// create new app to import genstate into
 	newData := setupTest(t)
 	q2 := newData.grpcQueryRouter
 
 	// initialize new app with genstate
-	_, err = keeper.InitGenesis(newData.ctx, &newData.keeper, *genState)
+	err = keeper.InitGenesis(newData.ctx, &newData.keeper, *genState)
 	require.NoError(t, err)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -11,14 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	banktypes "cosmossdk.io/x/bank/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -228,17 +229,16 @@ func TestRustPanicIsHandled(t *testing.T) {
 	assert.Nil(t, gotData)
 }
 
-func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
-	acct := accKeeper.GetAccount(ctx, addr)
+func checkAccount(t *testing.T, ctx context.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+	gotBalance := bankKeeper.GetAllBalances(ctx, addr)
 	if expected == nil {
-		assert.Nil(t, acct)
+		assert.True(t, gotBalance.Empty())
 	} else {
-		assert.NotNil(t, acct)
 		if expected.Empty() {
 			// there is confusion between nil and empty slice... let's just treat them the same
-			assert.True(t, bankKeeper.GetAllBalances(ctx, acct.GetAddress()).Empty())
+			assert.True(t, gotBalance.Empty())
 		} else {
-			assert.Equal(t, bankKeeper.GetAllBalances(ctx, acct.GetAddress()), expected)
+			assert.Equal(t, expected.String(), gotBalance.String())
 		}
 	}
 }
@@ -321,7 +321,7 @@ func reflectPlugins() *QueryPlugins {
 	}
 }
 
-func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+func performCustomQuery(_ context.Context, request json.RawMessage) ([]byte, error) {
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {

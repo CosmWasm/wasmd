@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/math/unsafe"
+	banktypes "cosmossdk.io/x/bank/types"
+	"cosmossdk.io/x/group"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/group"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/tests/ibctesting"
@@ -55,9 +55,9 @@ func TestGroupWithContract(t *testing.T) {
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// and a proposal submitted
-	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	recipientAddr := sdk.AccAddress(unsafe.Bytes(address.Len))
 
-	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
+	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr.String(), recipientAddr.String(), sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
@@ -110,9 +110,9 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// and a proposal submitted
-	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	recipientAddr := sdk.AccAddress(unsafe.Bytes(address.Len))
 
-	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
+	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr.String(), recipientAddr.String(), sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 

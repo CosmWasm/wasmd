@@ -64,7 +64,6 @@ func TestBuildContractAddressClassic(t *testing.T) {
 			gotAddr := BuildContractAddressClassic(spec.codeId, spec.instanceId)
 			// then
 			require.Equal(t, spec.expAddress, gotAddr.String())
-			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
@@ -93,7 +92,6 @@ func TestBuildContractAddressPredictable(t *testing.T) {
 			gotAddr := BuildContractAddressPredictable(spec.In.Checksum, spec.In.Creator, spec.In.Salt.Bytes(), []byte(spec.In.Msg))
 			// then
 			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
-			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }

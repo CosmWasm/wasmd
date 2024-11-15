@@ -8,9 +8,9 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -56,7 +56,7 @@ func TestIBCReflectContract(t *testing.T) {
 	coordinator.CommitBlock(chainA, chainB)
 	coordinator.UpdateTime()
 
-	require.Equal(t, chainA.CurrentHeader.Time, chainB.CurrentHeader.Time)
+	require.Equal(t, chainA.ProposedHeader.Time, chainB.ProposedHeader.Time)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
@@ -202,7 +202,7 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 }
 
 func TestOnChanOpenTryVersion(t *testing.T) {
-	const startVersion = ibctransfertypes.Version
+	const startVersion = ibctransfertypes.V1
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
 		expVersion  string
@@ -250,7 +250,7 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 			}
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  ibctransfertypes.PortID,
-				Version: ibctransfertypes.Version,
+				Version: ibctransfertypes.V1,
 				Order:   channeltypes.UNORDERED,
 			}
 

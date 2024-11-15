@@ -1,13 +1,14 @@
 package app
 
 import (
+	"fmt"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	dbm "github.com/cosmos/cosmos-db"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
+	coretesting "cosmossdk.io/core/testing"
 	"cosmossdk.io/log"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -20,7 +21,8 @@ import (
 var emptyWasmOpts []wasmkeeper.Option
 
 func TestWasmdExport(t *testing.T) {
-	db := dbm.NewMemDB()
+	db := coretesting.NewMemDB()
+
 	logger := log.NewTestLogger(t)
 	gapp := NewWasmAppWithCustomOptions(t, false, SetupOptions{
 		Logger:  logger.With("instance", "first"),
@@ -29,7 +31,7 @@ func TestWasmdExport(t *testing.T) {
 	})
 
 	// finalize block so we have CheckTx state set
-	_, err := gapp.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err := gapp.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height: 1,
 	})
 	require.NoError(t, err)
@@ -45,18 +47,22 @@ func TestWasmdExport(t *testing.T) {
 
 // ensure that blocked addresses are properly set in bank keeper
 func TestBlockedAddrs(t *testing.T) {
-	gapp := Setup(t)
+	app := Setup(t)
+	blockedAddrs, err := BlockedAddresses(app.interfaceRegistry.SigningContext().AddressCodec())
+	require.NoError(t, err)
+	for acc := range blockedAddrs {
+		var addr sdk.AccAddress
+		if modAddr, err := app.InterfaceRegistry().SigningContext().AddressCodec().StringToBytes(acc); err == nil {
+			addr = modAddr
+		} else {
+			addr = app.AuthKeeper.GetModuleAddress(acc)
+		}
 
-	for acc := range BlockedAddresses() {
-		t.Run(acc, func(t *testing.T) {
-			var addr sdk.AccAddress
-			if modAddr, err := sdk.AccAddressFromBech32(acc); err == nil {
-				addr = modAddr
-			} else {
-				addr = gapp.AccountKeeper.GetModuleAddress(acc)
-			}
-			require.True(t, gapp.BankKeeper.BlockedAddr(addr), "ensure that blocked addresses are properly set in bank keeper")
-		})
+		require.True(
+			t,
+			app.BankKeeper.BlockedAddr(addr),
+			fmt.Sprintf("ensure that blocked addresses are properly set in bank keeper: %s should be blocked", acc),
+		)
 	}
 }
 

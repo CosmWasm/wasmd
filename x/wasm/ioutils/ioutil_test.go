@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math/unsafe"
 )
 
 func TestUncompress(t *testing.T) {
@@ -52,7 +53,7 @@ func TestUncompress(t *testing.T) {
 			expError: errLimit,
 		},
 		"handle big gzip archive": {
-			src:      asGzip(rand.Bytes(2 * maxSize)),
+			src:      asGzip(unsafe.Bytes(2 * maxSize)),
 			expError: errLimit,
 		},
 	}

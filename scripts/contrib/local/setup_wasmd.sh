@@ -2,7 +2,7 @@
 set -o errexit -o nounset -o pipefail
 
 PASSWORD=${PASSWORD:-1234567890}
-STAKE=${STAKE_TOKEN:-ustake}
+STAKE=${STAKE_TOKEN:-stake}
 FEE=${FEE_TOKEN:-ucosm}
 CHAIN_ID=${CHAIN_ID:-testing}
 MONIKER=${MONIKER:-node001}
@@ -15,7 +15,7 @@ if ! wasmd keys show validator --keyring-backend=test; then
   (
     echo "$PASSWORD"
     echo "$PASSWORD"
-  ) | wasmd keys add validator --keyring-backend=test
+  ) | wasmd keys add validator --keyring-backend=test --no-backup
 fi
 # hardcode the validator account for this instance
 echo "$PASSWORD" | wasmd genesis add-genesis-account validator "1000000000000$STAKE,1000000000000$FEE" --keyring-backend=test

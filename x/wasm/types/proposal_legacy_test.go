@@ -12,9 +12,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/x/gov/types/v1beta1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestValidateProposalCommons(t *testing.T) {

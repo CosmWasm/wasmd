@@ -5,25 +5,30 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	corestore "cosmossdk.io/core/store"
-	circuittypes "cosmossdk.io/x/circuit/types"
+	"cosmossdk.io/x/accounts"
+	epochstypes "cosmossdk.io/x/epochs/types"
+	protocolpooltypes "cosmossdk.io/x/protocolpool/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
 )
 
 // UpgradeName defines the on-chain upgrade name
-const UpgradeName = "v0.50"
+const UpgradeName = "v0.52"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: corestore.StoreUpgrades{
 		Added: []string{
-			circuittypes.ModuleName,
+			accounts.StoreKey,
+			protocolpooltypes.StoreKey,
+			epochstypes.StoreKey,
 		},
-		Deleted: []string{},
+		Deleted: []string{"crisis"}, // The SDK discontinued the crisis module in v0.52.0
 	},
 }
 
@@ -32,8 +37,13 @@ func CreateUpgradeHandler(
 	configurator module.Configurator, //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
-	// sdk 47 to sdk 50
+	// sdk 50 to sdk 52
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) {
+		err := authkeeper.MigrateAccountNumberUnsafe(ctx, &ak.AuthKeeper)
+		if err != nil {
+			return nil, err
+		}
+
 		return mm.RunMigrations(ctx, configurator, fromVM)
 	}
 }

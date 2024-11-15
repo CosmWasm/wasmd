@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	"context"
 	"encoding/hex"
 	"io"
 	"math"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -54,7 +55,7 @@ func (ws *WasmSnapshotter) SnapshotExtension(height uint64, payloadWriter snapsh
 		return err
 	}
 
-	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(cacheMS, false, log.NewNopLogger())
 	seenBefore := make(map[string]bool)
 	var rerr error
 
@@ -99,7 +100,7 @@ func (ws *WasmSnapshotter) RestoreExtension(height uint64, format uint32, payloa
 	return snapshot.ErrUnknownFormat
 }
 
-func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
+func restoreV1(_ context.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")
 	}
@@ -116,7 +117,7 @@ func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
 	return nil
 }
 
-func finalizeV1(ctx sdk.Context, k *Keeper) error {
+func finalizeV1(ctx context.Context, k *Keeper) error {
 	// FIXME: ensure all codes have been uploaded?
 	return k.InitializePinnedCodes(ctx)
 }
@@ -124,10 +125,10 @@ func finalizeV1(ctx sdk.Context, k *Keeper) error {
 func (ws *WasmSnapshotter) processAllItems(
 	height uint64,
 	payloadReader snapshot.ExtensionPayloadReader,
-	cb func(sdk.Context, *Keeper, []byte) error,
-	finalize func(sdk.Context, *Keeper) error,
+	cb func(context.Context, *Keeper, []byte) error,
+	finalize func(context.Context, *Keeper) error,
 ) error {
-	ctx := sdk.NewContext(ws.cms, tmproto.Header{Height: int64(height)}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ws.cms, false, log.NewNopLogger()).WithBlockHeader(tmproto.Header{Height: int64(height)})
 	for {
 		payload, err := payloadReader()
 		if err == io.EOF {

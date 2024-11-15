@@ -5,7 +5,7 @@ BASE_ACCOUNT=$(wasmd keys show validator -a --keyring-backend=test)
 wasmd q auth account "$BASE_ACCOUNT" -o json | jq
 
 echo "## Add new account"
-wasmd keys add fred --keyring-backend=test
+wasmd keys add fred --keyring-backend=test --no-backup
 
 echo "## Check balance"
 NEW_ACCOUNT=$(wasmd keys show fred -a --keyring-backend=test)

@@ -12,10 +12,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/authz"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authztypes "github.com/cosmos/cosmos-sdk/types/authz"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 func TestContractAuthzFilterValidate(t *testing.T) {
@@ -542,7 +543,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 	myContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
 	otherContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
 	specs := map[string]struct {
-		auth      authztypes.Authorization
+		auth      authz.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
 		expErr    *errorsmod.Error
@@ -874,7 +875,7 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		auth      authztypes.Authorization
+		auth      authz.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
 		expErr    *errorsmod.Error

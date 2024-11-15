@@ -3,17 +3,18 @@ package upgrades
 import (
 	"context"
 
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
 
+	"cosmossdk.io/core/appmodule"
+	corestore "cosmossdk.io/core/store"
 	storetypes "cosmossdk.io/store/types"
+	consensusparamkeeper "cosmossdk.io/x/consensus/keeper"
+	paramskeeper "cosmossdk.io/x/params/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 )
 
 type AppKeepers struct {
@@ -22,12 +23,12 @@ type AppKeepers struct {
 	ConsensusParamsKeeper *consensusparamkeeper.Keeper
 	Codec                 codec.Codec
 	GetStoreKey           func(storeKey string) *storetypes.KVStoreKey
-	CapabilityKeeper      *capabilitykeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper
+	AuthKeeper            authkeeper.AccountKeeper
 }
 type ModuleManager interface {
-	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM module.VersionMap) (module.VersionMap, error)
-	GetVersionMap() module.VersionMap
+	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM appmodule.VersionMap) (appmodule.VersionMap, error) //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
+	GetVersionMap() appmodule.VersionMap
 }
 
 // Upgrade defines a struct containing necessary fields that a SoftwareUpgradeProposal
@@ -39,6 +40,6 @@ type Upgrade struct {
 	UpgradeName string
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
-	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
-	StoreUpgrades        storetypes.StoreUpgrades
+	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler //nolint:staticcheck // SA1019: Configurator is deprecated but still used in runtime v1.
+	StoreUpgrades        corestore.StoreUpgrades
 }

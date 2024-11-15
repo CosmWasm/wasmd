@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -10,27 +11,28 @@ import (
 	"time"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	bankkeeper "cosmossdk.io/x/bank/keeper"
+	govtypes "cosmossdk.io/x/gov/types"
+	"cosmossdk.io/x/gov/types/v1beta1"
+	stakingkeeper "cosmossdk.io/x/staking/keeper"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -96,7 +98,9 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// export
-	exportedState := ExportGenesis(srcCtx, wasmKeeper)
+	exportedState, err := ExportGenesis(srcCtx, wasmKeeper)
+	require.NoError(t, err)
+
 	// order should not matter
 	rand.Shuffle(len(exportedState.Codes), func(i, j int) {
 		exportedState.Codes[i], exportedState.Codes[j] = exportedState.Codes[j], exportedState.Codes[i]
@@ -132,7 +136,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	_, err = InitGenesis(dstCtx, dstKeeper, importState)
+	err = InitGenesis(dstCtx, dstKeeper, importState)
 	require.NoError(t, err)
 
 	// compare whole DB
@@ -168,9 +172,11 @@ func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
 	creator := RandomAccountAddress(t)
 	_, _, err := keepers.ContractKeeper.Instantiate2(eCtx, codeID, creator, nil, []byte("{}"), "testing", nil, []byte("my_salt"), false)
 	require.NoError(t, err)
-	genesisState := ExportGenesis(eCtx, k)
+	genesisState, err := ExportGenesis(eCtx, k)
+	require.NoError(t, err)
+
 	// when imported
-	_, err = InitGenesis(ctx, k, *genesisState)
+	err = InitGenesis(ctx, k, *genesisState)
 	require.NoError(t, err)
 }
 
@@ -492,7 +498,7 @@ func TestGenesisInit(t *testing.T) {
 			keeper, ctx := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			_, gotErr := InitGenesis(ctx, keeper, spec.src)
+			gotErr := InitGenesis(ctx, keeper, spec.src)
 			if !spec.expSuccess {
 				require.Error(t, gotErr)
 				return
@@ -587,7 +593,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState)
+	err = InitGenesis(ctx, keeper, importState)
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -667,10 +673,12 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, cmtproto.Header{
-		Height: 1234567,
-		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
-	}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, false, log.NewNopLogger()).WithBlockHeader(
+		cmtproto.Header{
+			Height: 1234567,
+			Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		},
+	)
 
 	encodingConfig := MakeEncodingConfig(t)
 	// register an example extension. must be protobuf
@@ -685,11 +693,11 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 
 	srcKeeper := NewKeeper(
 		encodingConfig.Codec,
+		appmodule.Environment{},
 		runtime.NewKVStoreService(keyWasm),
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},
-		nil,
 		nil,
 		nil,
 		nil,
@@ -712,7 +720,7 @@ type StakingKeeperMock struct {
 	gotCalls        int
 }
 
-func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ context.Context) ([]abci.ValidatorUpdate, error) {
 	s.gotCalls++
 	return s.validatorUpdate, s.err
 }
