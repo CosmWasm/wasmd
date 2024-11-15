@@ -17,6 +17,7 @@ import (
 	banktypes "cosmossdk.io/x/bank/types"
 	distributiontypes "cosmossdk.io/x/distribution/types"
 	v1 "cosmossdk.io/x/gov/types/v1"
+	protocolpooltypes "cosmossdk.io/x/protocolpool/types"
 	stakingtypes "cosmossdk.io/x/staking/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -155,7 +156,7 @@ func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionM
 		if err != nil {
 			return nil, err
 		}
-		fundMsg := distributiontypes.MsgFundCommunityPool{
+		fundMsg := protocolpooltypes.MsgFundCommunityPool{
 			Depositor: sender.String(),
 			Amount:    amt,
 		}

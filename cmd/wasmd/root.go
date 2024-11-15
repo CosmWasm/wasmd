@@ -119,6 +119,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	initRootCmd(rootCmd, encodingConfig.TxConfig, encodingConfig.InterfaceRegistry, encodingConfig.Codec, tempApp.ModuleManager)
+	addModuleInitFlags(rootCmd)
 
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()

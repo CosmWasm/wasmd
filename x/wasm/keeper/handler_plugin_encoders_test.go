@@ -6,6 +6,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
@@ -16,6 +17,7 @@ import (
 	banktypes "cosmossdk.io/x/bank/types"
 	distributiontypes "cosmossdk.io/x/distribution/types"
 	govv1 "cosmossdk.io/x/gov/types/v1"
+	protocolpooltypes "cosmossdk.io/x/protocolpool/types"
 	stakingtypes "cosmossdk.io/x/staking/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -388,7 +390,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&distributiontypes.MsgFundCommunityPool{
+				&protocolpooltypes.MsgFundCommunityPool{
 					Depositor: addr1.String(),
 					Amount: sdk.NewCoins(
 						sdk.NewInt64Coin("stones", 200),
