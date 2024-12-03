@@ -64,7 +64,7 @@ $(STATIK):
 	@(cd /tmp && go install github.com/rakyll/statik@v0.1.6)
 
 # Install the runsim binary with a temporary workaround of entering an outside
-# directory as the "go get" command ignores the -mod option and will polute the
+# directory as the "go get" command ignores the -mod option and will pollute the
 # go.{mod, sum} files.
 #
 # ref: https://github.com/golang/go/issues/30515
@@ -76,7 +76,7 @@ $(RUNSIM):
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT):
 	@echo "Installing golangci-lint..."
-	@(cd /tmp && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.0)
+	@(cd /tmp && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.3)
 
 tools-clean:
 	rm -f $(STATIK) $(GOLANGCI_LINT) $(RUNSIM)

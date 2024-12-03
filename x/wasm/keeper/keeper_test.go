@@ -50,7 +50,7 @@ var hackatomWasm []byte
 
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -84,6 +84,24 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 
 	_, _, err := keepers.ContractKeeper.Create(ctx, nil, hackatomWasm, nil)
 	require.Error(t, err, "nil creator is not allowed")
+}
+
+func TestWasmLimits(t *testing.T) {
+	one := uint32(1)
+	cfg := types.DefaultNodeConfig()
+	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, types.VMConfig{
+		WasmLimits: wasmvmtypes.WasmLimits{
+			MaxImports: &one, // very low limit that every contract will fail
+		},
+	}, dbm.NewMemDB())
+	keeper := keepers.ContractKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+
+	_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "Import")
 }
 
 func TestCreateNilWasmCode(t *testing.T) {
@@ -221,7 +239,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	onlyOther := types.AccessTypeAnyOfAddresses.With(other)
 
 	specs := map[string]struct {
-		defaultPermssion    types.AccessType
+		defaultPermission   types.AccessType
 		requestedPermission *types.AccessConfig
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
@@ -229,42 +247,42 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		expError *errorsmod.Error
 	}{
 		"override everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"default to everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"explicitly set everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &types.AccessConfig{Permission: types.AccessTypeEverybody},
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"cannot override nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: &onlyCreator,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
 		"default to nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
 		},
 		"only defaults to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: nil,
 			grantedPermission:   onlyCreator,
 		},
 		"can explicitly set to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"cannot override which address in only": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyOther,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
@@ -272,7 +290,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.InstantiateDefaultPermission = spec.defaultPermssion
+			params.InstantiateDefaultPermission = spec.defaultPermission
 			err := keeper.SetParams(ctx, params)
 			require.NoError(t, err)
 			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
@@ -402,7 +420,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bc8f), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1bca5), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -939,7 +957,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1acb4), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1acdb), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -1372,14 +1390,14 @@ func TestMigrate(t *testing.T) {
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
-		"all good with migration to older migrate version": {
-			admin:       creator,
-			caller:      creator,
-			initMsg:     initMsgBz,
-			fromCodeID:  hackatom420.CodeID,
-			toCodeID:    hackatom42.CodeID,
-			migrateMsg:  migMsgBz,
-			expVerifier: newVerifierAddr,
+		"contract returns error when downgrading version": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: hackatom420.CodeID,
+			toCodeID:   hackatom42.CodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
 		},
 	}
 
@@ -1597,9 +1615,14 @@ func TestIterateContractsByCode(t *testing.T) {
 
 func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
-	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
-		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
-	}}
+	mockWasmVM := wasmtesting.MockWasmEngine{
+		MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		},
+		MigrateWithInfoFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, migrateInfo wasmvmtypes.MigrateInfo, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		},
+	}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
@@ -1624,7 +1647,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 
 type sudoMsg struct {
 	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-	// Here we show that some priviledged Go module can make a call that should never be exposed
+	// Here we show that some privileged Go module can make a call that should never be exposed
 	// to end users (via Tx/Execute).
 	//
 	// The contract developer can choose to expose anything to sudo. This functionality is not a true
@@ -1670,7 +1693,7 @@ func TestSudo(t *testing.T) {
 	// now the community wants to get paid via sudo
 	msg := sudoMsg{
 		// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-		// Here we show that some priviledged Go module can make a call that should never be exposed
+		// Here we show that some privileged Go module can make a call that should never be exposed
 		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
@@ -2475,7 +2498,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 			creatorAddr:   mockAddress2,
 			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
 		},
-		"contractAdress": {
+		"contractAddress": {
 			creatorAddr:   gotAddr1,
 			contractsAddr: []string{gotAddr3.String()},
 		},

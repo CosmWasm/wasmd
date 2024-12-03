@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"runtime/debug"
 
@@ -402,8 +403,8 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
-			contracts = append(contracts, accAddres.String())
+			accAddress := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
+			contracts = append(contracts, accAddress.String())
 		}
 		return true, nil
 	})
@@ -437,6 +438,17 @@ func ensurePaginationParams(req *query.PageRequest) (*query.PageRequest, error) 
 		req.Limit = maxResultEntries
 	}
 	return req, nil
+}
+
+func (q GrpcQuerier) WasmLimitsConfig(c context.Context, req *types.QueryWasmLimitsConfigRequest) (*types.QueryWasmLimitsConfigResponse, error) {
+	json, err := json.Marshal(q.keeper.GetWasmLimits())
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryWasmLimitsConfigResponse{
+		Config: string(json),
+	}, nil
 }
 
 func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddressRequest) (*types.QueryBuildAddressResponse, error) {

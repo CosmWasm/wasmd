@@ -66,7 +66,7 @@ func setupTest(t *testing.T) testData {
 
 	ctx, keepers := keeper.CreateTestInput(t, false, []string{
 		"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
 	})
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
@@ -446,7 +446,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
 }
 
-func TestReadWasmConfig(t *testing.T) {
+func TestReadNodeConfig(t *testing.T) {
 	withViper := func(s string) *viper.Viper {
 		v := viper.New()
 		v.SetConfigType("toml")
@@ -454,17 +454,17 @@ func TestReadWasmConfig(t *testing.T) {
 		return v
 	}
 	var one uint64 = 1
-	defaults := types.DefaultWasmConfig()
+	defaults := types.DefaultNodeConfig()
 
 	specs := map[string]struct {
 		src servertypes.AppOptions
-		exp types.WasmConfig
+		exp types.NodeConfig
 	}{
 		"set query gas limit via opts": {
 			src: AppOptionsMock{
 				"wasm.query_gas_limit": 1,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SmartQueryGasLimit: 1,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
 			},
@@ -473,7 +473,7 @@ func TestReadWasmConfig(t *testing.T) {
 			src: AppOptionsMock{
 				"wasm.memory_cache_size": 2,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				MemoryCacheSize:    2,
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 			},
@@ -482,7 +482,7 @@ func TestReadWasmConfig(t *testing.T) {
 			src: AppOptionsMock{
 				"trace": true,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
 				ContractDebugMode:  true,
@@ -497,12 +497,12 @@ func TestReadWasmConfig(t *testing.T) {
 			exp: defaults,
 		},
 		"custom config template values": {
-			src: withViper(types.ConfigTemplate(types.WasmConfig{
+			src: withViper(types.ConfigTemplate(types.NodeConfig{
 				SimulationGasLimit: &one,
 				SmartQueryGasLimit: 2,
 				MemoryCacheSize:    3,
 			})),
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SimulationGasLimit: &one,
 				SmartQueryGasLimit: 2,
 				MemoryCacheSize:    3,
@@ -512,7 +512,7 @@ func TestReadWasmConfig(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := wasm.ReadWasmConfig(spec.src)
+			got, err := wasm.ReadNodeConfig(spec.src)
 			require.NoError(t, err)
 			assert.Equal(t, spec.exp, got)
 		})

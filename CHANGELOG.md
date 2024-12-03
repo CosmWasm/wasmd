@@ -162,7 +162,7 @@
 - Log query error before redacting [\#1593](https://github.com/CosmWasm/wasmd/issues/1593)
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
 - Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)
-- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+- Ensure some constraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
 - Ensure genesis import works with both address generators [\#1629](https://github.com/CosmWasm/wasmd/issues/1629)
 - Set default query limit and ensure constraints [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
 
@@ -174,7 +174,7 @@
   - If `port_id` is omitted, all channels bound to the contract's port will be listed.
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
   - Pagination limit is set to 100 for all-state-query. See also [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
-- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+- Ensure some constraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
   - Total number of code ids is limited to 50 for pin/unpin operations
 - Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
 
@@ -413,7 +413,7 @@ below to learn more!
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 
-- Add dependencies for protobuf and remove third_party forlder [/#1030](https://github.com/CosmWasm/wasmd/pull/1030)
+- Add dependencies for protobuf and remove third_party folder [/#1030](https://github.com/CosmWasm/wasmd/pull/1030)
 - Check wasmvm version on startup [\#1029](https://github.com/CosmWasm/wasmd/pull/1029/)
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
@@ -455,7 +455,7 @@ No
 
 **Fixed Bugs**
 
-- Fix: Make events in reply completely determinisitic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
+- Fix: Make events in reply completely deterministic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
 
 Migration notes:
 

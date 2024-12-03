@@ -402,7 +402,7 @@ func TestDispatchSubmessages(t *testing.T) {
 						// this is filtered out
 						sdk.NewEvent("message", sdk.NewAttribute("stargate", "something-something")),
 						// we still emit this to the client, but not the contract
-						sdk.NewEvent("non-determinstic"),
+						sdk.NewEvent("non-deterministic"),
 					}
 					return events, [][]byte{[]byte("subData")}, [][]*codectypes.Any{}, nil
 				},
@@ -410,7 +410,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte("subData"),
 			expCommits: []bool{true},
 			expEvents: []sdk.Event{
-				sdk.NewEvent("non-determinstic"),
+				sdk.NewEvent("non-deterministic"),
 				// the event from reply is also exposed
 				sdk.NewEvent("stargate-reply"),
 			},

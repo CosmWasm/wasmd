@@ -51,8 +51,8 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 	}
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
-			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			ctx, keepers := createTestInput(b, false, AvailableCapabilities, wasmConfig, spec.db())
+			nodeConfig := types.NodeConfig{MemoryCacheSize: 0}
+			ctx, keepers := createTestInput(b, false, AvailableCapabilities, nodeConfig, types.VMConfig{}, spec.db())
 			example := InstantiateHackatomExampleContract(b, ctx, keepers)
 			if spec.pinned {
 				require.NoError(b, keepers.ContractKeeper.PinCode(ctx, example.CodeID))
@@ -85,9 +85,9 @@ func BenchmarkCompilation(b *testing.B) {
 
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
-			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
+			nodeConfig := types.NodeConfig{MemoryCacheSize: 0}
 			db := dbm.NewMemDB()
-			ctx, keepers := createTestInput(b, false, AvailableCapabilities, wasmConfig, db)
+			ctx, keepers := createTestInput(b, false, AvailableCapabilities, nodeConfig, types.VMConfig{}, db)
 
 			// print out code size for comparisons
 			code, err := os.ReadFile(spec.wasmFile)

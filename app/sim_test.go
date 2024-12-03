@@ -179,7 +179,7 @@ func TestAppImportExport(t *testing.T) {
 		failedKVAs, failedKVBs := simtestutil.DiffKVStores(storeA, storeB, skipPrefixes[keyName])
 		if !assert.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare in %q", keyName) {
 			for _, v := range failedKVBs {
-				t.Logf("store missmatch: %q\n", v)
+				t.Logf("store mismatch: %q\n", v)
 			}
 			t.FailNow()
 		}
@@ -187,7 +187,7 @@ func TestAppImportExport(t *testing.T) {
 		t.Logf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), appKeyA, appKeyB)
 		if !assert.Equal(t, 0, len(failedKVAs), simtestutil.GetSimulationLog(keyName, app.SimulationManager().StoreDecoders, failedKVAs, failedKVBs)) {
 			for _, v := range failedKVAs {
-				t.Logf("store missmatch: %q\n", v)
+				t.Logf("store mismatch: %q\n", v)
 			}
 			t.FailNow()
 		}
