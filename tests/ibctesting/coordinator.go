@@ -102,7 +102,7 @@ func (coord *Coordinator) SetupClients(path *Path) {
 	require.NoError(coord.t, err)
 }
 
-// SetupClientConnections is a helper function to create clients and the appropriate
+// SetupConnections is a helper function to create clients and the appropriate
 // connections on both the source and counterparty chain. It assumes the caller does not
 // anticipate any errors.
 func (coord *Coordinator) SetupConnections(path *Path) {
@@ -111,7 +111,7 @@ func (coord *Coordinator) SetupConnections(path *Path) {
 	coord.CreateConnections(path)
 }
 
-// CreateConnection constructs and executes connection handshake messages in order to create
+// CreateConnections constructs and executes connection handshake messages in order to create
 // OPEN channels on chainA and chainB. The connection information of for chainA and chainB
 // are returned within a TestConnection struct. The function expects the connections to be
 // successfully opened otherwise testing will fail.
@@ -154,7 +154,7 @@ func (coord *Coordinator) CreateTransferChannels(path *Path) {
 	coord.CreateChannels(path)
 }
 
-// CreateChannel constructs and executes channel handshake messages in order to create
+// CreateChannels constructs and executes channel handshake messages in order to create
 // OPEN channels on chainA and chainB. The function expects the channels to be successfully
 // opened otherwise testing will fail.
 func (coord *Coordinator) CreateChannels(path *Path) {
