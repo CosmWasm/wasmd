@@ -18,7 +18,6 @@ linters:
     - exportloopref
     - goconst
     - gocritic
-    - gci
     - gofumpt
     - gosec
     - gosimple
@@ -31,43 +30,42 @@ linters:
     - revive
     - stylecheck
     - typecheck
-#    - thelper # too many positives with table tests that have custom setup(*testing.T)
     - unconvert
     - unused
 
 issues:
   exclude-rules:
-    - text: 'Use of weak random number generator'
+    - text: "Use of weak random number generator"
       linters:
         - gosec
-    - text: 'ST1003:'
+    - text: "ST1003:"
       linters:
         - stylecheck
     # FIXME: Disabled until golangci-lint updates stylecheck with this fix:
     # https://github.com/dominikh/go-tools/issues/389
-    - text: 'ST1016:'
+    - text: "ST1016:"
       linters:
         - stylecheck
-    - path: 'migrations'
-      text: 'SA1019:'
+    - path: "migrations"
+      text: "SA1019:"
       linters:
         - staticcheck
-    - text: 'SA1019: codec.NewAminoCodec is deprecated' # TODO remove once migration path is set out
+    - text: "SA1019: codec.NewAminoCodec is deprecated" # TODO remove once migration path is set out
       linters:
         - staticcheck
-    - text: 'SA1019: legacybech32.MustMarshalPubKey' # TODO remove once ready to remove from the sdk
+    - text: "SA1019: legacybech32.MustMarshalPubKey" # TODO remove once ready to remove from the sdk
       linters:
         - staticcheck
-    - text: 'SA1019: legacybech32.MarshalPubKey' # TODO remove once ready to remove from the sdk
+    - text: "SA1019: legacybech32.MarshalPubKey" # TODO remove once ready to remove from the sdk
       linters:
         - staticcheck
-    - text: 'SA1019: legacybech32.UnmarshalPubKey' # TODO remove once ready to remove from the sdk
+    - text: "SA1019: legacybech32.UnmarshalPubKey" # TODO remove once ready to remove from the sdk
       linters:
         - staticcheck
-    - text: 'SA1019: params.SendEnabled is deprecated' # TODO remove once ready to remove from the sdk
+    - text: "SA1019: params.SendEnabled is deprecated" # TODO remove once ready to remove from the sdk
       linters:
         - staticcheck
-    - text: 'leading space'
+    - text: "leading space"
       linters:
         - nolintlint
   max-issues-per-linter: 10000
@@ -140,7 +138,7 @@ linters-settings:
     require-explanation: false
     require-specific: false
   gosimple:
-    checks: ['all']
+    checks: ["all"]
   gocritic:
     disabled-checks:
       - regexpMust

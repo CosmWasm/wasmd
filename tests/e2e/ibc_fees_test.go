@@ -12,7 +12,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
 	transfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"

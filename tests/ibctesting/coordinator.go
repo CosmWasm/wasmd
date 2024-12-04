@@ -42,13 +42,25 @@ func NewCoordinatorX(t *testing.T, n int, appFactory ChainAppFactory, opts ...[]
 		CurrentTime: globalStartTime,
 	}
 
+	// Add debug logging
+	t.Logf("Initializing %d chains with app factory", n)
+
 	for i := 1; i <= n; i++ {
 		chainID := GetChainID(i)
 		var x []wasmkeeper.Option
 		if len(opts) > (i - 1) {
 			x = opts[i-1]
 		}
-		chains[chainID] = NewTestChain(t, coord, appFactory, chainID, x...)
+
+		// Add debug logging
+		t.Logf("Creating chain %s", chainID)
+
+		chain := NewTestChain(t, coord, appFactory, chainID, x...)
+		// Add verification that IBC modules are properly initialized
+		if err := chain.VerifyIBCModules(); err != nil {
+			t.Fatalf("Chain %s IBC modules not properly initialized: %v", chainID, err)
+		}
+		chains[chainID] = chain
 	}
 	coord.Chains = chains
 

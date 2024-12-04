@@ -715,3 +715,41 @@ func (chain *TestChain) GetClientLatestHeight(clientState exported.ClientState) 
 	}
 	return tmClientState.LatestHeight
 }
+
+func (chain *TestChain) VerifyIBCModules() error {
+	// Verify that the IBC keeper and its dependencies are properly initialized
+	if chain.App.GetIBCKeeper() == nil {
+		return fmt.Errorf("IBCKeeper is nil")
+	}
+
+	// Initialize proper configurations
+	clientConfig := ibctesting.NewTendermintConfig()
+	if clientConfig == nil {
+		return fmt.Errorf("failed to create Tendermint config")
+	}
+
+	connConfig := &ibctesting.ConnectionConfig{
+		DelayPeriod: 0,
+	}
+	chanConfig := &ibctesting.ChannelConfig{
+		PortID:  ibctesting.TransferPort,
+		Version: "ics20-1",
+		Order:   channeltypes.UNORDERED,
+	}
+
+	// Create endpoint with counterparty chain
+	endpoint := NewEndpoint(chain, clientConfig, connConfig, chanConfig)
+	if endpoint == nil {
+		return fmt.Errorf("failed to create endpoint")
+	}
+
+	// Add debug logging
+	chain.t.Logf("Creating client with config: %+v", clientConfig)
+
+	// Verify client creation with error handling
+	if err := endpoint.CreateClient(); err != nil {
+		return fmt.Errorf("failed to create Tendermint client: %v", err)
+	}
+
+	return nil
+}

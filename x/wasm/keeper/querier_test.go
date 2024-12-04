@@ -525,7 +525,7 @@ func TestQueryContractHistory(t *testing.T) {
 
 			// when
 			q := Querier(keeper)
-			got, gotErr := q.ContractHistory(xCtx, &spec.req) //nolint:gosec
+			got, gotErr := q.ContractHistory(xCtx, &spec.req)
 
 			// then
 			if spec.expErr != nil {
@@ -602,7 +602,7 @@ func TestQueryCodeList(t *testing.T) {
 			}
 			// when
 			q := Querier(keeper)
-			got, gotErr := q.Codes(xCtx, &spec.req) //nolint:gosec
+			got, gotErr := q.Codes(xCtx, &spec.req)
 
 			// then
 			if spec.expErr != nil {
@@ -674,7 +674,7 @@ func TestQueryContractInfo(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
-			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored) //nolint:gosec
+			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored)
 			// when
 			gotRsp, gotErr := querier.ContractInfo(xCtx, spec.src)
 			if spec.expErr {

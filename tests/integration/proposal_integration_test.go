@@ -17,6 +17,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
@@ -34,7 +35,7 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	capabilities = append(capabilities, "iterator")
 	pCtx, keepers := keeper.CreateTestInput(t, false, capabilities)
 	k := keepers.WasmKeeper
-	keepers.GovKeeper.SetLegacyRouter(v1beta1.NewRouter().
+	keepers.GovKeeper.SetLegacyRouter(govv1beta1.NewRouter().
 		AddRoute(types.ModuleName, keeper.NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
 	)
 	myAddress := keeper.RandomAccountAddress(t)
