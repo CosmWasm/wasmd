@@ -114,11 +114,11 @@ func TestOnRecvPacket(t *testing.T) {
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {
 				require.Panics(t, func() {
-					_ = h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
+					_ = h.OnRecvPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg, anyRelayerAddr)
 				})
 				return
 			}
-			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
+			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg, anyRelayerAddr)
 			assert.Equal(t, spec.expAck, gotAck)
 			assert.Equal(t, spec.expEvents, em.Events())
 		})

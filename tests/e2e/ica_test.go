@@ -69,7 +69,12 @@ func TestICA(t *testing.T) {
 			icaControllerAddr := sdk.AccAddress(icaControllerKey.PubKey().Address().Bytes())
 			controllerChain.Fund(icaControllerAddr, sdkmath.NewInt(1_000))
 
-			msg := icacontrollertypes.NewMsgRegisterInterchainAccount(path.EndpointA.ConnectionID, icaControllerAddr.String(), spec.icaVersion)
+			msg := icacontrollertypes.NewMsgRegisterInterchainAccount(
+				path.EndpointA.ConnectionID,
+				icaControllerAddr.String(),
+				spec.icaVersion,
+				channeltypes.ORDERED,
+			)
 			res, err := controllerChain.SendNonDefaultSenderMsgs(icaControllerKey, msg)
 			require.NoError(t, err)
 			chanID, portID, version := parseIBCChannelEvents(t, res)

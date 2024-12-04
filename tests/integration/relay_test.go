@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,10 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+)
+
+const (
+	Version = "ics20-1"
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
@@ -98,12 +103,12 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			path := wasmibctesting.NewPath(chainA, chainB)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  "transfer",
-				Version: ibctransfertypes.Version,
+				Version: Version,
 				Order:   channeltypes.UNORDERED,
 			}
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractBPortID,
-				Version: ibctransfertypes.Version,
+				Version: Version,
 				Order:   channeltypes.UNORDERED,
 			}
 
@@ -115,7 +120,17 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
+			msg := ibctransfertypes.NewMsgTransfer(
+				path.EndpointA.ChannelConfig.PortID,
+				path.EndpointA.ChannelID,
+				sdk.NewCoins(coinToSendToB),
+				chainA.SenderAccount.GetAddress().String(),
+				chainB.SenderAccount.GetAddress().String(),
+				timeoutHeight,
+				0,
+				"",
+				nil,
+			)
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
 			require.NoError(t, path.EndpointB.UpdateClient())
@@ -141,7 +156,14 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			assert.Equal(t, originalChainABalance.Amount.Add(spec.expChainABalanceDiff), newChainABalance.Amount)
 
 			// and dest chain balance contains voucher
-			expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, spec.expChainBBalanceDiff)
+			expBalance := sdk.NewCoin(
+				ibctransfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s/%s",
+					path.EndpointB.ChannelConfig.PortID,
+					path.EndpointB.ChannelID,
+					coinToSendToB.Denom,
+				)).IBCDenom(),
+				coinToSendToB.Amount,
+			)
 			gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 			assert.Equal(t, expBalance, gotBalance, "got total balance: %s", chainB.AllBalances(chainB.SenderAccount.GetAddress()))
 		})
@@ -171,12 +193,12 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -243,12 +265,12 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -319,12 +341,12 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -408,12 +430,12 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr1).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -469,12 +491,12 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -519,12 +541,12 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA1).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)

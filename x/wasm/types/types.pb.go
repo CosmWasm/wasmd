@@ -6,24 +6,21 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var (
-	_ = proto.Marshal
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -110,11 +107,9 @@ func (*AccessTypeParam) ProtoMessage()    {}
 func (*AccessTypeParam) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{0}
 }
-
 func (m *AccessTypeParam) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AccessTypeParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AccessTypeParam.Marshal(b, m, deterministic)
@@ -127,15 +122,12 @@ func (m *AccessTypeParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-
 func (m *AccessTypeParam) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AccessTypeParam.Merge(m, src)
 }
-
 func (m *AccessTypeParam) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AccessTypeParam) XXX_DiscardUnknown() {
 	xxx_messageInfo_AccessTypeParam.DiscardUnknown(m)
 }
@@ -154,11 +146,9 @@ func (*AccessConfig) ProtoMessage()    {}
 func (*AccessConfig) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{1}
 }
-
 func (m *AccessConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AccessConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AccessConfig.Marshal(b, m, deterministic)
@@ -171,15 +161,12 @@ func (m *AccessConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-
 func (m *AccessConfig) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AccessConfig.Merge(m, src)
 }
-
 func (m *AccessConfig) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AccessConfig) XXX_DiscardUnknown() {
 	xxx_messageInfo_AccessConfig.DiscardUnknown(m)
 }
@@ -197,11 +184,9 @@ func (*Params) ProtoMessage() {}
 func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{2}
 }
-
 func (m *Params) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
@@ -214,15 +199,12 @@ func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *Params) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Params.Merge(m, src)
 }
-
 func (m *Params) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *Params) XXX_DiscardUnknown() {
 	xxx_messageInfo_Params.DiscardUnknown(m)
 }
@@ -245,11 +227,9 @@ func (*CodeInfo) ProtoMessage()    {}
 func (*CodeInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{3}
 }
-
 func (m *CodeInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CodeInfo.Marshal(b, m, deterministic)
@@ -262,15 +242,12 @@ func (m *CodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *CodeInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CodeInfo.Merge(m, src)
 }
-
 func (m *CodeInfo) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CodeInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_CodeInfo.DiscardUnknown(m)
 }
@@ -301,11 +278,9 @@ func (*ContractInfo) ProtoMessage()    {}
 func (*ContractInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{4}
 }
-
 func (m *ContractInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractInfo.Marshal(b, m, deterministic)
@@ -318,15 +293,12 @@ func (m *ContractInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-
 func (m *ContractInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractInfo.Merge(m, src)
 }
-
 func (m *ContractInfo) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractInfo.DiscardUnknown(m)
 }
@@ -349,11 +321,9 @@ func (*ContractCodeHistoryEntry) ProtoMessage()    {}
 func (*ContractCodeHistoryEntry) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{5}
 }
-
 func (m *ContractCodeHistoryEntry) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractCodeHistoryEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractCodeHistoryEntry.Marshal(b, m, deterministic)
@@ -366,15 +336,12 @@ func (m *ContractCodeHistoryEntry) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-
 func (m *ContractCodeHistoryEntry) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractCodeHistoryEntry.Merge(m, src)
 }
-
 func (m *ContractCodeHistoryEntry) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractCodeHistoryEntry) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractCodeHistoryEntry.DiscardUnknown(m)
 }
@@ -397,11 +364,9 @@ func (*AbsoluteTxPosition) ProtoMessage()    {}
 func (*AbsoluteTxPosition) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{6}
 }
-
 func (m *AbsoluteTxPosition) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AbsoluteTxPosition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AbsoluteTxPosition.Marshal(b, m, deterministic)
@@ -414,15 +379,12 @@ func (m *AbsoluteTxPosition) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-
 func (m *AbsoluteTxPosition) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AbsoluteTxPosition.Merge(m, src)
 }
-
 func (m *AbsoluteTxPosition) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AbsoluteTxPosition) XXX_DiscardUnknown() {
 	xxx_messageInfo_AbsoluteTxPosition.DiscardUnknown(m)
 }
@@ -443,11 +405,9 @@ func (*Model) ProtoMessage()    {}
 func (*Model) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{7}
 }
-
 func (m *Model) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *Model) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Model.Marshal(b, m, deterministic)
@@ -460,15 +420,12 @@ func (m *Model) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *Model) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Model.Merge(m, src)
 }
-
 func (m *Model) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *Model) XXX_DiscardUnknown() {
 	xxx_messageInfo_Model.DiscardUnknown(m)
 }
@@ -593,7 +550,6 @@ func (this *AccessTypeParam) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *AccessConfig) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -626,7 +582,6 @@ func (this *AccessConfig) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *Params) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -654,7 +609,6 @@ func (this *Params) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *CodeInfo) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -685,7 +639,6 @@ func (this *CodeInfo) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *ContractInfo) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -728,7 +681,6 @@ func (this *ContractInfo) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *ContractCodeHistoryEntry) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -762,7 +714,6 @@ func (this *ContractCodeHistoryEntry) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *AbsoluteTxPosition) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -790,7 +741,6 @@ func (this *AbsoluteTxPosition) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *Model) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -818,7 +768,6 @@ func (this *Model) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (m *AccessTypeParam) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1182,7 +1131,6 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *AccessTypeParam) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1340,11 +1288,9 @@ func (m *Model) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *AccessTypeParam) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1414,7 +1360,6 @@ func (m *AccessTypeParam) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AccessConfig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1516,7 +1461,6 @@ func (m *AccessConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Params) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1619,7 +1563,6 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CodeInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1769,7 +1712,6 @@ func (m *CodeInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2039,7 +1981,6 @@ func (m *ContractInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractCodeHistoryEntry) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2198,7 +2139,6 @@ func (m *ContractCodeHistoryEntry) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AbsoluteTxPosition) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2287,7 +2227,6 @@ func (m *AbsoluteTxPosition) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Model) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2406,7 +2345,6 @@ func (m *Model) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

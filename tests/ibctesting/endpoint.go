@@ -66,7 +66,7 @@ func (endpoint *Endpoint) QueryProof(key []byte) ([]byte, clienttypes.Height) {
 	clientState := endpoint.Counterparty.Chain.GetClientState(endpoint.Counterparty.ClientID)
 
 	// query proof on the counterparty using the latest height of the IBC client
-	return endpoint.QueryProofAtHeight(key, clientState.GetLatestHeight().GetRevisionHeight())
+	return endpoint.QueryProofAtHeight(key, getLatestHeight(clientState).GetRevisionHeight())
 }
 
 // QueryProofAtHeight queries proof associated with this endpoint using the proof height
@@ -197,7 +197,7 @@ func (endpoint *Endpoint) UpgradeChain() error {
 		Root:               commitmenttypes.NewMerkleRoot(endpoint.Chain.LastHeader.Header.GetAppHash()),
 		NextValidatorsHash: endpoint.Chain.LastHeader.Header.NextValidatorsHash,
 	}
-	endpoint.Counterparty.SetConsensusState(consensusState, clientState.GetLatestHeight())
+	endpoint.Counterparty.SetConsensusState(consensusState, getLatestHeight(clientState))
 
 	// ensure the next update isn't identical to the one set in state
 	endpoint.Chain.Coordinator.IncrementTime()
@@ -230,13 +230,17 @@ func (endpoint *Endpoint) ConnOpenTry() error {
 	err := endpoint.UpdateClient()
 	require.NoError(endpoint.Chain.t, err)
 
-	counterpartyClient, proofClient, proofConsensus, consensusHeight, proofInit, proofHeight := endpoint.QueryConnectionHandshakeProof()
+	_, _, _, _, proofInit, proofHeight := endpoint.QueryConnectionHandshakeProof()
 
 	msg := connectiontypes.NewMsgConnectionOpenTry(
-		endpoint.ClientID, endpoint.Counterparty.ConnectionID, endpoint.Counterparty.ClientID,
-		counterpartyClient, endpoint.Counterparty.Chain.GetPrefix(), []*connectiontypes.Version{ibctesting.ConnectionVersion}, endpoint.ConnectionConfig.DelayPeriod,
-		proofInit, proofClient, proofConsensus,
-		proofHeight, consensusHeight,
+		endpoint.ClientID,
+		endpoint.Counterparty.ConnectionID,
+		endpoint.Counterparty.ClientID,
+		endpoint.Counterparty.Chain.GetPrefix(),
+		[]*connectiontypes.Version{ibctesting.ConnectionVersion},
+		endpoint.ConnectionConfig.DelayPeriod,
+		proofInit,
+		proofHeight,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
 	res, err := endpoint.Chain.SendMsgs(msg)
@@ -257,15 +261,18 @@ func (endpoint *Endpoint) ConnOpenAck() error {
 	err := endpoint.UpdateClient()
 	require.NoError(endpoint.Chain.t, err)
 
-	counterpartyClient, proofClient, proofConsensus, consensusHeight, proofTry, proofHeight := endpoint.QueryConnectionHandshakeProof()
+	// Only keep the proofs we need
+	_, _, _, _, proofTry, proofHeight := endpoint.QueryConnectionHandshakeProof()
 
 	msg := connectiontypes.NewMsgConnectionOpenAck(
-		endpoint.ConnectionID, endpoint.Counterparty.ConnectionID, counterpartyClient, // testing doesn't use flexible selection
-		proofTry, proofClient, proofConsensus,
-		proofHeight, consensusHeight,
+		endpoint.ConnectionID,
+		endpoint.Counterparty.ConnectionID,
+		proofTry,
+		proofHeight,
 		ibctesting.ConnectionVersion,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
+
 	return endpoint.Chain.sendMsgs(msg)
 }
 
@@ -301,7 +308,7 @@ func (endpoint *Endpoint) QueryConnectionHandshakeProof() (
 	clientKey := host.FullClientStateKey(endpoint.Counterparty.ClientID)
 	proofClient, proofHeight = endpoint.Counterparty.QueryProof(clientKey)
 
-	consensusHeight = clientState.GetLatestHeight().(clienttypes.Height)
+	consensusHeight = getLatestHeight(clientState)
 
 	// query proof for the consensus state on the counterparty
 	consensusKey := host.FullConsensusStateKey(endpoint.Counterparty.ClientID, consensusHeight)
@@ -427,6 +434,7 @@ func (endpoint *Endpoint) ChanCloseConfirm() error {
 		endpoint.ChannelConfig.PortID, endpoint.ChannelID,
 		proof, proofHeight,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
+		0, // Add sequence
 	)
 	return endpoint.Chain.sendMsgs(msg)
 }
@@ -571,6 +579,7 @@ func (endpoint *Endpoint) TimeoutOnClose(packet channeltypes.Packet) error {
 	timeoutOnCloseMsg := channeltypes.NewMsgTimeoutOnClose(
 		packet, nextSeqRecv,
 		proof, proofClosed, proofHeight, endpoint.Chain.SenderAccount.GetAddress().String(),
+		0, // Add sequence
 	)
 
 	return endpoint.Chain.sendMsgs(timeoutOnCloseMsg)
@@ -651,4 +660,22 @@ func (endpoint *Endpoint) QueryClientStateProof() (exported.ClientState, []byte)
 	proofClient, _ := endpoint.QueryProof(clientKey)
 
 	return clientState, proofClient
+}
+
+// Add helper method to Endpoint
+func (endpoint *Endpoint) GetClientLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
+}
+
+// Add helper method to get latest height from client state
+func getLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
 }

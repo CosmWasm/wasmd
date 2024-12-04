@@ -371,12 +371,10 @@ github.com/cosmos/gogoproto v1.7.0 h1:79USr0oyXAbxg3rspGh/m4SWNyoz/GLaAh0QlCe2fr
 github.com/cosmos/gogoproto v1.7.0/go.mod h1:yWChEv5IUEYURQasfyBW5ffkMHR/90hiHgbNgrtp4j0=
 github.com/cosmos/iavl v1.2.1 h1:68OrQEbUSfupX13SDRo+mYh7m1DPKq/uLalELH+qOzk=
 github.com/cosmos/iavl v1.2.1/go.mod h1:GiM43q0pB+uG53mLxLDzimxM9l/5N9UuSY3/D0huuVw=
-github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd h1:Lx+/5dZ/nN6qPXP2Ofog6u1fmlkCFA1ElcOconnofEM=
-github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd/go.mod h1:JWfpWVKJKiKtd53/KbRoKfxWl8FsT2GPcNezTOk0o5Q=
+github.com/cosmos/ibc-go/modules/apps/callbacks v0.0.0-20240902073039-8983f91e519f h1:SeoEfXIBac+7QfK8Owr4cCwZ1BAJONi+WNPk07PV/zA=
+github.com/cosmos/ibc-go/modules/apps/callbacks v0.0.0-20240902073039-8983f91e519f/go.mod h1:DCgByp780KeTpO0O7CDCSS2xO2kHsVLyxHupCbqmr3A=
 github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9svjthrX2+oXdZvzgGI=
 github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
-github.com/cosmos/ibc-go/v8 v8.4.0 h1:K2PfX0AZ+1XKZytHGEMuSjQXG/MZshPb83RSTQt2+cE=
-github.com/cosmos/ibc-go/v8 v8.4.0/go.mod h1:zh6x1osR0hNvEcFrC/lhGD08sMfQmr9wHVvZ/mRWMCs=
 github.com/cosmos/ibc-go/v9 v9.0.1 h1:P4BlAEnaHISaWtpibhKXmPPRommJIT9f8X4Ru7Oon/c=
 github.com/cosmos/ibc-go/v9 v9.0.1/go.mod h1:FeznzlNFQhhu1O8TrWJT+2L1OyKdUEb1kmmjuWod3VI=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=

@@ -202,7 +202,7 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 }
 
 func TestOnChanOpenTryVersion(t *testing.T) {
-	const startVersion = ibctransfertypes.Version
+	const startVersion = "ics20-1"
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
 		expVersion  string
@@ -250,7 +250,7 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 			}
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  ibctransfertypes.PortID,
-				Version: ibctransfertypes.Version,
+				Version: "ics20-1",
 				Order:   channeltypes.UNORDERED,
 			}
 

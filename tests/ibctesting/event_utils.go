@@ -106,7 +106,7 @@ func ParseChannelVersionFromEvents(events []abci.Event) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {
-				if attr.Key == channeltypes.AttributeVersion {
+				if attr.Key == "version" {
 					return attr.Value, nil
 				}
 			}

@@ -378,7 +378,6 @@ func createTestInput(
 		appCodec,
 		keys[ibcexported.StoreKey],
 		subspace(ibcexported.ModuleName),
-		stakingKeeper,
 		upgradeKeeper,
 		scopedIBCKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

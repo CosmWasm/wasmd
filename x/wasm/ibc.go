@@ -272,6 +272,7 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel,
 // OnRecvPacket implements the IBCModule interface
 func (i IBCHandler) OnRecvPacket(
 	ctx sdk.Context,
+	destinationPort string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
@@ -299,6 +300,7 @@ func (i IBCHandler) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface
 func (i IBCHandler) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	sourcePort string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -320,7 +322,12 @@ func (i IBCHandler) OnAcknowledgementPacket(
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+func (i IBCHandler) OnTimeoutPacket(
+	ctx sdk.Context,
+	sourcePort string,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
 	contractAddr, err := keeper.ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
