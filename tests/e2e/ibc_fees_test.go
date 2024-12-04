@@ -2,7 +2,9 @@ package e2e
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -26,6 +28,40 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+const (
+	testTimeout         = time.Minute
+	receiverAddressByte = byte(1)
+	payeeAddressByte    = byte(2)
+)
+
+func createTestAddress(b byte) sdk.AccAddress {
+	return sdk.AccAddress(bytes.Repeat([]byte{b}, address.Len))
+}
+
+func setupIBCFees(t *testing.T, chainA, chainB *wasmibctesting.TestChain, path *wasmibctesting.Path, portID string) sdk.AccAddress {
+	payee := createTestAddress(payeeAddressByte)
+	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
+	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
+
+	_, err := chainA.SendMsgs(ibcfee.NewMsgRegisterPayee(
+		portID,
+		path.EndpointA.ChannelID,
+		actorChainA.String(),
+		payee.String(),
+	))
+	require.NoError(t, err)
+
+	_, err = chainB.SendMsgs(ibcfee.NewMsgRegisterCounterpartyPayee(
+		transfertypes.PortID,
+		path.EndpointB.ChannelID,
+		actorChainB.String(),
+		payee.String(),
+	))
+	require.NoError(t, err)
+
+	return payee
+}
+
 func TestIBCFeesTransfer(t *testing.T) {
 	// scenario:
 	// given 2 chains
@@ -39,29 +75,55 @@ func TestIBCFeesTransfer(t *testing.T) {
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
-	receiver := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
+	receiver := createTestAddress(receiverAddressByte)
+
+	// Create path before using it
+	path := wasmibctesting.NewPath(chainA, chainB)
+	payee := setupIBCFees(t, chainA, chainB, path, transfertypes.PortID)
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
-	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  transfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
-		Order:   channeltypes.UNORDERED,
+		PortID: transfertypes.PortID,
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{
+			FeeVersion: ibcfee.Version,
+			AppVersion: "ics20-1",
+		})),
+		Order: channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  transfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
-		Order:   channeltypes.UNORDERED,
+		PortID: transfertypes.PortID,
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{
+			FeeVersion: ibcfee.Version,
+			AppVersion: "ics20-1",
+		})),
+		Order: channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
 	coord.Setup(path)
 	appA := chainA.App.(*app.WasmApp)
-	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), transfertypes.PortID, path.EndpointA.ChannelID))
+	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(
+		chainA.GetContext(),
+		transfertypes.PortID,
+		path.EndpointA.ChannelID,
+	))
 	// and with a payee registered on both chains
-	_, err := chainA.SendMsgs(ibcfee.NewMsgRegisterPayee(transfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), payee.String()))
+	_, err := chainA.SendMsgs(
+		ibcfee.NewMsgRegisterPayee(
+			transfertypes.PortID,
+			path.EndpointA.ChannelID,
+			actorChainA.String(),
+			payee.String(),
+		),
+	)
 	require.NoError(t, err)
-	_, err = chainB.SendMsgs(ibcfee.NewMsgRegisterCounterpartyPayee(transfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), payee.String()))
+	_, err = chainB.SendMsgs(
+		ibcfee.NewMsgRegisterCounterpartyPayee(
+			transfertypes.PortID,
+			path.EndpointB.ChannelID,
+			actorChainB.String(),
+			payee.String(),
+		),
+	)
 	require.NoError(t, err)
 
 	// when a transfer package is sent
@@ -78,10 +140,20 @@ func TestIBCFeesTransfer(t *testing.T) {
 		nil,
 	)
 	ibcPackageFee := ibcfee.NewFee(oneToken, oneToken, sdk.Coins{})
-	feeMsg := ibcfee.NewMsgPayPacketFee(ibcPackageFee, transfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), nil)
+	feeMsg := ibcfee.NewMsgPayPacketFee(
+		ibcPackageFee,
+		transfertypes.PortID,
+		path.EndpointA.ChannelID,
+		actorChainA.String(),
+		nil,
+	)
 	_, err = chainA.SendMsgs(feeMsg, ibcPayloadMsg)
 	require.NoError(t, err)
-	pendingIncentivisedPackages := appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), transfertypes.PortID, path.EndpointA.ChannelID)
+	pendingIncentivisedPackages := appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(
+		chainA.GetContext(),
+		transfertypes.PortID,
+		path.EndpointA.ChannelID,
+	)
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// and packages relayed
@@ -89,10 +161,14 @@ func TestIBCFeesTransfer(t *testing.T) {
 
 	// then
 	expBalance := sdk.NewCoin(
-		transfertypes.DenomTrace{
-			Path:      fmt.Sprintf("%s/%s", path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID),
-			BaseDenom: transferCoin.Denom,
-		}.IBCDenom(),
+		fmt.Sprintf("ibc/%s", hex.EncodeToString(func() []byte {
+			hash := sha256.Sum256([]byte(fmt.Sprintf("%s/%s/%s",
+				path.EndpointB.ChannelConfig.PortID,
+				path.EndpointB.ChannelID,
+				transferCoin.Denom,
+			)))
+			return hash[:]
+		}())),
 		transferCoin.Amount,
 	)
 	gotBalance := chainB.Balance(receiver, expBalance.Denom)
@@ -101,19 +177,53 @@ func TestIBCFeesTransfer(t *testing.T) {
 	assert.Equal(t, oneToken.Add(oneToken...).String(), payeeBalance.String())
 
 	// and with a payee registered for chain B to A
-	_, err = chainA.SendMsgs(ibcfee.NewMsgRegisterCounterpartyPayee(transfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), payee.String()))
+	_, err = chainA.SendMsgs(
+		ibcfee.NewMsgRegisterCounterpartyPayee(
+			transfertypes.PortID,
+			path.EndpointA.ChannelID,
+			actorChainA.String(),
+			payee.String(),
+		),
+	)
 	require.NoError(t, err)
-	_, err = chainB.SendMsgs(ibcfee.NewMsgRegisterPayee(transfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), payee.String()))
+	_, err = chainB.SendMsgs(
+		ibcfee.NewMsgRegisterPayee(
+			transfertypes.PortID,
+			path.EndpointB.ChannelID,
+			actorChainB.String(),
+			payee.String(),
+		),
+	)
 	require.NoError(t, err)
 
 	// and transfer from B to A
-	ibcPayloadMsg = transfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sdk.NewCoins(transferCoin), actorChainB.String(), receiver.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()), "more testing", nil)
+	ibcPayloadMsg = transfertypes.NewMsgTransfer(
+		path.EndpointB.ChannelConfig.PortID,
+		path.EndpointB.ChannelID,
+		sdk.NewCoins(transferCoin),
+		actorChainB.String(),
+		receiver.String(),
+		clienttypes.Height{},
+		uint64(time.Now().Add(time.Minute).UnixNano()),
+		"more testing",
+		nil,
+	)
 	ibcPackageFee = ibcfee.NewFee(oneToken, oneToken, sdk.Coins{})
-	feeMsg = ibcfee.NewMsgPayPacketFee(ibcPackageFee, transfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), nil)
+	feeMsg = ibcfee.NewMsgPayPacketFee(
+		ibcPackageFee,
+		transfertypes.PortID,
+		path.EndpointB.ChannelID,
+		actorChainB.String(),
+		nil,
+	)
 	_, err = chainB.SendMsgs(feeMsg, ibcPayloadMsg)
 	require.NoError(t, err)
 	appB := chainB.App.(*app.WasmApp)
-	pendingIncentivisedPackages = appB.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainB.GetContext(), transfertypes.PortID, path.EndpointB.ChannelID)
+	pendingIncentivisedPackages = appB.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(
+		chainB.GetContext(),
+		transfertypes.PortID,
+		path.EndpointB.ChannelID,
+	)
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// when packages relayed
@@ -121,10 +231,14 @@ func TestIBCFeesTransfer(t *testing.T) {
 
 	// then
 	expBalance = sdk.NewCoin(
-		transfertypes.DenomTrace{
-			Path:      fmt.Sprintf("%s/%s", path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID),
-			BaseDenom: transferCoin.Denom,
-		}.IBCDenom(),
+		fmt.Sprintf("ibc/%s", hex.EncodeToString(func() []byte {
+			hash := sha256.Sum256([]byte(fmt.Sprintf("%s/%s/%s",
+				path.EndpointA.ChannelConfig.PortID,
+				path.EndpointA.ChannelID,
+				transferCoin.Denom,
+			)))
+			return hash[:]
+		}())),
 		transferCoin.Amount,
 	)
 	gotBalance = chainA.Balance(receiver, expBalance.Denom)
@@ -157,9 +271,6 @@ func TestIBCFeesWasm(t *testing.T) {
 	ibcContractAddr := chainA.InstantiateContract(codeID, initMsg)
 	ibcContractPortID := chainA.ContractInfo(ibcContractAddr).IBCPortID
 
-	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
-	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
-
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibcContractPortID,
@@ -171,6 +282,10 @@ func TestIBCFeesWasm(t *testing.T) {
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
 		Order:   channeltypes.UNORDERED,
 	}
+
+	payee := setupIBCFees(t, chainA, chainB, path, ibcContractPortID)
+	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
+
 	// with an ics-29 fee enabled channel setup between both chains
 	coord.Setup(path)
 	appA := chainA.App.(*app.WasmApp)
@@ -212,10 +327,14 @@ func TestIBCFeesWasm(t *testing.T) {
 	pendingIncentivisedPackages = appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), ibcContractPortID, path.EndpointA.ChannelID)
 	assert.Len(t, pendingIncentivisedPackages, 0)
 	expBalance := sdk.NewCoin(
-		transfertypes.DenomTrace{
-			Path:      fmt.Sprintf("%s/%s", path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID),
-			BaseDenom: "cw20:" + cw20ContractAddr.String(),
-		}.IBCDenom(),
+		fmt.Sprintf("ibc/%s", hex.EncodeToString(func() []byte {
+			hash := sha256.Sum256([]byte(fmt.Sprintf("%s/%s/%s",
+				path.EndpointB.ChannelConfig.PortID,
+				path.EndpointB.ChannelID,
+				"cw20:"+cw20ContractAddr.String(),
+			)))
+			return hash[:]
+		}())),
 		sdkmath.NewInt(100),
 	)
 	gotBalance := chainB.Balance(actorChainB, expBalance.Denom)
@@ -361,10 +480,14 @@ func TestIBCFeesReflect(t *testing.T) {
 	pendingIncentivisedPackages = appA.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainA.GetContext(), transfertypes.PortID, path.EndpointA.ChannelID)
 	assert.Len(t, pendingIncentivisedPackages, 0)
 	expBalance := sdk.NewCoin(
-		transfertypes.DenomTrace{
-			Path:      fmt.Sprintf("%s/%s", path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID),
-			BaseDenom: sdk.DefaultBondDenom,
-		}.IBCDenom(),
+		fmt.Sprintf("ibc/%s", hex.EncodeToString(func() []byte {
+			h := sha256.Sum256([]byte(fmt.Sprintf("%s/%s/%s",
+				path.EndpointB.ChannelConfig.PortID,
+				path.EndpointB.ChannelID,
+				sdk.DefaultBondDenom,
+			)))
+			return h[:]
+		}())),
 		sdkmath.NewInt(10),
 	)
 	gotBalance := chainB.Balance(actorChainB, expBalance.Denom)

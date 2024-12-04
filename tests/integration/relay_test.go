@@ -9,7 +9,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
@@ -20,6 +20,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
@@ -120,7 +123,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 
-			msg := ibctransfertypes.NewMsgTransfer(
+			msg := transfertypes.NewMsgTransfer(
 				path.EndpointA.ChannelConfig.PortID,
 				path.EndpointA.ChannelID,
 				sdk.NewCoins(coinToSendToB),
@@ -156,14 +159,14 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			assert.Equal(t, originalChainABalance.Amount.Add(spec.expChainABalanceDiff), newChainABalance.Amount)
 
 			// and dest chain balance contains voucher
-			expBalance := sdk.NewCoin(
-				ibctransfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s/%s",
-					path.EndpointB.ChannelConfig.PortID,
-					path.EndpointB.ChannelID,
-					coinToSendToB.Denom,
-				)).IBCDenom(),
-				coinToSendToB.Amount,
+			denomTrace := fmt.Sprintf("%s/%s/%s",
+				path.EndpointB.ChannelConfig.PortID,
+				path.EndpointB.ChannelID,
+				coinToSendToB.Denom,
 			)
+			hash := sha256.Sum256([]byte(denomTrace))
+			ibcDenom := fmt.Sprintf("ibc/%s", hex.EncodeToString(hash[:]))
+			expBalance := sdk.NewCoin(ibcDenom, coinToSendToB.Amount)
 			gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 			assert.Equal(t, expBalance, gotBalance, "got total balance: %s", chainB.AllBalances(chainB.SenderAccount.GetAddress()))
 		})
@@ -192,12 +195,12 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  ibctransfertypes.PortID,
+		PortID:  transfertypes.PortID,
 		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  ibctransfertypes.PortID,
+		PortID:  transfertypes.PortID,
 		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
@@ -236,7 +239,14 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 
 	// and dest chain balance contains voucher
 	bankKeeperB := chainB.App.(*app.WasmApp).BankKeeper
-	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
+	denomTrace := fmt.Sprintf("%s/%s/%s",
+		path.EndpointB.ChannelConfig.PortID,
+		path.EndpointB.ChannelID,
+		coinToSendToB.Denom,
+	)
+	hash := sha256.Sum256([]byte(denomTrace))
+	ibcDenom := fmt.Sprintf("ibc/%s", hex.EncodeToString(hash[:]))
+	expBalance := sdk.NewCoin(ibcDenom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
@@ -269,7 +279,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  ibctransfertypes.PortID,
+		PortID:  transfertypes.PortID,
 		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
@@ -311,7 +321,14 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 
 	// and dest chain balance contains voucher
 	bankKeeperB := chainB.App.(*app.WasmApp).BankKeeper
-	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
+	denomTrace := fmt.Sprintf("%s/%s/%s",
+		path.EndpointB.ChannelConfig.PortID,
+		path.EndpointB.ChannelID,
+		coinToSendToB.Denom,
+	)
+	hash := sha256.Sum256([]byte(denomTrace))
+	ibcDenom := fmt.Sprintf("ibc/%s", hex.EncodeToString(hash[:]))
+	expBalance := sdk.NewCoin(ibcDenom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
@@ -345,7 +362,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  ibctransfertypes.PortID,
+		PortID:  transfertypes.PortID,
 		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
@@ -434,7 +451,7 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  ibctransfertypes.PortID,
+		PortID:  transfertypes.PortID,
 		Version: Version,
 		Order:   channeltypes.UNORDERED,
 	}
@@ -624,7 +641,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(_ wasmvm.Checksum, _ wasmvmtyp
 	require.Len(s.t, info.Funds, 1)
 	require.Equal(s.t, in.CoinsToSend.Amount.String(), info.Funds[0].Amount)
 	require.Equal(s.t, in.CoinsToSend.Denom, info.Funds[0].Denom)
-	dataPacket := ibctransfertypes.NewFungibleTokenPacketData(
+	dataPacket := transfertypes.NewFungibleTokenPacketData(
 		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), info.Sender, in.ReceiverAddr, "memo",
 	)
 	if err := dataPacket.ValidateBasic(); err != nil {
@@ -644,8 +661,8 @@ func (s *sendEmulatedIBCTransferContract) Execute(_ wasmvm.Checksum, _ wasmvmtyp
 func (s *sendEmulatedIBCTransferContract) IBCPacketTimeout(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	packet := msg.Packet
 
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &data); err != nil {
+	var data transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &data); err != nil {
 		return nil, 0, err
 	}
 	if err := data.ValidateBasic(); err != nil {
@@ -725,44 +742,95 @@ type ackReceiverContract struct {
 	chain *wasmibctesting.TestChain
 }
 
-func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
+func (c *ackReceiverContract) IBCPacketReceive(
+	_ wasmvm.Checksum,
+	_ wasmvmtypes.Env,
+	msg wasmvmtypes.IBCPacketReceiveMsg,
+	_ wasmvm.KVStore,
+	_ wasmvm.GoAPI,
+	_ wasmvm.Querier,
+	_ wasmvm.GasMeter,
+	_ uint64,
+	_ wasmvmtypes.UFraction,
+) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	packet := msg.Packet
 
-	var src ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
+	var src transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
 	require.NoError(c.t, src.ValidateBasic())
 
-	// call original ibctransfer keeper to not copy all code into this
+	// Replace the DenomTrace creation with direct IBC denom construction
+	hash := sha256.Sum256([]byte(src.Denom))
+	ibcDenom := transfertypes.Denom{
+		Base: fmt.Sprintf("ibc/%s", hex.EncodeToString(hash[:])),
+	}
+
+	// Create Token using the IBC denom
+	dataV2 := transfertypes.NewFungibleTokenPacketDataV2(
+		[]transfertypes.Token{
+			{
+				Denom:  ibcDenom,
+				Amount: src.Amount,
+			},
+		},
+		src.Sender,
+		src.Receiver,
+		"",                                   // empty memo
+		transfertypes.ForwardingPacketData{}, // empty forwarding data
+	)
+
+	// Now pass 'dataV2' to 'OnRecvPacket'
 	ibcPacket := toIBCPacket(packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
+	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnRecvPacket(ctx, ibcPacket, dataV2)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
 
 	var log []wasmvmtypes.EventAttribute // note: all events are under `wasm` event type
 	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).Acknowledgement()
-	return &wasmvmtypes.IBCReceiveResult{Ok: &wasmvmtypes.IBCReceiveResponse{Acknowledgement: ack, Attributes: log}}, 0, nil
+	return &wasmvmtypes.IBCReceiveResult{
+		Ok: &wasmvmtypes.IBCReceiveResponse{
+			Acknowledgement: ack,
+			Attributes:      log,
+		},
+	}, 0, nil
 }
 
 func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
+	var data transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.Acknowledgement.Data, &ack); err != nil {
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
 
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
-	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
+	var denom transfertypes.Denom
+	if err := json.Unmarshal([]byte(data.Denom), &denom); err != nil {
+		return nil, 0, err
+	}
+	dataV2 := transfertypes.NewFungibleTokenPacketDataV2(
+		[]transfertypes.Token{
+			{
+				Denom:  denom,
+				Amount: data.Amount,
+			},
+		},
+		data.Sender,
+		data.Receiver,
+		"",
+		transfertypes.ForwardingPacketData{},
+	)
+	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, dataV2, ack)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
@@ -779,8 +847,8 @@ type nackReceiverContract struct {
 func (c *nackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	packet := msg.Packet
 
-	var src ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
+	var src transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
 	require.NoError(c.t, src.ValidateBasic())
@@ -796,8 +864,8 @@ type errorReceiverContract struct {
 func (c *errorReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	packet := msg.Packet
 
-	var src ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
+	var src transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
 	require.NoError(c.t, src.ValidateBasic())
