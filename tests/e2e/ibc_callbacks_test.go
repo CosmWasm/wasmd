@@ -132,7 +132,7 @@ func TestIBCCallbacks(t *testing.T) {
 
 				// then the contract on chain B should receive a receive callback
 				var response QueryResp
-				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response))
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Len(t, response.IBCDestinationCallbacks, 1)
@@ -141,7 +141,8 @@ func TestIBCCallbacks(t *testing.T) {
 				assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
 
 				// and the contract on chain A should receive a callback with the ack
-				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				err := chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Len(t, response.IBCAckCallbacks, 1)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
@@ -154,13 +155,14 @@ func TestIBCCallbacks(t *testing.T) {
 
 				// then the contract on chain B should not receive anything
 				var response QueryResp
-				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response))
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
 
 				// and the contract on chain A should receive a callback with the timeout result
-				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				err := chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Len(t, response.IBCTimeoutCallbacks, 1)
 				assert.Empty(t, response.IBCDestinationCallbacks)
