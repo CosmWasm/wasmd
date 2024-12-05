@@ -15,15 +15,14 @@ import (
 	tmversion "github.com/cometbft/cometbft/version"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v9/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
@@ -89,7 +88,7 @@ type TestChain struct {
 	ChainID       string
 	LastHeader    *ibctm.Header   // header for last block height committed
 	CurrentHeader cmtproto.Header // header for current block height
-	QueryServer   types.QueryServer
+	QueryServer   *ibckeeper.Keeper
 	TxConfig      client.TxConfig
 	Codec         codec.Codec
 
@@ -309,7 +308,7 @@ func (chain *TestChain) QueryUpgradeProof(key []byte, height uint64) ([]byte, cl
 func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clienttypes.Height) {
 	clientState := chain.GetClientState(clientID)
 
-	consensusHeight := clientState.GetLatestHeight().(clienttypes.Height)
+	consensusHeight := chain.GetLatestHeight(clientState)
 	consensusKey := host.FullConsensusStateKey(clientID, consensusHeight)
 	proofConsensus, _ := chain.QueryProof(consensusKey)
 
@@ -497,7 +496,7 @@ func (chain *TestChain) ConstructUpdateCMTClientHeaderWithTrustedHeight(counterp
 	header := counterparty.LastHeader
 	// Relayer must query for LatestHeight on client to get TrustedHeight if the trusted height is not set
 	if trustedHeight.IsZero() {
-		trustedHeight = chain.GetClientState(clientID).GetLatestHeight().(clienttypes.Height)
+		trustedHeight = chain.GetLatestHeight(chain.GetClientState(clientID))
 	}
 	var (
 		cmtTrustedVals *cmttypes.ValidatorSet
@@ -697,4 +696,78 @@ func (chain *TestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
 
 func (chain *TestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
 	return chain.App.GetBankKeeper().GetAllBalances(chain.GetContext(), acc)
+}
+
+// Add this helper method to TestChain
+func (chain *TestChain) GetLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
+}
+
+// Add helper method to Chain
+func (chain *TestChain) GetClientLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
+}
+
+func (chain *TestChain) VerifyIBCModules() error {
+	// First verify IBC keeper is initialized
+	if chain.App.GetIBCKeeper() == nil {
+		return fmt.Errorf("IBCKeeper is nil")
+	}
+
+	// Verify ClientKeeper is initialized
+	if chain.App.GetIBCKeeper().ClientKeeper == nil {
+		return fmt.Errorf("ClientKeeper is nil")
+	}
+
+	// Initialize proper configurations with debug logging
+	chain.t.Logf("Initializing IBC module verification for chain %s", chain.ChainID)
+
+	clientConfig := ibctesting.NewTendermintConfig()
+	chain.t.Logf("Created Tendermint config: %+v", clientConfig)
+
+	// Create endpoints with more detailed error handling
+	endpoint := NewEndpoint(chain, clientConfig, &ibctesting.ConnectionConfig{
+		DelayPeriod: 0,
+	}, &ibctesting.ChannelConfig{
+		PortID:  ibctesting.TransferPort,
+		Version: "ics20-1",
+		Order:   channeltypes.UNORDERED,
+	})
+
+	if endpoint == nil {
+		return fmt.Errorf("failed to create endpoint")
+	}
+
+	// Create a mock counterparty endpoint
+	counterparty := NewEndpoint(chain, clientConfig, &ibctesting.ConnectionConfig{
+		DelayPeriod: 0,
+	}, &ibctesting.ChannelConfig{
+		PortID:  ibctesting.TransferPort,
+		Version: "ics20-1",
+		Order:   channeltypes.UNORDERED,
+	})
+
+	if counterparty == nil {
+		return fmt.Errorf("failed to create counterparty endpoint")
+	}
+
+	// Set up the counterparty relationship
+	endpoint.Counterparty = counterparty
+	counterparty.Counterparty = endpoint
+
+	// Try to create client with detailed error capture
+	if err := endpoint.CreateClient(); err != nil {
+		// Add more context to the error
+		return fmt.Errorf("failed to create Tendermint client: %v", err)
+	}
+
+	return nil
 }

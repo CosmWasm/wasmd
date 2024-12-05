@@ -6,9 +6,9 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -114,11 +114,11 @@ func TestOnRecvPacket(t *testing.T) {
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {
 				require.Panics(t, func() {
-					_ = h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
+					_ = h.OnRecvPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg, anyRelayerAddr)
 				})
 				return
 			}
-			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg, anyRelayerAddr)
+			gotAck := h.OnRecvPacket(ctx, spec.ibcPkg.DestinationPort, spec.ibcPkg, anyRelayerAddr)
 			assert.Equal(t, spec.expAck, gotAck)
 			assert.Equal(t, spec.expEvents, em.Events())
 		})

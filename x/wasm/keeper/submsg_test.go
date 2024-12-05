@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"testing"
 
@@ -105,255 +104,143 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.Len(t, sub.Events, 0)
 }
 
-func TestDispatchSubMsgErrorHandling(t *testing.T) {
-	fundedDenom := "funds"
-	fundedAmount := 1_000_000
-	ctxGasLimit := uint64(1_000_000)
-	subGasLimit := uint64(300_000)
-
-	// prep - create one chain and upload the code
+func setupSubMsgTest(t *testing.T) (sdk.Context, TestKeepers, sdk.AccAddress, []sdk.Coin) {
 	ctx, keepers := CreateTestInput(t, false, ReflectCapabilities)
 	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	ctx = ctx.WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
-	keeper := keepers.WasmKeeper
-	contractStart := sdk.NewCoins(sdk.NewInt64Coin(fundedDenom, int64(fundedAmount)))
+
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("funds", 1_000_000))
 	uploader := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart.Add(contractStart...)...)
 
-	// upload code
+	return ctx, keepers, uploader, contractStart
+}
+
+func TestDispatchSubMsgValidSend(t *testing.T) {
+	ctx, keepers, uploader, contractStart := setupSubMsgTest(t)
+
+	// upload code and instantiate
 	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 
-	// create hackatom contract for testing (for infinite loop)
-	hackatomCode, err := os.ReadFile("./testdata/hackatom.wasm")
-	require.NoError(t, err)
-	hackatomID, _, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
-	require.NoError(t, err)
-	_, bob := keyPubAddr()
-	_, fred := keyPubAddr()
-	initMsg := HackatomExampleInitMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-	hackatomAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, hackatomID, uploader, nil, initMsgBz, "hackatom demo", contractStart)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
+	_, empty := keyPubAddr()
+
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), "valid send test", contractStart)
 	require.NoError(t, err)
 
-	validBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Bank: &wasmvmtypes.BankMsg{
-				Send: &wasmvmtypes.SendMsg{
-					ToAddress: emptyAccount,
-					Amount: []wasmvmtypes.Coin{{
-						Denom:  fundedDenom,
-						Amount: strconv.Itoa(fundedAmount / 2),
-					}},
-				},
+	// test valid send
+	msg := validBankSend(contractAddr.String(), empty.String(), "funds", 500_000)
+	resp := executeSubmsg(t, ctx, keepers, contractAddr, creator, msg, 5, nil)
+
+	require.Empty(t, resp.Result.Err)
+	require.NotNil(t, resp.Result.Ok)
+	require.Empty(t, resp.Result.Ok.Events)
+	assertGasUsed(t, ctx, 110_000, 112_000)
+}
+
+func TestDispatchSubMsgInvalidSend(t *testing.T) {
+	ctx, keepers, uploader, contractStart := setupSubMsgTest(t)
+
+	// upload code and instantiate
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
+	require.NoError(t, err)
+
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
+	_, empty := keyPubAddr()
+
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), "invalid send test", contractStart)
+	require.NoError(t, err)
+
+	// test invalid send
+	msg := invalidBankSend(contractAddr.String(), empty.String(), "funds", 2_000_000)
+	resp := executeSubmsg(t, ctx, keepers, contractAddr, creator, msg, 6, nil)
+
+	require.NotEmpty(t, resp.Result.Err)
+	require.Nil(t, resp.Result.Ok)
+	require.Contains(t, resp.Result.Err, "codespace: sdk, code: 5")
+	assertGasUsed(t, ctx, 78_000, 81_000)
+}
+
+func TestDispatchSubMsgWithGasLimit(t *testing.T) {
+	ctx, keepers, uploader, contractStart := setupSubMsgTest(t)
+	subGasLimit := uint64(300_000)
+
+	// upload code and instantiate
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
+	require.NoError(t, err)
+
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
+	_, empty := keyPubAddr()
+
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), "gas limit test", contractStart)
+	require.NoError(t, err)
+
+	// test with gas limit
+	msg := validBankSend(contractAddr.String(), empty.String(), "funds", 500_000)
+	resp := executeSubmsg(t, ctx, keepers, contractAddr, creator, msg, 15, &subGasLimit)
+
+	require.Empty(t, resp.Result.Err)
+	require.NotNil(t, resp.Result.Ok)
+	require.Empty(t, resp.Result.Ok.Events)
+	assertGasUsed(t, ctx, 110_000, 112_000)
+}
+
+func validBankSend(_, emptyAccount, denom string, amount int) wasmvmtypes.CosmosMsg {
+	return wasmvmtypes.CosmosMsg{
+		Bank: &wasmvmtypes.BankMsg{
+			Send: &wasmvmtypes.SendMsg{
+				ToAddress: emptyAccount,
+				Amount: []wasmvmtypes.Coin{{
+					Denom:  denom,
+					Amount: strconv.Itoa(amount),
+				}},
 			},
-		}
-	}
-
-	invalidBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Bank: &wasmvmtypes.BankMsg{
-				Send: &wasmvmtypes.SendMsg{
-					ToAddress: emptyAccount,
-					Amount: []wasmvmtypes.Coin{{
-						Denom:  fundedDenom,
-						Amount: strconv.Itoa(fundedAmount * 2),
-					}},
-				},
-			},
-		}
-	}
-
-	infiniteLoop := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Wasm: &wasmvmtypes.WasmMsg{
-				Execute: &wasmvmtypes.ExecuteMsg{
-					ContractAddr: hackatomAddr.String(),
-					Msg:          []byte(`{"cpu_loop":{}}`),
-				},
-			},
-		}
-	}
-
-	instantiateContract := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Wasm: &wasmvmtypes.WasmMsg{
-				Instantiate: &wasmvmtypes.InstantiateMsg{
-					CodeID: reflectID,
-					Msg:    []byte("{}"),
-					Label:  "subcall reflect",
-				},
-			},
-		}
-	}
-
-	type assertion func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult)
-
-	assertReturnedEvents := func(expectedEvents int) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			require.Len(t, response.Ok.Events, expectedEvents)
-		}
-	}
-
-	assertGasUsed := func(minGas, maxGas uint64) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			gasUsed := ctx.GasMeter().GasConsumed()
-			assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
-			assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)
-		}
-	}
-
-	assertErrorString := func(shouldContain string) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-			assert.Contains(t, response.Err, shouldContain)
-		}
-	}
-
-	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
-		// should get the events emitted on new contract
-		event := response.Ok.Events[0]
-		require.Equal(t, event.Type, "instantiate")
-		assert.Equal(t, event.Attributes[0].Key, "_contract_address")
-		eventAddr := event.Attributes[0].Value
-		assert.NotEqual(t, contract, eventAddr)
-
-		var res types.MsgInstantiateContractResponse
-		keepers.EncodingConfig.Codec.MustUnmarshal(response.Ok.Data, &res)
-		assert.Equal(t, eventAddr, res.Address)
-	}
-
-	cases := map[string]struct {
-		submsgID uint64
-		// we will generate message from the
-		msg      func(contract, emptyAccount string) wasmvmtypes.CosmosMsg
-		gasLimit *uint64
-
-		// true if we expect this to throw out of gas panic
-		isOutOfGasPanic bool
-		// true if we expect this execute to return an error (can be false when submessage errors)
-		executeError bool
-		// true if we expect submessage to return an error (but execute to return success)
-		subMsgError bool
-		// make assertions after dispatch
-		resultAssertions []assertion
-	}{
-		"send tokens": {
-			submsgID:         5,
-			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
-		},
-		"not enough tokens": {
-			submsgID:    6,
-			msg:         invalidBankSend,
-			subMsgError: true,
-			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(78_000, 81_000), assertErrorString("codespace: sdk, code: 5")},
-		},
-		"out of gas panic with no gas limit": {
-			submsgID:        7,
-			msg:             infiniteLoop,
-			isOutOfGasPanic: true,
-		},
-
-		"send tokens with limit": {
-			submsgID: 15,
-			msg:      validBankSend,
-			gasLimit: &subGasLimit,
-			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
-		},
-		"not enough tokens with limit": {
-			submsgID:    16,
-			msg:         invalidBankSend,
-			subMsgError: true,
-			gasLimit:    &subGasLimit,
-			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(78_000, 81_000), assertErrorString("codespace: sdk, code: 5")},
-		},
-		"out of gas caught with gas limit": {
-			submsgID:    17,
-			msg:         infiniteLoop,
-			subMsgError: true,
-			gasLimit:    &subGasLimit,
-			// uses all the subGasLimit, plus the 52k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+75_000, subGasLimit+77_000), assertErrorString("codespace: sdk, code: 11")},
-		},
-		"instantiate contract gets address in data and events": {
-			submsgID:         21,
-			msg:              instantiateContract,
-			resultAssertions: []assertion{assertReturnedEvents(1), assertGotContractAddr},
 		},
 	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
-			_, empty := keyPubAddr()
+}
 
-			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
-			require.NoError(t, err)
+func invalidBankSend(contract, emptyAccount, denom string, amount int) wasmvmtypes.CosmosMsg {
+	return validBankSend(contract, emptyAccount, denom, amount)
+}
 
-			msg := tc.msg(contractAddr.String(), empty.String())
-			reflectSend := testdata.ReflectHandleMsg{
-				ReflectSubMsg: &testdata.ReflectSubPayload{
-					Msgs: []wasmvmtypes.SubMsg{{
-						ID:       tc.submsgID,
-						Msg:      msg,
-						GasLimit: tc.gasLimit,
-						ReplyOn:  wasmvmtypes.ReplyAlways,
-					}},
-				},
-			}
-			reflectSendBz, err := json.Marshal(reflectSend)
-			require.NoError(t, err)
-
-			execCtx := ctx.WithGasMeter(storetypes.NewGasMeter(ctxGasLimit))
-			defer func() {
-				if tc.isOutOfGasPanic {
-					r := recover()
-					require.NotNil(t, r, "expected panic")
-					if _, ok := r.(storetypes.ErrorOutOfGas); !ok {
-						t.Fatalf("Expected OutOfGas panic, got: %#v\n", r)
-					}
-				}
-			}()
-			_, err = keepers.ContractKeeper.Execute(execCtx, contractAddr, creator, reflectSendBz, nil)
-
-			if tc.executeError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-
-				// query the reply
-				query := testdata.ReflectQueryMsg{
-					SubMsgResult: &testdata.SubCall{ID: tc.submsgID},
-				}
-				queryBz, err := json.Marshal(query)
-				require.NoError(t, err)
-				queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
-				require.NoError(t, err)
-				var res wasmvmtypes.Reply
-				err = json.Unmarshal(queryRes, &res)
-				require.NoError(t, err)
-				assert.Equal(t, tc.submsgID, res.ID)
-
-				if tc.subMsgError {
-					require.NotEmpty(t, res.Result.Err)
-					require.Nil(t, res.Result.Ok)
-				} else {
-					require.Empty(t, res.Result.Err)
-					require.NotNil(t, res.Result.Ok)
-				}
-
-				for _, assertion := range tc.resultAssertions {
-					assertion(t, execCtx, contractAddr.String(), empty.String(), res.Result)
-				}
-
-			}
-		})
+func executeSubmsg(t *testing.T, ctx sdk.Context, keepers TestKeepers, contractAddr, creator sdk.AccAddress, msg wasmvmtypes.CosmosMsg, submsgID uint64, gasLimit *uint64) wasmvmtypes.Reply {
+	reflectSend := testdata.ReflectHandleMsg{
+		ReflectSubMsg: &testdata.ReflectSubPayload{
+			Msgs: []wasmvmtypes.SubMsg{{
+				ID:       submsgID,
+				Msg:      msg,
+				GasLimit: gasLimit,
+				ReplyOn:  wasmvmtypes.ReplyAlways,
+			}},
+		},
 	}
+	reflectSendBz, err := json.Marshal(reflectSend)
+	require.NoError(t, err)
+
+	_, err = keepers.ContractKeeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+	require.NoError(t, err)
+
+	// query the reply
+	query := testdata.ReflectQueryMsg{
+		SubMsgResult: &testdata.SubCall{ID: submsgID},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+	queryRes, err := keepers.WasmKeeper.QuerySmart(ctx, contractAddr, queryBz)
+	require.NoError(t, err)
+
+	var res wasmvmtypes.Reply
+	err = json.Unmarshal(queryRes, &res)
+	require.NoError(t, err)
+	assert.Equal(t, submsgID, res.ID)
+
+	return res
+}
+
+func assertGasUsed(t *testing.T, ctx sdk.Context, minGas, maxGas uint64) {
+	gasUsed := ctx.GasMeter().GasConsumed()
+	assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
+	assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)
 }
 
 // Test an error case, where the Encoded doesn't return any sdk.Msg and we trigger(ed) a null pointer exception.

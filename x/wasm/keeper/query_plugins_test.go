@@ -9,7 +9,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

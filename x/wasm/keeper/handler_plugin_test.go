@@ -8,9 +8,9 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -296,7 +296,9 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		TimeoutHeight:      clienttypes.Height{},
 		TimeoutTimestamp:   1720000000000000000,
 	}
-	contractKeeper.StoreAsyncAckPacket(ctx, ackPacket)
+	if err := contractKeeper.StoreAsyncAckPacket(ctx, ackPacket); err != nil {
+		t.Fatal(err)
+	}
 
 	sendResponse := types.MsgIBCSendResponse{Sequence: 1}
 	ackResponse := types.MsgIBCWriteAcknowledgementResponse{}
@@ -374,7 +376,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 			// when
 			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper, spec.chanKeeper, spec.capKeeper)
-			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg}) //nolint:gosec
+			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg})
 
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
@@ -461,7 +463,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 				return &wasmvmtypes.ContractResult{
 					Ok: &wasmvmtypes.Response{
 						Messages: []wasmvmtypes.SubMsg{
-							{Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{Burn: &spec.msg}}, ReplyOn: wasmvmtypes.ReplyNever}, //nolint:gosec
+							{Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{Burn: &spec.msg}}, ReplyOn: wasmvmtypes.ReplyNever},
 						},
 					},
 				}, 0, nil

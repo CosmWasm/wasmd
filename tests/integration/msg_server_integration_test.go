@@ -132,7 +132,7 @@ func TestUpdateParams(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			require.NoError(t, err)
 			var result types.MsgUpdateParamsResponse
 			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
@@ -223,7 +223,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			if spec.expErr {
 				require.Error(t, err)
 				require.Nil(t, rsp)
@@ -319,7 +319,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			if spec.expErr {
 				require.Error(t, err)
 				require.Nil(t, rsp)

@@ -5,10 +5,10 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1064,6 +1064,141 @@ func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.exp, gotCoins)
 			assert.NoError(t, gotCoins.Validate())
+		})
+	}
+}
+
+func TestDistributionMsgEncoding(t *testing.T) {
+	addr1 := RandomAccountAddress(t)
+	addr2 := RandomAccountAddress(t)
+	valAddr2 := make(sdk.ValAddress, types.SDKAddrLen)
+	valAddr2[1] = 123
+
+	cases := map[string]struct {
+		sender   sdk.AccAddress
+		srcMsg   wasmvmtypes.CosmosMsg
+		output   []sdk.Msg
+		expError bool
+	}{
+		"staking withdraw (explicit recipient)": {
+			sender: addr1,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Distribution: &wasmvmtypes.DistributionMsg{
+					WithdrawDelegatorReward: &wasmvmtypes.WithdrawDelegatorRewardMsg{
+						Validator: valAddr2.String(),
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&distributiontypes.MsgWithdrawDelegatorReward{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: valAddr2.String(),
+				},
+			},
+		},
+		"staking set withdraw address": {
+			sender: addr1,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Distribution: &wasmvmtypes.DistributionMsg{
+					SetWithdrawAddress: &wasmvmtypes.SetWithdrawAddressMsg{
+						Address: addr2.String(),
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&distributiontypes.MsgSetWithdrawAddress{
+					DelegatorAddress: addr1.String(),
+					WithdrawAddress:  addr2.String(),
+				},
+			},
+		},
+	}
+
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
+			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
+		})
+	}
+}
+
+func TestStargateMsgEncoding(t *testing.T) {
+	addr1 := RandomAccountAddress(t)
+	addr2 := RandomAccountAddress(t)
+
+	bankMsg := &banktypes.MsgSend{
+		FromAddress: addr2.String(),
+		ToAddress:   addr1.String(),
+		Amount: sdk.Coins{
+			sdk.NewInt64Coin("uatom", 12345),
+			sdk.NewInt64Coin("utgd", 54321),
+		},
+	}
+	bankMsgBin := must(proto.Marshal(bankMsg))
+	proposalMsg := &govv1.MsgSubmitProposal{
+		Proposer:       addr1.String(),
+		Messages:       []*codectypes.Any{must(codectypes.NewAnyWithValue(types.MsgStoreCodeFixture()))},
+		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
+	}
+	proposalMsgBin, err := proto.Marshal(proposalMsg)
+	require.NoError(t, err)
+
+	cases := map[string]struct {
+		sender   sdk.AccAddress
+		srcMsg   wasmvmtypes.CosmosMsg
+		output   []sdk.Msg
+		expError bool
+	}{
+		"stargate encoded bank msg": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Any: &wasmvmtypes.AnyMsg{
+					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
+					Value:   bankMsgBin,
+				},
+			},
+			output: []sdk.Msg{bankMsg},
+		},
+		"stargate encoded msg with any type": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Any: &wasmvmtypes.AnyMsg{
+					TypeURL: "/cosmos.gov.v1.MsgSubmitProposal",
+					Value:   proposalMsgBin,
+				},
+			},
+			output: []sdk.Msg{proposalMsg},
+		},
+		"stargate encoded invalid typeUrl": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Any: &wasmvmtypes.AnyMsg{
+					TypeURL: "/cosmos.bank.v2.MsgSend",
+					Value:   bankMsgBin,
+				},
+			},
+			expError: true,
+		},
+	}
+
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
+			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
 		})
 	}
 }

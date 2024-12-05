@@ -181,7 +181,7 @@ func TestStoreCodeGrant(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			// setup grant
-			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission) //nolint:gosec
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)
@@ -269,7 +269,7 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			// setup grant
-			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission) //nolint:gosec
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)

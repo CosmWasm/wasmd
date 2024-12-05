@@ -7,10 +7,10 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,12 +43,12 @@ func TestIBCCallbacks(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
@@ -132,7 +132,7 @@ func TestIBCCallbacks(t *testing.T) {
 
 				// then the contract on chain B should receive a receive callback
 				var response QueryResp
-				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response))
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Len(t, response.IBCDestinationCallbacks, 1)
@@ -141,7 +141,8 @@ func TestIBCCallbacks(t *testing.T) {
 				assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
 
 				// and the contract on chain A should receive a callback with the ack
-				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				err := chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Len(t, response.IBCAckCallbacks, 1)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
@@ -154,13 +155,14 @@ func TestIBCCallbacks(t *testing.T) {
 
 				// then the contract on chain B should not receive anything
 				var response QueryResp
-				chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, chainB.SmartQuery(contractAddrB.String(), QueryMsg{CallbackStats: struct{}{}}, &response))
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
 
 				// and the contract on chain A should receive a callback with the timeout result
-				chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				err := chainA.SmartQuery(contractAddrA.String(), QueryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Len(t, response.IBCTimeoutCallbacks, 1)
 				assert.Empty(t, response.IBCDestinationCallbacks)
@@ -187,12 +189,12 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: "ics20-1"})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains

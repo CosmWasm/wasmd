@@ -4,10 +4,10 @@ import (
 	"context"
 
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v9/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
