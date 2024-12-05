@@ -30,7 +30,40 @@ type Coordinator struct {
 // NewCoordinator initializes Coordinator with n default wasm TestChain instances
 func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *Coordinator {
 	t.Helper()
-	return NewCoordinatorX(t, n, DefaultWasmAppFactory, opts...)
+	chains := make(map[string]*TestChain)
+	coord := &Coordinator{
+		t:           t,
+		CurrentTime: globalStartTime,
+		Chains:      chains,
+	}
+
+	for i := 1; i <= n; i++ {
+		chainID := GetChainID(i)
+		var chainOpts []wasmkeeper.Option
+		if len(opts) > (i - 1) {
+			chainOpts = opts[i-1]
+		}
+		chain := NewTestChain(t, coord, DefaultWasmAppFactory, chainID, chainOpts...)
+
+		// Verify chain is properly initialized
+		if chain.App == nil {
+			t.Fatalf("failed to initialize chain %s: App is nil", chainID)
+		}
+		if chain.App.GetIBCKeeper() == nil {
+			t.Fatalf("failed to initialize chain %s: IBC Keeper is nil", chainID)
+		}
+
+		chains[chainID] = chain
+	}
+
+	// Initialize each chain's clients, connections, and channels
+	for _, chain := range chains {
+		if err := chain.VerifyIBCModules(); err != nil {
+			t.Fatalf("failed to verify IBC modules for chain %s: %v", chain.ChainID, err)
+		}
+	}
+
+	return coord
 }
 
 // NewCoordinatorX initializes Coordinator with N TestChain instances using the given app factory
@@ -47,15 +80,15 @@ func NewCoordinatorX(t *testing.T, n int, appFactory ChainAppFactory, opts ...[]
 
 	for i := 1; i <= n; i++ {
 		chainID := GetChainID(i)
-		var x []wasmkeeper.Option
+		var chainOpts []wasmkeeper.Option
 		if len(opts) > (i - 1) {
-			x = opts[i-1]
+			chainOpts = opts[i-1]
 		}
 
 		// Add debug logging
 		t.Logf("Creating chain %s", chainID)
 
-		chain := NewTestChain(t, coord, appFactory, chainID, x...)
+		chain := NewTestChain(t, coord, appFactory, chainID, chainOpts...)
 		// Add verification that IBC modules are properly initialized
 		if err := chain.VerifyIBCModules(); err != nil {
 			t.Fatalf("Chain %s IBC modules not properly initialized: %v", chainID, err)

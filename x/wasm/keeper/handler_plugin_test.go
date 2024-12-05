@@ -296,7 +296,9 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		TimeoutHeight:      clienttypes.Height{},
 		TimeoutTimestamp:   1720000000000000000,
 	}
-	contractKeeper.StoreAsyncAckPacket(ctx, ackPacket)
+	if err := contractKeeper.StoreAsyncAckPacket(ctx, ackPacket); err != nil {
+		t.Fatal(err)
+	}
 
 	sendResponse := types.MsgIBCSendResponse{Sequence: 1}
 	ackResponse := types.MsgIBCWriteAcknowledgementResponse{}

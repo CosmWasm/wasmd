@@ -717,37 +717,55 @@ func (chain *TestChain) GetClientLatestHeight(clientState exported.ClientState) 
 }
 
 func (chain *TestChain) VerifyIBCModules() error {
-	// Verify that the IBC keeper and its dependencies are properly initialized
+	// First verify IBC keeper is initialized
 	if chain.App.GetIBCKeeper() == nil {
 		return fmt.Errorf("IBCKeeper is nil")
 	}
 
-	// Initialize proper configurations
-	clientConfig := ibctesting.NewTendermintConfig()
-	if clientConfig == nil {
-		return fmt.Errorf("failed to create Tendermint config")
+	// Verify ClientKeeper is initialized
+	if chain.App.GetIBCKeeper().ClientKeeper == nil {
+		return fmt.Errorf("ClientKeeper is nil")
 	}
 
-	connConfig := &ibctesting.ConnectionConfig{
+	// Initialize proper configurations with debug logging
+	chain.t.Logf("Initializing IBC module verification for chain %s", chain.ChainID)
+
+	clientConfig := ibctesting.NewTendermintConfig()
+	chain.t.Logf("Created Tendermint config: %+v", clientConfig)
+
+	// Create endpoints with more detailed error handling
+	endpoint := NewEndpoint(chain, clientConfig, &ibctesting.ConnectionConfig{
 		DelayPeriod: 0,
-	}
-	chanConfig := &ibctesting.ChannelConfig{
+	}, &ibctesting.ChannelConfig{
 		PortID:  ibctesting.TransferPort,
 		Version: "ics20-1",
 		Order:   channeltypes.UNORDERED,
-	}
+	})
 
-	// Create endpoint with counterparty chain
-	endpoint := NewEndpoint(chain, clientConfig, connConfig, chanConfig)
 	if endpoint == nil {
 		return fmt.Errorf("failed to create endpoint")
 	}
 
-	// Add debug logging
-	chain.t.Logf("Creating client with config: %+v", clientConfig)
+	// Create a mock counterparty endpoint
+	counterparty := NewEndpoint(chain, clientConfig, &ibctesting.ConnectionConfig{
+		DelayPeriod: 0,
+	}, &ibctesting.ChannelConfig{
+		PortID:  ibctesting.TransferPort,
+		Version: "ics20-1",
+		Order:   channeltypes.UNORDERED,
+	})
 
-	// Verify client creation with error handling
+	if counterparty == nil {
+		return fmt.Errorf("failed to create counterparty endpoint")
+	}
+
+	// Set up the counterparty relationship
+	endpoint.Counterparty = counterparty
+	counterparty.Counterparty = endpoint
+
+	// Try to create client with detailed error capture
 	if err := endpoint.CreateClient(); err != nil {
+		// Add more context to the error
 		return fmt.Errorf("failed to create Tendermint client: %v", err)
 	}
 
