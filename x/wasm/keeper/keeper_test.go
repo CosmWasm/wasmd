@@ -48,6 +48,9 @@ import (
 //go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
+//go:embed testdata/replier.wasm
+var replierWasm []byte
+
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
 	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
@@ -2172,6 +2175,155 @@ func TestReply(t *testing.T) {
 			assert.Equal(t, spec.expEvt, em.Events())
 		})
 	}
+}
+
+type replierExecMsg struct {
+	MsgId                 byte             `json:"msg_id"`
+	SetDataInExecAndReply bool             `json:"set_data_in_exec_and_reply"`
+	ReturnOrderInReply    bool             `json:"return_order_in_reply"`
+	ExecError             bool             `json:"exec_error"`
+	ReplyError            bool             `json:"reply_error"`
+	ReplyOnNever          bool             `json:"reply_on_never"`
+	Messages              []replierExecMsg `json:"messages"`
+}
+
+var repliesMsgTemplate = replierExecMsg{
+	MsgId:                 1,
+	SetDataInExecAndReply: true,
+	ReturnOrderInReply:    false,
+	ExecError:             false,
+	ReplyError:            false,
+	ReplyOnNever:          false,
+	Messages: []replierExecMsg{
+		replierExecMsg{
+			MsgId:                 2,
+			SetDataInExecAndReply: true,
+			ReturnOrderInReply:    false,
+			ExecError:             false,
+			ReplyError:            false,
+			ReplyOnNever:          false,
+			Messages: []replierExecMsg{
+				replierExecMsg{
+					MsgId:                 3,
+					SetDataInExecAndReply: true,
+					ReturnOrderInReply:    false,
+					ExecError:             false,
+					ReplyError:            false,
+					ReplyOnNever:          false,
+					Messages:              []replierExecMsg{},
+				},
+			},
+		},
+		replierExecMsg{
+			MsgId:                 4,
+			SetDataInExecAndReply: true,
+			ReturnOrderInReply:    false,
+			ExecError:             false,
+			ReplyError:            false,
+			ReplyOnNever:          false,
+			Messages: []replierExecMsg{
+				replierExecMsg{
+					MsgId:                 5,
+					SetDataInExecAndReply: true,
+					ReturnOrderInReply:    false,
+					ExecError:             false,
+					ReplyError:            false,
+					ReplyOnNever:          false,
+					Messages:              []replierExecMsg{},
+				},
+			},
+		},
+	},
+}
+
+func TestMultipleReplies(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	_, keeper, _ := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
+	creatorAddr := RandomAccountAddress(t)
+
+	contractID, _, err := keeper.Create(ctx, creator, replierWasm, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, []byte("{}"), "demo contract replier", deposit)
+	require.NoError(t, err)
+
+	// Assert the depth-first order of message handling
+	repliesMsgTemplate.ReturnOrderInReply = true
+	execMsg, err := json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em := sdk.NewEventManager()
+	res, err := keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, []byte{0xee, 0x1, 0xee, 0x2, 0xee, 0x3, 0xbb, 0x2, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1}, res)
+	repliesMsgTemplate.ReturnOrderInReply = false
+
+	// Assert that with a list of submessages the `data` field will be set by the
+	// last submessage.
+	execMsg, err = json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em = sdk.NewEventManager()
+	res, err = keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, []byte{0xa, 0x6, 0xa, 0x2, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1}, res)
+
+	// Assert that with a list of submessages the `data` field will be
+	// set by the last submessage that overrides it.
+	repliesMsgTemplate.Messages[1].ReplyOnNever = true
+	execMsg, err = json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em = sdk.NewEventManager()
+	res, err = keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, []byte{0xa, 0x6, 0xa, 0x2, 0xee, 0x3, 0xbb, 0x2, 0xbb, 0x1}, res)
+	repliesMsgTemplate.Messages[1].ReplyOnNever = false
+
+	// Assert that in scenario C1 -> C4 -> C5 if C4 doesn't set `data`,
+	// the `data` set by C5 **is not forwarded** to the result of C1.
+	repliesMsgTemplate.Messages[1].SetDataInExecAndReply = false
+	execMsg, err = json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em = sdk.NewEventManager()
+	res, err = keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, []byte{0xbb, 0x1}, res)
+	repliesMsgTemplate.Messages[1].SetDataInExecAndReply = true
+
+	// In this example we have the following scenario:
+	// `C1 -> C2 -> C3 -> reply(C2) -> reply(C1) -> C4 -> C5 -> reply(C4) -> reply(C1)`.
+	// The `C3` contract returns an error that is handled by reply entrypoint of `C2`.
+	// It means that the changes done by `C3` are reverted, but the rest of the changes are kept.
+	repliesMsgTemplate.Messages[0].Messages[0].ExecError = true
+	repliesMsgTemplate.ReturnOrderInReply = true
+	execMsg, err = json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em = sdk.NewEventManager()
+	res, err = keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	assert.Equal(t, []byte{0xee, 0x1, 0xee, 0x2, 0xbb, 0x2, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1}, res)
+	repliesMsgTemplate.Messages[0].Messages[0].ExecError = false
+	repliesMsgTemplate.ReturnOrderInReply = false
+
+	// The `C2` contract returns an error in reply entry-point that is handled by reply entrypoint of `C1`.
+	// It means that the changes done by either `C2` and `C3` are reverted, but the rest of the changes are kept.
+	repliesMsgTemplate.Messages[0].ReplyError = true
+	repliesMsgTemplate.ReturnOrderInReply = true
+	execMsg, err = json.Marshal(repliesMsgTemplate)
+	require.NoError(t, err)
+	em = sdk.NewEventManager()
+	res, err = keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+	require.NoError(t, err)
+	assert.Equal(t, []byte{0xee, 0x1, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1}, res)
+	repliesMsgTemplate.Messages[0].ReplyError = false
+	repliesMsgTemplate.ReturnOrderInReply = false
 }
 
 func TestQueryIsolation(t *testing.T) {
