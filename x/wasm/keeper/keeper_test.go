@@ -2193,14 +2193,14 @@ var repliesMsgTemplate = replierExecMsg{
 	ExecError:             false,
 	ReplyOnNever:          false,
 	Messages: []replierExecMsg{
-		replierExecMsg{
+		{
 			MsgId:                 2,
 			SetDataInExecAndReply: true,
 			ReturnOrderInReply:    false,
 			ExecError:             false,
 			ReplyOnNever:          false,
 			Messages: []replierExecMsg{
-				replierExecMsg{
+				{
 					MsgId:                 3,
 					SetDataInExecAndReply: true,
 					ReturnOrderInReply:    false,
@@ -2210,14 +2210,14 @@ var repliesMsgTemplate = replierExecMsg{
 				},
 			},
 		},
-		replierExecMsg{
+		{
 			MsgId:                 4,
 			SetDataInExecAndReply: true,
 			ReturnOrderInReply:    false,
 			ExecError:             false,
 			ReplyOnNever:          false,
 			Messages: []replierExecMsg{
-				replierExecMsg{
+				{
 					MsgId:                 5,
 					SetDataInExecAndReply: true,
 					ReturnOrderInReply:    false,
@@ -2305,7 +2305,6 @@ func TestMultipleReplies(t *testing.T) {
 	// assert.Equal(t, res, []byte{0xa, 0x2, 0xee, 0x4, 0xbb, 0x1})
 	repliesMsgTemplate.Messages[0].Messages[0].ExecError = false
 	repliesMsgTemplate.ReturnOrderInReply = false
-
 }
 
 func TestQueryIsolation(t *testing.T) {
