@@ -2,7 +2,13 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.1...HEAD)
+
+## [v0.53.1](https://github.com/CosmWasm/wasmd/tree/v0.53.1) (2024-12-10)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.0...v0.53.1)
+
+- Fix CWA-2025-009
 
 ## [v0.53.0](https://github.com/CosmWasm/wasmd/tree/v0.53.0) (2024-08-21)
 
