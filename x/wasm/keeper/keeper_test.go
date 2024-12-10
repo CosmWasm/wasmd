@@ -2195,7 +2195,7 @@ var repliesMsgTemplate = replierExecMsg{
 	ReplyError:            false,
 	ReplyOnNever:          false,
 	Messages: []replierExecMsg{
-		replierExecMsg{
+		{
 			MsgId:                 2,
 			SetDataInExecAndReply: true,
 			ReturnOrderInReply:    false,
@@ -2203,7 +2203,7 @@ var repliesMsgTemplate = replierExecMsg{
 			ReplyError:            false,
 			ReplyOnNever:          false,
 			Messages: []replierExecMsg{
-				replierExecMsg{
+				{
 					MsgId:                 3,
 					SetDataInExecAndReply: true,
 					ReturnOrderInReply:    false,
@@ -2214,7 +2214,7 @@ var repliesMsgTemplate = replierExecMsg{
 				},
 			},
 		},
-		replierExecMsg{
+		{
 			MsgId:                 4,
 			SetDataInExecAndReply: true,
 			ReturnOrderInReply:    false,
@@ -2222,7 +2222,7 @@ var repliesMsgTemplate = replierExecMsg{
 			ReplyError:            false,
 			ReplyOnNever:          false,
 			Messages: []replierExecMsg{
-				replierExecMsg{
+				{
 					MsgId:                 5,
 					SetDataInExecAndReply: true,
 					ReturnOrderInReply:    false,
