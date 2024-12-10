@@ -4,6 +4,12 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.1...HEAD)
 
+## [v0.53.2](https://github.com/CosmWasm/wasmd/tree/v0.53.2) (2024-12-10)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.1...v0.53.2)
+
+- Fix failing simulation with previous patch
+
 ## [v0.53.1](https://github.com/CosmWasm/wasmd/tree/v0.53.1) (2024-12-10)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.0...v0.53.1)
