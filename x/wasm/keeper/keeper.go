@@ -172,7 +172,8 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
 	var gasUsed uint64
-	if sdkCtx.ExecMode() == sdk.ExecModeSimulate {
+	isSimulation := sdkCtx.ExecMode() == sdk.ExecModeSimulate
+	if isSimulation {
 		// only simulate storing the code, no files are written
 		checksum, gasUsed, err = k.wasmVM.SimulateStoreCode(wasmCode, gasLeft)
 	} else {
@@ -182,7 +183,11 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	report, err := k.wasmVM.AnalyzeCode(checksum)
+	// simulation gets default value for report
+	var report *wasmvmtypes.AnalysisReport = &wasmvmtypes.AnalysisReport{}
+	if !isSimulation {
+		report, err = k.wasmVM.AnalyzeCode(checksum)
+	}
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
