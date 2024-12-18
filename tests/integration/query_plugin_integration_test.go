@@ -952,8 +952,8 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 
 	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
 	accepted := wasmKeeper.AcceptedQueries{
-		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
-		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
+		"/cosmos.auth.v1beta1.Query/Account": func() proto.Message { return &authtypes.QueryAccountResponse{} },
+		"/no/route/to/this":                  func() proto.Message { return &authtypes.QueryAccountResponse{} },
 	}
 
 	marshal := func(pb proto.Message) []byte {
