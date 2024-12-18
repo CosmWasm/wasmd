@@ -153,7 +153,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker:
-          version: 20.10.18
+          docker_layer_caching: true
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .
@@ -170,7 +170,7 @@ jobs:
             fi
       - when:
           condition:
-            equal: [ main, << pipeline.git.branch >> ]
+            equal: [main, << pipeline.git.branch >>]
           steps:
             - run:
                 name: Push application Docker image to docker hub
