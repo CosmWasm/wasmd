@@ -736,6 +736,8 @@ func TestGRPCQuerier(t *testing.T) {
 	}
 	querier := keeper.AcceptListStargateQuerier(acceptedQueries, router, keepers.EncodingConfig.Codec)
 
+	addr := keeper.RandomBech32AccountAddress(t)
+
 	eg := errgroup.Group{}
 	errorsCount := atomic.Uint64{}
 	for range 50 {
@@ -743,7 +745,7 @@ func TestGRPCQuerier(t *testing.T) {
 			denom := denom // copy
 			eg.Go(func() error {
 				queryReq := &banktypes.QueryBalanceRequest{
-					Address: keeper.RandomBech32AccountAddress(t),
+					Address: addr,
 					Denom:   denom,
 				}
 				grpcData, err := cdc.Marshal(queryReq)
