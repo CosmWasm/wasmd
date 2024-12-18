@@ -187,8 +187,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker:
-          # >= v20.10 https://wiki.alpinelinux.org/wiki/Release_Notes_for_Alpine_3.14.0#faccessat2
-          version: 20.10.11
+          docker_layer_caching: true
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_TAG}" .
