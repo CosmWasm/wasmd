@@ -3,15 +3,20 @@ package keeper_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
+	"sync/atomic"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -20,6 +25,8 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -681,4 +688,110 @@ func TestConvertSDKDecCoinToWasmDecCoin(t *testing.T) {
 			assert.Equal(t, spec.exp, got)
 		})
 	}
+}
+
+var _ keeper.GRPCQueryRouter = mockedQueryRouter{}
+
+type mockedQueryRouter struct {
+	codec codec.Codec
+}
+
+func (m mockedQueryRouter) Route(_ string) baseapp.GRPCQueryHandler {
+	return func(ctx sdk.Context, req *abci.RequestQuery) (*abci.ResponseQuery, error) {
+		balanceReq := &banktypes.QueryBalanceRequest{}
+		if err := m.codec.Unmarshal(req.Data, balanceReq); err != nil {
+			return nil, err
+		}
+
+		coin := sdk.NewInt64Coin(balanceReq.Denom, 1)
+		balanceRes := &banktypes.QueryBalanceResponse{
+			Balance: &coin,
+		}
+
+		resValue, err := m.codec.Marshal(balanceRes)
+		if err != nil {
+			return nil, err
+		}
+
+		return &abci.ResponseQuery{
+			Value: resValue,
+		}, nil
+	}
+}
+
+func TestGRPCQuerier(t *testing.T) {
+	const (
+		denom1 = "denom1"
+		denom2 = "denom2"
+	)
+	_, keepers := keeper.CreateTestInput(t, false, keeper.AvailableCapabilities)
+	cdc := keepers.EncodingConfig.Codec
+
+	acceptedQueries := keeper.AcceptedQueries{
+		"/bank.Balance": func() proto.Message { return &banktypes.QueryBalanceResponse{} },
+	}
+
+	router := mockedQueryRouter{
+		codec: cdc,
+	}
+	querier := keeper.AcceptListStargateQuerier(acceptedQueries, router, keepers.EncodingConfig.Codec)
+
+	addr := keeper.RandomBech32AccountAddress(t)
+
+	eg := errgroup.Group{}
+	errorsCount := atomic.Uint64{}
+	for range 50 {
+		for _, denom := range []string{denom1, denom2} {
+			denom := denom // copy
+			eg.Go(func() error {
+				queryReq := &banktypes.QueryBalanceRequest{
+					Address: addr,
+					Denom:   denom,
+				}
+				grpcData, err := cdc.Marshal(queryReq)
+				if err != nil {
+					return err
+				}
+
+				wasmGrpcReq := &wasmvmtypes.StargateQuery{
+					Data: grpcData,
+					Path: "/bank.Balance",
+				}
+
+				wasmGrpcRes, err := querier(sdk.Context{}, wasmGrpcReq)
+				if err != nil {
+					return err
+				}
+
+				queryRes := &banktypes.QueryBalanceResponse{}
+				if err := cdc.UnmarshalJSON(wasmGrpcRes, queryRes); err != nil {
+					return err
+				}
+
+				expectedCoin := sdk.NewInt64Coin(denom, 1)
+				if queryRes.Balance == nil {
+					fmt.Printf(
+						"Error: expected %s, got nil\n",
+						expectedCoin.String(),
+					)
+					errorsCount.Add(1)
+					return nil
+				}
+				if queryRes.Balance.String() != expectedCoin.String() {
+					fmt.Printf(
+						"Error: expected %s, got %s\n",
+						expectedCoin.String(),
+						queryRes.Balance.String(),
+					)
+					errorsCount.Add(1)
+					return nil
+				}
+
+				return nil
+			})
+		}
+	}
+
+	require.NoError(t, eg.Wait())
+	require.Zero(t, errorsCount.Load())
 }

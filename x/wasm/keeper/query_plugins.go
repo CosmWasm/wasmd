@@ -346,7 +346,7 @@ func RejectGrpcQuerier(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.M
 // WithQueryPlugins(&QueryPlugins{Grpc: AcceptListGrpcQuerier(acceptList, queryRouter, codec)})
 func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
-		protoResponse, accepted := acceptList[request.Path]
+		protoResponseFn, accepted := acceptList[request.Path]
 		if !accepted {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
@@ -364,6 +364,7 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 			return nil, err
 		}
 
+		protoResponse := protoResponseFn()
 		// decode the query response into the expected protobuf message
 		err = codec.Unmarshal(res.Value, protoResponse)
 		if err != nil {
@@ -381,10 +382,15 @@ func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.Stargate
 	}
 }
 
-// AcceptedQueries define accepted Stargate or gRPC queries as a map with path as key and response type as value.
+// AcceptedQueries defines accepted Stargate or gRPC queries as a map where the key is the query path
+// and the value is a function returning a proto.Message.
+//
 // For example:
-// acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
-type AcceptedQueries map[string]proto.Message
+//
+//	acceptList["/cosmos.auth.v1beta1.Query/Account"] = func() proto.Message {
+//	    return &authtypes.QueryAccountResponse{}
+//	}
+type AcceptedQueries map[string]func() proto.Message
 
 // AcceptListStargateQuerier supports a preconfigured set of stargate queries only.
 // All arguments must be non nil.
@@ -396,7 +402,7 @@ type AcceptedQueries map[string]proto.Message
 // WithQueryPlugins(&QueryPlugins{Stargate: AcceptListStargateQuerier(acceptList, queryRouter, codec)})
 func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-		protoResponse, accepted := acceptList[request.Path]
+		protoResponseFn, accepted := acceptList[request.Path]
 		if !accepted {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
@@ -414,6 +420,7 @@ func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQuery
 			return nil, err
 		}
 
+		protoResponse := protoResponseFn()
 		return ConvertProtoToJSONMarshal(codec, protoResponse, res.Value)
 	}
 }
