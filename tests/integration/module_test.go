@@ -112,6 +112,21 @@ var (
 	oldContract  = mustLoad("./testdata/escrow_0.7.wasm")
 )
 
+func TestStoreCodeSimulation(t *testing.T) {
+	data := setupTest(t)
+	data.ctx = data.ctx.WithExecMode(sdk.ExecModeSimulate)
+
+	msg := &types.MsgStoreCode{
+		Sender:       addr1,
+		WASMByteCode: testContract,
+	}
+
+	h := data.msgServiceRouter.Handler(msg)
+
+	_, err := h(data.ctx, msg)
+	require.NoError(t, err)
+}
+
 func TestHandleCreate(t *testing.T) {
 	cases := map[string]struct {
 		msg     sdk.Msg
