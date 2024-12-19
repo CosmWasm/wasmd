@@ -178,17 +178,29 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 	}
 
 	gasLeft := k.runtimeGasForContract(sdkCtx)
-	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gasLeft)
+	var gasUsed uint64
+	isSimulation := sdkCtx.ExecMode() == sdk.ExecModeSimulate
+	if isSimulation {
+		// only simulate storing the code, no files are written
+		checksum, gasUsed, err = k.wasmVM.SimulateStoreCode(wasmCode, gasLeft)
+	} else {
+		checksum, gasUsed, err = k.wasmVM.StoreCode(wasmCode, gasLeft)
+	}
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	report, err := k.wasmVM.AnalyzeCode(checksum)
-	if err != nil {
-		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
+	// simulation gets default value for capabilities
+	var requiredCapabilities string
+	if !isSimulation {
+		report, err := k.wasmVM.AnalyzeCode(checksum)
+		if err != nil {
+			return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
+		}
+		requiredCapabilities = report.RequiredCapabilities
 	}
 	codeID = k.mustAutoIncrementID(sdkCtx, types.KeySequenceCodeID)
-	k.Logger(sdkCtx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
+	k.Logger(sdkCtx).Debug("storing new contract", "capabilities", requiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.mustStoreCodeInfo(sdkCtx, codeID, codeInfo)
 
@@ -197,7 +209,7 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 		sdk.NewAttribute(types.AttributeKeyChecksum, hex.EncodeToString(checksum)),
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)), // last element to be compatible with scripts
 	)
-	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
+	for _, f := range strings.Split(requiredCapabilities, ",") {
 		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
 	}
 	sdkCtx.EventManager().EmitEvent(evt)

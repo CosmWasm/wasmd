@@ -30,6 +30,11 @@ type WasmEngine interface {
 	// Use this for adding code that was checked before, particularly in the case of state sync.
 	StoreCodeUnchecked(code wasmvm.WasmCode) (wasmvm.Checksum, error)
 
+	// SimulateStoreCode works like StoreCode, but does not actually store the code.
+	// Instead, it just does all the validation and compilation steps without storing the result on disk.
+	// Returns both the checksum, as well as the gas cost of compilation (in CosmWasm Gas) or an error.
+	SimulateStoreCode(code wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, uint64, error)
+
 	// AnalyzeCode will statically analyze the code.
 	// Currently just reports if it exposes all IBC entry points.
 	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
