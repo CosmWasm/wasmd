@@ -237,12 +237,23 @@ func isIBCEvent(event sdk.Event) bool {
 	return false
 }
 
+func isDexEvent(event sdk.Event) bool {
+	for _, attr := range event.Attributes {
+		// Indexing of dex events requires that all dev events are emitted
+		if attr.Key == sdk.AttributeKeyModule && attr.Value == "dex" {
+			return true
+		}
+	}
+	return false
+}
+
 func filterEvents(events []sdk.Event) []sdk.Event {
 	// pre-allocate space for efficiency
 	res := make([]sdk.Event, 0, len(events))
 	for _, ev := range events {
 		// we filter out all 'message' type events but if they are ibc events we must keep them for the IBC relayer (hermes particularly)
-		if ev.Type != "message" || isIBCEvent(ev) {
+		// we also keep dex events, this is required for proper indexing of dex messages
+		if ev.Type != "message" || isIBCEvent(ev) || isDexEvent(ev) {
 			res = append(res, ev)
 		}
 	}
