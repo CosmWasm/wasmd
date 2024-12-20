@@ -404,6 +404,7 @@ func TestDispatchSubmessages(t *testing.T) {
 						// we still emit this to the client, but not the contract
 						sdk.NewEvent("non-determinstic"),
 						sdk.NewEvent("message", sdk.NewAttribute("module", "ibc_channel")),
+						sdk.NewEvent("message", sdk.NewAttribute("module", "dex")),
 					}
 					return events, [][]byte{[]byte("subData")}, [][]*codectypes.Any{}, nil
 				},
@@ -413,6 +414,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			expEvents: []sdk.Event{
 				sdk.NewEvent("non-determinstic"),
 				sdk.NewEvent("message", sdk.NewAttribute("module", "ibc_channel")),
+				sdk.NewEvent("message", sdk.NewAttribute("module", "dex")),
 				// the event from reply is also exposed
 				sdk.NewEvent("stargate-reply"),
 			},
