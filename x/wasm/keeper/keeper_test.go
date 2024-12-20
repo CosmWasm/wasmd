@@ -2196,7 +2196,7 @@ func defaultRepliesMsgTemplate() replierExecMsg {
 		ReplyError:            false,
 		ReplyOnNever:          false,
 		Messages: []replierExecMsg{
-			replierExecMsg{
+			{
 				MsgId:                 2,
 				SetDataInExecAndReply: true,
 				ReturnOrderInReply:    false,
@@ -2204,7 +2204,7 @@ func defaultRepliesMsgTemplate() replierExecMsg {
 				ReplyError:            false,
 				ReplyOnNever:          false,
 				Messages: []replierExecMsg{
-					replierExecMsg{
+					{
 						MsgId:                 3,
 						SetDataInExecAndReply: true,
 						ReturnOrderInReply:    false,
@@ -2215,7 +2215,7 @@ func defaultRepliesMsgTemplate() replierExecMsg {
 					},
 				},
 			},
-			replierExecMsg{
+			{
 				MsgId:                 4,
 				SetDataInExecAndReply: true,
 				ReturnOrderInReply:    false,
@@ -2223,7 +2223,7 @@ func defaultRepliesMsgTemplate() replierExecMsg {
 				ReplyError:            false,
 				ReplyOnNever:          false,
 				Messages: []replierExecMsg{
-					replierExecMsg{
+					{
 						MsgId:                 5,
 						SetDataInExecAndReply: true,
 						ReturnOrderInReply:    false,
@@ -2239,32 +2239,32 @@ func defaultRepliesMsgTemplate() replierExecMsg {
 }
 
 func repliesMsgTemplateReturnOrder() replierExecMsg {
-	var repliesMsgTemplate = defaultRepliesMsgTemplate()
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
 	repliesMsgTemplate.ReturnOrderInReply = true
 	return repliesMsgTemplate
 }
 
 func repliesMsgTemplateReplyNever() replierExecMsg {
-	var repliesMsgTemplate = defaultRepliesMsgTemplate()
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
 	repliesMsgTemplate.Messages[1].ReplyOnNever = true
 	return repliesMsgTemplate
 }
 
 func repliesMsgTemplateNoDataInResp() replierExecMsg {
-	var repliesMsgTemplate = defaultRepliesMsgTemplate()
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
 	repliesMsgTemplate.Messages[1].SetDataInExecAndReply = false
 	return repliesMsgTemplate
 }
 
 func repliesMsgTemplateExecError() replierExecMsg {
-	var repliesMsgTemplate = defaultRepliesMsgTemplate()
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
 	repliesMsgTemplate.Messages[0].Messages[0].ExecError = true
 	repliesMsgTemplate.ReturnOrderInReply = true
 	return repliesMsgTemplate
 }
 
 func repliesMsgTemplateReplyError() replierExecMsg {
-	var repliesMsgTemplate = defaultRepliesMsgTemplate()
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
 	repliesMsgTemplate.Messages[0].ReplyError = true
 	repliesMsgTemplate.ReturnOrderInReply = true
 	return repliesMsgTemplate
