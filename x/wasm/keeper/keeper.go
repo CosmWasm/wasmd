@@ -154,16 +154,29 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 
 	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
-	checksum, err = k.wasmVM.StoreCode(wasmCode)
+	isSimulation, ok := types.ExecModeSimulation(ctx)
+	if !ok {
+		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, "exec mode not found")
+	}
+	if isSimulation {
+		checksum, err = k.wasmVM.SimulateStoreCode(wasmCode, 0) // TODO: discuss what to do with gas limit
+	} else {
+		checksum, err = k.wasmVM.StoreCode(wasmCode)
+	}
 	if err != nil {
 		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	report, err := k.wasmVM.AnalyzeCode(checksum)
-	if err != nil {
-		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	// simulation gets default value for capabilities
+	var requiredCapabilities string
+	if !isSimulation {
+		report, err := k.wasmVM.AnalyzeCode(checksum)
+		if err != nil {
+			return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		}
+		requiredCapabilities = report.RequiredCapabilities
 	}
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	k.Logger(ctx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
+	k.Logger(ctx).Debug("storing new contract", "capabilities", requiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
 
@@ -172,7 +185,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		sdk.NewAttribute(types.AttributeKeyChecksum, hex.EncodeToString(checksum)),
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)), // last element to be compatible with scripts
 	)
-	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
+	for _, f := range strings.Split(requiredCapabilities, ",") {
 		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
 	}
 	ctx.EventManager().EmitEvent(evt)
