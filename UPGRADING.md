@@ -321,7 +321,7 @@ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
 
 On a real network, operators will have to be awake when the upgrade plan is activated
 and manually perform this switch, or use some automated tooling like 
-[cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/master/cosmovisor/README.md).
+[cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/main/tools/cosmovisor/README.md).
 
 ## Check final state
 
