@@ -94,3 +94,16 @@ func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 	return next(ctx, tx, simulate)
 }
+
+// ExecModeSimulationDecorator is an ante handler that determines if the execution mode is simulation.
+type ExecModeSimulationDecorator struct{}
+
+// NewExecModeSimulationDecorator constructor
+func NewExecModeSimulationDecorator() *ExecModeSimulationDecorator {
+	return &ExecModeSimulationDecorator{}
+}
+
+// AnteHandle stores a boolean in the context indicating whether execution mode is simulation.
+func (a ExecModeSimulationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	return next(types.WithExecModeSimulation(ctx, simulate), tx, simulate)
+}

@@ -187,3 +187,44 @@ func consumeGasAnteHandler(gasToConsume sdk.Gas) sdk.AnteHandler {
 		return ctx, nil
 	}
 }
+
+func TestExecModeSimulationDecorator(t *testing.T) {
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db)
+	specs := map[string]struct {
+		simulate bool
+	}{
+		"simulation": {
+			simulate: true,
+		},
+		"not simulation": {
+			simulate: false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := sdk.NewContext(ms.CacheMultiStore(), tmproto.Header{
+				Height: 10,
+				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
+			}, false, log.NewNopLogger())
+			var anyTx sdk.Tx
+
+			nextAssertAnte := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				gotSimulate, ok := types.ExecModeSimulation(ctx)
+				require.True(t, ok)
+				assert.Equal(t, simulate, gotSimulate)
+				return ctx, nil
+			}
+
+			// when
+			ante := keeper.NewExecModeSimulationDecorator()
+			ctx, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, nextAssertAnte)
+
+			// then
+			require.NoError(t, gotErr)
+			gotSimulate, ok := types.ExecModeSimulation(ctx)
+			require.True(t, ok)
+			assert.Equal(t, spec.simulate, gotSimulate)
+		})
+	}
+}
