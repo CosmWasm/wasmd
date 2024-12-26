@@ -189,6 +189,8 @@ func consumeGasAnteHandler(gasToConsume sdk.Gas) sdk.AnteHandler {
 }
 
 func TestExecModeSimulationDecorator(t *testing.T) {
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db)
 	specs := map[string]struct {
 		simulate bool
 	}{
@@ -201,7 +203,10 @@ func TestExecModeSimulationDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.Context{}
+			ctx := sdk.NewContext(ms.CacheMultiStore(), tmproto.Header{
+				Height: 10,
+				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
+			}, false, log.NewNopLogger())
 			var anyTx sdk.Tx
 
 			nextAssertAnte := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
