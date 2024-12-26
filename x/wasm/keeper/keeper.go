@@ -156,7 +156,8 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
 	isSimulation, ok := types.ExecModeSimulation(ctx)
 	if !ok {
-		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, "exec mode not found")
+		k.Logger(ctx).Info("cannot getexec mode from context")
+		isSimulation = false
 	}
 	if isSimulation {
 		checksum, err = k.wasmVM.SimulateStoreCode(wasmCode, 0) // TODO: discuss what to do with gas limit
