@@ -278,9 +278,9 @@ func (c WasmdCli) AddKey(name string) string {
 }
 
 // AddKeyFromSeed recovers the key from given seed and add it to default keyring. Returns address
-func (c WasmdCli) AddKeyFromSeed(name, mnemoic string) string {
+func (c WasmdCli) AddKeyFromSeed(name, mnemonic string) string {
 	cmd := c.withKeyringFlags("keys", "add", name, "--recover")
-	out, _ := c.runWithInput(cmd, strings.NewReader(mnemoic))
+	out, _ := c.runWithInput(cmd, strings.NewReader(mnemonic))
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr
