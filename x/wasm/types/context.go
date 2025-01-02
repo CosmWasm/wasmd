@@ -23,6 +23,9 @@ const (
 
 	// contracts in the current tx
 	contextKeyTxContracts contextKey = iota
+
+	// contextKeyExecModeSimulation contextKey = iota
+	_
 )
 
 // WithTXCounter stores a transaction counter value in the context
