@@ -1,7 +1,4 @@
-# docker build . -t cosmwasm/wasmd:latest
-# docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-
-FROM golang:1.23-alpine3.19 AS go-builder
+FROM golang:1.21-alpine3.19 AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -26,7 +23,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/wasmd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.18
+FROM alpine:3.19
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 
@@ -42,4 +39,4 @@ EXPOSE 26656
 # tendermint rpc
 EXPOSE 26657
 
-CMD ["/usr/bin/wasmd", "version"]
+CMD ["/usr/bin/wasmd", "version"] 
