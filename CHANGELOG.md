@@ -11,6 +11,7 @@
 - Bump wasmvm v2.2.1, which enables [CosmWasm 2.2.0](https://github.com/CosmWasm/cosmwasm/blob/v2.2.0/CHANGELOG.md#220---2024-12-17)
 - Bump cosmos-sdk [v0.50.11](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.11)
 - Fix AcceptListGrpcQuerier concurrency issues [\#2065](https://github.com/CosmWasm/wasmd/pull/2065)
+- Add customizable WasmLimits [\#1989](https://github.com/CosmWasm/wasmd/pull/1989)
 - Fix no-cgo keeper signature [\#2079](https://github.com/CosmWasm/wasmd/pull/2079)
 
 ## [v0.53.0](https://github.com/CosmWasm/wasmd/tree/v0.53.0) (2024-08-21)
