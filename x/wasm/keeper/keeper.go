@@ -156,7 +156,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
 	isSimulation, ok := types.ExecModeSimulation(ctx)
 	if !ok {
-		k.Logger(ctx).Info("cannot getexec mode from context")
+		k.Logger(ctx).Info("cannot get execution mode from context")
 		isSimulation = false
 	}
 	if isSimulation {
