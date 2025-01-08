@@ -37,6 +37,11 @@ type WasmerEngine interface {
 	// It does the same as StoreCode but without the static checks.
 	StoreCodeUnchecked(code wasmvm.WasmCode) (wasmvm.Checksum, error)
 
+	// SimulateStoreCode works like StoreCode, but does not actually store the code.
+	// Instead, it just does all the validation and compilation steps without storing the result on disk.
+	// Returns the checksum or an error.
+	SimulateStoreCode(code wasmvm.WasmCode) (wasmvm.Checksum, error)
+
 	// AnalyzeCode will statically analyze the code.
 	// Currently just reports if it exposes all IBC entry points.
 	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
