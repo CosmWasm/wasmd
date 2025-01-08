@@ -160,7 +160,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		isSimulation = false
 	}
 	if isSimulation {
-		checksum, err = k.wasmVM.SimulateStoreCode(wasmCode, 0) // TODO: discuss what to do with gas limit
+		checksum, err = k.wasmVM.SimulateStoreCode(wasmCode)
 	} else {
 		checksum, err = k.wasmVM.StoreCode(wasmCode)
 	}

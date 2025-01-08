@@ -18,7 +18,7 @@ var _ types.WasmerEngine = &MockWasmer{}
 type MockWasmer struct {
 	StoreCodeFn          func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
 	StoreCodeUncheckedFn func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
-	SimulateStoreCodeFn  func(codeID wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, error)
+	SimulateStoreCodeFn  func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
 	AnalyzeCodeFn        func(codeID wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
 	InstantiateFn        func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error)
 	ExecuteFn            func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error)
@@ -100,11 +100,11 @@ func (m *MockWasmer) StoreCodeUnchecked(codeID wasmvm.WasmCode) (wasmvm.Checksum
 	return m.StoreCodeUncheckedFn(codeID)
 }
 
-func (m *MockWasmer) SimulateStoreCode(codeID wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, error) {
+func (m *MockWasmer) SimulateStoreCode(codeID wasmvm.WasmCode) (wasmvm.Checksum, error) {
 	if m.SimulateStoreCodeFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.SimulateStoreCodeFn(codeID, gasLimit)
+	return m.SimulateStoreCodeFn(codeID)
 }
 
 func (m *MockWasmer) AnalyzeCode(codeID wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {

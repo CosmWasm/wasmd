@@ -40,7 +40,7 @@ type WasmerEngine interface {
 	// SimulateStoreCode works like StoreCode, but does not actually store the code.
 	// Instead, it just does all the validation and compilation steps without storing the result on disk.
 	// Returns the checksum or an error.
-	SimulateStoreCode(code wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, error)
+	SimulateStoreCode(code wasmvm.WasmCode) (wasmvm.Checksum, error)
 
 	// AnalyzeCode will statically analyze the code.
 	// Currently just reports if it exposes all IBC entry points.
