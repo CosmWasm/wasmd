@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
 )
 
 func GetSendPackets(evts []abci.Event) []channeltypes.Packet {
@@ -106,7 +106,7 @@ func ParseChannelVersionFromEvents(events []abci.Event) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {
-				if attr.Key == channeltypes.AttributeVersion {
+				if attr.Key == channeltypes.AttributeKeyVersion {
 					return attr.Value, nil
 				}
 			}

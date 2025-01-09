@@ -15,15 +15,14 @@ import (
 	tmversion "github.com/cometbft/cometbft/version"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v9/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
@@ -89,7 +88,6 @@ type TestChain struct {
 	ChainID       string
 	LastHeader    *ibctm.Header   // header for last block height committed
 	CurrentHeader cmtproto.Header // header for current block height
-	QueryServer   types.QueryServer
 	TxConfig      client.TxConfig
 	Codec         codec.Codec
 
@@ -219,7 +217,6 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAp
 		ChainID:        chainID,
 		App:            wasmApp,
 		CurrentHeader:  header,
-		QueryServer:    wasmApp.GetIBCKeeper(),
 		TxConfig:       txConfig,
 		Codec:          wasmApp.AppCodec(),
 		Vals:           valSet,
@@ -309,7 +306,7 @@ func (chain *TestChain) QueryUpgradeProof(key []byte, height uint64) ([]byte, cl
 func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clienttypes.Height) {
 	clientState := chain.GetClientState(clientID)
 
-	consensusHeight := clientState.GetLatestHeight().(clienttypes.Height)
+	consensusHeight := chain.GetLatestHeight(clientState)
 	consensusKey := host.FullConsensusStateKey(clientID, consensusHeight)
 	proofConsensus, _ := chain.QueryProof(consensusKey)
 
@@ -430,6 +427,15 @@ func (chain *TestChain) CaptureIBCEvents(r *abci.ExecTxResult) {
 	}
 }
 
+// Add this helper method to TestChain
+func (chain *TestChain) GetLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
+}
+
 // GetClientState retrieves the client state for the provided clientID. The client is
 // expected to exist otherwise testing will fail.
 func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
@@ -497,7 +503,7 @@ func (chain *TestChain) ConstructUpdateCMTClientHeaderWithTrustedHeight(counterp
 	header := counterparty.LastHeader
 	// Relayer must query for LatestHeight on client to get TrustedHeight if the trusted height is not set
 	if trustedHeight.IsZero() {
-		trustedHeight = chain.GetClientState(clientID).GetLatestHeight().(clienttypes.Height)
+		trustedHeight = chain.GetLatestHeight(chain.GetClientState(clientID))
 	}
 	var (
 		cmtTrustedVals *cmttypes.ValidatorSet
