@@ -15,15 +15,14 @@ import (
 	tmversion "github.com/cometbft/cometbft/version"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v9/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v9/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
@@ -89,7 +88,6 @@ type TestChain struct {
 	ChainID       string
 	LastHeader    *ibctm.Header   // header for last block height committed
 	CurrentHeader cmtproto.Header // header for current block height
-	QueryServer   types.QueryServer
 	TxConfig      client.TxConfig
 	Codec         codec.Codec
 
@@ -219,7 +217,6 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAp
 		ChainID:        chainID,
 		App:            wasmApp,
 		CurrentHeader:  header,
-		QueryServer:    wasmApp.GetIBCKeeper(),
 		TxConfig:       txConfig,
 		Codec:          wasmApp.AppCodec(),
 		Vals:           valSet,
