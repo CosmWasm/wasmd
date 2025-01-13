@@ -8,10 +8,10 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -98,12 +98,12 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			path := wasmibctesting.NewPath(chainA, chainB)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  "transfer",
-				Version: ibctransfertypes.Version,
+				Version: ibctransfertypes.V2,
 				Order:   channeltypes.UNORDERED,
 			}
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractBPortID,
-				Version: ibctransfertypes.Version,
+				Version: ibctransfertypes.V2,
 				Order:   channeltypes.UNORDERED,
 			}
 
@@ -115,7 +115,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
+			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, []sdk.Coin{coinToSendToB}, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "", &ibctransfertypes.Forwarding{Unwind: false, Hops: []ibctransfertypes.Hop{}})
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
 			require.NoError(t, path.EndpointB.UpdateClient())
@@ -171,12 +171,12 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -243,12 +243,12 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -319,12 +319,12 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -408,12 +408,12 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr1).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -469,12 +469,12 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -519,12 +519,12 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA1).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V2,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(path)
@@ -706,7 +706,7 @@ type ackReceiverContract struct {
 func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	packet := msg.Packet
 
-	var src ibctransfertypes.FungibleTokenPacketData
+	var src ibctransfertypes.FungibleTokenPacketDataV2
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
@@ -726,7 +726,7 @@ func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.
 }
 
 func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
-	var data ibctransfertypes.FungibleTokenPacketData
+	var data ibctransfertypes.FungibleTokenPacketDataV2
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
