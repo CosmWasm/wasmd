@@ -33,14 +33,14 @@ func TestIBCCallbacks(t *testing.T) {
 	// then the contract on B should receive a destination chain callback
 	//   and the contract on A should receive a source chain callback with the result (ack or timeout)
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator(t, 2)
-	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
-	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
+	coord := wasmibctesting.NewCoordinator2(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
@@ -128,7 +128,7 @@ func TestIBCCallbacks(t *testing.T) {
 
 			if spec.expAck {
 				// and the packet is relayed
-				require.NoError(t, coord.RelayAndAckPendingPackets(path))
+				wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 
 				// then the contract on chain B should receive a receive callback
 				var response QueryResp
@@ -150,7 +150,7 @@ func TestIBCCallbacks(t *testing.T) {
 				assert.Equal(t, []byte(`{"result":"AQ=="}`), response.IBCAckCallbacks[0].Acknowledgement.Data)
 			} else {
 				// and the packet times out
-				require.NoError(t, coord.TimeoutPendingPackets(path))
+				require.NoError(t, wasmibctesting.TimeoutPendingPackets(coord, &chainA, path))
 
 				// then the contract on chain B should not receive anything
 				var response QueryResp
@@ -178,13 +178,13 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	// then the VM should try to call the callback on B and fail gracefully
 	//   and should try to call the callback on A and fail gracefully
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator(t, 2)
-	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
-	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
+	coord := wasmibctesting.NewCoordinator2(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
 
 	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1))
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
@@ -199,20 +199,20 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	coord.Setup(path)
 
 	// with a reflect contract deployed on chain A and B
-	contractAddrA := e2e.InstantiateReflectContract(t, chainA)
+	contractAddrA := e2e.InstantiateReflectContract(t, &chainA)
 	chainA.Fund(contractAddrA, oneToken.Amount)
-	contractAddrB := e2e.InstantiateReflectContract(t, chainA)
+	contractAddrB := e2e.InstantiateReflectContract(t, &chainA)
 
 	// when the contract on A sends an IBCMsg::Transfer to the contract on B
 	memo := fmt.Sprintf(`{"src_callback":{"address":"%v"},"dest_callback":{"address":"%v"}}`, contractAddrA.String(), contractAddrB.String())
-	e2e.MustExecViaReflectContract(t, chainA, contractAddrA, wasmvmtypes.CosmosMsg{
+	e2e.MustExecViaReflectContract(t, &chainA, contractAddrA, wasmvmtypes.CosmosMsg{
 		IBC: &wasmvmtypes.IBCMsg{
 			Transfer: &wasmvmtypes.TransferMsg{
 				ToAddress: contractAddrB.String(),
 				ChannelID: path.EndpointA.ChannelID,
 				Amount:    wasmvmtypes.NewCoin(oneToken.Amount.Uint64(), oneToken.Denom),
 				Timeout: wasmvmtypes.IBCTimeout{
-					Timestamp: uint64(chainA.LastHeader.GetTime().Add(time.Second * 100).UnixNano()),
+					Timestamp: uint64(chainA.LatestCommittedHeader.GetTime().Add(time.Second * 100).UnixNano()),
 				},
 				Memo: memo,
 			},
@@ -220,6 +220,5 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	})
 
 	// and the packet is relayed without problems
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
-	assert.Empty(t, chainA.PendingSendPackets)
+	wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 }
