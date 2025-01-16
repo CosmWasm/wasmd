@@ -333,7 +333,7 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 }
 
 func RejectGrpcQuerier(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
-	return nil, wasmvmtypes.UnsupportedRequest{Kind: "gRPC queries are disabled"}
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "gRPC queries are disabled on this chain"}
 }
 
 // AcceptListGrpcQuerier supports a preconfigured set of gRPC queries only.
@@ -377,7 +377,7 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 
 // RejectStargateQuerier rejects all stargate queries
 func RejectStargateQuerier(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled"}
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled on this chain"}
 }
 
 // AcceptedQueries defines accepted Stargate or gRPC queries as a map where the key is the query path
