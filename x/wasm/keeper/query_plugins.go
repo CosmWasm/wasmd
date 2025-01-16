@@ -121,7 +121,7 @@ func DefaultQueryPlugins(
 		Custom:       NoCustomQuerier,
 		IBC:          IBCQuerier(wasm, channelKeeper),
 		Staking:      StakingQuerier(staking, distKeeper),
-		Stargate:     RejectStargateQuerier(),
+		Stargate:     RejectStargateQuerier,
 		Grpc:         RejectGrpcQuerier,
 		Wasm:         WasmQuerier(wasm),
 		Distribution: DistributionQuerier(distKeeper),
@@ -376,10 +376,8 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 }
 
 // RejectStargateQuerier rejects all stargate queries
-func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled"}
-	}
+func RejectStargateQuerier(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled"}
 }
 
 // AcceptedQueries defines accepted Stargate or gRPC queries as a map where the key is the query path
