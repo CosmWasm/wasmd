@@ -49,9 +49,9 @@ func TestIBCFeesTransfer(t *testing.T) {
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator(t, 2)
-	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
-	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
+	coord := wasmibctesting.NewCoordinator2(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
@@ -59,7 +59,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
@@ -72,7 +72,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 	}
 	// with an ics-20 transfer channel setup between both chains
 	coord.Setup(path)
-	appA := chainA.App.(*app.WasmApp)
+	appA := chainA.GetWasmApp()
 	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID))
 	// and with a payee registered on both chains
 	_, err := chainA.SendMsgs(ibcfee.NewMsgRegisterPayee(ibctransfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), payee.String()))
@@ -92,7 +92,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 
 	require.NoError(t, err) // message committed
 
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+	require.NoError(t, wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path))
 
 	// then
 	expBalance := GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, transferCoin.Denom, transferCoin.Amount)
@@ -113,12 +113,12 @@ func TestIBCFeesTransfer(t *testing.T) {
 	feeMsg = ibcfee.NewMsgPayPacketFee(ibcPackageFee, ibctransfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), nil)
 	_, err = chainB.SendMsgs(feeMsg, ibcPayloadMsg)
 	require.NoError(t, err)
-	appB := chainB.App.(*app.WasmApp)
+	appB := chainB.GetWasmApp()
 	pendingIncentivisedPackages = appB.IBCFeeKeeper.GetIdentifiedPacketFeesForChannel(chainB.GetContext(), ibctransfertypes.PortID, path.EndpointB.ChannelID)
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// when packages relayed
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+	require.NoError(t, wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path))
 
 	// then
 	expBalance = GetTransferCoin(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, transferCoin.Denom, transferCoin.Amount)
@@ -135,9 +135,9 @@ func TestIBCFeesWasm(t *testing.T) {
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator(t, 2)
-	chainA := coord.GetChain(ibctesting.GetChainID(1))
-	chainB := coord.GetChain(ibctesting.GetChainID(2))
+	coord := wasmibctesting.NewCoordinator2(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
 
@@ -155,7 +155,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibcContractPortID,
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
@@ -168,8 +168,8 @@ func TestIBCFeesWasm(t *testing.T) {
 	}
 	// with an ics-29 fee enabled channel setup between both chains
 	coord.Setup(path)
-	appA := chainA.App.(*app.WasmApp)
-	appB := chainB.App.(*app.WasmApp)
+	appA := chainA.GetWasmApp()
+	appB := chainB.GetWasmApp()
 	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibcContractPortID, path.EndpointA.ChannelID))
 	require.True(t, appB.IBCFeeKeeper.IsFeeEnabled(chainB.GetContext(), ibctransfertypes.PortID, path.EndpointB.ChannelID))
 	// and with a payee registered for A -> B
@@ -194,7 +194,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// and packages relayed
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+	require.NoError(t, wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path))
 
 	// then
 	// on chain A
@@ -226,7 +226,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// when packages relayed
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+	require.NoError(t, wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path))
 
 	// then
 	// on chain A
@@ -246,9 +246,9 @@ func TestIBCFeesReflect(t *testing.T) {
 	// then the relayer's payee is receiving the fee(s) on success
 
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator(t, 2)
-	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
-	chainB := coord.GetChain(ibctesting.GetChainID(2))
+	coord := wasmibctesting.NewCoordinator2(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
 
@@ -261,7 +261,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	payee := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
 	oneToken := []wasmvmtypes.Coin{wasmvmtypes.NewCoin(1, sdk.DefaultBondDenom)}
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
 		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
@@ -274,8 +274,8 @@ func TestIBCFeesReflect(t *testing.T) {
 	}
 	// with an ics-29 fee enabled channel setup between both chains
 	coord.Setup(path)
-	appA := chainA.App.(*app.WasmApp)
-	appB := chainB.App.(*app.WasmApp)
+	appA := chainA.GetWasmApp()
+	appB := chainB.GetWasmApp()
 	require.True(t, appA.IBCFeeKeeper.IsFeeEnabled(chainA.GetContext(), ibctransfertypes.PortID, path.EndpointA.ChannelID))
 	require.True(t, appB.IBCFeeKeeper.IsFeeEnabled(chainB.GetContext(), ibctransfertypes.PortID, path.EndpointB.ChannelID))
 	// and with a payee registered for A -> B
@@ -285,7 +285,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	require.NoError(t, err)
 
 	// when reflect contract on A sends a PayPacketFee msg, followed by a transfer
-	_, err = ExecViaReflectContract(t, chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
+	_, err = ExecViaReflectContract(t, &chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
 		{
 			IBC: &wasmvmtypes.IBCMsg{
 				PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
@@ -319,7 +319,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	assert.Len(t, pendingIncentivisedPackages, 1)
 
 	// and sends an PayPacketFeeAsync msg
-	_, err = ExecViaReflectContract(t, chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
+	_, err = ExecViaReflectContract(t, &chainA, reflectContractAddr, []wasmvmtypes.CosmosMsg{
 		{
 			IBC: &wasmvmtypes.IBCMsg{
 				PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
@@ -339,7 +339,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	require.NoError(t, err)
 
 	// and packages relayed
-	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+	require.NoError(t, wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path))
 
 	// then
 	// on chain A

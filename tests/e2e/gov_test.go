@@ -15,9 +15,9 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
-	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
 func TestGovVoteByContract(t *testing.T) {
@@ -26,9 +26,9 @@ func TestGovVoteByContract(t *testing.T) {
 	// When  the contract sends a vote for the proposal
 	// Then	 the vote is taken into account
 
-	coord := ibctesting.NewCoordinator(t, 1)
-	chain := coord.GetChain(ibctesting.GetChainID(1))
-	contractAddr := e2e.InstantiateReflectContract(t, chain)
+	coord := wasmibctesting.NewCoordinator2(t, 1)
+	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	contractAddr := e2e.InstantiateReflectContract(t, &chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// a contract with a high delegation amount
 	delegateMsg := wasmvmtypes.CosmosMsg{
@@ -42,10 +42,10 @@ func TestGovVoteByContract(t *testing.T) {
 			},
 		},
 	}
-	e2e.MustExecViaReflectContract(t, chain, contractAddr, delegateMsg)
+	e2e.MustExecViaReflectContract(t, &chain, contractAddr, delegateMsg)
 
 	signer := chain.SenderAccount.GetAddress().String()
-	app := chain.App.(*app.WasmApp)
+	app := chain.GetWasmApp()
 	govKeeper, accountKeeper := app.GovKeeper, app.AccountKeeper
 	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), distributiontypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
 	require.False(t, communityPoolBalance.IsZero())
@@ -122,13 +122,13 @@ func TestGovVoteByContract(t *testing.T) {
 					Vote: spec.vote,
 				},
 			}
-			e2e.MustExecViaReflectContract(t, chain, contractAddr, voteMsg)
+			e2e.MustExecViaReflectContract(t, &chain, contractAddr, voteMsg)
 
 			// then proposal executed after voting period
 			proposal, err := govKeeper.Proposals.Get(chain.GetContext(), propID)
 			require.NoError(t, err)
 			coord.IncrementTimeBy(proposal.VotingEndTime.Sub(chain.GetContext().BlockTime()) + time.Minute)
-			coord.CommitBlock(chain)
+			coord.CommitBlock(chain.TestChain)
 
 			// and recipient balance updated
 			recipientBalance := chain.Balance(recipientAddr, sdk.DefaultBondDenom)

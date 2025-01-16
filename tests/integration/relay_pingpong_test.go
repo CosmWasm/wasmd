@@ -16,7 +16,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	app2 "github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -48,9 +47,9 @@ func TestPinPong(t *testing.T) {
 		chainBOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
 			wasmtesting.NewIBCContractMockWasmEngine(pongContract),
 		)}
-		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
-		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
-		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(2))
+		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts, chainBOpts)
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
 	)
 	_ = chainB.SeedNewContractInstance() // skip 1 instance so that addresses are not the same
 	var (
@@ -58,12 +57,12 @@ func TestPinPong(t *testing.T) {
 		pongContractAddr = chainB.SeedNewContractInstance()
 	)
 	require.NotEqual(t, pingContractAddr, pongContractAddr)
-	coordinator.CommitBlock(chainA, chainB)
+	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-	pingContract.chain = chainA
+	pingContract.chain = &chainA
 	pingContract.contractAddr = pingContractAddr
 
-	pongContract.chain = chainB
+	pongContract.chain = &chainB
 	pongContract.contractAddr = pongContractAddr
 
 	var (
@@ -71,7 +70,7 @@ func TestPinPong(t *testing.T) {
 		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
 	)
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
 		Version: ibctransfertypes.V2,
@@ -98,7 +97,7 @@ func TestPinPong(t *testing.T) {
 		Msg:      s.GetBytes(),
 	}
 	// on chain A
-	_, err := path.EndpointA.Chain.SendMsgs(startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
 
 	// when some rounds are played
@@ -106,7 +105,7 @@ func TestPinPong(t *testing.T) {
 		t.Logf("++ round: %d\n", i)
 
 		require.Len(t, chainA.PendingSendPackets, 1)
-		err := coordinator.RelayAndAckPendingPackets(path)
+		wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 		require.NoError(t, err)
 	}
 
@@ -129,7 +128,7 @@ var _ wasmtesting.IBCContractCallbacks = &player{}
 // player is a (mock) contract that sends and receives ibc packages
 type player struct {
 	t            *testing.T
-	chain        *wasmibctesting.TestChain
+	chain        *wasmibctesting.WasmTestChain
 	contractAddr sdk.AccAddress
 	actor        string // either ping or pong
 	execCalls    int    // number of calls to Execute method (checkTx + deliverTx)
@@ -312,7 +311,7 @@ func (p player) incrementCounter(key []byte, store wasmvm.KVStore) uint64 {
 }
 
 func (p player) QueryState(key []byte) uint64 {
-	app := p.chain.App.(*app2.WasmApp)
+	app := p.chain.GetWasmApp()
 	raw := app.WasmKeeper.QueryRaw(p.chain.GetContext(), p.contractAddr, key)
 	return sdk.BigEndianToUint64(raw)
 }

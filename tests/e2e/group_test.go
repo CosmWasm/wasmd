@@ -16,8 +16,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
 func TestGroupWithContract(t *testing.T) {
@@ -25,9 +26,9 @@ func TestGroupWithContract(t *testing.T) {
 	// When  contract submits a proposal with try_execute
 	// Then	 the payload msg is executed
 
-	coord := ibctesting.NewCoordinator(t, 1)
-	chain := coord.GetChain(ibctesting.GetChainID(1))
-	contractAddr := e2e.InstantiateStargateReflectContract(t, chain)
+	coord := wasmibctesting.NewCoordinator2(t, 1)
+	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	contractAddr := e2e.InstantiateStargateReflectContract(t, &chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
 	members := []group.MemberRequest{
@@ -61,7 +62,7 @@ func TestGroupWithContract(t *testing.T) {
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
-	rsp = e2e.MustExecViaStargateReflectContract(t, chain, contractAddr, propMsg)
+	rsp = e2e.MustExecViaStargateReflectContract(t, &chain, contractAddr, propMsg)
 	var execRsp types.MsgExecuteContractResponse
 	chain.UnwrapExecTXResult(rsp, &execRsp)
 
@@ -80,9 +81,9 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	// When  contract submits a proposal with try_execute
 	// Then	 the payload msg is executed
 
-	coord := ibctesting.NewCoordinator(t, 1)
-	chain := coord.GetChain(ibctesting.GetChainID(1))
-	contractAddr := e2e.InstantiateReflectContract(t, chain)
+	coord := wasmibctesting.NewCoordinator2(t, 1)
+	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	contractAddr := e2e.InstantiateReflectContract(t, &chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
 	members := []group.MemberRequest{
@@ -116,7 +117,7 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
-	rsp = e2e.MustExecViaAnyReflectContract(t, chain, contractAddr, propMsg)
+	rsp = e2e.MustExecViaAnyReflectContract(t, &chain, contractAddr, propMsg)
 	var execRsp types.MsgExecuteContractResponse
 	chain.UnwrapExecTXResult(rsp, &execRsp)
 
