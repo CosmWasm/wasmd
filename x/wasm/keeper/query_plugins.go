@@ -84,8 +84,10 @@ func (q QueryHandler) GasConsumed() uint64 {
 
 type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
 
-type stargateQuerierFn func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
-type grpcQuerierFn func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error)
+type (
+	stargateQuerierFn func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
+	grpcQuerierFn     func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error)
+)
 
 type QueryPlugins struct {
 	Bank         func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
