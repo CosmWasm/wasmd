@@ -16,7 +16,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -47,9 +47,9 @@ func TestPinPong(t *testing.T) {
 		chainBOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
 			wasmtesting.NewIBCContractMockWasmEngine(pongContract),
 		)}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts, chainBOpts)
-		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	_ = chainB.SeedNewContractInstance() // skip 1 instance so that addresses are not the same
 	var (
@@ -104,7 +104,7 @@ func TestPinPong(t *testing.T) {
 	for i := 1; i <= rounds; i++ {
 		t.Logf("++ round: %d\n", i)
 
-		require.Len(t, chainA.PendingSendPackets, 1)
+		require.Len(t, *chainA.PendingSendPackets, 1)
 		wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 		require.NoError(t, err)
 	}

@@ -24,7 +24,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -101,9 +101,9 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
 					wasmtesting.NewIBCContractMockWasmEngine(spec.contract),
 				)}
-				coordinator = wasmibctesting.NewCoordinator2(t, 2, []wasmkeeper.Option{}, chainAOpts)
-				chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-				chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+				coordinator = wasmibctesting.NewCoordinator(t, 2, []wasmkeeper.Option{}, chainAOpts)
+				chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+				chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 			)
 			coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 			myContractAddr := chainB.SeedNewContractInstance()
@@ -170,9 +170,9 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 			wasmkeeper.WithWasmEngine(
 				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
-		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	myContractAddr := chainA.SeedNewContractInstance()
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
@@ -210,16 +210,16 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// and when relay to chain B and handle Ack on chain A
 	err = wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 	require.NoError(t, err)
 
 	// then
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
 	bankKeeperB := chainB.GetWasmApp().BankKeeper
@@ -241,10 +241,10 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 			wasmkeeper.WithWasmEngine(
 				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
-		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	myContractAddr := chainA.SeedNewContractInstance()
 	myContract.contractAddr = myContractAddr.String()
@@ -285,16 +285,16 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// and when relay to chain B and handle Ack on chain A
 	err = wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 	require.NoError(t, err)
 
 	// then
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
 	expBalance := GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
@@ -315,10 +315,10 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 			wasmkeeper.WithWasmEngine(
 				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
-		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 	myContractAddr := chainA.SeedNewContractInstance()
@@ -372,8 +372,8 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	coordinator.CommitBlock(chainA.TestChain)
 
 	// then
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// and then verify account balances restored
 	newContractBalance = chainA.Balance(myContractAddr, sdk.DefaultBondDenom)
@@ -399,10 +399,10 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 			),
 		}
 
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
-		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
@@ -461,10 +461,10 @@ func TestContractHandlesChannelClose(t *testing.T) {
 			wasmkeeper.WithWasmEngine(
 				wasmtesting.NewIBCContractMockWasmEngine(myContractB)),
 		}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts, chainBOpts)
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 
-		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
@@ -509,10 +509,10 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 			wasmkeeper.WithWasmEngine(
 				wasmtesting.NewIBCContractMockWasmEngine(myContractB)),
 		}
-		coordinator = wasmibctesting.NewCoordinator2(t, 2, chainAOpts, chainBOpts)
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 
-		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		chainA = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)

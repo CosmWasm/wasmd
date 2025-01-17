@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/rand"
@@ -35,6 +37,13 @@ import (
 	ibctestingtypes "github.com/cosmos/ibc-go/v9/testing/types"
 )
 
+var (
+	TimeIncrement   = time.Second * 5
+	globalStartTime = time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)
+	wasmIdent       = []byte("\x00\x61\x73\x6D")
+	MaxAccounts     = 10
+)
+
 type WasmTestApp struct {
 	*app.WasmApp
 }
@@ -50,11 +59,13 @@ func (app WasmTestApp) GetTxConfig() client.TxConfig {
 type WasmTestChain struct {
 	*ibctesting.TestChain
 
-	PendingSendPackets []channeltypes.Packet
+	PendingSendPackets *[]channeltypes.Packet
 }
 
 func NewWasmTestChain(chain *ibctesting.TestChain) WasmTestChain {
-	return WasmTestChain{TestChain: chain, PendingSendPackets: []channeltypes.Packet{}}
+	res := WasmTestChain{TestChain: chain, PendingSendPackets: &[]channeltypes.Packet{}}
+	res.SendMsgsOverride = res.OverrideSendMsgs
+	return res
 }
 
 func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
@@ -62,21 +73,24 @@ func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
 	// require.NoError(chain, err)
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
-		chain.PendingSendPackets = append(chain.PendingSendPackets, toSend...)
+		*chain.PendingSendPackets = append(*chain.PendingSendPackets, toSend...)
 	}
 }
 
-func (chain *WasmTestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
+// TODO tkulik: Przy CreateChannels trzeba przechwycić pakiety w SendMesgs
+func (chain *WasmTestChain) OverrideSendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
+	chain.SendMsgsOverride = nil
 	result, err := chain.TestChain.SendMsgs(msgs...)
+	chain.SendMsgsOverride = chain.OverrideSendMsgs
 	chain.CaptureIBCEvents(result)
 	return result, err
 }
 
-func (chain WasmTestChain) GetWasmApp() *app.WasmApp {
+func (chain *WasmTestChain) GetWasmApp() *app.WasmApp {
 	return chain.App.(WasmTestApp).WasmApp
 }
 
-func (chain WasmTestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
+func (chain *WasmTestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
 	wasmCode, err := os.ReadFile(filename)
 	require.NoError(chain.TB, err)
 	if strings.HasSuffix(filename, "wasm") { // compress for gas limit
@@ -91,7 +105,7 @@ func (chain WasmTestChain) StoreCodeFile(filename string) types.MsgStoreCodeResp
 	return chain.StoreCode(wasmCode)
 }
 
-func (chain WasmTestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
+func (chain *WasmTestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	storeMsg := &types.MsgStoreCode{
 		Sender:       chain.SenderAccount.GetAddress().String(),
 		WASMByteCode: byteCode,
@@ -108,7 +122,7 @@ func (chain WasmTestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse
 }
 
 // UnwrapExecTXResult is a helper to unpack execution result from proto any type
-func (chain WasmTestChain) UnwrapExecTXResult(r *abci.ExecTxResult, target proto.Message) {
+func (chain *WasmTestChain) UnwrapExecTXResult(r *abci.ExecTxResult, target proto.Message) {
 	var wrappedRsp sdk.TxMsgData
 	require.NoError(chain.TB, chain.App.AppCodec().Unmarshal(r.Data, &wrappedRsp))
 
@@ -117,7 +131,7 @@ func (chain WasmTestChain) UnwrapExecTXResult(r *abci.ExecTxResult, target proto
 	require.NoError(chain.TB, proto.Unmarshal(wrappedRsp.MsgResponses[0].Value, target))
 }
 
-func (chain WasmTestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
+func (chain *WasmTestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
 	instantiateMsg := &types.MsgInstantiateContract{
 		Sender: chain.SenderAccount.GetAddress().String(),
 		Admin:  chain.SenderAccount.GetAddress().String(),
@@ -151,12 +165,12 @@ func (chain *WasmTestChain) SeedNewContractInstance() sdk.AccAddress {
 	return chain.InstantiateContract(codeID, initMsg)
 }
 
-func (chain WasmTestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
+func (chain *WasmTestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
 	return chain.App.(WasmTestApp).GetWasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
 }
 
 // Fund an address with the given amount in default denom
-func (chain WasmTestChain) Fund(addr sdk.AccAddress, amount math.Int) {
+func (chain *WasmTestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 	_, err := chain.SendMsgs(&banktypes.MsgSend{
 		FromAddress: chain.SenderAccount.GetAddress().String(),
 		ToAddress:   addr.String(),
@@ -167,15 +181,15 @@ func (chain WasmTestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 
 // GetTimeoutHeight is a convenience function which returns a IBC packet timeout height
 // to be used for testing. It returns the current IBC height + 100 blocks
-func (chain WasmTestChain) GetTimeoutHeight() clienttypes.Height {
+func (chain *WasmTestChain) GetTimeoutHeight() clienttypes.Height {
 	return clienttypes.NewHeight(clienttypes.ParseChainID(chain.ChainID), uint64(chain.GetContext().BlockHeight())+100)
 }
 
-func (chain WasmTestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
+func (chain *WasmTestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
 	return chain.App.(WasmTestApp).GetBankKeeper().GetBalance(chain.GetContext(), acc, denom)
 }
 
-func (chain WasmTestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
+func (chain *WasmTestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
 	return chain.App.(WasmTestApp).GetBankKeeper().GetAllBalances(chain.GetContext(), acc)
 }
 
@@ -237,30 +251,79 @@ func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response i
 	return json.Unmarshal(resp.Data, response)
 }
 
+// RelayPacketWithoutAck attempts to relay the packet first on EndpointA and then on EndpointB
+// if EndpointA does not contain a packet commitment for that packet. An error is returned
+// if a relay step fails or the packet commitment does not exist on either endpoint.
+// In contrast to RelayPacket, this function does not acknowledge the packet and expects it to have no acknowledgement yet.
+// It is useful for testing async acknowledgement.
+func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) error {
+	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
+	if bytes.Equal(pc, channeltypes.CommitPacket(path.EndpointA.Chain.App.AppCodec(), packet)) {
+
+		// packet found, relay from A to B
+		if err := path.EndpointB.UpdateClient(); err != nil {
+			return err
+		}
+
+		res, err := path.EndpointB.RecvPacketWithResult(packet)
+		if err != nil {
+			return err
+		}
+
+		_, err = ParseAckFromEvents(res.GetEvents())
+		if err == nil {
+			return fmt.Errorf("tried to relay packet without ack but got ack")
+		}
+
+		return nil
+	}
+
+	pc = path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
+	if bytes.Equal(pc, channeltypes.CommitPacket(path.EndpointB.Chain.App.AppCodec(), packet)) {
+
+		// packet found, relay B to A
+		if err := path.EndpointA.UpdateClient(); err != nil {
+			return err
+		}
+
+		res, err := path.EndpointA.RecvPacketWithResult(packet)
+		if err != nil {
+			return err
+		}
+
+		_, err = ParseAckFromEvents(res.GetEvents())
+		if err == nil {
+			return fmt.Errorf("tried to relay packet without ack but got ack")
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("packet commitment does not exist on either endpoint for provided packet")
+}
+
 // RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
 func RelayAndAckPendingPackets(chainA *WasmTestChain, chainB *WasmTestChain, path *ibctesting.Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
 	require.NoError(chainA, src.UpdateClient())
-	chainA.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(chainA.PendingSendPackets), len(chainB.PendingSendPackets))
-	for _, v := range chainA.PendingSendPackets {
-		result, _, err := path.RelayPacketWithResults(v)
+	chainA.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(*chainA.PendingSendPackets), len(*chainB.PendingSendPackets))
+	for _, v := range *chainA.PendingSendPackets {
+		_, _, err := path.RelayPacketWithResults(v)
 		if err != nil {
 			return err
 		}
-		chainA.CaptureIBCEvents(result)
-		chainA.PendingSendPackets = chainA.PendingSendPackets[1:]
+		*chainA.PendingSendPackets = (*chainA.PendingSendPackets)[1:]
 	}
 
 	src = path.EndpointB
 	require.NoError(chainB, src.UpdateClient())
-	for _, v := range chainB.PendingSendPackets {
-		result, _, err := path.RelayPacketWithResults(v)
+	for _, v := range *chainB.PendingSendPackets {
+		_, _, err := path.RelayPacketWithResults(v)
 		if err != nil {
 			return err
 		}
-		chainA.CaptureIBCEvents(result)
-		chainB.PendingSendPackets = chainB.PendingSendPackets[1:]
+		*chainB.PendingSendPackets = (*chainB.PendingSendPackets)[1:]
 	}
 	return nil
 }
@@ -272,13 +335,13 @@ func TimeoutPendingPackets(coord *ibctesting.Coordinator, chainSrc *WasmTestChai
 	dest := path.EndpointB
 
 	toSend := chainSrc.PendingSendPackets
-	coord.Logf("Timeout %d Packets A->B\n", len(toSend))
+	coord.Logf("Timeout %d Packets A->B\n", len(*toSend))
 	require.NoError(coord, src.UpdateClient())
 
 	// Increment time and commit block so that 5 second delay period passes between send and receive
 	coord.IncrementTime()
 	coord.CommitBlock(src.Chain, dest.Chain)
-	for _, packet := range toSend {
+	for _, packet := range *toSend {
 		// get proof of packet unreceived on dest
 		packetKey := host.PacketReceiptKey(packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 		proofUnreceived, proofHeight := dest.QueryProof(packetKey)
@@ -288,7 +351,7 @@ func TimeoutPendingPackets(coord *ibctesting.Coordinator, chainSrc *WasmTestChai
 			return err
 		}
 	}
-	chainSrc.PendingSendPackets = nil
+	*chainSrc.PendingSendPackets = []channeltypes.Packet{}
 	return nil
 }
 
@@ -311,22 +374,22 @@ func CloseChannel(coord *ibctesting.Coordinator, path *ibctesting.Path) {
 }
 
 // ChainAppFactory abstract factory method that usually implemented by app.SetupWithGenesisValSet
-type ChainAppFactory2 func(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) WasmTestApp
+type ChainAppFactory func(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) WasmTestApp
 
 // DefaultWasmAppFactory instantiates and sets up the default wasmd app
-func DefaultWasmAppFactory2(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) WasmTestApp {
+func DefaultWasmAppFactory(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) WasmTestApp {
 	return WasmTestApp{app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, balances...)}
 }
 
 // NewDefaultTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewDefaultTestChain2(t *testing.T, coord *ibctesting.Coordinator, chainID string, opts ...wasmkeeper.Option) *ibctesting.TestChain {
-	return NewTestChain2(t, coord, DefaultWasmAppFactory2, chainID, opts...)
+func NewDefaultTestChain(t *testing.T, coord *ibctesting.Coordinator, chainID string, opts ...wasmkeeper.Option) *ibctesting.TestChain {
+	return NewTestChain(t, coord, DefaultWasmAppFactory, chainID, opts...)
 }
 
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewTestChain2(t *testing.T, coord *ibctesting.Coordinator, appFactory ChainAppFactory2, chainID string, opts ...wasmkeeper.Option) *ibctesting.TestChain {
+func NewTestChain(t *testing.T, coord *ibctesting.Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasmkeeper.Option) *ibctesting.TestChain {
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -347,7 +410,7 @@ func NewTestChain2(t *testing.T, coord *ibctesting.Coordinator, appFactory Chain
 	// or, if equal, by address lexical order
 	valSet := cmttypes.NewValidatorSet(validators)
 
-	return NewTestChainWithValSet2(t, coord, appFactory, chainID, valSet, signersByAddress, opts...)
+	return NewTestChainWithValSet(t, coord, appFactory, chainID, valSet, signersByAddress, opts...)
 }
 
 // NewTestChainWithValSet initializes a new TestChain instance with the given validator set
@@ -365,7 +428,7 @@ func NewTestChain2(t *testing.T, coord *ibctesting.Coordinator, appFactory Chain
 //
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
-func NewTestChainWithValSet2(t *testing.T, coord *ibctesting.Coordinator, appFactory ChainAppFactory2, chainID string, valSet *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator, opts ...wasmkeeper.Option) *ibctesting.TestChain {
+func NewTestChainWithValSet(t *testing.T, coord *ibctesting.Coordinator, appFactory ChainAppFactory, chainID string, valSet *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator, opts ...wasmkeeper.Option) *ibctesting.TestChain {
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []ibctesting.SenderAccount{}
@@ -427,8 +490,27 @@ func NewTestChainWithValSet2(t *testing.T, coord *ibctesting.Coordinator, appFac
 	return chain
 }
 
+// ParseAckFromEvents parses events emitted from a MsgRecvPacket and returns the
+// acknowledgement.
+func ParseAckFromEvents(events []abci.Event) ([]byte, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeWriteAck {
+			for _, attr := range ev.Attributes {
+				if attr.Key == channeltypes.AttributeKeyAckHex {
+					bz, err := hex.DecodeString(attr.Value)
+					if err != nil {
+						panic(err)
+					}
+					return bz, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("acknowledgement event attribute not found")
+}
+
 // NewCoordinator initializes Coordinator with N TestChain's
-func NewCoordinator2(t *testing.T, n int, opts ...[]wasmkeeper.Option) *ibctesting.Coordinator {
+func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *ibctesting.Coordinator {
 	t.Helper()
 	chains := make(map[string]*ibctesting.TestChain)
 	coord := &ibctesting.Coordinator{
@@ -442,9 +524,50 @@ func NewCoordinator2(t *testing.T, n int, opts ...[]wasmkeeper.Option) *ibctesti
 		if len(opts) > (i - 1) {
 			x = opts[i-1]
 		}
-		chains[chainID] = NewDefaultTestChain2(t, coord, chainID, x...)
+		chains[chainID] = NewDefaultTestChain(t, coord, chainID, x...)
 	}
 	coord.Chains = chains
 
 	return coord
+}
+
+// ParseChannelIDFromEvents parses events emitted from a MsgChannelOpenInit or
+// MsgChannelOpenTry and returns the channel identifier.
+func ParseChannelIDFromEvents(events []abci.Event) (string, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
+			for _, attr := range ev.Attributes {
+				if attr.Key == channeltypes.AttributeKeyChannelID {
+					return attr.Value, nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("channel identifier event attribute not found")
+}
+
+func ParsePortIDFromEvents(events []abci.Event) (string, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
+			for _, attr := range ev.Attributes {
+				if attr.Key == channeltypes.AttributeKeyPortID {
+					return attr.Value, nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("port id event attribute not found")
+}
+
+func ParseChannelVersionFromEvents(events []abci.Event) (string, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
+			for _, attr := range ev.Attributes {
+				if attr.Key == channeltypes.AttributeKeyVersion {
+					return attr.Value, nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("version event attribute not found")
 }

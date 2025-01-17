@@ -26,7 +26,7 @@ import (
 	"strings"
 
 	"github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -50,9 +50,9 @@ func TestIBCFeesTransfer(t *testing.T) {
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator2(t, 2)
-	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
-	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
@@ -136,7 +136,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator2(t, 2)
+	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
@@ -247,7 +247,7 @@ func TestIBCFeesReflect(t *testing.T) {
 	// then the relayer's payee is receiving the fee(s) on success
 
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator2(t, 2)
+	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())

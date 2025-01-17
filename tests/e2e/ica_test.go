@@ -22,7 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 )
 
 func TestICA(t *testing.T) {
@@ -32,7 +32,7 @@ func TestICA(t *testing.T) {
 	// and the channel is established to the host chain
 	// then the ICA owner can submit a message via IBC
 	//      to control their account on the host chain
-	coord := wasmibctesting.NewCoordinator2(t, 2)
+	coord := wasmibctesting.NewCoordinator(t, 2)
 	hostChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	hostParams := hosttypes.NewParams(true, []string{sdk.MsgTypeURL(&banktypes.MsgSend{})})
 	hostApp := hostChain.GetWasmApp()
