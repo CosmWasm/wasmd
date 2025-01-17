@@ -251,7 +251,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 	nextValue := p.incrementCounter(lastBallSentKey, store)
 	newHit := NewHit(p.actor, nextValue)
 	respHit := &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
-		ChannelID: packet.Src.ChannelID,
+		ChannelID: packet.Dest.ChannelID,
 		Data:      newHit.GetBytes(),
 		Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
 			Revision: doNotTimeout.RevisionNumber,
