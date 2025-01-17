@@ -16,7 +16,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -31,9 +31,9 @@ func TestIBCReflectContract(t *testing.T) {
 	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
 
 	var (
-		coordinator = wasmibctesting.NewCoordinator2(t, 2)
-		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+		coordinator = wasmibctesting.NewCoordinator(t, 2)
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 
@@ -69,6 +69,8 @@ func TestIBCReflectContract(t *testing.T) {
 	}
 
 	coordinator.SetupConnections(path)
+
+	// TODO tkulik: Przy CreateChannels trzeba przechwycić pakiety w SendMesgs
 	coordinator.CreateChannels(path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
@@ -90,12 +92,12 @@ func TestIBCReflectContract(t *testing.T) {
 
 	// ensure the expected packet was prepared, and relay it
 
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 	err := wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// let's query the source contract and make sure it registered an address
 	query := ReflectSendQueryMsg{Account: &AccountQuery{ChannelID: path.EndpointA.ChannelID}}
@@ -173,9 +175,9 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 					wasmkeeper.WithWasmEngine(
 						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
-				coordinator    = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
-				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 				myContractAddr = chainA.SeedNewContractInstance()
 				appA           = chainA.GetWasmApp()
 				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
@@ -233,9 +235,9 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 					wasmkeeper.WithWasmEngine(
 						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
-				coordinator    = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
-				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(1)))
-				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(wasmibctesting.GetChainID(2)))
+				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 				myContractAddr = chainA.SeedNewContractInstance()
 				contractInfo   = chainA.ContractInfo(myContractAddr)
 			)
@@ -300,9 +302,9 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				wasmkeeper.WithWasmEngine(mockContractEngine),
 			}
 			var (
-				coord  = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
-				chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
-				chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
+				coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+				chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+				chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 			)
 			// setup chain A contract metadata for mock
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
@@ -330,15 +332,15 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			coord.SetupConnections(path)
 			coord.CreateChannels(path)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
-			require.Equal(t, 0, len(chainA.PendingSendPackets))
-			require.Equal(t, 0, len(chainB.PendingSendPackets))
+			require.Equal(t, 0, len(*chainA.PendingSendPackets))
+			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 			// when an ibc packet is sent from chain A to chain B
 			capturedAck := mockContractEngine.SubmitIBCPacket(t, path, &chainA, myMockContractAddr, spec.packetData)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-			require.Equal(t, 1, len(chainA.PendingSendPackets))
-			require.Equal(t, 0, len(chainB.PendingSendPackets))
+			require.Equal(t, 1, len(*chainA.PendingSendPackets))
+			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 			err = wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
 
@@ -375,9 +377,9 @@ func TestIBCAsyncAck(t *testing.T) {
 		wasmkeeper.WithWasmEngine(mockContractEngine),
 	}
 	var (
-		coord  = wasmibctesting.NewCoordinator2(t, 2, chainAOpts)
-		chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
-		chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
+		coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+		chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	)
 	// setup chain A contract metadata for mock
 	myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
@@ -405,24 +407,21 @@ func TestIBCAsyncAck(t *testing.T) {
 	coord.SetupConnections(path)
 	coord.CreateChannels(path)
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// when the "no_ack" ibc packet is sent from chain A to chain B
 	capturedAck := mockContractEngine.SubmitIBCPacket(t, path, &chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// we don't expect an ack yet
+	err = wasmibctesting.RelayPacketWithoutAck(path, (*chainA.PendingSendPackets)[0])
 
-	// TODO tkulik:
-	// err = path.RelayPacketWithoutAck(chainA.PendingSendPackets[0], nil)
-	err = wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
-
-	noAckPacket := chainA.PendingSendPackets[0]
-	chainA.PendingSendPackets = []channeltypes.Packet{}
+	noAckPacket := (*chainA.PendingSendPackets)[0]
+	chainA.PendingSendPackets = &[]channeltypes.Packet{}
 	require.NoError(t, err)
 	assert.Nil(t, *capturedAck)
 

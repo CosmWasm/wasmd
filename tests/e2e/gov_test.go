@@ -16,7 +16,7 @@ import (
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
@@ -26,7 +26,7 @@ func TestGovVoteByContract(t *testing.T) {
 	// When  the contract sends a vote for the proposal
 	// Then	 the vote is taken into account
 
-	coord := wasmibctesting.NewCoordinator2(t, 1)
+	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	contractAddr := e2e.InstantiateReflectContract(t, &chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))

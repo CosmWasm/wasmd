@@ -20,7 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
@@ -34,7 +34,7 @@ func TestGrants(t *testing.T) {
 	// - balance A reduced (on success)
 	// - balance B not touched
 
-	coord := wasmibctesting.NewCoordinator2(t, 1)
+	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	contractAddr := e2e.InstantiateReflectContract(t, &chain)
 	require.NotEmpty(t, contractAddr)
@@ -131,7 +131,7 @@ func TestStoreCodeGrant(t *testing.T) {
 	reflectCodeChecksum, err := wasmvm.CreateChecksum(reflectWasmCode)
 	require.NoError(t, err)
 
-	coord := wasmibctesting.NewCoordinator2(t, 1)
+	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 
 	granterAddr := chain.SenderAccount.GetAddress()
@@ -219,7 +219,7 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 	hackatomCodeChecksum, err := wasmvm.CreateChecksum(hackatomWasmCode)
 	require.NoError(t, err)
 
-	coord := wasmibctesting.NewCoordinator2(t, 1)
+	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 
 	granterAddr := chain.SenderAccount.GetAddress()
@@ -301,7 +301,7 @@ func TestBrokenGzipStoreCodeGrant(t *testing.T) {
 	brokenGzipWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/broken_crc.gzip")
 	require.NoError(t, err)
 
-	coord := wasmibctesting.NewCoordinator2(t, 1)
+	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 
 	granterAddr := chain.SenderAccount.GetAddress()

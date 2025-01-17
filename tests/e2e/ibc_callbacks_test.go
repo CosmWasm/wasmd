@@ -20,7 +20,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -33,9 +33,9 @@ func TestIBCCallbacks(t *testing.T) {
 	// then the contract on B should receive a destination chain callback
 	//   and the contract on A should receive a source chain callback with the result (ack or timeout)
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator2(t, 2)
-	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
-	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
@@ -178,9 +178,9 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	// then the VM should try to call the callback on B and fail gracefully
 	//   and should try to call the callback on A and fail gracefully
 	marshaler := app.MakeEncodingConfig(t).Codec
-	coord := wasmibctesting.NewCoordinator2(t, 2)
-	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(1)))
-	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(wasmibctesting.GetChainID(2)))
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1))
 
@@ -221,4 +221,5 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 
 	// and the packet is relayed without problems
 	wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
+	assert.Empty(t, *chainA.PendingSendPackets)
 }
