@@ -5,6 +5,7 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,7 +18,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
 func TestGovVoteByContract(t *testing.T) {

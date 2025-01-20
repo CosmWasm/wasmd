@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
 func TestGroupWithContract(t *testing.T) {

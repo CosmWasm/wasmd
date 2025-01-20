@@ -7,6 +7,7 @@ import (
 	"time"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 )
 
 func TestGrants(t *testing.T) {
