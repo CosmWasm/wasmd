@@ -77,7 +77,6 @@ func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
 	}
 }
 
-// TODO tkulik: Przy CreateChannels trzeba przechwycić pakiety w SendMesgs
 func (chain *WasmTestChain) OverrideSendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	chain.SendMsgsOverride = nil
 	result, err := chain.TestChain.SendMsgs(msgs...)
@@ -303,7 +302,7 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 }
 
 // RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
-func RelayAndAckPendingPackets(chainA *WasmTestChain, chainB *WasmTestChain, path *ibctesting.Path) error {
+func RelayAndAckPendingPackets(chainA, chainB *WasmTestChain, path *ibctesting.Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
 	require.NoError(chainA, src.UpdateClient())

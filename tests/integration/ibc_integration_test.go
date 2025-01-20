@@ -70,7 +70,6 @@ func TestIBCReflectContract(t *testing.T) {
 
 	coordinator.SetupConnections(path)
 
-	// TODO tkulik: Przy CreateChannels trzeba przechwycić pakiety w SendMesgs
 	coordinator.CreateChannels(path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
