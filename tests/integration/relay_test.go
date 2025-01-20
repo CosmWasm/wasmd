@@ -728,7 +728,7 @@ func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.
 	}
 	require.NoError(c.t, src.ValidateBasic())
 
-	srcV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{ibctransfertypes.Token{Denom: ibctransfertypes.NewDenom(src.Denom), Amount: src.Amount}}, src.Sender, src.Receiver, src.Memo, ibctransfertypes.ForwardingPacketData{})
+	srcV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{{Denom: ibctransfertypes.NewDenom(src.Denom), Amount: src.Amount}}, src.Sender, src.Receiver, src.Memo, ibctransfertypes.ForwardingPacketData{})
 
 	// call original ibctransfer keeper to not copy all code into this
 	ibcPacket := toIBCPacket(packet)
@@ -748,7 +748,7 @@ func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env,
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
-	dataV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{ibctransfertypes.Token{Denom: ibctransfertypes.NewDenom(data.Denom), Amount: data.Amount}}, data.Sender, data.Receiver, data.Memo, ibctransfertypes.ForwardingPacketData{})
+	dataV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{{Denom: ibctransfertypes.NewDenom(data.Denom), Amount: data.Amount}}, data.Sender, data.Receiver, data.Memo, ibctransfertypes.ForwardingPacketData{})
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
