@@ -63,10 +63,10 @@ type WasmTestChain struct {
 	PendingSendPackets *[]channeltypes.Packet
 }
 
-func NewWasmTestChain(chain *ibctesting.TestChain) WasmTestChain {
+func NewWasmTestChain(chain *ibctesting.TestChain) *WasmTestChain {
 	res := WasmTestChain{TestChain: chain, PendingSendPackets: &[]channeltypes.Packet{}}
 	res.SendMsgsOverride = res.OverrideSendMsgs
-	return res
+	return &res
 }
 
 func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
@@ -302,39 +302,54 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 	return fmt.Errorf("packet commitment does not exist on either endpoint for provided packet")
 }
 
+type WasmPath struct {
+	ibctesting.Path
+
+	chainA *WasmTestChain
+	chainB *WasmTestChain
+}
+
+func NewWasmPath(chainA, chainB *WasmTestChain) *WasmPath {
+	return &WasmPath{
+		Path:   *ibctesting.NewPath(chainA.TestChain, chainB.TestChain),
+		chainA: chainA,
+		chainB: chainB,
+	}
+}
+
 // RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
-func RelayAndAckPendingPackets(chainA, chainB *WasmTestChain, path *ibctesting.Path) error {
+func RelayAndAckPendingPackets(path *WasmPath) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
-	require.NoError(chainA, src.UpdateClient())
-	chainA.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(*chainA.PendingSendPackets), len(*chainB.PendingSendPackets))
-	for _, v := range *chainA.PendingSendPackets {
+	require.NoError(path.chainA, src.UpdateClient())
+	path.chainA.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(*path.chainA.PendingSendPackets), len(*path.chainB.PendingSendPackets))
+	for _, v := range *path.chainA.PendingSendPackets {
 		_, _, err := path.RelayPacketWithResults(v)
 		if err != nil {
 			return err
 		}
-		*chainA.PendingSendPackets = (*chainA.PendingSendPackets)[1:]
+		*path.chainA.PendingSendPackets = (*path.chainA.PendingSendPackets)[1:]
 	}
 
 	src = path.EndpointB
-	require.NoError(chainB, src.UpdateClient())
-	for _, v := range *chainB.PendingSendPackets {
+	require.NoError(path.chainB, src.UpdateClient())
+	for _, v := range *path.chainB.PendingSendPackets {
 		_, _, err := path.RelayPacketWithResults(v)
 		if err != nil {
 			return err
 		}
-		*chainB.PendingSendPackets = (*chainB.PendingSendPackets)[1:]
+		*path.chainB.PendingSendPackets = (*path.chainB.PendingSendPackets)[1:]
 	}
 	return nil
 }
 
 // TimeoutPendingPackets returns the package to source chain to let the IBC app revert any operation.
 // from A to B
-func TimeoutPendingPackets(coord *ibctesting.Coordinator, chainSrc *WasmTestChain, path *ibctesting.Path) error {
+func TimeoutPendingPackets(coord *ibctesting.Coordinator, path *WasmPath) error {
 	src := path.EndpointA
 	dest := path.EndpointB
 
-	toSend := chainSrc.PendingSendPackets
+	toSend := path.chainA.PendingSendPackets
 	coord.Logf("Timeout %d Packets A->B\n", len(*toSend))
 	require.NoError(coord, src.UpdateClient())
 
@@ -346,12 +361,12 @@ func TimeoutPendingPackets(coord *ibctesting.Coordinator, chainSrc *WasmTestChai
 		packetKey := host.PacketReceiptKey(packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 		proofUnreceived, proofHeight := dest.QueryProof(packetKey)
 		timeoutMsg := channeltypes.NewMsgTimeout(packet, packet.Sequence, proofUnreceived, proofHeight, src.Chain.SenderAccount.GetAddress().String())
-		_, err := chainSrc.SendMsgs(timeoutMsg)
+		_, err := path.chainA.SendMsgs(timeoutMsg)
 		if err != nil {
 			return err
 		}
 	}
-	*chainSrc.PendingSendPackets = []channeltypes.Packet{}
+	*path.chainA.PendingSendPackets = []channeltypes.Packet{}
 	return nil
 }
 

@@ -36,7 +36,7 @@ func TestGrants(t *testing.T) {
 
 	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
-	contractAddr := e2e.InstantiateReflectContract(t, &chain)
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	require.NotEmpty(t, contractAddr)
 
 	granterAddr := chain.SenderAccount.GetAddress()

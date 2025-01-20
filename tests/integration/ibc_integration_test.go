@@ -56,7 +56,7 @@ func TestIBCReflectContract(t *testing.T) {
 	coordinator.UpdateTime()
 
 	require.Equal(t, chainA.ProposedHeader.Time, chainB.ProposedHeader.Time)
-	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
 		Version: "ibc-reflect-v1",
@@ -68,9 +68,9 @@ func TestIBCReflectContract(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 
-	coordinator.SetupConnections(path)
+	coordinator.SetupConnections(&path.Path)
 
-	coordinator.CreateChannels(path)
+	coordinator.CreateChannels(&path.Path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -93,7 +93,7 @@ func TestIBCReflectContract(t *testing.T) {
 
 	require.Equal(t, 1, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
-	err := wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
+	err := wasmibctesting.RelayAndAckPendingPackets(path)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -107,7 +107,7 @@ func TestIBCReflectContract(t *testing.T) {
 	require.Empty(t, account.RemoteBalance)
 
 	// close channel
-	wasmibctesting.CloseChannel(coordinator, path)
+	wasmibctesting.CloseChannel(coordinator, &path.Path)
 
 	// let's query the source contract and make sure it registered an address
 	account = AccountResponse{}
@@ -181,9 +181,9 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 				appA           = chainA.GetWasmApp()
 				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
-			path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
-			coordinator.SetupClients(path)
-			coordinator.CreateConnections(path)
+			path := wasmibctesting.NewWasmPath(chainA, chainB)
+			coordinator.SetupClients(&path.Path)
+			coordinator.CreateConnections(&path.Path)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
 				Version: spec.startVersion,
@@ -241,8 +241,8 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 				contractInfo   = chainA.ContractInfo(myContractAddr)
 			)
 
-			path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
-			coordinator.SetupConnections(path)
+			path := wasmibctesting.NewWasmPath(chainA, chainB)
+			coordinator.SetupConnections(&path.Path)
 
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
@@ -319,7 +319,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			var (
 				sourcePortID      = chainA.ContractInfo(myMockContractAddr).IBCPortID
 				counterpartPortID = chainB.ContractInfo(ibcReflectContractAddr).IBCPortID
-				path              = ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
+				path              = wasmibctesting.NewWasmPath(chainA, chainB)
 			)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
@@ -328,20 +328,20 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 			}
 
-			coord.SetupConnections(path)
-			coord.CreateChannels(path)
+			coord.SetupConnections(&path.Path)
+			coord.CreateChannels(&path.Path)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 			require.Equal(t, 0, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 			// when an ibc packet is sent from chain A to chain B
-			capturedAck := mockContractEngine.SubmitIBCPacket(t, path, &chainA, myMockContractAddr, spec.packetData)
+			capturedAck := mockContractEngine.SubmitIBCPacket(t, &path.Path, chainA, myMockContractAddr, spec.packetData)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
 			require.Equal(t, 1, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
-			err = wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
+			err = wasmibctesting.RelayAndAckPendingPackets(path)
 
 			// then
 			if spec.expPacketNotHandled {
@@ -394,7 +394,7 @@ func TestIBCAsyncAck(t *testing.T) {
 	var (
 		sourcePortID      = chainA.ContractInfo(myMockContractAddr).IBCPortID
 		counterpartPortID = chainB.ContractInfo(ibcReflectContractAddr).IBCPortID
-		path              = ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
+		path              = wasmibctesting.NewWasmPath(chainA, chainB)
 	)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
@@ -403,21 +403,21 @@ func TestIBCAsyncAck(t *testing.T) {
 		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
 	}
 
-	coord.SetupConnections(path)
-	coord.CreateChannels(path)
+	coord.SetupConnections(&path.Path)
+	coord.CreateChannels(&path.Path)
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// when the "no_ack" ibc packet is sent from chain A to chain B
-	capturedAck := mockContractEngine.SubmitIBCPacket(t, path, &chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
+	capturedAck := mockContractEngine.SubmitIBCPacket(t, &path.Path, chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
 	require.Equal(t, 1, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// we don't expect an ack yet
-	err = wasmibctesting.RelayPacketWithoutAck(path, (*chainA.PendingSendPackets)[0])
+	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0])
 
 	noAckPacket := (*chainA.PendingSendPackets)[0]
 	chainA.PendingSendPackets = &[]channeltypes.Packet{}

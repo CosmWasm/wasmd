@@ -59,10 +59,10 @@ func TestPinPong(t *testing.T) {
 	require.NotEqual(t, pingContractAddr, pongContractAddr)
 	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-	pingContract.chain = &chainA
+	pingContract.chain = chainA
 	pingContract.contractAddr = pingContractAddr
 
-	pongContract.chain = &chainB
+	pongContract.chain = chainB
 	pongContract.contractAddr = pongContractAddr
 
 	var (
@@ -70,7 +70,7 @@ func TestPinPong(t *testing.T) {
 		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
 	)
 
-	path := ibctesting.NewPath(chainA.TestChain, chainB.TestChain)
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
 		Version: ibctransfertypes.V2,
@@ -81,8 +81,8 @@ func TestPinPong(t *testing.T) {
 		Version: ibctransfertypes.V2,
 		Order:   channeltypes.ORDERED,
 	}
-	coordinator.SetupConnections(path)
-	coordinator.CreateChannels(path)
+	coordinator.SetupConnections(&path.Path)
+	coordinator.CreateChannels(&path.Path)
 
 	// trigger start game via execute
 	const startValue uint64 = 100
@@ -105,7 +105,7 @@ func TestPinPong(t *testing.T) {
 		t.Logf("++ round: %d\n", i)
 
 		require.Len(t, *chainA.PendingSendPackets, 1)
-		wasmibctesting.RelayAndAckPendingPackets(&chainA, &chainB, path)
+		wasmibctesting.RelayAndAckPendingPackets(path)
 		require.NoError(t, err)
 	}
 

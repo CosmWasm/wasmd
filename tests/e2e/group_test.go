@@ -28,7 +28,7 @@ func TestGroupWithContract(t *testing.T) {
 
 	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
-	contractAddr := e2e.InstantiateStargateReflectContract(t, &chain)
+	contractAddr := e2e.InstantiateStargateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
 	members := []group.MemberRequest{
@@ -62,7 +62,7 @@ func TestGroupWithContract(t *testing.T) {
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
-	rsp = e2e.MustExecViaStargateReflectContract(t, &chain, contractAddr, propMsg)
+	rsp = e2e.MustExecViaStargateReflectContract(t, chain, contractAddr, propMsg)
 	var execRsp types.MsgExecuteContractResponse
 	chain.UnwrapExecTXResult(rsp, &execRsp)
 
@@ -83,7 +83,7 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 
 	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
-	contractAddr := e2e.InstantiateReflectContract(t, &chain)
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
 	members := []group.MemberRequest{
@@ -117,7 +117,7 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
-	rsp = e2e.MustExecViaAnyReflectContract(t, &chain, contractAddr, propMsg)
+	rsp = e2e.MustExecViaAnyReflectContract(t, chain, contractAddr, propMsg)
 	var execRsp types.MsgExecuteContractResponse
 	chain.UnwrapExecTXResult(rsp, &execRsp)
 

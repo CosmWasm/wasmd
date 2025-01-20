@@ -28,7 +28,7 @@ func TestGovVoteByContract(t *testing.T) {
 
 	coord := wasmibctesting.NewCoordinator(t, 1)
 	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
-	contractAddr := e2e.InstantiateReflectContract(t, &chain)
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// a contract with a high delegation amount
 	delegateMsg := wasmvmtypes.CosmosMsg{
@@ -42,7 +42,7 @@ func TestGovVoteByContract(t *testing.T) {
 			},
 		},
 	}
-	e2e.MustExecViaReflectContract(t, &chain, contractAddr, delegateMsg)
+	e2e.MustExecViaReflectContract(t, chain, contractAddr, delegateMsg)
 
 	signer := chain.SenderAccount.GetAddress().String()
 	app := chain.GetWasmApp()
@@ -122,7 +122,7 @@ func TestGovVoteByContract(t *testing.T) {
 					Vote: spec.vote,
 				},
 			}
-			e2e.MustExecViaReflectContract(t, &chain, contractAddr, voteMsg)
+			e2e.MustExecViaReflectContract(t, chain, contractAddr, voteMsg)
 
 			// then proposal executed after voting period
 			proposal, err := govKeeper.Proposals.Get(chain.GetContext(), propID)
