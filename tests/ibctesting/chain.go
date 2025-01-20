@@ -155,6 +155,15 @@ func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, 
 	return NewTestChainWithValSet(t, coord, appFactory, chainID, valSet, signersByAddress, opts...)
 }
 
+// Add this helper method
+func GetLatestHeight(clientState exported.ClientState) clienttypes.Height {
+	tmClientState, ok := clientState.(*ibctm.ClientState)
+	if !ok {
+		panic("invalid client state type")
+	}
+	return tmClientState.LatestHeight
+}
+
 // NewTestChainWithValSet initializes a new TestChain instance with the given validator set
 // and signer array. It also initializes 10 Sender accounts with a balance of 10000000000000000000 coins of
 // bond denom to use for tests.
@@ -306,7 +315,7 @@ func (chain *TestChain) QueryUpgradeProof(key []byte, height uint64) ([]byte, cl
 func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clienttypes.Height) {
 	clientState := chain.GetClientState(clientID)
 
-	consensusHeight := chain.GetLatestHeight(clientState)
+	consensusHeight := GetLatestHeight(clientState)
 	consensusKey := host.FullConsensusStateKey(clientID, consensusHeight)
 	proofConsensus, _ := chain.QueryProof(consensusKey)
 
@@ -427,15 +436,6 @@ func (chain *TestChain) CaptureIBCEvents(r *abci.ExecTxResult) {
 	}
 }
 
-// Add this helper method to TestChain
-func (chain *TestChain) GetLatestHeight(clientState exported.ClientState) clienttypes.Height {
-	tmClientState, ok := clientState.(*ibctm.ClientState)
-	if !ok {
-		panic("invalid client state type")
-	}
-	return tmClientState.LatestHeight
-}
-
 // GetClientState retrieves the client state for the provided clientID. The client is
 // expected to exist otherwise testing will fail.
 func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
@@ -503,7 +503,7 @@ func (chain *TestChain) ConstructUpdateCMTClientHeaderWithTrustedHeight(counterp
 	header := counterparty.LastHeader
 	// Relayer must query for LatestHeight on client to get TrustedHeight if the trusted height is not set
 	if trustedHeight.IsZero() {
-		trustedHeight = chain.GetLatestHeight(chain.GetClientState(clientID))
+		trustedHeight = GetLatestHeight(chain.GetClientState(clientID))
 	}
 	var (
 		cmtTrustedVals *cmttypes.ValidatorSet

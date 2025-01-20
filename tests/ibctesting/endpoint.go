@@ -66,7 +66,7 @@ func (endpoint *Endpoint) QueryProof(key []byte) ([]byte, clienttypes.Height) {
 	clientState := endpoint.Counterparty.Chain.GetClientState(endpoint.Counterparty.ClientID)
 
 	// query proof on the counterparty using the latest height of the IBC client
-	return endpoint.QueryProofAtHeight(key, endpoint.Counterparty.Chain.GetLatestHeight(clientState).GetRevisionHeight())
+	return endpoint.QueryProofAtHeight(key, GetLatestHeight(clientState).GetRevisionHeight())
 }
 
 // QueryProofAtHeight queries proof associated with this endpoint using the proof height
@@ -197,7 +197,7 @@ func (endpoint *Endpoint) UpgradeChain() error {
 		Root:               commitmenttypes.NewMerkleRoot(endpoint.Chain.LastHeader.Header.GetAppHash()),
 		NextValidatorsHash: endpoint.Chain.LastHeader.Header.NextValidatorsHash,
 	}
-	endpoint.Counterparty.SetConsensusState(consensusState, endpoint.Chain.GetLatestHeight(clientState))
+	endpoint.Counterparty.SetConsensusState(consensusState, GetLatestHeight(clientState))
 
 	// ensure the next update isn't identical to the one set in state
 	endpoint.Chain.Coordinator.IncrementTime()
@@ -301,7 +301,7 @@ func (endpoint *Endpoint) QueryConnectionHandshakeProof() (
 	clientKey := host.FullClientStateKey(endpoint.Counterparty.ClientID)
 	proofClient, proofHeight = endpoint.Counterparty.QueryProof(clientKey)
 
-	consensusHeight = endpoint.Chain.GetLatestHeight(clientState)
+	consensusHeight = GetLatestHeight(clientState)
 
 	// query proof for the consensus state on the counterparty
 	consensusKey := host.FullConsensusStateKey(endpoint.Counterparty.ClientID, consensusHeight)
@@ -422,8 +422,6 @@ func (endpoint *Endpoint) ChanCloseInit() error {
 func (endpoint *Endpoint) ChanCloseConfirm() error {
 	channelKey := host.ChannelKey(endpoint.Counterparty.ChannelConfig.PortID, endpoint.Counterparty.ChannelID)
 	proof, proofHeight := endpoint.Counterparty.QueryProof(channelKey)
-
-	// counterpartyUpgradeSequence uint64,
 
 	msg := channeltypes.NewMsgChannelCloseConfirm(
 		endpoint.ChannelConfig.PortID, endpoint.ChannelID,
