@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -77,19 +78,12 @@ func GetCmdBuildAddress() *cobra.Command {
 		Aliases: []string{"address"},
 		Args:    cobra.RangeArgs(3, 4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
 			var initArgs []byte
 			if len(args) == 4 {
 				initArgs = types.RawContractMessage(args[3])
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.BuildAddress(
-				context.Background(),
+			res, err := keeper.BuildAddressPredictable(
 				&types.QueryBuildAddressRequest{
 					CodeHash:       args[0],
 					CreatorAddress: args[1],
@@ -100,7 +94,8 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintProto(res)
+			fmt.Println(res.Address)
+			return nil
 		},
 		SilenceUsage: true,
 	}
