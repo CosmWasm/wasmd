@@ -137,6 +137,9 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			require.NoError(t, path.EndpointB.UpdateClient())
 
 			// then
+			require.Equal(t, 1, len(*chainA.PendingSendPackets))
+			require.Equal(t, 0, len(*chainB.PendingSendPackets))
+
 			// and when relay to chain B and handle Ack on chain A
 			err = wasmibctesting.RelayAndAckPendingPackets(path)
 			if spec.expErr {
@@ -146,6 +149,10 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			}
 
 			// then
+			require.Equal(t, spec.expChainAPendingSendPackets, len(*chainA.PendingSendPackets))
+			require.Equal(t, spec.expChainBPendingSendPackets, len(*chainB.PendingSendPackets))
+
+			// and source chain balance was decreased
 			newChainABalance := chainA.Balance(chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 			assert.Equal(t, originalChainABalance.Amount.Add(spec.expChainABalanceDiff), newChainABalance.Amount)
 
