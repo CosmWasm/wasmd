@@ -22,8 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 )
 
 func TestICA(t *testing.T) {
@@ -34,15 +33,15 @@ func TestICA(t *testing.T) {
 	// then the ICA owner can submit a message via IBC
 	//      to control their account on the host chain
 	coord := wasmibctesting.NewCoordinator(t, 2)
-	hostChain := coord.GetChain(ibctesting.GetChainID(1))
+	hostChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	hostParams := hosttypes.NewParams(true, []string{sdk.MsgTypeURL(&banktypes.MsgSend{})})
-	hostApp := hostChain.App.(*app.WasmApp)
+	hostApp := hostChain.GetWasmApp()
 	hostApp.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
 
-	controllerChain := coord.GetChain(ibctesting.GetChainID(2))
+	controllerChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
-	path := wasmibctesting.NewPath(controllerChain, hostChain)
-	coord.SetupConnections(path)
+	path := wasmibctesting.NewWasmPath(controllerChain, hostChain)
+	coord.SetupConnections(&path.Path)
 
 	specs := map[string]struct {
 		icaVersion string
@@ -87,10 +86,10 @@ func TestICA(t *testing.T) {
 				Version: icatypes.Version,
 				Order:   channeltypes.ORDERED,
 			}
-			coord.CreateChannels(path)
+			coord.CreateChannels(&path.Path)
 
 			// assert ICA exists on controller
-			contApp := controllerChain.App.(*app.WasmApp)
+			contApp := controllerChain.GetWasmApp()
 			icaRsp, err := contApp.ICAControllerKeeper.InterchainAccount(controllerChain.GetContext(), &icacontrollertypes.QueryInterchainAccountRequest{
 				Owner:        icaControllerAddr.String(),
 				ConnectionId: path.EndpointA.ConnectionID,
@@ -115,8 +114,7 @@ func TestICA(t *testing.T) {
 			_, err = controllerChain.SendNonDefaultSenderMsgs(icaControllerKey, msgSendTx)
 			require.NoError(t, err)
 
-			assert.Equal(t, 1, len(controllerChain.PendingSendPackets))
-			require.NoError(t, coord.RelayAndAckPendingPackets(path))
+			wasmibctesting.RelayAndAckPendingPackets(path)
 
 			gotBalance := hostChain.Balance(targetAddr, sdk.DefaultBondDenom)
 			assert.Equal(t, sendCoin.String(), gotBalance.String())

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
+	ibctesting "github.com/cosmos/ibc-go/v9/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -25,8 +26,8 @@ func TestGroupWithContract(t *testing.T) {
 	// When  contract submits a proposal with try_execute
 	// Then	 the payload msg is executed
 
-	coord := ibctesting.NewCoordinator(t, 1)
-	chain := coord.GetChain(ibctesting.GetChainID(1))
+	coord := wasmibctesting.NewCoordinator(t, 1)
+	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	contractAddr := e2e.InstantiateStargateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
@@ -80,8 +81,8 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	// When  contract submits a proposal with try_execute
 	// Then	 the payload msg is executed
 
-	coord := ibctesting.NewCoordinator(t, 1)
-	chain := coord.GetChain(ibctesting.GetChainID(1))
+	coord := wasmibctesting.NewCoordinator(t, 1)
+	chain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
