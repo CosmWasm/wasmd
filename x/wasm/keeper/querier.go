@@ -203,7 +203,7 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 
 	// limit the gas to the queryGasLimit or the remaining gas, whichever is smaller
 	ctx := sdk.UnwrapSDKContext(c)
-	gasLimit := min(uint64(ctx.GasMeter().GasRemaining()), q.queryGasLimit)
+	gasLimit := min(ctx.GasMeter().GasRemaining(), q.queryGasLimit)
 	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasLimit))
 	// recover from out-of-gas panic
 	defer func() {
