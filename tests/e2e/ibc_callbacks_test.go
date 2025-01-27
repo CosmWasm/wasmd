@@ -64,6 +64,7 @@ func TestIBCCallbacks(t *testing.T) {
 		ToAddress      string `json:"to_address"`
 		ChannelID      string `json:"channel_id"`
 		TimeoutSeconds uint32 `json:"timeout_seconds"`
+		ChannelVersion string `json:"channel_version"`
 	}
 	// ExecuteMsg is the ibc-callbacks contract's execute msg
 	type ExecuteMsg struct {
@@ -88,6 +89,7 @@ func TestIBCCallbacks(t *testing.T) {
 				Transfer: &TransferExecMsg{
 					ChannelID:      path.EndpointA.ChannelID,
 					TimeoutSeconds: 100,
+					ChannelVersion: "V2",
 				},
 			},
 			expAck: true,
@@ -97,6 +99,7 @@ func TestIBCCallbacks(t *testing.T) {
 				Transfer: &TransferExecMsg{
 					ChannelID:      path.EndpointA.ChannelID,
 					TimeoutSeconds: 1,
+					ChannelVersion: "V2",
 				},
 			},
 			expAck: false,

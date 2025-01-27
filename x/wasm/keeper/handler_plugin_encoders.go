@@ -321,6 +321,34 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				Memo:             msg.Transfer.Memo,
 			}
 			return []sdk.Msg{msg}, nil
+		case msg.TransferV2 != nil:
+			tokens := []sdk.Coin{}
+			for _, token := range msg.TransferV2.Tokens {
+				trace := []ibctransfertypes.Hop{}
+				for _, hop := range token.Trace {
+					newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
+					trace = append(trace, newHop)
+				}
+				coin, err := ibctransfertypes.Token{
+					Amount: token.Amount,
+					Denom:  ibctransfertypes.NewDenom(token.Base, trace...),
+				}.ToCoin()
+				if err != nil {
+					return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, token.Amount+token.Base)
+				}
+				tokens = append(tokens, coin)
+			}
+			msg := &ibctransfertypes.MsgTransfer{
+				SourcePort:       portSource.GetPort(ctx),
+				SourceChannel:    msg.TransferV2.ChannelID,
+				Tokens:           tokens,
+				Sender:           sender.String(),
+				Receiver:         msg.TransferV2.ToAddress,
+				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.TransferV2.Timeout.Block),
+				TimeoutTimestamp: msg.TransferV2.Timeout.Timestamp,
+				Memo:             msg.TransferV2.Memo,
+			}
+			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
 			fee, err := ConvertIBCFee(&msg.PayPacketFee.Fee)
 			if err != nil {
