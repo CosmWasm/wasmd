@@ -324,19 +324,19 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 		case msg.TransferV2 != nil:
 			tokens := []sdk.Coin{}
 			for _, token := range msg.TransferV2.Tokens {
-				trace := []ibctransfertypes.Hop{}
-				for _, hop := range token.Trace {
-					newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
-					trace = append(trace, newHop)
-				}
-				coin, err := ibctransfertypes.Token{
-					Amount: token.Amount,
-					Denom:  ibctransfertypes.NewDenom(token.Base, trace...),
-				}.ToCoin()
+				coin, err := ConvertWasmCoinToSdkCoin(token)
 				if err != nil {
-					return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, token.Amount+token.Base)
+					return nil, errorsmod.Wrap(err, "amount")
 				}
 				tokens = append(tokens, coin)
+			}
+			forwardingHops := []ibctransfertypes.Hop{}
+			for _, hop := range msg.TransferV2.Forwarding {
+				newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
+				forwardingHops = append(forwardingHops, newHop)
+			}
+			forwarding := ibctransfertypes.Forwarding{
+				Hops: forwardingHops,
 			}
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
@@ -347,6 +347,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.TransferV2.Timeout.Block),
 				TimeoutTimestamp: msg.TransferV2.Timeout.Timestamp,
 				Memo:             msg.TransferV2.Memo,
+				Forwarding:       &forwarding,
 			}
 			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
