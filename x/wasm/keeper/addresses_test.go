@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func prepareCleanup(t *testing.T) {
