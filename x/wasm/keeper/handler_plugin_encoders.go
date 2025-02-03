@@ -213,7 +213,7 @@ func EncodeAnyMsg(unpacker codectypes.AnyUnpacker) AnyEncoder {
 		}
 		var sdkMsg sdk.Msg
 
-		ctx.GasMeter().ConsumeGas((700000*uint64(len(msg.Value)))/types.DefaultGasMultiplier, "unpacking AnyMsg")
+		ctx.GasMeter().ConsumeGas(700000/types.DefaultGasMultiplier, "unpacking AnyMsg")
 		if err := unpacker.UnpackAny(&codecAny, &sdkMsg); err != nil {
 			return nil, errorsmod.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 		}
