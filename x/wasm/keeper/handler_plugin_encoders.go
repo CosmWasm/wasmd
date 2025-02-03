@@ -322,21 +322,18 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			return []sdk.Msg{msg}, nil
 		case msg.TransferV2 != nil:
-			tokens := []sdk.Coin{}
-			for _, token := range msg.TransferV2.Tokens {
-				coin, err := ConvertWasmCoinToSdkCoin(token)
-				if err != nil {
-					return nil, errorsmod.Wrap(err, "amount")
+			tokens, err := ConvertWasmCoinsToSdkCoins(msg.TransferV2.Tokens)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "amount")
+			}
+			hops := ConvertWasmHopsToIbcHops(msg.TransferV2.Forwarding)
+			var forwarding *ibctransfertypes.Forwarding
+			if len(hops) == 0 {
+				forwarding = nil
+			} else {
+				forwarding = &ibctransfertypes.Forwarding{
+					Hops: hops,
 				}
-				tokens = append(tokens, coin)
-			}
-			forwardingHops := []ibctransfertypes.Hop{}
-			for _, hop := range msg.TransferV2.Forwarding {
-				newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
-				forwardingHops = append(forwardingHops, newHop)
-			}
-			forwarding := ibctransfertypes.Forwarding{
-				Hops: forwardingHops,
 			}
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
@@ -347,7 +344,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.TransferV2.Timeout.Block),
 				TimeoutTimestamp: msg.TransferV2.Timeout.Timestamp,
 				Memo:             msg.TransferV2.Memo,
-				Forwarding:       &forwarding,
+				Forwarding:       forwarding,
 			}
 			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
@@ -449,6 +446,16 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 		toSend = toSend.Add(c)
 	}
 	return toSend.Sort(), nil
+}
+
+// ConvertWasmHopsToIbcHops converts the wasm []hop type to IBC type []hop
+func ConvertWasmHopsToIbcHops(hops []wasmvmtypes.Hop) []ibctransfertypes.Hop {
+	forwardingHops := []ibctransfertypes.Hop{}
+	for _, hop := range hops {
+		newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
+		forwardingHops = append(forwardingHops, newHop)
+	}
+	return forwardingHops
 }
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin

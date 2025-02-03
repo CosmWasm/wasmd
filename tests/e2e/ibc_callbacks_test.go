@@ -89,7 +89,7 @@ func TestIBCCallbacks(t *testing.T) {
 				Transfer: &TransferExecMsg{
 					ChannelID:      path.EndpointA.ChannelID,
 					TimeoutSeconds: 100,
-					ChannelVersion: "V2",
+					ChannelVersion: "v2",
 				},
 			},
 			expAck: true,
@@ -99,7 +99,7 @@ func TestIBCCallbacks(t *testing.T) {
 				Transfer: &TransferExecMsg{
 					ChannelID:      path.EndpointA.ChannelID,
 					TimeoutSeconds: 1,
-					ChannelVersion: "V2",
+					ChannelVersion: "v2",
 				},
 			},
 			expAck: false,

@@ -694,6 +694,102 @@ func TestEncodeIbcMsg(t *testing.T) {
 				},
 			},
 		},
+		"TransferV2 without forwarding": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					TransferV2: &wasmvmtypes.TransferV2Msg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Tokens: []wasmvmtypes.Coin{
+							{
+								Denom:  "TK1",
+								Amount: "1",
+							},
+							{
+								Denom:  "TK2",
+								Amount: "12",
+							},
+						},
+						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
+						Memo:    "myMemo",
+					},
+				},
+			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "myTransferPort",
+					SourceChannel: "myChanID",
+					Tokens: []sdk.Coin{
+						{
+							Denom:  "TK1",
+							Amount: sdkmath.NewInt(1),
+						},
+						{
+							Denom:  "TK2",
+							Amount: sdkmath.NewInt(12),
+						},
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+					Memo:             "myMemo",
+				},
+			},
+		},
+		"TransferV2 with forwarding": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					TransferV2: &wasmvmtypes.TransferV2Msg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Tokens: []wasmvmtypes.Coin{
+							{
+								Denom:  "TK1",
+								Amount: "1",
+							},
+							{
+								Denom:  "TK2",
+								Amount: "12",
+							},
+						},
+						Timeout:    wasmvmtypes.IBCTimeout{Timestamp: 100},
+						Memo:       "myMemo",
+						Forwarding: []wasmvmtypes.Hop{{ChannelID: "chnl1", PortID: "port1"}},
+					},
+				},
+			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "myTransferPort",
+					SourceChannel: "myChanID",
+					Tokens: []sdk.Coin{
+						{
+							Denom:  "TK1",
+							Amount: sdkmath.NewInt(1),
+						},
+						{
+							Denom:  "TK2",
+							Amount: sdkmath.NewInt(12),
+						},
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+					Memo:             "myMemo",
+					Forwarding:       &ibctransfertypes.Forwarding{Hops: []ibctransfertypes.Hop{{ChannelId: "chnl1", PortId: "port1"}}},
+				},
+			},
+		},
 	}
 	encodingConfig := MakeEncodingConfig(t)
 	for name, tc := range cases {
