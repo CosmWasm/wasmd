@@ -326,15 +326,6 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			if err != nil {
 				return nil, errorsmod.Wrap(err, "amount")
 			}
-			hops := ConvertWasmHopsToIbcHops(msg.TransferV2.Forwarding)
-			var forwarding *ibctransfertypes.Forwarding
-			if len(hops) == 0 {
-				forwarding = nil
-			} else {
-				forwarding = &ibctransfertypes.Forwarding{
-					Hops: hops,
-				}
-			}
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
 				SourceChannel:    msg.TransferV2.ChannelID,
@@ -344,7 +335,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.TransferV2.Timeout.Block),
 				TimeoutTimestamp: msg.TransferV2.Timeout.Timestamp,
 				Memo:             msg.TransferV2.Memo,
-				Forwarding:       forwarding,
+				Forwarding:       ConvertWasmForwardingToIbcForwarding(msg.TransferV2.Forwarding),
 			}
 			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
@@ -449,13 +440,20 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 }
 
 // ConvertWasmHopsToIbcHops converts the wasm []hop type to IBC type []hop
-func ConvertWasmHopsToIbcHops(hops []wasmvmtypes.Hop) []ibctransfertypes.Hop {
-	forwardingHops := []ibctransfertypes.Hop{}
-	for _, hop := range hops {
-		newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
-		forwardingHops = append(forwardingHops, newHop)
+func ConvertWasmForwardingToIbcForwarding(forwarding *wasmvmtypes.Forwarding) *ibctransfertypes.Forwarding {
+	if forwarding != nil {
+		forwardingHops := []ibctransfertypes.Hop{}
+		for _, hop := range forwarding.Hops {
+			newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
+			forwardingHops = append(forwardingHops, newHop)
+		}
+		return &ibctransfertypes.Forwarding{
+			Hops:   forwardingHops,
+			Unwind: forwarding.Unwind,
+		}
+	} else {
+		return nil
 	}
-	return forwardingHops
 }
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin
