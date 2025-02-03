@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -432,7 +433,8 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
-			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
+			gm := storetypes.NewInfiniteGasMeter()
+			res, err := encoder.Encode(sdk.Context{}.WithGasMeter(gm), tc.sender, "", tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, err)
 				return
