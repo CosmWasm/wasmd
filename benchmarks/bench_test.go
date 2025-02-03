@@ -14,7 +14,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -128,7 +127,7 @@ func BenchmarkTxSending(b *testing.B) {
 }
 
 func BenchmarkUnpackAny(b *testing.B) {
-	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
 			AddressCodec: address.Bech32Codec{
@@ -168,7 +167,7 @@ func BenchmarkUnpackAny(b *testing.B) {
 	}{
 		"garbage any": {
 			msg: &codectypes.Any{
-				TypeUrl: "aslasdf", // TODO: use a real type URL
+				TypeUrl: "aslasdf",
 				Value:   []byte("oiuwurjtlwerlwmt032498u50j3oehr943q;l348u58q=-afvu89 290i32-1[1]"),
 			},
 			expErr: true,
