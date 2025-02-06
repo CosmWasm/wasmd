@@ -20,7 +20,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	"ibc_callbacks_test.go"
+	"github.com/Cosmwasm/wasmd/tests/e2e/ibc_callbacks_test.go.ibc_callbacks_test.go"
 	// UnusedImport also btw, I'm fetching the documentation of error codes here
 	// https://cs.opensource.google/go/x/tools/+/refs/tags/v0.9.3:internal/typesinternal/errorcode.go
 	// which... is kind of an useless errorcode.go file that does not hand out solutions, so we're going to do this
