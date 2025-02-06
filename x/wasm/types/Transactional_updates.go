@@ -1,77 +1,64 @@
 package keeper
 
 import (
-	"encoding/binary"
+	"testing"
 
-	corestoretypes "cosmossdk.io/core/store"
-	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	corestoretypes "cosmossdk.io/core/store"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// CountTXDecorator ante handler to count the tx position in a block.
-type CountTXDecorator struct {
-	storeService corestoretypes.KVStoreService
-}
+// MockKVStoreService and related implementations should be defined to simulate the store behavior.
 
-// NewCountTXDecorator constructor
-func NewCountTXDecorator(s corestoretypes.KVStoreService) *CountTXDecorator {
-	return &CountTXDecorator{storeService: s}
-}
+func TestCountTXDecorator_SameBlock(t *testing.T) {
+	// Create a mock store service and context
+	storeService := corestoretypes.NewMockKVStoreService() // Assuming you have a mock implementation
+	ctx := sdk.Context{}.WithBlockHeight(100)
+	// Create the decorator
+	decorator := NewCountTXDecorator(storeService)
 
-// AnteHandle handler stores a tx counter with current height encoded in the store to let the app handle
-// global rollback behavior instead of keeping state in the handler itself.
-// The ante handler passes the counter value via sdk.Context upstream. See `types.TXCounter(ctx)` to read the value.
-// Simulations don't get a tx counter value assigned.
-func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	if simulate {
-		return next(ctx, tx, simulate)
-	}
-	store := a.storeService.OpenKVStore(ctx)
-	currentHeight := ctx.BlockHeight()
-
-	// Begin a transaction
-	txn := store.NewTransaction()
-	defer txn.Discard() // Ensure the transaction is discarded if not committed
-
-	var txCounter uint32 // start with 0
-	// load counter when exists
-	bz, err := txn.Get(types.TXCounterPrefix)
-	if err != nil {
-		return ctx, errorsmod.Wrap(err, "read tx counter")
-	}
-	if bz != nil {
-		lastHeight, val := decodeHeightCounter(bz)
-		if currentHeight == lastHeight {
-			// then use stored counter
-			txCounter = val
-		} // else use `0` from above to start with
-	}
-	// store next counter value for current height
-	newTxCounter := txCounter + 1
-	err = txn.Set(types.TXCounterPrefix, encodeHeightCounter(currentHeight, newTxCounter))
-	if err != nil {
-		return ctx, errorsmod.Wrap(err, "store tx counter")
+	// Define a dummy next handler that simply returns the context and nil error.
+	nextHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+		return ctx, nil
 	}
 
-	// Commit the transaction
-	err = txn.Commit()
-	if err != nil {
-		return ctx, errorsmod.Wrap(err, "commit transaction")
+	// Execute the handler twice in the same block.
+	ctx, err := decorator.AnteHandle(ctx, nil, false, nextHandler)
+	require.NoError(t, err)
+	counter1 := types.TXCounter(ctx) // Implement retrieval as needed
+
+	ctx, err = decorator.AnteHandle(ctx, nil, false, nextHandler)
+	require.NoError(t, err)
+	counter2 := types.TXCounter(ctx)
+
+	// Expect counter2 to be counter1 + 1.
+	require.Equal(t, counter1+1, counter2)
+}
+
+func TestCountTXDecorator_NewBlock(t *testing.T) {
+	// Create a mock store service and context for block height 100.
+	storeService := corestoretypes.NewMockKVStoreService() // Replace with your mock implementation
+	ctx := sdk.Context{}.WithBlockHeight(100)
+	decorator := NewCountTXDecorator(storeService)
+
+	nextHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+		return ctx, nil
 	}
 
-	return next(types.WithTXCounter(ctx, newTxCounter), tx, simulate)
+	// Execute the handler.
+	ctx, err := decorator.AnteHandle(ctx, nil, false, nextHandler)
+	require.NoError(t, err)
+	counter := types.TXCounter(ctx)
+	require.Equal(t, uint32(1), counter)
+
+	// Simulate a new block.
+	ctx = ctx.WithBlockHeight(101)
+	ctx, err = decorator.AnteHandle(ctx, nil, false, nextHandler)
+	require.NoError(t, err)
+	newCounter := types.TXCounter(ctx)
+	// Since it's a new block, counter should reset to 1.
+	require.Equal(t, uint32(1), newCounter)
 }
 
-func encodeHeightCounter(height int64, counter uint32) []byte {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, counter)
-	return append(sdk.Uint64ToBigEndian(uint64(height)), b...)
-}
-
-func decodeHeightCounter(bz []byte) (int64, uint32) {
-	return int64(sdk.BigEndianToUint64(bz[0:8])), binary.BigEndian.Uint32(bz[8:])
-}
