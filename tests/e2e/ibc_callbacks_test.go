@@ -17,12 +17,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/CosmWasm/wasmd/app"
+  "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/Cosmwasm/wasmd/tests/e2e/ibc_callbacks_test.go.ibc_callbacks_test.go"
-	
-"github.com/CosmWasm/wasmd/tests/wasmibctesting"
+	"github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 // UnusedImport also btw, I'm fetching the documentation of error codes here

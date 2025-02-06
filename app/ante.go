@@ -1,4 +1,4 @@
-package app
+// package app
 
 import (
 	"errors"
@@ -12,25 +12,34 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	signing "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
-// channel keeper.
+// HandlerOptions extends the SDK's AnteHandler options by requiring additional keepers.
 type HandlerOptions struct {
-	ante.HandlerOptions
-
+	AccountKeeper         *authkeeper.AccountKeeper
+	BankKeeper            *bankkeeper.BaseKeeper
+	SignModeHandler       signing.SignModeHandler
 	IBCKeeper             *keeper.Keeper
-	NodeConfig            *NodeConfig.Keeper
+	WasmConfig            wasmkeeper.WasmConfig
 	WasmKeeper            *wasmkeeper.Keeper
-	TXCounterStoreService *types.corestoretypes.KVStoreService
+	TXCounterStoreService corestoretypes.KVStoreService
 	CircuitKeeper         *circuitkeeper.Keeper
+	FeegrantKeeper        *feegrantkeeper.Keeper
+	TxFeeChecker          ante.TxFeeChecker
+	SigGasConsumer        ante.SignatureVerificationGasConsumer
+	ExtensionOptionChecker ante.ExtensionOptionChecker
 }
 
 // NewAnteHandler constructor
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
+	// Validate required keepers
 	if options.AccountKeeper == nil {
 		return nil, errors.New("account keeper is required for ante builder")
 	}
@@ -40,19 +49,19 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.SignModeHandler == nil {
 		return nil, errors.New("sign mode handler is required for ante builder")
 	}
-	if options.NodeConfig == nil {
-		return nil, errors.New("wasm config is required for ante builder")
+	if options.WasmKeeper == nil {
+		return nil, errors.New("wasm keeper is required for ante builder")
 	}
 	if options.TXCounterStoreService == nil {
-		return nil, errors.New("wasm store service is required for ante builder")
+		return nil, errors.New("TX counter store service is required for ante builder")
 	}
 	if options.CircuitKeeper == nil {
 		return nil, errors.New("circuit keeper is required for ante builder")
 	}
 
 	anteDecorators := []sdk.AnteDecorator{
-		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		wasmkeeper.NewLimitSimulationGasDecorator(options.NodeConfig.SimulationGasLimit), // after setup context to enforce limits early
+		ante.NewSetUpContextDecorator(), // Must be called first
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // Enforce limits early
 		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreService),
 		wasmkeeper.NewGasRegisterDecorator(options.WasmKeeper.GetGasRegister()),
 		wasmkeeper.NewTxContractsDecorator(),
@@ -63,7 +72,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		ante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
+		ante.NewSetPubKeyDecorator(options.AccountKeeper), // Must be before signature verification
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
