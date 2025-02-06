@@ -25,16 +25,16 @@ import (
 type HandlerOptions struct {
 	AccountKeeper         *authkeeper.AccountKeeper
 	BankKeeper            *bankkeeper.BaseKeeper
-	SignModeHandler       signing.SignModeHandler
+	SignModeHandler       *signing.SignModeHandler
 	IBCKeeper             *keeper.Keeper
-	WasmConfig            wasmkeeper.WasmConfig
+	WasmConfig            *wasmkeeper.WasmConfig
 	WasmKeeper            *wasmkeeper.Keeper
-	TXCounterStoreService corestoretypes.KVStoreService
+	TXCounterStoreService *corestoretypes.KVStoreService
 	CircuitKeeper         *circuitkeeper.Keeper
 	FeegrantKeeper        *feegrantkeeper.Keeper
-	TxFeeChecker          ante.TxFeeChecker
-	SigGasConsumer        ante.SignatureVerificationGasConsumer
-	ExtensionOptionChecker ante.ExtensionOptionChecker
+	TxFeeChecker          *ante.TxFeeChecker
+	SigGasConsumer        *ante.SignatureVerificationGasConsumer
+	ExtensionOptionChecker *ante.ExtensionOptionChecker
 }
 
 // NewAnteHandler constructor
