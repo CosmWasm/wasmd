@@ -1,3 +1,5 @@
+package keeper  // ✅ This must be the first line!
+
 import (
 	"encoding/binary"
 
@@ -62,3 +64,4 @@ func encodeHeightCounter(height int64, counter uint32) []byte {
 func decodeHeightCounter(bz []byte) (int64, uint32) {
 	return int64(sdk.BigEndianToUint64(bz[0:8])), binary.BigEndian.Uint32(bz[8:])
 }
+
