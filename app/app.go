@@ -190,9 +190,9 @@ var (
 type WasmApp struct {
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
-	appCodec          codec.Codec
-	txConfig          client.TxConfig
-	interfaceRegistry types.InterfaceRegistry
+	appCodec          *codec.Codec
+	txConfig          *client.TxConfig
+	interfaceRegistry *types.InterfaceRegistry
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -200,38 +200,38 @@ type WasmApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
-	BankKeeper            bankkeeper.BaseKeeper
+	AccountKeeper         *authkeeper.AccountKeeper
+	BankKeeper            *bankkeeper.BaseKeeper
 	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
-	SlashingKeeper        slashingkeeper.Keeper
-	MintKeeper            mintkeeper.Keeper
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
+	SlashingKeeper        *slashingkeeper.Keeper
+	MintKeeper            *mintkeeper.Keeper
+	DistrKeeper           *distrkeeper.Keeper
+	GovKeeper             *govkeeper.Keeper
 	CrisisKeeper          *crisiskeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
-	AuthzKeeper           authzkeeper.Keeper
-	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	GroupKeeper           groupkeeper.Keeper
-	NFTKeeper             nftkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	CircuitKeeper         circuitkeeper.Keeper
+	ParamsKeeper          *paramskeeper.Keeper
+	AuthzKeeper           *authzkeeper.Keeper
+	EvidenceKeeper        *evidencekeeper.Keeper
+	FeeGrantKeeper       *feegrantkeeper.Keeper
+	GroupKeeper           *groupkeeper.Keeper
+	NFTKeeper             *nftkeeper.Keeper
+	ConsensusParamsKeeper *consensusparamkeeper.Keeper
+	CircuitKeeper         *circuitkeeper.Keeper
 
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper
-	ICAControllerKeeper icacontrollerkeeper.Keeper
-	ICAHostKeeper       icahostkeeper.Keeper
-	TransferKeeper      ibctransferkeeper.Keeper
-	WasmKeeper          wasmkeeper.Keeper
+	IBCFeeKeeper        *ibcfeekeeper.Keeper
+	ICAControllerKeeper *icacontrollerkeeper.Keeper
+	ICAHostKeeper       *icahostkeeper.Keeper
+	TransferKeeper      *ibctransferkeeper.Keeper
+	WasmKeeper          *wasmkeeper.Keeper
 
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper           *capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper      *capabilitykeeper.ScopedKeeper
+	ScopedICAControllerKeeper *capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper      *capabilitykeeper.ScopedKeeper
+	ScopedIBCFeeKeeper        *capabilitykeeper.ScopedKeeper
+	ScopedWasmKeeper          *capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -282,31 +282,31 @@ func NewWasmApp(
 	//
 	// Example:
 	//
-	// bApp := baseapp.NewBaseApp(...)
-	// nonceMempool := mempool.NewSenderNonceMempool()
-	// abciPropHandler := NewDefaultProposalHandler(nonceMempool, bApp)
+	   bApp := baseapp.NewBaseApp(...)
+	   nonceMempool := mempool.NewSenderNonceMempool()
+	  abciPropHandler := NewDefaultProposalHandler(nonceMempool, bApp)
 	//
-	// bApp.SetMempool(nonceMempool)
-	// bApp.SetPrepareProposal(abciPropHandler.PrepareProposalHandler())
-	// bApp.SetProcessProposal(abciPropHandler.ProcessProposalHandler())
+	  bApp.SetMempool(nonceMempool)
+	  bApp.SetPrepareProposal(abciPropHandler.PrepareProposalHandler())
+	  bApp.SetProcessProposal(abciPropHandler.ProcessProposalHandler())
 	//
 	// Alternatively, you can construct BaseApp options, append those to
-	// baseAppOptions and pass them to NewBaseApp.
+	//baseAppOptions and pass them to NewBaseApp.
 	//
 	// Example:
 	//
-	// prepareOpt = func(app *baseapp.BaseApp) {
-	// 	abciPropHandler := baseapp.NewDefaultProposalHandler(nonceMempool, app)
-	// 	app.SetPrepareProposal(abciPropHandler.PrepareProposalHandler())
+	  prepareOpt = func(app *baseapp.BaseApp) {
+	  abciPropHandler := baseapp.NewDefaultProposalHandler(nonceMempool, app)
+	  app.SetPrepareProposal(abciPropHandler.PrepareProposalHandler())
 	// }
-	// baseAppOptions = append(baseAppOptions, prepareOpt)
+	  baseAppOptions = append(baseAppOptions, prepareOpt)
 
 	// create and set dummy vote extension handler
-	// voteExtOp := func(bApp *baseapp.BaseApp) {
-	//	voteExtHandler := NewVoteExtensionHandler()
-	//	voteExtHandler.SetHandlers(bApp)
+	  voteExtOp := func(bApp *baseapp.BaseApp) {
+	  voteExtHandler := NewVoteExtensionHandler()
+	  voteExtHandler.SetHandlers(bApp)
 	// }
-	// baseAppOptions = append(baseAppOptions, voteExtOp)
+	  baseAppOptions = append(baseAppOptions, voteExtOp)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
