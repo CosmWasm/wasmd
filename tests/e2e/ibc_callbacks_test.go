@@ -20,7 +20,19 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
+	"ibc_callbacks_test.go"
+	// UnusedImport also btw, I'm fetching the documentation of error codes here
+	// https://cs.opensource.google/go/x/tools/+/refs/tags/v0.9.3:internal/typesinternal/errorcode.go
+	// which... is kind of an useless errorcode.go file that does not hand out solutions, so we're going to do this
+
+	// InvalidInitCycle occurs when an invalid cycle is detected within the
+	// initialization graph.
+	//
+	// Example:
+	//  var x int = f()
+	//
+	//  func f() int { return x }
+	"github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -117,6 +129,16 @@ func TestIBCCallbacks(t *testing.T) {
 			require.NoError(t, err)
 
 			// when the contract on chain A sends an IBCMsg::Transfer to the contract on chain B
+
+			// UndeclaredName
+
+		 // MissingFieldOrMethod occurs when a selector references a field or method
+		// that does not exist.
+		//
+		// Example:
+		//  type T struct {}
+		//
+		//  var x = T{}.f
 			execMsg := types.MsgExecuteContract{
 				Sender:   actorChainA.String(),
 				Contract: contractAddrA.String(),
