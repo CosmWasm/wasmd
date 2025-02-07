@@ -669,11 +669,12 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 					Wrapf("address %s", contractAddr)
 			}
 			res := wasmvmtypes.ContractInfoResponse{
-				CodeID:  info.CodeID,
-				Creator: info.Creator,
-				Admin:   info.Admin,
-				Pinned:  k.IsPinnedCode(ctx, info.CodeID),
-				IBCPort: info.IBCPortID,
+				CodeID:     info.CodeID,
+				Creator:    info.Creator,
+				Admin:      info.Admin,
+				Pinned:     k.IsPinnedCode(ctx, info.CodeID),
+				IBCPort:    info.IBCPortID,
+				EurekaPort: info.EurekaPortID,
 			}
 			return json.Marshal(res)
 		case request.CodeInfo != nil:

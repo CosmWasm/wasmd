@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+Bind eureka port and store it in ContractInfo [\#2122](https://github.com/CosmWasm/wasmd/pull/2122)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...HEAD)
 
 ## [v0.54.0](https://github.com/CosmWasm/wasmd/tree/v0.54.0) (2025-01-08)
