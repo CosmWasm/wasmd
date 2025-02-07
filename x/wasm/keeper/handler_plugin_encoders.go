@@ -326,18 +326,52 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			if err != nil {
 				return nil, errorsmod.Wrap(err, "amount")
 			}
-			msg := &ibctransfertypes.MsgTransfer{
-				SourcePort:       portSource.GetPort(ctx),
-				SourceChannel:    msg.TransferV2.ChannelID,
-				Tokens:           tokens,
-				Sender:           sender.String(),
-				Receiver:         msg.TransferV2.ToAddress,
-				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.TransferV2.Timeout.Block),
-				TimeoutTimestamp: msg.TransferV2.Timeout.Timestamp,
-				Memo:             msg.TransferV2.Memo,
-				Forwarding:       ConvertWasmForwardingToIbcForwarding(msg.TransferV2.Forwarding),
+			msgTransferV2 := msg.TransferV2.TransferType
+			switch {
+			case msgTransferV2.Direct != nil:
+				msg := &ibctransfertypes.MsgTransfer{
+					SourcePort:       portSource.GetPort(ctx),
+					SourceChannel:    msgTransferV2.Direct.ChannelID,
+					Tokens:           tokens,
+					Sender:           sender.String(),
+					Receiver:         msg.TransferV2.ToAddress,
+					TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msgTransferV2.Direct.IBCTimeout.Block),
+					TimeoutTimestamp: msgTransferV2.Direct.IBCTimeout.Timestamp,
+					Memo:             msg.TransferV2.Memo,
+				}
+				return []sdk.Msg{msg}, nil
+			case msgTransferV2.MultiHop != nil:
+				msg := &ibctransfertypes.MsgTransfer{
+					SourcePort:       portSource.GetPort(ctx),
+					SourceChannel:    msgTransferV2.MultiHop.ChannelID,
+					Tokens:           tokens,
+					Sender:           sender.String(),
+					Receiver:         msg.TransferV2.ToAddress,
+					TimeoutTimestamp: uint64(msgTransferV2.MultiHop.Timeout),
+					Memo:             msg.TransferV2.Memo,
+					Forwarding: &ibctransfertypes.Forwarding{
+						Hops:   ConvertWasmHopsToIbcHops(msgTransferV2.MultiHop.Hops),
+						Unwind: false,
+					},
+				}
+				return []sdk.Msg{msg}, nil
+			case msgTransferV2.Unwinding != nil:
+				msg := &ibctransfertypes.MsgTransfer{
+					SourcePort:       portSource.GetPort(ctx),
+					Tokens:           tokens,
+					Sender:           sender.String(),
+					Receiver:         msg.TransferV2.ToAddress,
+					TimeoutTimestamp: uint64(msgTransferV2.Unwinding.Timeout),
+					Memo:             msg.TransferV2.Memo,
+					Forwarding: &ibctransfertypes.Forwarding{
+						Hops:   ConvertWasmHopsToIbcHops(msgTransferV2.Unwinding.Hops),
+						Unwind: true,
+					},
+				}
+				return []sdk.Msg{msg}, nil
+			default:
+				return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of IBC TransferV2 message")
 			}
-			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
 			fee, err := ConvertIBCFee(&msg.PayPacketFee.Fee)
 			if err != nil {
@@ -440,20 +474,13 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 }
 
 // ConvertWasmHopsToIbcHops converts the wasm []hop type to IBC type []hop
-func ConvertWasmForwardingToIbcForwarding(forwarding *wasmvmtypes.Forwarding) *ibctransfertypes.Forwarding {
-	if forwarding != nil {
-		forwardingHops := []ibctransfertypes.Hop{}
-		for _, hop := range forwarding.Hops {
-			newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
-			forwardingHops = append(forwardingHops, newHop)
-		}
-		return &ibctransfertypes.Forwarding{
-			Hops:   forwardingHops,
-			Unwind: forwarding.Unwind,
-		}
-	} else {
-		return nil
+func ConvertWasmHopsToIbcHops(hops []wasmvmtypes.Hop) []ibctransfertypes.Hop {
+	forwardingHops := []ibctransfertypes.Hop{}
+	for _, hop := range hops {
+		newHop := ibctransfertypes.NewHop(hop.PortID, hop.ChannelID)
+		forwardingHops = append(forwardingHops, newHop)
 	}
+	return forwardingHops
 }
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin

@@ -694,13 +694,18 @@ func TestEncodeIbcMsg(t *testing.T) {
 				},
 			},
 		},
-		"TransferV2 without forwarding": {
+		"TransferV2 direct": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC: &wasmvmtypes.IBCMsg{
 					TransferV2: &wasmvmtypes.TransferV2Msg{
-						ChannelID: "myChanID",
+						TransferType: wasmvmtypes.TransferV2Type{
+							Direct: &wasmvmtypes.DirectType{
+								ChannelID:  "myChanID",
+								IBCTimeout: wasmvmtypes.IBCTimeout{Timestamp: 100, Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 22, Height: 10}},
+							},
+						},
 						ToAddress: addr2.String(),
 						Tokens: []wasmvmtypes.Coin{
 							{
@@ -712,8 +717,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 								Amount: "12",
 							},
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
-						Memo:    "myMemo",
+						Memo: "myMemo",
 					},
 				},
 			},
@@ -737,6 +741,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 					Sender:           addr1.String(),
 					Receiver:         addr2.String(),
 					TimeoutTimestamp: 100,
+					TimeoutHeight:    clienttypes.Height{RevisionNumber: 22, RevisionHeight: 10},
 					Memo:             "myMemo",
 				},
 			},
@@ -747,7 +752,13 @@ func TestEncodeIbcMsg(t *testing.T) {
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC: &wasmvmtypes.IBCMsg{
 					TransferV2: &wasmvmtypes.TransferV2Msg{
-						ChannelID: "myChanID",
+						TransferType: wasmvmtypes.TransferV2Type{
+							MultiHop: &wasmvmtypes.MultiHopType{
+								ChannelID: "myChanID",
+								Timeout:   100,
+								Hops:      []wasmvmtypes.Hop{{ChannelID: "chnl1", PortID: "port1"}},
+							},
+						},
 						ToAddress: addr2.String(),
 						Tokens: []wasmvmtypes.Coin{
 							{
@@ -759,12 +770,7 @@ func TestEncodeIbcMsg(t *testing.T) {
 								Amount: "12",
 							},
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
-						Memo:    "myMemo",
-						Forwarding: &wasmvmtypes.Forwarding{
-							Hops:   []wasmvmtypes.Hop{{ChannelID: "chnl1", PortID: "port1"}},
-							Unwind: false,
-						},
+						Memo: "myMemo",
 					},
 				},
 			},
@@ -789,7 +795,58 @@ func TestEncodeIbcMsg(t *testing.T) {
 					Receiver:         addr2.String(),
 					TimeoutTimestamp: 100,
 					Memo:             "myMemo",
-					Forwarding:       &ibctransfertypes.Forwarding{Hops: []ibctransfertypes.Hop{{ChannelId: "chnl1", PortId: "port1"}}},
+					Forwarding:       &ibctransfertypes.Forwarding{Hops: []ibctransfertypes.Hop{{ChannelId: "chnl1", PortId: "port1"}}, Unwind: false},
+				},
+			},
+		},
+		"TransferV2 with unwinding": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					TransferV2: &wasmvmtypes.TransferV2Msg{
+						TransferType: wasmvmtypes.TransferV2Type{
+							Unwinding: &wasmvmtypes.UnwindingType{
+								Timeout: 100,
+								Hops:    []wasmvmtypes.Hop{{ChannelID: "chnl1", PortID: "port1"}},
+							},
+						},
+						ToAddress: addr2.String(),
+						Tokens: []wasmvmtypes.Coin{
+							{
+								Denom:  "TK1",
+								Amount: "1",
+							},
+							{
+								Denom:  "TK2",
+								Amount: "12",
+							},
+						},
+						Memo: "myMemo",
+					},
+				},
+			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort: "myTransferPort",
+					Tokens: []sdk.Coin{
+						{
+							Denom:  "TK1",
+							Amount: sdkmath.NewInt(1),
+						},
+						{
+							Denom:  "TK2",
+							Amount: sdkmath.NewInt(12),
+						},
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+					Memo:             "myMemo",
+					Forwarding:       &ibctransfertypes.Forwarding{Hops: []ibctransfertypes.Hop{{ChannelId: "chnl1", PortId: "port1"}}, Unwind: true},
 				},
 			},
 		},
