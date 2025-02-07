@@ -24,6 +24,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// anyMsgGasCost is the gas cost for unpacking an AnyMsg, in CosmWasm gas units (not SDK gas units).
+// With the default gas multiplier, this amounts to 5 SDK gas.
+const anyMsgGasCost = 700000
+
 type (
 	BankEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
 	CustomEncoder       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
@@ -213,7 +217,7 @@ func EncodeAnyMsg(unpacker codectypes.AnyUnpacker) AnyEncoder {
 		}
 		var sdkMsg sdk.Msg
 
-		ctx.GasMeter().ConsumeGas(700000/types.DefaultGasMultiplier, "unpacking AnyMsg")
+		ctx.GasMeter().ConsumeGas(anyMsgGasCost/types.DefaultGasMultiplier, "unpacking AnyMsg")
 		if err := unpacker.UnpackAny(&codecAny, &sdkMsg); err != nil {
 			return nil, errorsmod.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 		}
