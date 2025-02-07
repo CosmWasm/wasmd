@@ -90,7 +90,7 @@ func (module IBC2Handler) OnAcknowledgementPacket(
 
 // The method calls the contract to process the incoming IBC2 packet. The contract fully owns the data processing and
 // returns the acknowledgement data for the chain level. This allows custom applications and protocols on top
-// of IBCv2.
+// of IBC2.
 func (k Keeper) OnRecvIBC2Packet(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
