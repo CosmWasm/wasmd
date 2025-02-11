@@ -581,6 +581,8 @@ func NewWasmApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
+	ibcRouterV2 := ibcapi.NewRouter()
+
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -600,6 +602,7 @@ func NewWasmApp(
 		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ibcRouterV2,
 		wasmOpts...,
 	)
 
@@ -641,7 +644,7 @@ func NewWasmApp(
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
-	ibcRouterV2 := ibcapi.NewRouter().
+	ibcRouterV2 = ibcRouterV2.
 		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper))
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
