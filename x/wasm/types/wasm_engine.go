@@ -292,6 +292,20 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
+	// IBC2PacketReceive is available on IBC2-enabled contracts and is called when an incoming
+	// payload is received on a channel belonging to this contract
+	IBC2PacketReceive(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		payload wasmvmtypes.IBC2PacketReceiveMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCReceiveResult, uint64, error)
+
 	// Pin pins a code to an in-memory cache, such that is
 	// always loaded quickly when executed.
 	// Pin is idempotent.

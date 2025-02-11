@@ -15,6 +15,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -110,6 +111,12 @@ type Keeper struct {
 
 	// wasmLimits contains the limits sent to wasmvm on init
 	wasmLimits wasmvmtypes.WasmLimits
+
+	ibcRouterV2 *ibcapi.Router
+}
+
+func (k Keeper) GetIBCRouterV2() *ibcapi.Router {
+	return k.ibcRouterV2
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {

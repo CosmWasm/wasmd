@@ -697,6 +697,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		types.VMConfig{},
 		AvailableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		nil,
 	)
 	return &srcKeeper, ctx
 }
