@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 )
 
 // NewKeeper creates a new contract Keeper instance
@@ -35,6 +36,7 @@ func NewKeeper(
 	vmConfig types.VMConfig,
 	availableCapabilities []string,
 	authority string,
+	ibcKeeper *ibcapi.Router,
 	opts ...Option,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -56,6 +58,7 @@ func NewKeeper(
 		},
 		authority:  authority,
 		wasmLimits: vmConfig.WasmLimits,
+		ibcKeeper:  ibcKeeper,
 	}
 	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)

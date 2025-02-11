@@ -31,6 +31,7 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
@@ -591,6 +592,8 @@ func NewWasmApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
+	ibcRouterV2 := ibcapi.NewRouter()
+
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -610,6 +613,7 @@ func NewWasmApp(
 		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ibcRouterV2,
 		wasmOpts...,
 	)
 
@@ -656,6 +660,8 @@ func NewWasmApp(
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
+
+	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
 	clientKeeper := app.IBCKeeper.ClientKeeper
 	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()

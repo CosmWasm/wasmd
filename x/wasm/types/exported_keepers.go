@@ -5,6 +5,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -136,4 +137,13 @@ type IBCContractKeeper interface {
 	StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Packet) error
 	// DeleteAsyncAckPacket deletes a previously stored packet. See StoreAsyncAckPacket for more details.
 	DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64)
+}
+
+// EurekaContractKeeper Eureka lifecycle event handler
+type EurekaContractKeeper interface {
+	OnRecvEurekaPacket(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.EurekaPacketReceiveMsg,
+	) channeltypesv2.RecvPacketResult
 }
