@@ -22,3 +22,16 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	}
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }
+
+const portIDPrefixV2 = "wasmV2"
+
+func PortIDForContractV2(addr sdk.AccAddress) string {
+	return portIDPrefixV2 + addr.String()
+}
+
+func ContractFromPortID2(portID string) (sdk.AccAddress, error) {
+	if !strings.HasPrefix(portID, portIDPrefixV2) {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
+	}
+	return sdk.AccAddressFromBech32(portID[len(portIDPrefixV2):])
+}
