@@ -290,7 +290,6 @@ type ContractInfo struct {
 	// Created Tx position when the contract was instantiated.
 	Created   *AbsoluteTxPosition `protobuf:"bytes,5,opt,name=created,proto3" json:"created,omitempty"`
 	IBCPortID string              `protobuf:"bytes,6,opt,name=ibc_port_id,json=ibcPortId,proto3" json:"ibc_port_id,omitempty"`
-	EurekaPortID string              `protobuf:"bytes,6,opt,name=eureka_port_id,json=eurekaPortId,proto3" json:"eureka_port_id,omitempty"`
 	// Extension is an extension point to store custom metadata within the
 	// persistence model.
 	Extension *types.Any `protobuf:"bytes,7,opt,name=extension,proto3" json:"extension,omitempty"`
