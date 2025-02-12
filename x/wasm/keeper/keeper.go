@@ -380,17 +380,14 @@ func (k Keeper) instantiate(
 		contractInfo.IBCPortID = ibcPort
 	}
 	// Should we bind the port in some special way for Eureka?
-	//
-	// Analysis report is missing the `HasEurekaEntryPoints` field.
-	//
-	// if report.HasEurekaEntryPoints {
-	// register Eureka port
-	eurekaPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
-	if err != nil {
-		return nil, nil, err
+	if report.HasEurekaEntryPoints {
+		// register Eureka port
+		eurekaPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
+		if err != nil {
+			return nil, nil, err
+		}
+		contractInfo.EurekaPortID = eurekaPort
 	}
-	contractInfo.EurekaPortID = eurekaPort
-	// }
 
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
@@ -560,17 +557,14 @@ func (k Keeper) migrate(
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
 
 	// Should we bind the port in some special way for Eureka?
-	//
-	// Analysis report is missing the `HasEurekaEntryPoints` field.
-	//
-	// if report.HasEurekaEntryPoints && contractInfo.EurekaPortID != "" {
-	// register Eureka port
-	eurekaPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
-	if err != nil {
-		return nil, err
+	if report.HasEurekaEntryPoints && contractInfo.EurekaPortID != "" {
+		// register Eureka port
+		eurekaPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
+		if err != nil {
+			return nil, err
+		}
+		contractInfo.EurekaPortID = eurekaPort
 	}
-	contractInfo.EurekaPortID = eurekaPort
-	// }
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,
