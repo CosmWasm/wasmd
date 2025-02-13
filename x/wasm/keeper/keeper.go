@@ -107,7 +107,7 @@ type Keeper struct {
 	propagateGovAuthorization map[types.AuthorizationPolicyAction]struct{}
 
 	// Binds port for Eureka
-	bindEurekaPort func(ctx sdk.Context, contractAddr sdk.AccAddress) (string, error)
+	customBindEurekaPort func(ctx sdk.Context, contractAddr sdk.AccAddress) (string, error)
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -419,6 +419,14 @@ func (k Keeper) instantiate(
 	}
 
 	return contractAddress, data, nil
+}
+
+func (k Keeper) bindEurekaPort(sdkCtx sdk.Context, contractAddress sdk.AccAddress) (string, error) {
+	if k.bindEurekaPort != nil {
+		return k.customBindEurekaPort(sdkCtx, contractAddress)
+	} else {
+		return k.ensureIbcPort(sdkCtx, contractAddress)
+	}
 }
 
 // Execute executes the contract instance
