@@ -17,11 +17,10 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/gogoproto/proto"
-	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
-	ibctestingtypes "github.com/cosmos/ibc-go/v9/testing/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
@@ -47,10 +46,6 @@ var (
 
 type WasmTestApp struct {
 	*app.WasmApp
-}
-
-func (app WasmTestApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
-	return app.WasmApp.GetStakingKeeper()
 }
 
 func (app WasmTestApp) GetTxConfig() client.TxConfig {
@@ -258,7 +253,7 @@ func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response i
 // It is useful for testing async acknowledgement.
 func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) error {
 	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
-	if bytes.Equal(pc, channeltypes.CommitPacket(path.EndpointA.Chain.App.AppCodec(), packet)) {
+	if bytes.Equal(pc, channeltypes.CommitPacket(packet)) {
 
 		// packet found, relay from A to B
 		if err := path.EndpointB.UpdateClient(); err != nil {
@@ -279,7 +274,7 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 	}
 
 	pc = path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
-	if bytes.Equal(pc, channeltypes.CommitPacket(path.EndpointB.Chain.App.AppCodec(), packet)) {
+	if bytes.Equal(pc, channeltypes.CommitPacket(packet)) {
 
 		// packet found, relay B to A
 		if err := path.EndpointA.UpdateClient(); err != nil {
@@ -485,19 +480,20 @@ func NewTestChainWithValSet(t *testing.T, coord *ibctesting.Coordinator, appFact
 
 	// create an account to send transactions from
 	chain := &ibctesting.TestChain{
-		TB:             t,
-		Coordinator:    coord,
-		ChainID:        chainID,
-		App:            wasmApp,
-		ProposedHeader: header,
-		TxConfig:       txConfig,
-		Codec:          wasmApp.AppCodec(),
-		Vals:           valSet,
-		NextVals:       valSet,
-		Signers:        signers,
-		SenderPrivKey:  senderAccs[0].SenderPrivKey,
-		SenderAccount:  senderAccs[0].SenderAccount,
-		SenderAccounts: senderAccs,
+		TB:                t,
+		Coordinator:       coord,
+		ChainID:           chainID,
+		App:               wasmApp,
+		ProposedHeader:    header,
+		TxConfig:          txConfig,
+		Codec:             wasmApp.AppCodec(),
+		Vals:              valSet,
+		NextVals:          valSet,
+		Signers:           signers,
+		TrustedValidators: make(map[uint64]*cmttypes.ValidatorSet, 0),
+		SenderPrivKey:     senderAccs[0].SenderPrivKey,
+		SenderAccount:     senderAccs[0].SenderAccount,
+		SenderAccounts:    senderAccs,
 	}
 
 	coord.CommitBlock(chain)
