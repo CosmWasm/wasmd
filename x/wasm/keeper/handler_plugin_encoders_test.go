@@ -8,6 +8,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -876,6 +877,73 @@ func TestEncodeGovMsg(t *testing.T) {
 					Options: []*govv1.WeightedVoteOption{
 						{Option: govv1.OptionYes, Weight: sdkmath.LegacyNewDecWithPrec(49, 2).String()},
 						{Option: govv1.OptionNo, Weight: sdkmath.LegacyNewDecWithPrec(5, 1).String()},
+					},
+				},
+			},
+		},
+	}
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var ctx sdk.Context
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
+			res, gotEncErr := encoder.Encode(ctx, tc.sender, "myIBCPort", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, gotEncErr)
+				return
+			}
+			require.NoError(t, gotEncErr)
+			assert.Equal(t, tc.output, res)
+		})
+	}
+}
+
+func TestEncodeIBCv2Msg(t *testing.T) {
+	var (
+		myAddr   = RandomAccountAddress(t)
+		destAddr = RandomAccountAddress(t)
+	)
+
+	cases := map[string]struct {
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		transferPortSource types.ICS20TransferPortSource
+		// set if valid
+		output []sdk.Msg
+		// set if expect mapping fails
+		expError bool
+	}{
+		"IBC2 SendPacket": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC2: &wasmvmtypes.IBC2Msg{
+					SendPacket: &wasmvmtypes.IBC2SendPacketMsg{
+						ChannelID: myAddr.String(),
+						Payloads: []wasmvmtypes.IBC2Payload{
+							{
+								DestinationPort: PortIDForContractV2(destAddr),
+								Version:         "v1",
+								Encoding:        "json",
+								Value:           []byte{},
+							},
+						},
+						Timeout: 1000,
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&channeltypesv2.MsgSendPacket{
+					SourceClient:     myAddr.String(),
+					TimeoutTimestamp: 1000,
+					Signer:           myAddr.String(),
+					Payloads: []channeltypesv2.Payload{
+						{
+							SourcePort:      PortIDForContractV2(myAddr),
+							DestinationPort: PortIDForContractV2(destAddr),
+							Version:         "v1",
+							Encoding:        "json",
+							Value:           []byte{},
+						},
 					},
 				},
 			},
