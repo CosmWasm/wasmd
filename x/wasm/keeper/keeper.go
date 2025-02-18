@@ -422,7 +422,7 @@ func (k Keeper) instantiate(
 }
 
 func (k Keeper) bindEurekaPort(sdkCtx sdk.Context, contractAddress sdk.AccAddress) (string, error) {
-	if k.bindEurekaPort != nil {
+	if k.customBindEurekaPort != nil {
 		return k.customBindEurekaPort(sdkCtx, contractAddress)
 	} else {
 		return k.ensureIbcPort(sdkCtx, contractAddress)
