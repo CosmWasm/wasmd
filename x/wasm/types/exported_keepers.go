@@ -4,9 +4,8 @@ import (
 	"context"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v9/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -127,11 +126,6 @@ type IBCContractKeeper interface {
 		contractAddr sdk.AccAddress,
 		msg wasmvmtypes.IBCDestinationCallbackMsg,
 	) error
-	// ClaimCapability allows the transfer module to claim a capability
-	// that IBC module passes to it
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
-	// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
-	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 
 	// LoadAsyncAckPacket loads a previously stored packet. See StoreAsyncAckPacket for more details.
 	// Both the portID and channelID are the ones on the destination chain (the chain that this is executed on).

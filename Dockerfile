@@ -1,7 +1,7 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
 
-FROM golang:1.23-alpine3.19 AS go-builder
+FROM golang:1.23.6-alpine AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile

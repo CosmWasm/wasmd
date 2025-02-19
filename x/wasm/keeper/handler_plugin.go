@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v9/modules/core/24-host"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -43,7 +41,6 @@ func NewDefaultMessageHandler(
 	router MessageRouter,
 	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
-	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
 	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
@@ -55,7 +52,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(cdc, router, encoders),
-		NewIBCRawPacketHandler(ics4Wrapper, keeper, channelKeeper, capabilityKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, keeper, channelKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -175,19 +172,17 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
-	ics4Wrapper      types.ICS4Wrapper
-	wasmKeeper       types.IBCContractKeeper
-	channelKeeper    types.ChannelKeeper
-	capabilityKeeper types.CapabilityKeeper
+	ics4Wrapper   types.ICS4Wrapper
+	wasmKeeper    types.IBCContractKeeper
+	channelKeeper types.ChannelKeeper
 }
 
 // NewIBCRawPacketHandler constructor
-func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper, channelKeeper types.ChannelKeeper) IBCRawPacketHandler {
 	return IBCRawPacketHandler{
-		ics4Wrapper:      ics4Wrapper,
-		wasmKeeper:       wasmKeeper,
-		channelKeeper:    channelKeeper,
-		capabilityKeeper: capabilityKeeper,
+		ics4Wrapper:   ics4Wrapper,
+		wasmKeeper:    wasmKeeper,
+		channelKeeper: channelKeeper,
 	}
 }
 
@@ -206,11 +201,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
 		}
 
-		channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
-		if !ok {
-			return nil, nil, nil, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-		}
-		seq, err := h.ics4Wrapper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
+		seq, err := h.ics4Wrapper.SendPacket(ctx, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
 		if err != nil {
 			return nil, nil, nil, errorsmod.Wrap(err, "channel")
 		}
@@ -237,17 +228,12 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
 		}
 
-		channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
-		if !ok {
-			return nil, nil, nil, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-		}
-
 		packet, err := h.wasmKeeper.LoadAsyncAckPacket(ctx, contractIBCPortID, contractIBCChannelID, msg.IBC.WriteAcknowledgement.PacketSequence)
 		if err != nil {
 			return nil, nil, nil, errorsmod.Wrap(types.ErrInvalid, "packet")
 		}
 
-		err = h.ics4Wrapper.WriteAcknowledgement(ctx, channelCap, packet, ContractConfirmStateAck(msg.IBC.WriteAcknowledgement.Ack.Data))
+		err = h.ics4Wrapper.WriteAcknowledgement(ctx, packet, ContractConfirmStateAck(msg.IBC.WriteAcknowledgement.Ack.Data))
 		if err != nil {
 			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
 		}

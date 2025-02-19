@@ -12,10 +12,10 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -131,7 +131,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, []sdk.Coin{coinToSendToB}, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "", &ibctransfertypes.Forwarding{Unwind: false, Hops: []ibctransfertypes.Hop{}})
+			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
 			require.NoError(t, path.EndpointB.UpdateClient())
@@ -334,12 +334,12 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
@@ -421,12 +421,12 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddr1).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
@@ -482,12 +482,12 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
@@ -532,12 +532,12 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainA.ContractInfo(myContractAddrA1).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
-		Version: ibctransfertypes.V2,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
@@ -725,12 +725,12 @@ func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.
 	}
 	require.NoError(c.t, src.ValidateBasic())
 
-	srcV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{{Denom: ibctransfertypes.NewDenom(src.Denom), Amount: src.Amount}}, src.Sender, src.Receiver, src.Memo, ibctransfertypes.ForwardingPacketData{})
+	srcV2 := ibctransfertypes.NewFungibleTokenPacketDataV2(ibctransfertypes.Token{Denom: ibctransfertypes.NewDenom(src.Denom), Amount: src.Amount}, src.Sender, src.Receiver, src.Memo)
 
 	// call original ibctransfer keeper to not copy all code into this
 	ibcPacket := toIBCPacket(packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	err := c.chain.GetWasmApp().TransferKeeper.OnRecvPacket(ctx, ibcPacket, srcV2)
+	err := c.chain.GetWasmApp().TransferKeeper.OnRecvPacket(ctx, srcV2, ibcPacket.SourcePort, ibcPacket.SourceChannel, ibcPacket.DestinationPort, ibcPacket.DestinationChannel)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
@@ -745,7 +745,7 @@ func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env,
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
-	dataV2 := ibctransfertypes.NewFungibleTokenPacketDataV2([]ibctransfertypes.Token{{Denom: ibctransfertypes.NewDenom(data.Denom), Amount: data.Amount}}, data.Sender, data.Receiver, data.Memo, ibctransfertypes.ForwardingPacketData{})
+	dataV2 := ibctransfertypes.NewFungibleTokenPacketDataV2(ibctransfertypes.Token{Denom: ibctransfertypes.NewDenom(data.Denom), Amount: data.Amount}, data.Sender, data.Receiver, data.Memo)
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
@@ -756,7 +756,7 @@ func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env,
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
-	err := c.chain.GetWasmApp().TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, dataV2, ack)
+	err := c.chain.GetWasmApp().TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket.SourcePort, ibcPacket.SourceChannel, dataV2, ack)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}

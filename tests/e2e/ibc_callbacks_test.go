@@ -7,10 +7,10 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
+	ibcfee "github.com/cosmos/ibc-go/v10/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,12 +43,12 @@ func TestIBCCallbacks(t *testing.T) {
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
@@ -187,12 +187,12 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V2})),
+		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.V1})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains

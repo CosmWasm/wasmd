@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
-	ibctesting "github.com/cosmos/ibc-go/v9/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

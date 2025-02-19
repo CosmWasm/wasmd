@@ -5,10 +5,10 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibcfee "github.com/cosmos/ibc-go/v9/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v9/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v9/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v9/modules/core/04-channel/types"
+	ibcfee "github.com/cosmos/ibc-go/v10/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
