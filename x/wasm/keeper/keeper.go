@@ -369,9 +369,6 @@ func (k Keeper) instantiate(
 	if report.HasIBCEntryPoints {
 		// register IBC port
 		ibcPort := PortIDForContract(contractAddress)
-		if err != nil {
-			return nil, nil, err
-		}
 		contractInfo.IBCPortID = ibcPort
 	}
 
@@ -500,9 +497,6 @@ func (k Keeper) migrate(
 	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
 		// add ibc port
 		ibcPort := PortIDForContract(contractAddress)
-		if err != nil {
-			return nil, err
-		}
 		contractInfo.IBCPortID = ibcPort
 	}
 
