@@ -53,7 +53,7 @@ var replierWasm []byte
 
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2", "eureka",
 }
 
 func TestNewKeeper(t *testing.T) {
