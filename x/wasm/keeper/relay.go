@@ -22,7 +22,7 @@ var _ types.IBCContractKeeper = (*Keeper)(nil)
 // In the IBC protocol this is either the `Channel Open Init` event on the initiating chain or
 // `Channel Open Try` on the counterparty chain.
 // Protocol version and channel ordering should be verified for example.
-// See https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+// See https://github.com/cosmos/ibc/blob/main/spec/core/ics-004-channel-and-packet-semantics/README.md#channel-lifecycle-management
 func (k Keeper) OnOpenChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
@@ -128,9 +128,9 @@ func (k Keeper) OnCloseChannel(
 // OnRecvPacket calls the contract to process the incoming IBC packet. The contract fully owns the data processing and
 // returns the acknowledgement data for the chain level. This allows custom applications and protocols on top
 // of IBC. Although it is recommended to use the standard acknowledgement envelope defined in
-// https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#acknowledgement-envelope
+// https://github.com/cosmos/ibc/blob/main/spec/core/ics-004-channel-and-packet-semantics/README.md#acknowledgement-envelope
 //
-// For more information see: https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#packet-flow--handling
+// For more information see: https://github.com/cosmos/ibc/blob/main/spec/core/ics-004-channel-and-packet-semantics/README.md#packet-flow--handling
 func (k Keeper) OnRecvPacket(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
