@@ -25,7 +25,7 @@ for addr in "$@"; do
   wasmd genesis add-genesis-account "$addr" "1000000000$STAKE,1000000000$FEE" --keyring-backend=test
 done
 # submit a genesis validator tx
-## Workraround for https://github.com/cosmos/cosmos-sdk/issues/8251
+## Workaround for https://github.com/cosmos/cosmos-sdk/issues/8251
 (
   echo "$PASSWORD"
   echo "$PASSWORD"
