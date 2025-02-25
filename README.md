@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/main)
 [![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
 [![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
-[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/License-Apache2.0-green.svg)](https://github.com/CosmWasm/wasmd/blob/main/LICENSE)
 [![LoC](https://tokei.rs/b1/github/CosmWasm/wasmd)](https://github.com/CosmWasm/wasmd)
 
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
