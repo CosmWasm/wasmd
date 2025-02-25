@@ -13,7 +13,7 @@ This documents how CosmWasm contracts are expected to interact with IBC.
   If this feature is enabled, it is considered "IBC Enabled", and that info will
   be stored in the ContractInfo. (For mock, we assume all contracts are IBC enabled)
   
-Also, please read the [IBC Docs](https://docs.cosmos.network/master/ibc/overview.html)
+Also, please read the [IBC Docs](https://ibc.cosmos.network/v8/ibc/overview/)
 for detailed descriptions of the terms *Port*, *Client*, *Connection*,
 and *Channel*
   
@@ -32,7 +32,7 @@ as how contracts can properly identify their counterparty.
 * If a *Channel* is being established with a registered `wasm.xyz` port,
   the `x/wasm.Keeper` will handle this and call into the appropriate
   contract to determine supported protocol versions during the
-  [`ChanOpenTry` and `ChanOpenAck` phases](https://docs.cosmos.network/master/ibc/overview.html#channels).
+  [`ChanOpenTry` and `ChanOpenAck` phases](https://ibc.cosmos.network/v8/ibc/overview/#channels).
   (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
 * Both the *Port* and the *Channel* are fully owned by one contract.
 * `x/wasm` will allow both *ORDERED* and *UNORDERED* channels and pass that mode
