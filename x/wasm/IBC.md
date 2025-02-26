@@ -13,7 +13,7 @@ This documents how CosmWasm contracts are expected to interact with IBC.
   If this feature is enabled, it is considered "IBC Enabled", and that info will
   be stored in the ContractInfo. (For mock, we assume all contracts are IBC enabled)
   
-Also, please read the [IBC Docs](https://docs.cosmos.network/master/ibc/overview.html)
+Also, please read the [IBC Docs](https://cosmwasm.cosmos.network/ibc)
 for detailed descriptions of the terms *Port*, *Client*, *Connection*,
 and *Channel*
   
