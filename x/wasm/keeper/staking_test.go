@@ -320,7 +320,7 @@ func TestUnbonding(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("53000"))
 
-	// check there is unbonding in progress
+	// check if there is unbonding in progress
 	un, err := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(un.Entries))
@@ -345,7 +345,7 @@ func TestReinvest(t *testing.T) {
 	initPower := val.GetDelegatorShares()
 	assert.Equal(t, val.Tokens, sdkmath.NewInt(1000000), "%s", val.Tokens)
 
-	// full is 2x funds, 1x goes to the contract, other stays on his wallet
+	// full is 2x funds, 1x goes to the contract, and the other stays in his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
 	bob := initInfo.faucet.NewFundedRandomAccount(ctx, full...)
