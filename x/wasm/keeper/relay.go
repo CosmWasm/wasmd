@@ -55,7 +55,7 @@ func (k Keeper) OnOpenChannel(
 //
 // There is an open issue with the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk/issues/8334)
 // that the counterparty channelID is empty on the initiating chain
-// See https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+// See https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
 func (k Keeper) OnConnectChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
@@ -92,7 +92,7 @@ func (k Keeper) OnConnectChannel(
 //
 // Once closed, channels cannot be reopened and identifiers cannot be reused. Identifier reuse is prevented because
 // we want to prevent potential replay of previously sent packets
-// See https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+// See https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
 func (k Keeper) OnCloseChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
