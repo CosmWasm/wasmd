@@ -45,8 +45,8 @@ require (
 	cosmossdk.io/x/upgrade v0.1.4
 	github.com/cometbft/cometbft v0.38.15
 	github.com/cosmos/cosmos-db v1.1.1
-	github.com/cosmos/ibc-go/modules/apps/callbacks v0.3.1-0.20250226181540-d65db00ece7a
-	github.com/cosmos/ibc-go/v10 v10.0.0-beta.1
+	github.com/cosmos/ibc-go/modules/apps/callbacks v0.3.1-0.20250227211730-c7a9c56d82b7
+	github.com/cosmos/ibc-go/v10 v10.0.0-beta.2
 	github.com/distribution/reference v0.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
