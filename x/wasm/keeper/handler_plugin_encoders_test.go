@@ -5,7 +5,6 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibcfee "github.com/cosmos/ibc-go/v10/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -613,86 +612,6 @@ func TestEncodeIbcMsg(t *testing.T) {
 					PortId:    "wasm." + addr1.String(),
 					ChannelId: "channel-1",
 					Signer:    addr1.String(),
-				},
-			},
-		},
-		"IBC PayPacketFee": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
-						ChannelID: "myChannelID",
-						Fee: wasmvmtypes.IBCFee{
-							TimeoutFee: []wasmvmtypes.Coin{
-								{
-									Denom:  "ALX",
-									Amount: "1",
-								},
-							},
-						},
-						PortID:   "myIBCPort",
-						Relayers: []string{},
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibcfee.MsgPayPacketFee{
-					Fee: ibcfee.Fee{
-						TimeoutFee: []sdk.Coin{
-							{
-								Denom:  "ALX",
-								Amount: sdkmath.NewInt(1),
-							},
-						},
-					},
-					SourcePortId:    "myIBCPort",
-					SourceChannelId: "myChannelID",
-					Signer:          addr1.String(),
-					Relayers:        []string{},
-				},
-			},
-		},
-		"IBC PayPacketFeeAsync": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
-						ChannelID: "myChannelID",
-						Fee: wasmvmtypes.IBCFee{
-							TimeoutFee: []wasmvmtypes.Coin{
-								{
-									Denom:  "ALX",
-									Amount: "1",
-								},
-							},
-						},
-						PortID:   "myIBCPort",
-						Relayers: []string{},
-						Sequence: 42,
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibcfee.MsgPayPacketFeeAsync{
-					PacketId: channeltypes.PacketId{
-						PortId:    "myIBCPort",
-						ChannelId: "myChannelID",
-						Sequence:  42,
-					},
-					PacketFee: ibcfee.PacketFee{
-						Fee: ibcfee.Fee{
-							TimeoutFee: []sdk.Coin{
-								{
-									Denom:  "ALX",
-									Amount: sdkmath.NewInt(1),
-								},
-							},
-						},
-						RefundAddress: addr1.String(),
-						Relayers:      []string{},
-					},
 				},
 			},
 		},
