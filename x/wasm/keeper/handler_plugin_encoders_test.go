@@ -615,6 +615,51 @@ func TestEncodeIbcMsg(t *testing.T) {
 				},
 			},
 		},
+		"IBC PayPacketFee": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
+						ChannelID: "myChannelID",
+						Fee: wasmvmtypes.IBCFee{
+							TimeoutFee: []wasmvmtypes.Coin{
+								{
+									Denom:  "ALX",
+									Amount: "1",
+								},
+							},
+						},
+						PortID:   "myIBCPort",
+						Relayers: []string{},
+					},
+				},
+			},
+			expError: true,
+		},
+		"IBC PayPacketFeeAsync": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
+						ChannelID: "myChannelID",
+						Fee: wasmvmtypes.IBCFee{
+							TimeoutFee: []wasmvmtypes.Coin{
+								{
+									Denom:  "ALX",
+									Amount: "1",
+								},
+							},
+						},
+						PortID:   "myIBCPort",
+						Relayers: []string{},
+						Sequence: 42,
+					},
+				},
+			},
+			expError: true,
+		},
 	}
 	encodingConfig := MakeEncodingConfig(t)
 	for name, tc := range cases {

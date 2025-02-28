@@ -326,6 +326,10 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				Memo:             msg.Transfer.Memo,
 			}
 			return []sdk.Msg{msg}, nil
+		case msg.PayPacketFee != nil:
+			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "pay packet fee not supported")
+		case msg.PayPacketFeeAsync != nil:
+			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "pay packet fee async not supported")
 		default:
 			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
 		}
