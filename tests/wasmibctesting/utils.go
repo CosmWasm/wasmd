@@ -377,7 +377,7 @@ func CloseChannel(coord *ibctesting.Coordinator, path *ibctesting.Path) {
 	msg := channeltypes.NewMsgChannelCloseConfirm(
 		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID,
 		proof, proofHeight,
-		path.EndpointB.Chain.SenderAccount.GetAddress().String(), 0,
+		path.EndpointB.Chain.SenderAccount.GetAddress().String(),
 	)
 	_, err = path.EndpointB.Chain.SendMsgs(msg)
 	require.NoError(coord, err)
