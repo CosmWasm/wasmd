@@ -2,6 +2,7 @@ package wasmtesting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
@@ -137,7 +138,7 @@ func (m *IBCContractKeeperMock) LoadAsyncAckPacket(ctx context.Context, portID, 
 	key := portID + fmt.Sprint(len(channelID)) + channelID
 	packet, ok := m.packets[key]
 	if !ok {
-		return channeltypes.Packet{}, fmt.Errorf("packet not found")
+		return channeltypes.Packet{}, errors.New("packet not found")
 	}
 	return packet, nil
 }

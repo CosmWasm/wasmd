@@ -3,6 +3,7 @@ package wasm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -304,7 +305,7 @@ func getExpectedLibwasmVersion() string {
 // `wasmd query wasm libwasmvm-version`.
 func CheckLibwasmVersion(wasmExpectedVersion string) error {
 	if wasmExpectedVersion == "" {
-		return fmt.Errorf("wasmvm module not exist")
+		return errors.New("wasmvm module not exist")
 	}
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {

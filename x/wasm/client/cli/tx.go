@@ -116,7 +116,7 @@ func parseStoreCodeArgs(file, sender string, flags *flag.FlagSet) (types.MsgStor
 			return types.MsgStoreCode{}, err
 		}
 	} else if !ioutils.IsGzip(wasm) {
-		return types.MsgStoreCode{}, fmt.Errorf("invalid input file. Use wasm binary or gzip")
+		return types.MsgStoreCode{}, errors.New("invalid input file. Use wasm binary or gzip")
 	}
 
 	perm, err := parseAccessConfigFlags(flags)
@@ -202,7 +202,7 @@ func InstantiateContractCmd() *cobra.Command {
 Each contract instance has a unique address assigned.
 Example:
 $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
-  --from mykey --amount="100ustake" --label "local0.1.0" 
+  --from mykey --amount="100ustake" --label "local0.1.0"
 `, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(2),
@@ -236,13 +236,13 @@ func InstantiateContract2Cmd() *cobra.Command {
 			"--fix-msg [bool,optional]",
 		Short: "Instantiate a wasm contract with predictable address",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
-Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses 
+Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses
 for special use cases, the given 'salt' argument and '--fix-msg' parameters can be used to generate a custom address.
 
 Predictable address example (also see '%s query wasm build-address -h'):
 $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --admin="$(%s keys show mykey -a)" \
   --from mykey --amount="100ustake" --label "local0.1.0" \
-   --fix-msg 
+   --fix-msg
 `, version.AppName, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(3),
@@ -322,10 +322,10 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 
 	// ensure sensible admin is set (or explicitly immutable)
 	if adminStr == "" && !noAdmin {
-		return nil, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutable (wasmd issue #719)")
+		return nil, errors.New("you must set an admin or explicitly pass --no-admin to make it immutable (wasmd issue #719)")
 	}
 	if adminStr != "" && noAdmin {
-		return nil, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
+		return nil, errors.New("you set an admin and passed --no-admin, those cannot both be true")
 	}
 
 	if adminStr != "" {
@@ -625,7 +625,7 @@ func parseStoreCodeGrants(args []string) ([]types.CodeGrant, error) {
 		// access_config: nobody|everybody|address(es)
 		parts := strings.Split(c, ":")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid format")
+			return nil, errors.New("invalid format")
 		}
 
 		if parts[1] == "*" {
