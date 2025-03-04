@@ -8,6 +8,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channelv2types "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -35,6 +36,7 @@ type (
 	AnyEncoder          func(ctx sdk.Context, sender sdk.AccAddress, msg *wasmvmtypes.AnyMsg) ([]sdk.Msg, error)
 	WasmEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
 	IBCEncoder          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
+	EurekaEncoder       func(sender sdk.AccAddress, msg *wasmvmtypes.EurekaMsg) ([]sdk.Msg, error)
 )
 
 type MessageEncoders struct {
@@ -42,6 +44,7 @@ type MessageEncoders struct {
 	Custom       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
 	Distribution func(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error)
 	IBC          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
+	Eureka       func(sender sdk.AccAddress, msg *wasmvmtypes.EurekaMsg) ([]sdk.Msg, error)
 	Staking      func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
 	Any          func(ctx sdk.Context, sender sdk.AccAddress, msg *wasmvmtypes.AnyMsg) ([]sdk.Msg, error)
 	Wasm         func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
@@ -54,6 +57,7 @@ func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20Tran
 		Custom:       NoCustomMsg,
 		Distribution: EncodeDistributionMsg,
 		IBC:          EncodeIBCMsg(portSource),
+		Eureka:       EncodeEurekaMsg,
 		Staking:      EncodeStakingMsg,
 		Any:          EncodeAnyMsg(unpacker),
 		Wasm:         EncodeWasmMsg,
@@ -76,6 +80,9 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	}
 	if o.IBC != nil {
 		e.IBC = o.IBC
+	}
+	if o.Eureka != nil {
+		e.Eureka = o.Eureka
 	}
 	if o.Staking != nil {
 		e.Staking = o.Staking
@@ -102,6 +109,8 @@ func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, co
 		return e.Distribution(contractAddr, msg.Distribution)
 	case msg.IBC != nil:
 		return e.IBC(ctx, contractAddr, contractIBCPortID, msg.IBC)
+	case msg.Eureka != nil:
+		return e.Eureka(contractAddr, msg.Eureka)
 	case msg.Staking != nil:
 		return e.Staking(contractAddr, msg.Staking)
 	case msg.Any != nil:
@@ -333,6 +342,33 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 		default:
 			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
 		}
+	}
+}
+
+func EncodeEurekaMsg(sender sdk.AccAddress, msg *wasmvmtypes.EurekaMsg) ([]sdk.Msg, error) {
+	switch {
+	case msg.SendPacket != nil:
+		var payloads []channelv2types.Payload
+		for i := range msg.SendPacket.Payloads {
+			payloads = append(payloads, channelv2types.Payload{
+				// TODO: Verify if source port can be set to contract address
+				SourcePort:      sender.String(),
+				DestinationPort: msg.SendPacket.Payloads[i].DestinationPort,
+				Version:         msg.SendPacket.Payloads[i].Version,
+				Encoding:        msg.SendPacket.Payloads[i].Encoding,
+				Value:           msg.SendPacket.Payloads[i].Value,
+			})
+		}
+		msg := &channelv2types.MsgSendPacket{
+			SourceClient:     msg.SendPacket.ChannelID,
+			TimeoutTimestamp: msg.SendPacket.Timeout,
+			Payloads:         payloads,
+			// Do we set it?
+			// Signer:           "signer",
+		}
+		return []sdk.Msg{msg}, nil
+	default:
+		return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Eureka")
 	}
 }
 
