@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v10/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -328,32 +327,9 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			return []sdk.Msg{msg}, nil
 		case msg.PayPacketFee != nil:
-			fee, err := ConvertIBCFee(&msg.PayPacketFee.Fee)
-			if err != nil {
-				return nil, errorsmod.Wrap(err, "fee")
-			}
-			msg := &ibcfeetypes.MsgPayPacketFee{
-				Fee:             fee,
-				SourcePortId:    msg.PayPacketFee.PortID,
-				SourceChannelId: msg.PayPacketFee.ChannelID,
-				Signer:          sender.String(),
-				Relayers:        msg.PayPacketFee.Relayers,
-			}
-			return []sdk.Msg{msg}, nil
+			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "pay packet fee not supported")
 		case msg.PayPacketFeeAsync != nil:
-			fee, err := ConvertIBCFee(&msg.PayPacketFeeAsync.Fee)
-			if err != nil {
-				return nil, errorsmod.Wrap(err, "fee")
-			}
-			msg := &ibcfeetypes.MsgPayPacketFeeAsync{
-				PacketId: channeltypes.PacketId{
-					PortId:    msg.PayPacketFeeAsync.PortID,
-					ChannelId: msg.PayPacketFeeAsync.ChannelID,
-					Sequence:  msg.PayPacketFeeAsync.Sequence,
-				},
-				PacketFee: ibcfeetypes.NewPacketFee(fee, sender.String(), msg.PayPacketFeeAsync.Relayers),
-			}
-			return []sdk.Msg{msg}, nil
+			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "pay packet fee async not supported")
 		default:
 			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
 		}
@@ -439,24 +415,4 @@ func ConvertWasmCoinToSdkCoin(coin wasmvmtypes.Coin) (sdk.Coin, error) {
 		Amount: amount,
 	}
 	return r, r.Validate()
-}
-
-func ConvertIBCFee(fee *wasmvmtypes.IBCFee) (ibcfeetypes.Fee, error) {
-	ackFee, err := ConvertWasmCoinsToSdkCoins(fee.AckFee)
-	if err != nil {
-		return ibcfeetypes.Fee{}, err
-	}
-	recvFee, err := ConvertWasmCoinsToSdkCoins(fee.ReceiveFee)
-	if err != nil {
-		return ibcfeetypes.Fee{}, err
-	}
-	timeoutFee, err := ConvertWasmCoinsToSdkCoins(fee.TimeoutFee)
-	if err != nil {
-		return ibcfeetypes.Fee{}, err
-	}
-	return ibcfeetypes.Fee{
-		AckFee:     ackFee,
-		RecvFee:    recvFee,
-		TimeoutFee: timeoutFee,
-	}, nil
 }
