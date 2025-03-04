@@ -374,6 +374,13 @@ func (k Keeper) instantiate(
 		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
+	// Should we bind the port in some special way for Eureka?
+	if report.HasEurekaEntryPoints {
+		// register Eureka port
+		ibcV2Port := IbcV2PortIDForContract(contractAddress)
+		// k.ibcKeeper.AddRoute(ibcV2Port, )
+		contractInfo.EurekaPortID = ibcV2Port
+	}
 
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
@@ -538,6 +545,14 @@ func (k Keeper) migrate(
 		return nil, err
 	}
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
+
+	// Should we bind the port in some special way for Eureka?
+	if report.HasEurekaEntryPoints && contractInfo.EurekaPortID != "" {
+		// register Eureka port
+		ibcV2Port := IbcV2PortIDForContract(contractAddress)
+		// k.ibcKeeper.AddRoute(ibcV2Port, )
+		contractInfo.EurekaPortID = ibcV2Port
+	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,
