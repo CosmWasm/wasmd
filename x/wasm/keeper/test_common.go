@@ -387,6 +387,7 @@ func createTestInput(
 		vmConfig,
 		availableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		nil,
 		opts...,
 	)
 	require.NoError(t, keeper.SetParams(ctx, types.DefaultParams()))
