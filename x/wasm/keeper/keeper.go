@@ -1192,7 +1192,6 @@ func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum []byte, isPin
 
 	txContracts, ok := types.TxContractsFromContext(ctx)
 	if !ok || txContracts.GetContracts() == nil {
-		k.Logger(ctx).Warn("cannot get tx contracts from context")
 		return ctx, false
 	} else if txContracts.Exists(checksum) {
 		return ctx, true
