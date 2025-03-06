@@ -277,9 +277,9 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
-	// IBCSourceCallback is available on IBC-callbacks-enabled contracts and is called when an
-	// IBC-callbacks-enabled IBC message previously sent by this contract is either acknowledged or
-	// times out.
+	// IBCDestinationCallback is available on IBC-callbacks-enabled contracts and is called when an
+	// IBC-callbacks-enabled IBC message previously sent from a different chain is being
+	// acknowledged on this chain.
 	IBCDestinationCallback(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
