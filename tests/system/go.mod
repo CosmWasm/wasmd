@@ -28,7 +28,7 @@ require (
 	github.com/cometbft/cometbft v0.38.15
 	github.com/tidwall/gjson v1.14.2
 	github.com/tidwall/sjson v1.2.5
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
+	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
 )
 
 require (
