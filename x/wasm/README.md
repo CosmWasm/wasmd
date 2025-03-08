@@ -208,12 +208,206 @@ find out the entire path for the events.
 
 ## Messages
 
-TODO
+The Wasm module defines the following messages:
+
+### MsgStoreCode
+
+`MsgStoreCode` is used to upload new code to the blockchain. This can only be done by authorized addresses if permissioning is enabled.
+
+```go
+type MsgStoreCode struct {
+    Sender       string  // Account address of the signer
+    WASMByteCode []byte  // Raw contract code
+    InstantiatePermission *AccessConfig // Optional access control configuration for instantiation
+}
+```
+
+### MsgInstantiateContract
+
+`MsgInstantiateContract` is used to create a new contract instance from already submitted code.
+
+```go
+type MsgInstantiateContract struct {
+    Sender    string    // Account address of the signer
+    Admin     string    // Optional address for contract migrations/admin functions
+    CodeID    uint64    // ID of the code to be instantiated
+    Label     string    // Human-readable label for this instance
+    Msg       []byte    // JSON-encoded instantiate message
+    Funds     sdk.Coins // Funds to be transferred to the contract on instantiation
+}
+```
+
+### MsgExecuteContract
+
+`MsgExecuteContract` is used to execute functions on an existing contract.
+
+```go
+type MsgExecuteContract struct {
+    Sender  string    // Account address of the signer
+    Contract string   // Contract address to execute
+    Msg     []byte    // JSON-encoded execution message
+    Funds   sdk.Coins // Funds to be transferred to the contract on execution
+}
+```
+
+### MsgMigrateContract
+
+`MsgMigrateContract` is used to migrate a contract to a new code ID. This can only be executed by the contract admin.
+
+```go
+type MsgMigrateContract struct {
+    Sender   string // Account address of the signer (must be contract admin)
+    Contract string // Contract address to migrate
+    CodeID   uint64 // New code ID to migrate to
+    Msg      []byte // JSON-encoded migration message
+}
+```
+
+### MsgUpdateAdmin
+
+`MsgUpdateAdmin` is used to change a contract's admin.
+
+```go
+type MsgUpdateAdmin struct {
+    Sender   string // Account address of the signer (must be current contract admin)
+    NewAdmin string // Address of the new admin
+    Contract string // Contract address to update
+}
+```
+
+### MsgClearAdmin
+
+`MsgClearAdmin` is used to clear a contract's admin, removing admin privileges permanently.
+
+```go
+type MsgClearAdmin struct {
+    Sender   string // Account address of the signer (must be contract admin)
+    Contract string // Contract address to clear admin for
+}
+```
 
 ## CLI
 
-TODO - working, but not the nicest interface (json + bash = bleh). Use to upload, but I suggest to focus on frontend / js tooling
+The Wasm module provides several commands for interacting with the blockchain via the CLI. Here are the primary commands:
 
-## Rest
+### Upload contract code
 
-TODO - main supported interface, under rapid change
+```bash
+wasmd tx wasm store contract.wasm --from myKey --chain-id=myChainID --gas auto --gas-adjustment 1.3
+```
+
+If you want to specify instantiation permissions:
+
+```bash
+wasmd tx wasm store contract.wasm --instantiate-only-address cosmos1address... --from myKey --chain-id=myChainID
+```
+
+### Instantiate a contract
+
+```bash
+wasmd tx wasm instantiate 1 '{"owner":"cosmos1address...", "other_param":"value"}' --label "my contract" --from myKey --chain-id=myChainID
+```
+
+For contracts that require funds on initialization:
+
+```bash
+wasmd tx wasm instantiate 1 '{"owner":"cosmos1address..."}' --amount 1000uatom --label "my contract" --from myKey --chain-id=myChainID
+```
+
+### Execute a contract
+
+```bash
+wasmd tx wasm execute cosmos14hj2... '{"action":"do_something","param":"value"}' --from myKey --chain-id=myChainID
+```
+
+With funds:
+
+```bash
+wasmd tx wasm execute cosmos14hj2... '{"action":"do_something"}' --amount 500uatom --from myKey --chain-id=myChainID
+```
+
+### Query a contract
+
+```bash
+wasmd query wasm contract-state smart cosmos14hj2... '{"get_config":{}}'
+```
+
+### List contracts
+
+List all contracts:
+
+```bash
+wasmd query wasm list-contract-by-code 1
+```
+
+List all code IDs:
+
+```bash
+wasmd query wasm list-code
+```
+
+### Contract migrations and admin functions
+
+Migrate a contract to a new code ID:
+
+```bash
+wasmd tx wasm migrate cosmos14hj2... 2 '{"new_parameter":"new_value"}' --from myAdminKey --chain-id=myChainID
+```
+
+Update a contract's admin:
+
+```bash
+wasmd tx wasm update-admin cosmos14hj2... cosmos1newadmin... --from myAdminKey --chain-id=myChainID
+```
+
+Clear a contract's admin:
+
+```bash
+wasmd tx wasm clear-admin cosmos14hj2... --from myAdminKey --chain-id=myChainID
+```
+
+## REST API
+
+The Wasm module provides a comprehensive REST API that can be accessed via the Cosmos SDK API server (typically on port 1317). Below are the key endpoints:
+
+### Code Management
+
+- `GET /wasm/code`: List all codes stored
+- `GET /wasm/code/{codeID}`: Get details about a specific code ID
+- `POST /wasm/code`: Upload a new contract (multipart request with wasm binary)
+
+### Contract Management
+
+- `GET /wasm/contract/{contractAddr}`: Get contract information
+- `GET /wasm/contract/{contractAddr}/state`: Get all contract state
+- `GET /wasm/contract/{contractAddr}/smart/{query-data}`: Query contract using smart queries
+- `GET /wasm/contract/{contractAddr}/raw/{key}`: Query raw contract state by key
+- `GET /wasm/contract/{contractAddr}/history`: Get contract history (migrations)
+- `GET /wasm/contract/list/{codeID}`: List all contract instances for a code ID
+
+### Transactions (via REST)
+
+- `POST /wasm/contract/{contractAddr}/execute`: Execute a contract
+- `POST /wasm/code/{codeID}/instantiate`: Instantiate a contract
+- `POST /wasm/contract/{contractAddr}/migrate`: Migrate a contract to a new code ID
+- `POST /wasm/contract/{contractAddr}/admin`: Update contract admin
+- `POST /wasm/contract/{contractAddr}/clear-admin`: Clear contract admin
+
+For all transaction endpoints, the payload should be wrapped in a `BaseReq` object with authentication and transaction parameters.
+
+Example request to execute a contract:
+
+```json
+{
+  "base_req": {
+    "from": "cosmos1sender...",
+    "chain_id": "myChainID",
+    "gas": "auto",
+    "gas_adjustment": "1.3"
+  },
+  "msg": {"action": "transfer", "recipient": "cosmos1recipient...", "amount": "100"},
+  "funds": [{"denom": "uatom", "amount": "50"}]
+}
+```
+
+This REST API provides a comprehensive interface for dApps and other client applications to interact with smart contracts on the blockchain.
