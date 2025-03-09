@@ -17,7 +17,7 @@ import (
 // StoreCodeInfoFn stores code info
 type StoreCodeInfoFn func(ctx context.Context, codeID uint64, codeInfo types.CodeInfo)
 
-// Keeper abstract keeper
+// wasmKeeper abstract keeper
 type wasmKeeper interface {
 	SetParams(ctx context.Context, ps types.Params) error
 }
