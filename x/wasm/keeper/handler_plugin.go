@@ -89,14 +89,14 @@ func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddr
 }
 
 func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) (*sdk.Result, error) {
-	// todo: this block needs proper review from sdk team
+	// Perform message validation and authorization checks
 	if m, ok := msg.(sdk.HasValidateBasic); ok {
 		if err := m.ValidateBasic(); err != nil {
-			return nil, err
+			return nil, errorsmod.Wrapf(err, "failed basic validation for message type %T", msg)
 		}
 	}
 
-	// make sure this account can send it
+	// Verify contract address has proper authorization
 	signers, _, err := h.cdc.GetMsgV1Signers(msg)
 	if err != nil {
 		return nil, err
