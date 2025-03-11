@@ -18,7 +18,7 @@ if ! wasmd keys show validator --keyring-backend=test; then
   ) | wasmd keys add validator --keyring-backend=test
 fi
 # hardcode the validator account for this instance
-echo "$PASSWORD" | wasmd genesis add-genesis-account validator "1000000000000$STAKE,1000000000000$FEE" --keyring-backend=test
+echo "$PASSWORD" | wasmd add-genesis-account validator "1000000000000$STAKE,1000000000000$FEE" --keyring-backend=test
 # (optionally) add a few more genesis accounts
 for addr in "$@"; do
   echo "$addr"
