@@ -8,7 +8,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.55.0)
 
-- Bump ibc-go to v10.0.0 [\#2157](https://github.com/CosmWasm/wasmd/pull/2157)
+- Bump ibc-go to v10.0.0 wich removes IBC fees and capabilities [\#2157](https://github.com/CosmWasm/wasmd/pull/2157)
 - Add gas cost for UnpackAny [\#2115](https://github.com/CosmWasm/wasmd/pull/2115)
 - Make ContractAddrLen variable [\#2111](https://github.com/CosmWasm/wasmd/pull/2111)
 - Adjust SmartContractState query gas limit [\#2103](https://github.com/CosmWasm/wasmd/pull/2103)
