@@ -20,6 +20,7 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefix) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
+
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }
 

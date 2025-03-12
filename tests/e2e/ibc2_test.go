@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
@@ -29,11 +28,13 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
-	contractCode := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
-	contractAddrA := chainA.InstantiateContract(contractCode, []byte(`{}`))
+	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
 	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
-	contractPortB := "wasm2ChainBContractAddr"
 
+	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
 	require.NotEmpty(t, contractAddrA)
 
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
@@ -49,11 +50,6 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	}
 
 	path.Path.SetupV2()
-
-	// TODO tkulik: Port binding is needed to properly send a packet to a contract. The following two lines is a workaround
-	// - Remove when https://github.com/CosmWasm/wasmd/pull/2123 is ready
-	chainA.GetWasmApp().WasmKeeper.GetIBCRouterV2().AddRoute(contractPortA, keeper.NewIBC2Handler(chainA.GetWasmApp().WasmKeeper))
-	chainB.GetWasmApp().WasmKeeper.GetIBCRouterV2().AddRoute(contractPortB, keeper.NewIBC2Handler(chainB.GetWasmApp().WasmKeeper))
 
 	var err error
 	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
