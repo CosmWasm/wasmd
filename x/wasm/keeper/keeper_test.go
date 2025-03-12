@@ -53,7 +53,7 @@ var replierWasm []byte
 
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2", "ibc2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -423,7 +423,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bca5), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1bcb7), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -960,7 +960,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1acdb), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1aceb), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
