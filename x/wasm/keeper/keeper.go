@@ -381,7 +381,7 @@ func (k Keeper) instantiate(
 	if report.HasIBC2EntryPoints {
 		// register IBC v2 port
 		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(nil))
+		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
 		contractInfo.IBC2PortID = ibc2Port
 	}
 
@@ -552,7 +552,7 @@ func (k Keeper) migrate(
 	if report.HasIBC2EntryPoints && contractInfo.IBC2PortID != "" {
 		// register IBC v2 port
 		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(nil))
+		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
 		contractInfo.IBC2PortID = ibc2Port
 	}
 
