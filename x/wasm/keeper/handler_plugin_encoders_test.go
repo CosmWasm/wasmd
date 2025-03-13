@@ -921,6 +921,7 @@ func TestEncodeIBCv2Msg(t *testing.T) {
 						ChannelID: myAddr.String(),
 						Payloads: []wasmvmtypes.IBC2Payload{
 							{
+								SourcePort:      PortIDForContractV2(myAddr),
 								DestinationPort: PortIDForContractV2(destAddr),
 								Version:         "v1",
 								Encoding:        "json",
