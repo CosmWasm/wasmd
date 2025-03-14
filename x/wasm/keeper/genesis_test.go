@@ -692,6 +692,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		nil,
 		nil,
 		nil,
+		nil,
 		tempDir,
 		nodeConfig,
 		types.VMConfig{},
