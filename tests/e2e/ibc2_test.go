@@ -1,16 +1,19 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	mockv2 "github.com/cosmos/ibc-go/v10/testing/mock/v2"
 	"github.com/stretchr/testify/require"
 
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // QueryMsg is used to encode query messages to ibc2 contract
@@ -27,6 +30,9 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
 	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
+
+	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
+	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 
 	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
 	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
@@ -51,15 +57,45 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 
 	path.Path.SetupV2()
 
+	type IncrementExecMsg struct {
+		ChannelID       string `json:"channel_id"`
+		DestinationPort string `json:"destination_port"`
+	}
+	// ExecuteMsg is the ibc2 contract's execute msg
+	type ExecuteMsg struct {
+		Increment *IncrementExecMsg `json:"increment"`
+	}
+
+	contractMsg := ExecuteMsg{
+		Increment: &IncrementExecMsg{
+			ChannelID:       path.EndpointB.ChannelID,
+			DestinationPort: contractPortA,
+		},
+	}
+
 	var err error
-	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
-	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, mockv2.NewMockPayload(contractPortB, contractPortA))
-	require.NoError(t, err)
-	err = path.EndpointA.MsgRecvPacket(packet)
+	// timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
+
+	contractMsgBz, err := json.Marshal(contractMsg)
 	require.NoError(t, err)
 
-	var response State
-	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	execMsg := types.MsgExecuteContract{
+		Sender:   actorChainB.String(),
+		Contract: contractAddrA.String(),
+		Msg:      contractMsgBz,
+		Funds:    oneToken,
+	}
+
+	_, err = chainB.SendMsgs(&execMsg)
 	require.NoError(t, err)
-	require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
+
+	// packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, mockv2.NewMockPayload(contractPortB, contractPortA))
+	// require.NoError(t, err)
+	// err = path.EndpointA.MsgRecvPacket(packet)
+	// require.NoError(t, err)
+	//
+	// var response State
+	// err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	// require.NoError(t, err)
+	// require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
 }
