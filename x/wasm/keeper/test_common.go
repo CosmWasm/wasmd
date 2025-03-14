@@ -379,6 +379,7 @@ func createTestInput(
 		distributionkeeper.NewQuerier(distKeeper),
 		ibcKeeper.ChannelKeeper, // ICS4Wrapper
 		ibcKeeper.ChannelKeeper,
+		ibcKeeper.ChannelKeeperV2,
 		wasmtesting.MockIBCTransferKeeper{},
 		msgRouter,
 		querier,

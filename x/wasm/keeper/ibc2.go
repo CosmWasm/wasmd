@@ -133,7 +133,7 @@ func (k Keeper) OnRecvIBC2Packet(
 	}
 
 	// note submessage reply results can overwrite the `Acknowledgement` data
-	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
+	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
 	if err != nil {
 		// submessage errors result in error ACK with state reverted. Error message is redacted
 		return channeltypesv2.RecvPacketResult{
