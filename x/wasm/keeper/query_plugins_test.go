@@ -285,6 +285,59 @@ func TestBankQuerierMetadata(t *testing.T) {
 	assert.Contains(t, gotErr2.Error(), "uatom: not found")
 }
 
+func TestBankQuerierMetadataWithNilAliases(t *testing.T) {
+	metadata := banktypes.Metadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+				Aliases:  nil,
+			},
+		},
+	}
+
+	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx context.Context, denom string) (banktypes.Metadata, bool) {
+		if denom == "utest" {
+			return metadata, true
+		} else {
+			return banktypes.Metadata{}, false
+		}
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "utest",
+		},
+	})
+	require.NoError(t, gotErr)
+	var got wasmvmtypes.DenomMetadataResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wasmvmtypes.DenomMetadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []wasmvmtypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+				Aliases:  []string{},
+			},
+		},
+	}
+	assert.Equal(t, exp, got.Metadata)
+
+	_, gotErr2 := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "uatom",
+		},
+	})
+	require.Error(t, gotErr2)
+	assert.Contains(t, gotErr2.Error(), "uatom: not found")
+}
+
 func TestBankQuerierAllMetadata(t *testing.T) {
 	metadata := []banktypes.Metadata{
 		{
