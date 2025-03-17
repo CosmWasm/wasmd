@@ -33,7 +33,7 @@ as how contracts can properly identify their counterparty.
   the `x/wasm.Keeper` will handle this and call into the appropriate
   contract to determine supported protocol versions during the
   [`ChanOpenTry` and `ChanOpenAck` phases](https://ibc.cosmos.network/v8/ibc/overview/#channels).
-  (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
+  (See [Channel Handshake Version Negotiation](https://ibc.cosmos.network/v8/ibc/apps/ibcmodule/#channel-handshake-version-negotiation))
 * Both the *Port* and the *Channel* are fully owned by one contract.
 * `x/wasm` will allow both *ORDERED* and *UNORDERED* channels and pass that mode
   down to the contract in `OnChanOpenTry`, so the contract can decide if it accepts
@@ -124,7 +124,7 @@ To clarify:
     specifies the destination contract, and allow any *ChannelID*.
     However, looking at [`OnChanOpenInit` function signature](https://docs.cosmos.network/master/ibc/custom.html#implement-ibcmodule-interface-and-callbacks),
     I don't see a place to put this extra info, without abusing the version field,
-    which is a [specified field](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation):
+    which is a [specified field](https://ibc.cosmos.network/v8/ibc/apps/ibcmodule/#channel-handshake-version-negotiation):
     ```
     Versions must be strings but can implement any versioning structure. 
     If your application plans to have linear releases then semantic versioning is recommended.
