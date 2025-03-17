@@ -240,6 +240,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 			{
 				Denom:    "utest",
 				Exponent: 0,
+				Aliases:  []string{},
 			},
 		},
 	}
@@ -269,6 +270,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 			{
 				Denom:    "utest",
 				Exponent: 0,
+				Aliases:  []string{},
 			},
 		},
 	}
@@ -292,6 +294,7 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 				{
 					Denom:    "utest",
 					Exponent: 0,
+					Aliases:  []string{},
 				},
 			},
 		},
@@ -321,6 +324,7 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 					{
 						Denom:    "utest",
 						Exponent: 0,
+						Aliases:  []string{},
 					},
 				},
 			},
