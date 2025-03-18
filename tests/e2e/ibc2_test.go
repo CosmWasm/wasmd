@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -21,6 +22,14 @@ type QueryMsg struct {
 // ibc2 contract response type
 type State struct {
 	IBC2PacketReceiveCounter uint32 `json:"ibc2_packet_receive_counter"`
+	LastChannelID            string `json:"last_channel_id"`
+	LastPacketSeq            uint64 `json:"last_packet_seq"`
+}
+
+// Message sent to the ibc2 contract over IBCv2 channel
+type IbcPayload struct {
+	ResponseWithoutAck     bool `json:"response_without_ack"`
+	SendAsyncAckForPrevMsg bool `json:"send_async_ack_for_prev_msg"`
 }
 
 func TestIBC2ReceiveEntrypoint(t *testing.T) {
@@ -53,7 +62,10 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 
 	var err error
 	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
-	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, mockv2.NewMockPayload(contractPortB, contractPortA))
+	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: true})
+	require.NoError(t, err)
+	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.NoError(t, err)
 	err = path.EndpointA.MsgRecvPacket(packet)
 	require.NoError(t, err)
@@ -62,4 +74,15 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
+
+	timeoutTimestamp = chainA.GetTimeoutTimestampSecs()
+	payload = mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{SendAsyncAckForPrevMsg: true})
+	require.NoError(t, err)
+	packet, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+	err = path.EndpointA.MsgRecvPacket(packet)
+	require.NoError(t, err)
+
+	// TODO tkulik: We need https://github.com/CosmWasm/wasmd/issues/2171 in order to properly test receiving async ACKs
 }

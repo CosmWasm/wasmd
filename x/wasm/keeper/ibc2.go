@@ -52,7 +52,7 @@ func (module IBC2Handler) OnRecvPacket(
 	}
 
 	em := sdk.NewEventManager()
-	msg := wasmvmtypes.IBC2PacketReceiveMsg{Payload: newIBC2Payload(payload), Relayer: relayer.String(), SourceClient: sourceClient}
+	msg := wasmvmtypes.IBC2PacketReceiveMsg{Payload: newIBC2Payload(payload), Relayer: relayer.String(), SourceClient: sourceClient, PacketSequence: sequence}
 
 	ack := module.keeper.OnRecvIBC2Packet(ctx.WithEventManager(em), contractAddr, msg)
 
@@ -133,7 +133,7 @@ func (k Keeper) OnRecvIBC2Packet(
 	}
 
 	// note submessage reply results can overwrite the `Acknowledgement` data
-	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
+	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
 	if err != nil {
 		// submessage errors result in error ACK with state reverted. Error message is redacted
 		return channeltypesv2.RecvPacketResult{
@@ -143,16 +143,6 @@ func (k Keeper) OnRecvIBC2Packet(
 	}
 
 	if data == nil {
-		// In case of lack of ack, we assume that the packet should
-		// be handled asynchronously.
-		// TODO: https://github.com/CosmWasm/wasmd/issues/2161
-		// err = k.StoreAsyncAckPacket(ctx, convertPacket(msg.Payload))
-		// if err != nil {
-		// 	return channeltypesv2.RecvPacketResult{
-		// 		Status:          channeltypesv2.PacketStatus_Failure,
-		// 		Acknowledgement: []byte(err.Error()),
-		// 	}
-		// }
 		return channeltypesv2.RecvPacketResult{
 			Status: channeltypesv2.PacketStatus_Async,
 		}
