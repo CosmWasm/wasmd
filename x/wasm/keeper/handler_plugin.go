@@ -325,6 +325,39 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 		msgResponses := [][]*codectypes.Any{{any}}
 
 		return nil, [][]byte{val}, msgResponses, nil
+	case msg.IBC2.WriteAcknowledgement != nil:
+		packet := msg.IBC2.WriteAcknowledgement
+		if contractIBC2PortID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc not supported")
+		}
+		contractIBCChannelID := msg.IBC2.WriteAcknowledgement.ChannelID
+		if contractIBCChannelID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
+		}
+
+		err := h.channelKeeperV2.WriteAcknowledgement(
+			ctx,
+			packet.ChannelID,
+			packet.PacketSequence,
+			channeltypesv2.Acknowledgement{AppAcknowledgements: [][]byte{msg.IBC2.WriteAcknowledgement.Ack.Data}},
+		)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
+		}
+
+		resp := &types.MsgIBCWriteAcknowledgementResponse{}
+		val, err := resp.Marshal()
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
+		}
+
+		any, err := codectypes.NewAnyWithValue(resp)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+		}
+		msgResponses := [][]*codectypes.Any{{any}}
+
+		return nil, [][]byte{val}, msgResponses, nil
 	default:
 		return nil, nil, nil, types.ErrUnknownMsg
 	}
