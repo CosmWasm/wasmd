@@ -381,82 +381,45 @@ func MsgRecvPacketWithResultV2(endpoint *ibctesting.Endpoint, packet channeltype
 	return res, endpoint.Counterparty.UpdateClient()
 }
 
-func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet) error {
-	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
-	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
-		// packet found, relay from A to B
-		if err := path.EndpointB.UpdateClient(); err != nil {
-			return err
-		}
+func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet, srcEndpoint, dstEndpoint *ibctesting.Endpoint, packetToAck *channeltypesv2.Packet) error {
+	// packet found, relay from src to dst
 
-		res, err := MsgRecvPacketWithResultV2(path.EndpointB, packet)
-		if err != nil {
-			return err
-		}
-
-		ack, err := ParseAckFromEventsV2(res.GetEvents())
-		if err != nil {
-			return fmt.Errorf("tried to relay packet without ack but got ack")
-		}
-
-		var msg channeltypesv2.Acknowledgement
-		err = proto.Unmarshal(ack, &msg)
-		if err != nil {
-			return err
-		}
-
-		// packet found, relay from A to B
-		if err := path.EndpointA.UpdateClient(); err != nil {
-			return err
-		}
-
-		path.chainA.Logf("sending ack to other chain")
-		err = path.EndpointA.MsgAcknowledgePacket(packet, msg)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	if err := dstEndpoint.UpdateClient(); err != nil {
+		return err
 	}
 
-	pc = path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
-	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
-		// packet found, relay B to A
-		if err := path.EndpointA.UpdateClient(); err != nil {
-			return err
-		}
-
-		res, err := MsgRecvPacketWithResultV2(path.EndpointA, packet)
-		if err != nil {
-			return err
-		}
-
-		ack, err := ParseAckFromEventsV2(res.GetEvents())
-		if err != nil {
-			return fmt.Errorf("tried to relay packet without ack but got ack")
-		}
-
-		var msg channeltypesv2.Acknowledgement
-		err = proto.Unmarshal(ack, &msg)
-		if err != nil {
-			return err
-		}
-
-		// packet found, relay from A to B
-		if err := path.EndpointB.UpdateClient(); err != nil {
-			return err
-		}
-
-		path.chainA.Logf("sending ack to other chain")
-		err = path.EndpointB.MsgAcknowledgePacket(packet, msg)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	res, err := MsgRecvPacketWithResultV2(dstEndpoint, packet)
+	if err != nil {
+		return err
 	}
 
-	return fmt.Errorf("packet commitment does not exist on either endpointV2 for provided packet")
+	ack, err := ParseAckFromEventsV2(res.GetEvents())
+	if err != nil {
+		return fmt.Errorf("No ack received")
+	}
+
+	var msg channeltypesv2.Acknowledgement
+	err = proto.Unmarshal(ack, &msg)
+	if err != nil {
+		return err
+	}
+
+	// packet found, relay ACK from dst to src
+	if err := srcEndpoint.UpdateClient(); err != nil {
+		return err
+	}
+
+	if packetToAck == nil {
+		packetToAck = &packet
+	}
+
+	path.chainA.Logf("sending ack to other chain")
+	err = srcEndpoint.MsgAcknowledgePacket(*packetToAck, msg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // RelayPacketWithoutAckV2 attempts to relay the packet first on EndpointA and then on EndpointB
@@ -574,7 +537,7 @@ func RelayPendingPacketsWithAcksV2(path *WasmPath) error {
 	require.NoError(path.chainA, src.UpdateClient())
 	path.chainA.Logf("Relay: %d PacketsV2 A->B, %d PacketsV2 B->A\n", len(*path.chainA.PendingSendPacketsV2), len(*path.chainB.PendingSendPacketsV2))
 	for _, v := range *path.chainA.PendingSendPacketsV2 {
-		err := RelayPacketV2(path, v)
+		err := RelayPacketV2(path, v, path.EndpointA, path.EndpointB, nil)
 		if err != nil {
 			return err
 		}
@@ -585,7 +548,7 @@ func RelayPendingPacketsWithAcksV2(path *WasmPath) error {
 	src = path.EndpointB
 	require.NoError(path.chainB, src.UpdateClient())
 	for _, v := range *path.chainB.PendingSendPacketsV2 {
-		err := RelayPacketV2(path, v)
+		err := RelayPacketV2(path, v, path.EndpointB, path.EndpointA, nil)
 		if err != nil {
 			return err
 		}

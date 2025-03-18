@@ -222,16 +222,6 @@ func (k Keeper) OnRecvIBC2Packet(
 	}
 
 	if data == nil {
-		// In case of lack of ack, we assume that the packet should
-		// be handled asynchronously.
-		// TODO: https://github.com/CosmWasm/wasmd/issues/2161
-		// err = k.StoreAsyncAckPacket(ctx, convertPacket(msg.Payload))
-		// if err != nil {
-		// 	return channeltypesv2.RecvPacketResult{
-		// 		Status:          channeltypesv2.PacketStatus_Failure,
-		// 		Acknowledgement: []byte(err.Error()),
-		// 	}
-		// }
 		return channeltypesv2.RecvPacketResult{
 			Status: channeltypesv2.PacketStatus_Async,
 		}
@@ -276,7 +266,7 @@ func (k Keeper) OnTimeoutIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
 // OnSendIBC2Packet calls the contract to inform it that the packet was sent from

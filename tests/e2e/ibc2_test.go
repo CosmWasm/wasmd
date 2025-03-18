@@ -164,6 +164,67 @@ func TestIBC2SendReceiveMsg(t *testing.T) {
 	}
 }
 
+func TestIBC2RAsyncAckSending(t *testing.T) {
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
+
+	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
+	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
+
+	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
+	require.NotEmpty(t, contractAddrA)
+
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortA,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortB,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+
+	path.Path.SetupV2()
+
+	var err error
+	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
+	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: true})
+	require.NoError(t, err)
+	packetToAck, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+	err = path.EndpointA.MsgRecvPacket(packetToAck)
+	require.NoError(t, err)
+
+	timeoutTimestamp = chainA.GetTimeoutTimestampSecs()
+	payload = mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{SendAsyncAckForPrevMsg: true})
+	require.NoError(t, err)
+	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+
+	// Check that the ACK was not sent at this moment
+	var response State
+	err = chainB.SmartQuery(contractAddrB.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	require.NoError(t, err)
+	require.Equal(t, uint32(0), response.IBC2PacketAckCounter)
+
+	// Relay the second packet and expect an ACK sent for the first packet
+	err = wasmibctesting.RelayPacketV2(path, packet, path.EndpointB, path.EndpointA, &packetToAck)
+	require.NoError(t, err)
+
+	// Check if counter was incremented in the recv entry point
+	err = chainB.SmartQuery(contractAddrB.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), response.IBC2PacketAckCounter)
+}
+
 func TestIBC2TimeoutMsg(t *testing.T) {
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
