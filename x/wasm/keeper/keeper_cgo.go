@@ -60,7 +60,7 @@ func NewKeeper(
 		wasmLimits:  vmConfig.WasmLimits,
 		ibcRouterV2: ibcRouterV2,
 	}
-	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, bankKeeper, cdc, portSource)
+	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	preOpts, postOpts := splitOpts(opts)
 	for _, o := range preOpts {
