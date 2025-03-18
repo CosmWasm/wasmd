@@ -40,7 +40,6 @@ func NewDefaultMessageHandler(
 	keeper *Keeper,
 	router MessageRouter,
 	ics4Wrapper types.ICS4Wrapper,
-	channelKeeper types.ChannelKeeper,
 	bankKeeper types.Burner,
 	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
@@ -52,7 +51,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(cdc, router, encoders),
-		NewIBCRawPacketHandler(ics4Wrapper, keeper, channelKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, keeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -172,17 +171,15 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
-	ics4Wrapper   types.ICS4Wrapper
-	wasmKeeper    types.IBCContractKeeper
-	channelKeeper types.ChannelKeeper
+	ics4Wrapper types.ICS4Wrapper
+	wasmKeeper  types.IBCContractKeeper
 }
 
 // NewIBCRawPacketHandler constructor
-func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper, channelKeeper types.ChannelKeeper) IBCRawPacketHandler {
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper) IBCRawPacketHandler {
 	return IBCRawPacketHandler{
-		ics4Wrapper:   ics4Wrapper,
-		wasmKeeper:    wasmKeeper,
-		channelKeeper: channelKeeper,
+		ics4Wrapper: ics4Wrapper,
+		wasmKeeper:  wasmKeeper,
 	}
 }
 
@@ -242,6 +239,83 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		// This ensures WriteAcknowledgement can only be used once per packet
 		// such that overriding the acknowledgement later on is not possible.
 		h.wasmKeeper.DeleteAsyncAckPacket(ctx, contractIBCPortID, contractIBCChannelID, msg.IBC.WriteAcknowledgement.PacketSequence)
+
+		resp := &types.MsgIBCWriteAcknowledgementResponse{}
+		val, err := resp.Marshal()
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
+		}
+
+		any, err := codectypes.NewAnyWithValue(resp)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+		}
+		msgResponses := [][]*codectypes.Any{{any}}
+
+		return nil, [][]byte{val}, msgResponses, nil
+	default:
+		return nil, nil, nil, types.ErrUnknownMsg
+	}
+}
+
+// IBC2RawPacketHandler handles IBC2Msg received from CosmWasm.
+type IBC2RawPacketHandler struct {
+	ics4Wrapper types.ICS4Wrapper
+}
+
+// NewIBCRawPacketHandler constructor
+func NewIBC2RawPacketHandler(ics4Wrapper types.ICS4Wrapper) IBC2RawPacketHandler {
+	return IBC2RawPacketHandler{
+		ics4Wrapper: ics4Wrapper,
+	}
+}
+
+// DispatchMsg publishes a raw IBC packet onto the channel.
+func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
+	if msg.IBC == nil {
+		return nil, nil, nil, types.ErrUnknownMsg
+	}
+	switch {
+	case msg.IBC.SendPacket != nil:
+		if contractIBCPortID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc not supported")
+		}
+		contractIBCChannelID := msg.IBC.SendPacket.ChannelID
+		if contractIBCChannelID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
+		}
+
+		seq, err := h.ics4Wrapper.SendPacket(ctx, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "channel")
+		}
+		moduleLogger(ctx).Debug("ibc packet set", "seq", seq)
+
+		resp := &types.MsgIBCSendResponse{Sequence: seq}
+		val, err := resp.Marshal()
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
+		}
+		any, err := codectypes.NewAnyWithValue(resp)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+		}
+		msgResponses := [][]*codectypes.Any{{any}}
+
+		return nil, [][]byte{val}, msgResponses, nil
+	case msg.IBC.WriteAcknowledgement != nil:
+		if contractIBCPortID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc not supported")
+		}
+		contractIBCChannelID := msg.IBC.WriteAcknowledgement.ChannelID
+		if contractIBCChannelID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
+		}
+
+		err := h.ics4Wrapper.WriteAcknowledgement(ctx, packet, ContractConfirmStateAck(msg.IBC.WriteAcknowledgement.Ack.Data))
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
+		}
 
 		resp := &types.MsgIBCWriteAcknowledgementResponse{}
 		val, err := resp.Marshal()
