@@ -268,16 +268,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			return nil
 		},
 	}
-	chanKeeper := &wasmtesting.MockChannelKeeper{
-		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
-			return channeltypes.Channel{
-				Counterparty: channeltypes.NewCounterparty(
-					"other-port",
-					"other-channel-1",
-				),
-			}, true
-		},
-	}
 	contractKeeper := wasmtesting.IBCContractKeeperMock{}
 	// also store a packet to be acked
 	ackPacket := channeltypes.Packet{
@@ -297,7 +287,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 	specs := map[string]struct {
 		srcMsg        wasmvmtypes.IBCMsg
-		chanKeeper    types.ChannelKeeper
 		expPacketSent *CapturedPacket
 		expPacketAck  *CapturedPacket
 		expAck        []byte
@@ -312,7 +301,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 					Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
 				},
 			},
-			chanKeeper: chanKeeper,
 			expPacketSent: &CapturedPacket{
 				sourcePort:    ibcPort,
 				sourceChannel: "channel-1",
@@ -329,7 +317,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 					Ack:            wasmvmtypes.IBCAcknowledgement{Data: []byte("myAck")},
 				},
 			},
-			chanKeeper: chanKeeper,
 			expPacketAck: &CapturedPacket{
 				sourcePort:       ackPacket.SourcePort,
 				sourceChannel:    ackPacket.SourceChannel,
@@ -348,7 +335,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacketAck = nil
 
 			// when
-			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper, spec.chanKeeper)
+			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper)
 			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg}) //nolint:gosec
 
 			// then

@@ -40,7 +40,6 @@ func NewDefaultMessageHandler(
 	keeper *Keeper,
 	router MessageRouter,
 	ics4Wrapper types.ICS4Wrapper,
-	channelKeeper types.ChannelKeeper,
 	bankKeeper types.Burner,
 	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
@@ -52,7 +51,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(cdc, router, encoders),
-		NewIBCRawPacketHandler(ics4Wrapper, keeper, channelKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, keeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -172,17 +171,15 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
-	ics4Wrapper   types.ICS4Wrapper
-	wasmKeeper    types.IBCContractKeeper
-	channelKeeper types.ChannelKeeper
+	ics4Wrapper types.ICS4Wrapper
+	wasmKeeper  types.IBCContractKeeper
 }
 
 // NewIBCRawPacketHandler constructor
-func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper, channelKeeper types.ChannelKeeper) IBCRawPacketHandler {
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, wasmKeeper types.IBCContractKeeper) IBCRawPacketHandler {
 	return IBCRawPacketHandler{
-		ics4Wrapper:   ics4Wrapper,
-		wasmKeeper:    wasmKeeper,
-		channelKeeper: channelKeeper,
+		ics4Wrapper: ics4Wrapper,
+		wasmKeeper:  wasmKeeper,
 	}
 }
 
