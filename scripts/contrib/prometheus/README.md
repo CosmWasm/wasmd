@@ -8,7 +8,7 @@ Enable prometheus metrics in wasmd:
 # Enabled enables the application telemetry functionality. When enabled,
 # an in-memory sink is also enabled by default. Operators may also enabled
 # other sinks such as Prometheus.
-enabled =true
+enabled = true
 # ...
 
 # PrometheusRetentionTime, when positive, enables a Prometheus metrics sink.
