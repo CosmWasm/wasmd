@@ -55,7 +55,7 @@ func TestGroupWithContract(t *testing.T) {
 	groupID, policyAddr := createRsp.GroupId, sdk.MustAccAddressFromBech32(createRsp.GroupPolicyAddress)
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
-	// and a proposal submitted
+	// and a proposal is submitted
 	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
 
 	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
@@ -70,7 +70,7 @@ func TestGroupWithContract(t *testing.T) {
 	require.NoError(t, chain.Codec.Unmarshal(execRsp.Data, &groupRsp))
 	// require.NotEmpty(t, groupRsp.ProposalId)
 
-	// and coins received
+	// and coins are received
 	recipientBalance := chain.Balance(recipientAddr, sdk.DefaultBondDenom)
 	expBalanceAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
 	assert.Equal(t, expBalanceAmount.String(), recipientBalance.String())
