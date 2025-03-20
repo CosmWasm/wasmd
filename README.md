@@ -236,7 +236,7 @@ We strongly suggest **to limit the max block gas in the genesis** and not use th
       "max_gas": "SET_YOUR_MAX_VALUE",
 ```
 
-Tip: if you want to lock this down to a permisisoned network, the following script can edit the genesis file
+Tip: if you want to lock this down to a permissioned network, the following script can edit the genesis file
 to only allow permissioned use of code upload or instantiating:
 
 `sed -i 's/permission": "Everybody"/permission": "Nobody"/'  .../config/genesis.json`

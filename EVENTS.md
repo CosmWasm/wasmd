@@ -346,7 +346,7 @@ sdk.NewEvent(
     sdk.NewAttribute("custom", "from contract"),
 ),
 
-// instantiating contract (first dipatched message)
+// instantiating contract (first dispatched message)
 sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
