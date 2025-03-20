@@ -301,7 +301,7 @@ message UpdateInstantiateConfigProposal {
   string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
   string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
-  // AccessConfigUpdate contains the list of code ids and the access config
+  // AccessConfigUpdates contains the list of code ids and the access config
   // to be applied.
   repeated AccessConfigUpdate access_config_updates = 3
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
