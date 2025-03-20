@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var AllAccessTypes = []AccessType{
+var AllAccessTypes []AccessType = []AccessType{
 	AccessTypeNobody,
 	AccessTypeAnyOfAddresses,
 	AccessTypeEverybody,
@@ -101,7 +101,7 @@ func (p Params) String() string {
 // ValidateBasic performs basic validation on wasm parameters
 func (p Params) ValidateBasic() error {
 	if err := validateAccessType(p.InstantiateDefaultPermission); err != nil {
-		return errors.Wrap(err, "instantiate default permission")
+		return errorsmod.Wrap(err, "instantiate default permission")
 	}
 	if err := p.CodeUploadAccess.ValidateBasic(); err != nil {
 		return errors.Wrap(err, "upload access")
