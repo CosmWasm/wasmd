@@ -86,6 +86,8 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.NoError(t, err)
 
+	wasmibctesting.RelayAndAckPendingPackets(path)
+
 	err = path.EndpointA.MsgRecvPacket(packet)
 	require.NoError(t, err)
 
