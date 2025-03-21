@@ -2,7 +2,7 @@
 
 With stargate, we have access to the `x/upgrade` module, which we can use to perform
 inline upgrades. Please first read both the basic 
-[x/upgrade spec](https://github.com/cosmos/cosmos-sdk/blob/master/x/upgrade/spec/01_concepts.md)
+[x/upgrade spec](https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/upgrade/spec/01_concepts.md)
 and [go docs](https://godoc.org/github.com/cosmos/cosmos-sdk/x/upgrade#hdr-Performing_Upgrades)
 for the background on the module.
 
