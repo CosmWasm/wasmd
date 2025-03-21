@@ -656,9 +656,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	t.Helper()
-	tempDir, err := os.MkdirTemp("", "wasm")
-	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	tempDir := t.TempDir()
 
 	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 
