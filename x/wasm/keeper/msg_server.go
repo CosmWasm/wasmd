@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -361,7 +362,7 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 
 	addresses := params.CodeUploadAccess.Addresses
 	for _, newAddr := range req.Addresses {
-		if !contains(addresses, newAddr) {
+		if !slices.Contains(addresses, newAddr) {
 			addresses = append(addresses, newAddr)
 		}
 	}
@@ -393,7 +394,7 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	addresses := params.CodeUploadAccess.Addresses
 	newAddresses := make([]string, 0)
 	for _, addr := range addresses {
-		if contains(req.Addresses, addr) {
+		if slices.Contains(req.Addresses, addr) {
 			continue
 		}
 		newAddresses = append(newAddresses, addr)
@@ -406,15 +407,6 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	}
 
 	return &types.MsgRemoveCodeUploadParamsAddressesResponse{}, nil
-}
-
-func contains[T comparable](src []T, o T) bool {
-	for _, v := range src {
-		if v == o {
-			return true
-		}
-	}
-	return false
 }
 
 func (m msgServer) selectAuthorizationPolicy(ctx context.Context, actor string) types.AuthorizationPolicy {
