@@ -199,11 +199,11 @@ func (w ContractConfirmStateAck) Acknowledgement() []byte {
 
 // OnAckPacket calls the contract to handle the "acknowledgement" data which can contain success or failure of a packet
 // acknowledgement written on the receiving chain for example. This is application level data and fully owned by the
-// contract. The use of the standard acknowledgement envelope is recommended: https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#acknowledgement-envelope
+// contract. The use of the standard acknowledgement envelope is recommended: https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics#acknowledgement-envelope
 //
 // On application errors the contract can revert an operation like returning tokens as in ibc-transfer.
 //
-// For more information see: https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#packet-flow--handling
+// For more information see: https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics#packet-flow--handling
 func (k Keeper) OnAckPacket(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
