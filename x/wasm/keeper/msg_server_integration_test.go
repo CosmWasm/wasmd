@@ -8,7 +8,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -461,7 +461,7 @@ func TestUnpinCodes(t *testing.T) {
 
 func TestSudoContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -552,7 +552,7 @@ func TestSudoContract(t *testing.T) {
 
 func TestStoreAndInstantiateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -612,7 +612,7 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 
 func TestUpdateAdmin(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -677,7 +677,7 @@ func TestUpdateAdmin(t *testing.T) {
 
 func TestClearAdmin(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -739,7 +739,7 @@ func TestClearAdmin(t *testing.T) {
 
 func TestMigrateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -826,7 +826,7 @@ func TestMigrateContract(t *testing.T) {
 
 func TestInstantiateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -898,7 +898,7 @@ func TestInstantiateContract(t *testing.T) {
 
 func TestInstantiateContract2(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -977,7 +977,7 @@ func TestInstantiateContract2(t *testing.T) {
 
 func TestUpdateInstantiateConfig(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		creator   sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -1051,7 +1051,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 
 func TestStoreAndMigrateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	checksum, err := wasmvm.CreateChecksum(hackatomContract)
 	require.NoError(t, err)
@@ -1147,7 +1147,7 @@ func TestStoreAndMigrateContract(t *testing.T) {
 
 func TestUpdateContractLabel(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContextLegacy(false, cmtproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)

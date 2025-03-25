@@ -5,7 +5,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -381,7 +381,7 @@ func NoOpInstantiateFn(wasmvm.Checksum, wasmvmtypes.Env, wasmvmtypes.MessageInfo
 }
 
 func NoOpStoreCodeFn(wasm wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, uint64, error) {
-	return rand.Bytes(32), uint64(MockStoreCodeCostPerByte * len(wasm)), nil
+	return cmtcrypto.CRandBytes(32), uint64(MockStoreCodeCostPerByte * len(wasm)), nil
 }
 
 func HasIBCAnalyzeFn(wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {

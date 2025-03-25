@@ -29,7 +29,7 @@ func TestWasmdExport(t *testing.T) {
 	})
 
 	// finalize block so we have CheckTx state set
-	_, err := gapp.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err := gapp.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height: 1,
 	})
 	require.NoError(t, err)

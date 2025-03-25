@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +20,7 @@ import (
 
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
-	myAddress := sdk.AccAddress(rand.Bytes(address.Len))
+	myAddress := sdk.AccAddress(cmtcrypto.CRandBytes(address.Len))
 
 	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)

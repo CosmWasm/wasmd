@@ -3,7 +3,7 @@ package v2_test
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +29,7 @@ func TestMigrate(t *testing.T) {
 		wasmStoreKey    = storetypes.NewKVStoreKey(types.StoreKey)
 		paramsStoreKey  = storetypes.NewKVStoreKey(paramstypes.StoreKey)
 		paramsTStoreKey = storetypes.NewTransientStoreKey(paramstypes.TStoreKey)
-		myAddress       = sdk.AccAddress(rand.Bytes(address.Len))
+		myAddress       = sdk.AccAddress(cmtcrypto.CRandBytes(address.Len))
 	)
 	specs := map[string]struct {
 		src v2.Params
@@ -47,7 +47,7 @@ func TestMigrate(t *testing.T) {
 			src: v2.Params{
 				CodeUploadAccess: v2.AccessConfig{
 					Permission: v2.AccessTypeAnyOfAddresses,
-					Addresses:  []string{myAddress.String(), sdk.AccAddress(rand.Bytes(address.Len)).String()},
+					Addresses:  []string{myAddress.String(), sdk.AccAddress(cmtcrypto.CRandBytes(address.Len)).String()},
 				},
 				InstantiateDefaultPermission: v2.AccessTypeEverybody,
 			},

@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -55,7 +56,7 @@ func TestGroupWithContract(t *testing.T) {
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// and a proposal submitted
-	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	recipientAddr := sdk.AccAddress(cmtcrypto.CRandBytes(address.Len))
 
 	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
@@ -110,7 +111,7 @@ func TestGroupWithNewReflectContract(t *testing.T) {
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// and a proposal submitted
-	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	recipientAddr := sdk.AccAddress(cmtcrypto.CRandBytes(address.Len))
 
 	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")

@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/assert"
 
@@ -27,7 +27,7 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 	}}
 
 	ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	ctx := sdk.NewContext(ms, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, cmtproto.Header{}, false, log.NewNopLogger())
 
 	specs := map[string]struct {
 		ctx   sdk.Context

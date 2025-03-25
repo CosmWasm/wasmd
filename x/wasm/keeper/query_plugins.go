@@ -356,7 +356,7 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := handler(ctx, &abci.RequestQuery{
+		res, err := handler(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -406,7 +406,7 @@ func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQuery
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := route(ctx, &abci.RequestQuery{
+		res, err := route(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -590,7 +590,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 
 	// FIXME: make a cleaner way to do this (modify the sdk)
 	// we need the info from `distKeeper.calculateDelegationRewards()`, but it is not public
-	// neither is `queryDelegationRewards(ctx sdk.Context, _ []string, req abci.RequestQuery, k Keeper)`
+	// neither is `queryDelegationRewards(ctx sdk.Context, _ []string, req abci.QueryRequest, k Keeper)`
 	// so we go through the front door of the querier....
 	accRewards, err := getAccumulatedRewards(ctx, distKeeper, delegation)
 	if err != nil {

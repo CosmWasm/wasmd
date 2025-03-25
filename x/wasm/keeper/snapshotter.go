@@ -5,7 +5,7 @@ import (
 	"io"
 	"math"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -54,7 +54,7 @@ func (ws *WasmSnapshotter) SnapshotExtension(height uint64, payloadWriter snapsh
 		return err
 	}
 
-	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(cacheMS, cmtproto.Header{}, false, log.NewNopLogger())
 	seenBefore := make(map[string]bool)
 	var rerr error
 
@@ -127,7 +127,7 @@ func (ws *WasmSnapshotter) processAllItems(
 	cb func(sdk.Context, *Keeper, []byte) error,
 	finalize func(sdk.Context, *Keeper) error,
 ) error {
-	ctx := sdk.NewContext(ws.cms, tmproto.Header{Height: int64(height)}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ws.cms, cmtproto.Header{Height: int64(height)}, false, log.NewNopLogger())
 	for {
 		payload, err := payloadReader()
 		if err == io.EOF {

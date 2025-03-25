@@ -13,8 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/rand"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -128,7 +126,7 @@ func printResultFlag(ok bool) {
 }
 
 func randomBech32Addr() string {
-	src := rand.Bytes(address.Len)
+	src := cmtcrypto.CRandBytes(address.Len)
 	return sdk.AccAddress(src).String()
 }
 

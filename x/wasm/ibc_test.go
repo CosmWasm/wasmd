@@ -5,7 +5,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -21,7 +21,7 @@ import (
 )
 
 func TestOnRecvPacket(t *testing.T) {
-	anyRelayerAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	anyRelayerAddr := sdk.AccAddress(cmtcrypto.CRandBytes(address.Len))
 	anyContractIBCPkg := IBCPacketFixture(func(p *channeltypes.Packet) {
 		p.DestinationPort = "wasm.cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"
 	})

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ var wasmIdent = []byte("\x00\x61\x73\x6D")
 // Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmEngine
 // for using a contract mock in Go.
 func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
-	pInstResp := chain.StoreCode(append(wasmIdent, rand.Bytes(10)...))
+	pInstResp := chain.StoreCode(append(wasmIdent, cmtcrypto.CRandBytes(10)...))
 	codeID := pInstResp.CodeID
 
 	anyAddressStr := chain.SenderAccount.GetAddress().String()
@@ -107,7 +107,7 @@ func (chain *TestChain) RawQuery(contractAddr string, queryData []byte) ([]byte,
 		return nil, err
 	}
 
-	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.QueryRequest{
 		Path: "/cosmwasm.wasm.v1.Query/RawContractState",
 		Data: reqBin,
 	})
@@ -145,7 +145,7 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg, response inter
 		return err
 	}
 
-	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.QueryRequest{
 		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})

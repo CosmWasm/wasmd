@@ -14,8 +14,8 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v1"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -309,7 +309,7 @@ func TestCreateDuplicate(t *testing.T) {
 func TestCreateWithSimulation(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
-	ctx = ctx.WithBlockHeader(tmproto.Header{Height: 1}).
+	ctx = ctx.WithBlockHeader(cmtproto.Header{Height: 1}).
 		WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -341,15 +341,15 @@ func TestIsSimulationMode(t *testing.T) {
 		exp bool
 	}{
 		"genesis block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(cmtproto.Header{}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
 			exp: false,
 		},
 		"any regular block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewGasMeter(10000000)),
+			ctx: sdk.Context{}.WithBlockHeader(cmtproto.Header{Height: 1}).WithGasMeter(storetypes.NewGasMeter(10000000)),
 			exp: false,
 		},
 		"simulation": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(cmtproto.Header{Height: 1}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
 			exp: true,
 		},
 	}
@@ -2372,7 +2372,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
 
 	// create vesting account
-	var vestingAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	var vestingAddr sdk.AccAddress = cmtcrypto.CRandBytes(types.ContractAddrLen)
 	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
 	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(parentCtx, msgCreateVestingAccount)
 	require.NoError(t, err)

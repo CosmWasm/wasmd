@@ -108,7 +108,7 @@ func BenchmarkTxSending(b *testing.B) {
 					require.NoError(b, err)
 					xxx[j] = bz
 				}
-				_, err := appInfo.App.FinalizeBlock(&abci.RequestFinalizeBlock{Txs: xxx, Height: height, Time: time.Now()})
+				_, err := appInfo.App.FinalizeBlock(&abci.FinalizeBlockRequest{Txs: xxx, Height: height, Time: time.Now()})
 				require.NoError(b, err)
 
 				_, err = appInfo.App.Commit()
