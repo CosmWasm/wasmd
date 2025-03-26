@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"slices"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -418,13 +419,10 @@ func isSubset(super, sub []string) bool {
 	if len(sub) == 0 {
 		return true
 	}
-	var matches int
+	matches := 0
 	for _, o := range sub {
-		for _, s := range super {
-			if o == s {
-				matches++
-				break
-			}
+		if slices.Contains(super, o) {
+			matches++
 		}
 	}
 	return matches == len(sub)
