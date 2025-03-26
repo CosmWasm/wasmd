@@ -280,7 +280,6 @@ func NewIBC2RawPacketHandler(channelKeeperV2 types.ChannelKeeperV2) IBC2RawPacke
 // DispatchMsg publishes a raw IBC2 packet onto the channel.
 func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 	contractAddr sdk.AccAddress, contractIBC2PortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
-	fmt.Println("\n\nDispatchMsg IBC2MSG")
 	if msg.IBC2 == nil {
 		return nil, nil, nil, types.ErrUnknownMsg
 	}
