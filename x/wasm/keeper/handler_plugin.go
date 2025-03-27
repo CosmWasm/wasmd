@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	channelv2types "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -15,7 +16,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	channelv2types "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 )
 
 // msgEncoder is an extension point to customize encodings
