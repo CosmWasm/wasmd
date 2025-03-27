@@ -1,12 +1,13 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	mockv2 "github.com/cosmos/ibc-go/v10/testing/mock/v2"
 	"github.com/stretchr/testify/require"
 
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
@@ -31,11 +32,12 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
 	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
 	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
+	require.NotEmpty(t, contractAddrA)
 
 	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
 	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
 	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
-	require.NotEmpty(t, contractAddrA)
+	require.NotEmpty(t, contractAddrB)
 
 	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
@@ -51,10 +53,39 @@ func TestIBC2ReceiveEntrypoint(t *testing.T) {
 
 	path.Path.SetupV2()
 
+	type IncrementExecMsg struct {
+		ChannelID       string `json:"channel_id"`
+		DestinationPort string `json:"destination_port"`
+	}
+	// ExecuteMsg is the ibc2 contract's execute msg
+	type ExecuteMsg struct {
+		Increment *IncrementExecMsg `json:"increment"`
+	}
+
+	contractMsg := ExecuteMsg{
+		Increment: &IncrementExecMsg{
+			ChannelID:       path.EndpointB.ChannelID,
+			DestinationPort: contractPortA,
+		},
+	}
+
 	var err error
-	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
-	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, mockv2.NewMockPayload(contractPortB, contractPortA))
+	timeoutTimestamp := chainB.GetTimeoutTimestampSecs()
+
+	contractMsgBz, err := json.Marshal(contractMsg)
 	require.NoError(t, err)
+
+	payload := channeltypesv2.Payload{
+		SourcePort:      contractPortB,
+		DestinationPort: contractPortA,
+		Version:         "V1",
+		Encoding:        "json",
+		Value:           contractMsgBz,
+	}
+
+	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+
 	err = path.EndpointA.MsgRecvPacket(packet)
 	require.NoError(t, err)
 
