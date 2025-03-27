@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	channelv2types "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -239,6 +240,57 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		// This ensures WriteAcknowledgement can only be used once per packet
 		// such that overriding the acknowledgement later on is not possible.
 		h.wasmKeeper.DeleteAsyncAckPacket(ctx, contractIBCPortID, contractIBCChannelID, msg.IBC.WriteAcknowledgement.PacketSequence)
+
+		resp := &types.MsgIBCWriteAcknowledgementResponse{}
+		val, err := resp.Marshal()
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC send response")
+		}
+
+		any, err := codectypes.NewAnyWithValue(resp)
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
+		}
+		msgResponses := [][]*codectypes.Any{{any}}
+
+		return nil, [][]byte{val}, msgResponses, nil
+	default:
+		return nil, nil, nil, types.ErrUnknownMsg
+	}
+}
+
+// IBC2RawPacketHandler handles IBC2Msg received from CosmWasm.
+type IBC2RawPacketHandler struct {
+	ics4v2Wrapper types.ICS4v2Wrapper
+}
+
+// NewIBCRawPacketHandler constructor
+func NewIBC2RawPacketHandler(ics4v2Wrapper types.ICS4v2Wrapper) IBC2RawPacketHandler {
+	return IBC2RawPacketHandler{
+		ics4v2Wrapper: ics4v2Wrapper,
+	}
+}
+
+// DispatchMsg publishes a raw IBC packet onto the channel.
+func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
+	if msg.IBC == nil {
+		return nil, nil, nil, types.ErrUnknownMsg
+	}
+	switch {
+	case msg.IBC.WriteAcknowledgement != nil:
+		packet := msg.IBC.WriteAcknowledgement
+		if contractIBCPortID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc not supported")
+		}
+		contractIBCChannelID := msg.IBC.WriteAcknowledgement.ChannelID
+		if contractIBCChannelID == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc channel")
+		}
+
+		err := h.ics4v2Wrapper.WriteAcknowledgement(ctx, packet.ChannelID, packet.PacketSequence, channelv2types.Acknowledgement{AppAcknowledgements: [][]byte{msg.IBC.WriteAcknowledgement.Ack.Data}})
+		if err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "acknowledgement")
+		}
 
 		resp := &types.MsgIBCWriteAcknowledgementResponse{}
 		val, err := resp.Marshal()
