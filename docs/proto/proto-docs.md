@@ -960,7 +960,7 @@ the x/gov module via a v1 governance proposal.
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
-| `access_config_updates` | [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate) | repeated | AccessConfigUpdate contains the list of code ids and the access config to be applied. |
+| `access_config_updates` | [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate) | repeated | AccessConfigUpdates contains the list of code ids and the access config to be applied. |
 
 
 
