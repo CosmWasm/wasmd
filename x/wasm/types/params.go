@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/pkg/errors"
@@ -113,10 +114,8 @@ func validateAccessType(a AccessType) error {
 	if a == AccessTypeUnspecified {
 		return errorsmod.Wrap(ErrEmpty, "type")
 	}
-	for _, v := range AllAccessTypes {
-		if v == a {
-			return nil
-		}
+	if slices.Contains(AllAccessTypes, a) {
+		return nil
 	}
 	return errorsmod.Wrapf(ErrInvalid, "unknown type: %q", a)
 }
@@ -143,12 +142,7 @@ func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
 	case AccessTypeEverybody:
 		return true
 	case AccessTypeAnyOfAddresses:
-		for _, v := range a.Addresses {
-			if v == actor.String() {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(a.Addresses, actor.String())
 	default:
 		panic("unknown type")
 	}
