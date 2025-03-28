@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"time"
 
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
@@ -27,10 +28,18 @@ func (k Keeper) OnOpenChannel(
 	msg wasmvmtypes.IBCChannelOpenMsg,
 ) (string, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-open-channel")
-	_, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return "", err
 	}
+
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return "", sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-open-channel")
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
@@ -65,6 +74,14 @@ func (k Keeper) OnConnectChannel(
 		return err
 	}
 
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-connect-channel")
+
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
@@ -96,6 +113,14 @@ func (k Keeper) OnCloseChannel(
 		return err
 	}
 
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-close-channel")
+
 	params := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
@@ -125,6 +150,14 @@ func (k Keeper) OnRecvPacket(
 	if err != nil {
 		return nil, err
 	}
+
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-recv-packet")
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
@@ -184,6 +217,14 @@ func (k Keeper) OnAckPacket(
 		return err
 	}
 
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-ack-packet")
+
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
@@ -210,6 +251,14 @@ func (k Keeper) OnTimeoutPacket(
 	if err != nil {
 		return err
 	}
+
+	msgBz, err := json.Marshal(msg) // this is not great
+	if err != nil {
+		// this should never happen, as we just built this message
+		return sdkerrors.Wrap(types.ErrInvalidMsg, err.Error())
+	}
+	setupCost := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msgBz))
+	ctx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-timeout-packet")
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
