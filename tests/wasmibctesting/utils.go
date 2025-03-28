@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
@@ -295,6 +296,48 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 	}
 
 	return fmt.Errorf("packet commitment does not exist on either endpoint for provided packet")
+}
+
+// RelayPacketWithoutAckV2 attempts to relay the packet first on EndpointA and then on EndpointB
+// if EndpointA does not contain a packet commitment for that packet. An error is returned
+// if a relay step fails or the packet commitment does not exist on either endpoint.
+// In contrast to RelayPacket, this function does not acknowledge the packet and expects it to have no acknowledgement yet.
+// It is useful for testing async acknowledgement.
+func RelayPacketWithoutAckV2(path *WasmPath, packet channeltypesv2.Packet) error {
+	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
+	path.chainA.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(*path.chainA.PendingSendPackets), len(*path.chainB.PendingSendPackets))
+	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
+
+		// packet found, relay from A to B
+		if err := path.EndpointB.UpdateClient(); err != nil {
+			return err
+		}
+
+		err := path.EndpointB.MsgRecvPacket(packet)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	pc = path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
+	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
+
+		// packet found, relay B to A
+		if err := path.EndpointA.UpdateClient(); err != nil {
+			return err
+		}
+
+		err := path.EndpointA.MsgRecvPacket(packet)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("packet commitment does not exist on either endpointV2 for provided packet")
 }
 
 type WasmPath struct {
