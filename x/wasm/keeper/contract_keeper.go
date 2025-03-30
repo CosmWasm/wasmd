@@ -32,7 +32,7 @@ type decoratedKeeper interface {
 	execute(ctx context.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 	Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 	setContractInfoExtension(ctx context.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
-	setAccessConfig(ctx context.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, autz types.AuthorizationPolicy) error
+	setAccessConfig(ctx context.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, authz types.AuthorizationPolicy) error
 	ClassicAddressGenerator() AddressGenerator
 }
 
