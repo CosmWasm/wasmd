@@ -258,7 +258,7 @@ type IBCContractCallbacks interface {
 	IBCChannelOpen(
 		codeID wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		msg wasmvmtypes.IBCChannelOpenMsg,
+		channel wasmvmtypes.IBCChannelOpenMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -413,7 +413,7 @@ type MockIBCContractCallbacks struct {
 	IBCPacketTimeoutFn  func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error)
 }
 
-func (m MockIBCContractCallbacks) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCChannelOpenResult, uint64, error) {
+func (m MockIBCContractCallbacks) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCChannelOpenResult, uint64, error) {
 	if m.IBCChannelOpenFn == nil {
 		panic("not expected to be called")
 	}
