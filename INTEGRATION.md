@@ -6,14 +6,14 @@ If you want to use Wasm in your own app, here is how you can get this working
 quickly and easily. 
 First start with this [article](https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc) 
 in the "CosmWasm for CTOs" series that gives you a high level view. 
-Then check to make sure you fit the pre-requisites,
+Then check to make sure you fit the prerequisites,
 then integrate the `x/wasm` module as described below, and finally, you
 can add custom messages and queries to your custom Go/SDK modules, exposing
 them to any chain-specific contract.
 
 ## Prerequisites
 
-The pre-requisites of integrating `x/wasm` into your custom app is to be using 
+The prerequisites of integrating `x/wasm` into your custom app are to be using 
 a compatible version of the Cosmos SDK, and to accept some limits to the
 hardware it runs on.
 
