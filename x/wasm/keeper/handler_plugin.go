@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -13,8 +14,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -276,7 +275,8 @@ func NewIBC2RawPacketHandler(channelKeeperV2 types.ChannelKeeperV2) IBC2RawPacke
 
 // DispatchMsg publishes a raw IBC2 packet onto the channel.
 func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
-	contractAddr sdk.AccAddress, contractIBC2PortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
+	contractAddr sdk.AccAddress, contractIBC2PortID string, msg wasmvmtypes.CosmosMsg,
+) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
 	if msg.IBC2 == nil {
 		return nil, nil, nil, types.ErrUnknownMsg
 	}
