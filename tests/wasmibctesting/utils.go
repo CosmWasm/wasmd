@@ -66,8 +66,6 @@ func NewWasmTestChain(chain *ibctesting.TestChain) *WasmTestChain {
 	return &res
 }
 
-// TODO: jawoznia
-// Waiting for ParsePacketsFromEventsV2 being implemented by ibcv2 team
 func (chain *WasmTestChain) CaptureIBCEventsV2(result *abci.ExecTxResult) {
 	toSend, err := ParsePacketsFromEventsV2(channeltypesv2.EventTypeSendPacket, result.Events)
 	require.NoError(chain, err)
@@ -77,6 +75,9 @@ func (chain *WasmTestChain) CaptureIBCEventsV2(result *abci.ExecTxResult) {
 	}
 }
 
+// TODO: Remove this once it's implemented in the `ibc-go`.
+// https://github.com/cosmos/ibc-go/issues/8284
+//
 // ParsePacketsFromEventsV2 parses events emitted from a MsgRecvPacket and returns
 // all the packets found.
 // Returns an error if no packet is found.
@@ -94,7 +95,6 @@ func ParsePacketsFromEventsV2(eventType string, events []abci.Event) ([]channelt
 					if err != nil {
 						return ferr(err)
 					}
-					// packet, err := DeserializePacketV2(data)
 					var packet channeltypesv2.Packet
 					err = proto.Unmarshal(data, &packet)
 					if err != nil {
@@ -106,12 +106,8 @@ func ParsePacketsFromEventsV2(eventType string, events []abci.Event) ([]channelt
 					continue
 				}
 			}
-
 		}
 	}
-	// if len(packets) == 0 {
-	// 	return ferr(errors.New("acknowledgement event attribute not found"))
-	// }
 	return packets, nil
 }
 
@@ -140,9 +136,6 @@ func (chain *WasmTestChain) OverrideSendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResul
 	result, err := chain.TestChain.SendMsgs(msgs...)
 	chain.SendMsgsOverride = chain.OverrideSendMsgs
 	chain.CaptureIBCEvents(result)
-	// TODO: jawoznia
-	// Waiting for ParsePacketsFromEventsV2 being implemented by ibcv2 team
-	//
 	chain.CaptureIBCEventsV2(result)
 	return result, err
 }
