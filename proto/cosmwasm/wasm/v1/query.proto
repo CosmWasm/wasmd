@@ -101,7 +101,7 @@ service Query {
   rpc BuildAddress(QueryBuildAddressRequest)
       returns (QueryBuildAddressResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/build_address";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/build_address";
   }
 }
 
