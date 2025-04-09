@@ -14,7 +14,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	v3 "github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
+	"github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 

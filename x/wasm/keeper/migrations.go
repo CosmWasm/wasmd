@@ -4,9 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
-	v1 "github.com/CosmWasm/wasmd/x/wasm/migrations/v1"
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
-	v3 "github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
+	"github.com/CosmWasm/wasmd/x/wasm/migrations/v1"
+	"github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
+	"github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
 )
 
 // Migrator is a struct for handling in-place store migrations.
