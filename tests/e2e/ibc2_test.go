@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -57,21 +56,11 @@ func TestIBC2SendMsg(t *testing.T) {
 
 	// IBC v2 Payload from contract on Chain B to contract on Chain A
 	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
-	type PacketMsg struct {
-		ChannelID string `json:"channel_id"`
-	}
-
-	packetMsg := PacketMsg{
-		ChannelID: path.EndpointB.ClientID,
-	}
-	packetMsgBz, err := json.Marshal(packetMsg)
-	require.NoError(t, err)
-	payload.Value = packetMsgBz
 
 	// Message timeout
 	timeoutTimestamp := uint64(chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
 
-	_, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test
