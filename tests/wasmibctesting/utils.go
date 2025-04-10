@@ -117,6 +117,10 @@ func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
 	// IBCv1 and IBCv2 `EventTypeSendPacket` are the same
 	// and the [`ParsePacketsFromEvents`] parses both of them as they were IBCv1
 	// so we have to filter them here.
+	//
+	// While parsing IBC2 events in IBC1 context the only overlapping event is the
+	// `AttributeKeyTimeoutTimestamp` so to determine if the wrong set of events was parsed
+	// we should be able to check if any other field in the packet is not set.
 	var toSendFiltered []channeltypes.Packet
 	for _, packet := range toSend {
 		if packet.SourcePort != "" {
@@ -361,7 +365,7 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 // if a relay step fails or the packet commitment does not exist on either endpoint.
 // In contrast to RelayPacket, this function does not acknowledge the packet and expects it to have no acknowledgement yet.
 // It is useful for testing async acknowledgement.
-func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet) error {
+func RelayPacketWithoutAckV2(path *WasmPath, packet channeltypesv2.Packet) error {
 	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
 	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
 		// packet found, relay from A to B
@@ -443,7 +447,7 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 	require.NoError(path.chainA, src.UpdateClient())
 	path.chainA.Logf("Relay: %d PacketsV2 A->B, %d PacketsV2 B->A\n", len(*path.chainA.PendingSendPacketsV2), len(*path.chainB.PendingSendPacketsV2))
 	for _, v := range *path.chainA.PendingSendPacketsV2 {
-		err := RelayPacketV2(path, v)
+		err := RelayPacketWithoutAckV2(path, v)
 		if err != nil {
 			return err
 		}
@@ -454,7 +458,7 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 	src = path.EndpointB
 	require.NoError(path.chainB, src.UpdateClient())
 	for _, v := range *path.chainB.PendingSendPacketsV2 {
-		err := RelayPacketV2(path, v)
+		err := RelayPacketWithoutAckV2(path, v)
 		if err != nil {
 			return err
 		}
