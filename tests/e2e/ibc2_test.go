@@ -80,11 +80,10 @@ func TestIBC2SendMsg(t *testing.T) {
 
 	// Check if counter was incremented in the recv entry point
 	var response State
-	initialCounter := 1000
 
 	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
 	require.NoError(t, err)
-	require.Equal(t, uint32(initialCounter+1), response.IBC2PacketReceiveCounter)
+	require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
 
 	// The counters on both Chains are both incremented in every iteration of the loop,
 	// because once the first relaying loop in `RelayPendingPacketsV2` the array of
@@ -97,11 +96,11 @@ func TestIBC2SendMsg(t *testing.T) {
 		// Check counter in contract A
 		err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
 		require.NoError(t, err)
-		require.Equal(t, uint32(initialCounter+1+i), response.IBC2PacketReceiveCounter)
+		require.Equal(t, uint32(i+1), response.IBC2PacketReceiveCounter)
 
 		// Check counter in contract B
 		err = chainB.SmartQuery(contractAddrB.String(), QueryMsg{QueryState: struct{}{}}, &response)
 		require.NoError(t, err)
-		require.Equal(t, uint32(initialCounter+i), response.IBC2PacketReceiveCounter)
+		require.Equal(t, uint32(i), response.IBC2PacketReceiveCounter)
 	}
 }
