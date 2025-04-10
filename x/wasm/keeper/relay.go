@@ -40,13 +40,19 @@ func (k Keeper) OnOpenChannel(
 	gasLeft := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
-	if execErr != nil {
+	switch {
+	case execErr != nil:
 		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	case res == nil:
+		return "", errorsmod.Wrap(types.ErrVMError, "empty response from contract")
+	case res.Err != "":
+		return "", types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	case res.Ok == nil:
+		// a nil "ok" value is a valid response and means the contract accepts the incoming channel version
+		// see https://docs.rs/cosmwasm-std/2.2.2/cosmwasm_std/type.IbcChannelOpenResponse.html
+		return "", nil
 	}
-	if res != nil && res.Ok != nil {
-		return res.Ok.Version, nil
-	}
-	return "", nil
+	return res.Ok.Version, nil
 }
 
 // OnConnectChannel calls the contract to let it know the IBC channel was established.
