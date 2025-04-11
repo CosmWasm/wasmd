@@ -88,15 +88,18 @@ type ChannelKeeper interface {
 // ChannelKeeperV2 defines the expected IBC2 channel keeper
 type ChannelKeeperV2 interface {
 	SendPacket(goCtx context.Context, msg *channeltypesv2.MsgSendPacket) (*channeltypesv2.MsgSendPacketResponse, error)
+	WriteAcknowledgement(
+		ctx sdk.Context,
+		clientID string,
+		sequence uint64,
+		ack channeltypesv2.Acknowledgement,
+	) error
 }
 
 // ICS4Wrapper defines the method for an IBC data package to be submitted.
 // The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
 // can add functionality on top of it. See ics4Wrapper in ibc-go.
 // It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
-//
-// For example, when ics-29 fee middleware is set up for the wasm ibc-stack, then the IBCFeeKeeper should be used, so
-// that they are in sync.
 type ICS4Wrapper interface {
 	// SendPacket is called by a module in order to send an IBC packet on a channel.
 	// The packet sequence generated for the packet to be sent is returned. An error

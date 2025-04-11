@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -22,6 +23,14 @@ type QueryMsg struct {
 // ibc2 contract response type
 type State struct {
 	IBC2PacketReceiveCounter uint32 `json:"ibc2_packet_receive_counter"`
+	LastChannelID            string `json:"last_channel_id"`
+	LastPacketSeq            uint64 `json:"last_packet_seq"`
+}
+
+// Message sent to the ibc2 contract over IBCv2 channel
+type IbcPayload struct {
+	ResponseWithoutAck     bool `json:"response_without_ack"`
+	SendAsyncAckForPrevMsg bool `json:"send_async_ack_for_prev_msg"`
 }
 
 func TestIBC2SendMsg(t *testing.T) {
@@ -56,11 +65,14 @@ func TestIBC2SendMsg(t *testing.T) {
 
 	// IBC v2 Payload from contract on Chain B to contract on Chain A
 	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	var err error
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: false, SendAsyncAckForPrevMsg: false})
+	require.NoError(t, err)
 
 	// Message timeout
 	timeoutTimestamp := uint64(chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
 
-	_, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test
@@ -92,4 +104,59 @@ func TestIBC2SendMsg(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, uint32(i), response.IBC2PacketReceiveCounter)
 	}
+}
+
+func TestIBC2RAsyncAckSending(t *testing.T) {
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
+
+	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
+	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
+
+	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
+	require.NotEmpty(t, contractAddrA)
+
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortA,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortB,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+
+	path.Path.SetupV2()
+
+	var err error
+	timeoutTimestamp := chainA.GetTimeoutTimestampSecs()
+	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: true})
+	require.NoError(t, err)
+	packet, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+	err = path.EndpointA.MsgRecvPacket(packet)
+	require.NoError(t, err)
+
+	var response State
+	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
+
+	timeoutTimestamp = chainA.GetTimeoutTimestampSecs()
+	payload = mockv2.NewMockPayload(contractPortB, contractPortA)
+	payload.Value, err = json.Marshal(IbcPayload{SendAsyncAckForPrevMsg: true})
+	require.NoError(t, err)
+	packet, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+	err = wasmibctesting.RelayPendingPacketsV2(path)
+	require.NoError(t, err)
+
+	// TODO tkulik: We need https://github.com/CosmWasm/wasmd/issues/2171 in order to properly test receiving async ACKs
 }
