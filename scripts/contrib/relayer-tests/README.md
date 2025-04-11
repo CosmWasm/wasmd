@@ -9,6 +9,6 @@ Make sure you run below scripts under `wasmd/scripts/contrib/relayer-tests` dire
 
 ## Thank you
 The setup scripts here are taken from [cosmos/relayer](https://github.com/cosmos/relayer)
-Thank your relayer team for these scripts.
+Thank you relayer team for these scripts.
 
 
