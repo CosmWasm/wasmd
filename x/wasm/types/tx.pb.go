@@ -134,7 +134,7 @@ var xxx_messageInfo_MsgStoreCodeResponse proto.InternalMessageInfo
 // MsgInstantiateContract create a new smart contract instance for the given
 // code id.
 type MsgInstantiateContract struct {
-	// Sender is the actor that signed the messages
+	// Sender is the that actor that signed the messages
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Admin is an optional address that can execute migrations
 	Admin string `protobuf:"bytes,2,opt,name=admin,proto3" json:"admin,omitempty"`
