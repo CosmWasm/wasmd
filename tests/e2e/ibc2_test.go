@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -22,6 +23,14 @@ type QueryMsg struct {
 // ibc2 contract response type
 type State struct {
 	IBC2PacketReceiveCounter uint32 `json:"ibc2_packet_receive_counter"`
+	LastChannelID            string `json:"last_channel_id"`
+	LastPacketSeq            uint64 `json:"last_packet_seq"`
+}
+
+// Message sent to the ibc2 contract over IBCv2 channel
+type IbcPayload struct {
+	ResponseWithoutAck     bool `json:"response_without_ack"`
+	SendAsyncAckForPrevMsg bool `json:"send_async_ack_for_prev_msg"`
 }
 
 func TestIBC2SendMsg(t *testing.T) {
@@ -56,11 +65,14 @@ func TestIBC2SendMsg(t *testing.T) {
 
 	// IBC v2 Payload from contract on Chain B to contract on Chain A
 	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	var err error
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: false, SendAsyncAckForPrevMsg: false})
+	require.NoError(t, err)
 
 	// Message timeout
 	timeoutTimestamp := uint64(chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
 
-	_, err := path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test

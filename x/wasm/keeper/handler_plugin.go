@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
@@ -302,7 +303,7 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 		}
 		ibcGoMsg := &channeltypesv2.MsgSendPacket{
 			SourceClient:     msg.IBC2.SendPacket.ChannelID,
-			TimeoutTimestamp: msg.IBC2.SendPacket.Timeout,
+			TimeoutTimestamp: uint64(time.Unix(0, int64(msg.IBC2.SendPacket.Timeout)).Unix()),
 			Payloads:         payloads,
 			Signer:           contractAddr.String(),
 		}
