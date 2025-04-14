@@ -2,7 +2,10 @@ package simulation
 
 import (
 	"context"
+	"cosmossdk.io/x/tx/signing"
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/cosmos/gogoproto/proto"
 	"math/rand"
 	"os"
 
@@ -470,15 +473,29 @@ func BuildOperationInput(
 	app *baseapp.BaseApp,
 	ctx sdk.Context,
 	msg interface {
-		sdk.Msg
-		Type() string
-	},
+	sdk.Msg
+	Type() string
+},
 	simAccount simtypes.Account,
 	ak types.AccountKeeper,
 	bk BankKeeper,
 	deposit sdk.Coins,
 ) simulation.OperationInput {
-	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: signing.Options{
+			AddressCodec: address.Bech32Codec{
+				Bech32Prefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			},
+			ValidatorAddressCodec: address.Bech32Codec{
+				Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
+			},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	txConfig := tx.NewTxConfig(codec.NewProtoCodec(interfaceRegistry), tx.DefaultSignModes)
 	return simulation.OperationInput{
 		R:               r,
