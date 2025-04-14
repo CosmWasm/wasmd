@@ -594,7 +594,6 @@ func NewWasmApp(
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.ChannelKeeperV2,
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
