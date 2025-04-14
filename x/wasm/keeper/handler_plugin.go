@@ -3,10 +3,8 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -42,7 +40,6 @@ func NewDefaultMessageHandler(
 	keeper *Keeper,
 	router MessageRouter,
 	ics4Wrapper types.ICS4Wrapper,
-	channelKeeperV2 types.ChannelKeeperV2,
 	bankKeeper types.Burner,
 	cdc codec.Codec,
 	portSource types.ICS20TransferPortSource,
@@ -55,7 +52,6 @@ func NewDefaultMessageHandler(
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(cdc, router, encoders),
 		NewIBCRawPacketHandler(ics4Wrapper, keeper),
-		NewIBC2RawPacketHandler(channelKeeperV2),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -253,75 +249,6 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		any, err := codectypes.NewAnyWithValue(resp)
 		if err != nil {
 			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC send response to Any")
-		}
-		msgResponses := [][]*codectypes.Any{{any}}
-
-		return nil, [][]byte{val}, msgResponses, nil
-	default:
-		return nil, nil, nil, types.ErrUnknownMsg
-	}
-}
-
-// IBC2RawPacketHandler handles IBC2Msg received from CosmWasm.
-type IBC2RawPacketHandler struct {
-	channelKeeperV2 types.ChannelKeeperV2
-}
-
-// NewIBCRawPacketHandler constructor
-func NewIBC2RawPacketHandler(channelKeeperV2 types.ChannelKeeperV2) IBC2RawPacketHandler {
-	return IBC2RawPacketHandler{
-		channelKeeperV2: channelKeeperV2,
-	}
-}
-
-// DispatchMsg publishes a raw IBC2 packet onto the channel.
-func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
-	contractAddr sdk.AccAddress, contractIBC2PortID string, msg wasmvmtypes.CosmosMsg,
-) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
-	if msg.IBC2 == nil {
-		return nil, nil, nil, types.ErrUnknownMsg
-	}
-	switch {
-	case msg.IBC2.SendPacket != nil:
-		if contractIBC2PortID == "" {
-			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc2 not supported")
-		}
-		contractIBCChannelID := msg.IBC2.SendPacket.ChannelID
-		if contractIBCChannelID == "" {
-			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc2 channel")
-		}
-
-		var payloads []channeltypesv2.Payload
-		for _, payload := range msg.IBC2.SendPacket.Payloads {
-			payloads = append(payloads, channeltypesv2.Payload{
-				SourcePort:      payload.SourcePort,
-				DestinationPort: payload.DestinationPort,
-				Version:         payload.Version,
-				Encoding:        payload.Encoding,
-				Value:           payload.Value,
-			})
-		}
-		ibcGoMsg := &channeltypesv2.MsgSendPacket{
-			SourceClient:     msg.IBC2.SendPacket.ChannelID,
-			TimeoutTimestamp: uint64(time.Unix(0, int64(msg.IBC2.SendPacket.Timeout)).Unix()),
-			Payloads:         payloads,
-			Signer:           contractAddr.String(),
-		}
-
-		ibcGoResp, err := h.channelKeeperV2.SendPacket(ctx, ibcGoMsg)
-		if err != nil {
-			return nil, nil, nil, errorsmod.Wrap(err, "channel")
-		}
-		moduleLogger(ctx).Debug("ibc2 packet set", "seq", ibcGoResp.Sequence)
-
-		resp := &types.MsgIBCSendResponse{Sequence: ibcGoResp.Sequence}
-		val, err := resp.Marshal()
-		if err != nil {
-			return nil, nil, nil, errorsmod.Wrap(err, "failed to marshal IBC2 send response")
-		}
-		any, err := codectypes.NewAnyWithValue(resp)
-		if err != nil {
-			return nil, nil, nil, errorsmod.Wrap(err, "failed to convert IBC2 send response to Any")
 		}
 		msgResponses := [][]*codectypes.Any{{any}}
 
