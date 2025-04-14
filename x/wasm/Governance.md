@@ -6,7 +6,7 @@ a high-level, technical introduction meant to provide context before
 looking into the code, or constructing proposals. 
 
 ## Proposal Types
-We have added 15 new wasm specific proposal messages that cover the contract's live cycle and authorization:
+We have added 15 new wasm specific proposal messages that cover the contract's lifecycle and authorization:
  
 * `MsgStoreCode` - upload a wasm binary
 * `MsgInstantiateContract` - instantiate a wasm contract

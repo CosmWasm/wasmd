@@ -48,7 +48,7 @@ func canonicalizeAddress(human string) ([]byte, uint64, error) {
 func validateAddress(human string) (uint64, error) {
 	canonicalized, err := sdk.AccAddressFromBech32(human)
 	if err != nil {
-		return costValidate, err
+		return costCanonical, err
 	}
 	// AccAddressFromBech32 already calls VerifyAddressFormat, so we can just humanize and compare
 	if canonicalized.String() != human {
