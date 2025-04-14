@@ -17,7 +17,7 @@ import (
 
 type AppKeepers struct {
 	AccountKeeper         *authkeeper.AccountKeeper
-	ParamsKeeper          *paramskeeper.Keeper
+	ParamsKeeper          *paramskeeper.Keeper //nolint // TODO remove deprecated module
 	ConsensusParamsKeeper *consensusparamkeeper.Keeper
 	Codec                 codec.Codec
 	GetStoreKey           func(storeKey string) *storetypes.KVStoreKey
