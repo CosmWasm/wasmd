@@ -110,7 +110,7 @@ func MakeEncodingConfig(_ testing.TB) moduletestutil.TestEncodingConfig {
 		mint.AppModule{},
 		slashing.AppModule{},
 		gov.AppModule{},
-		crisis.AppModule{},
+		crisis.AppModule{}, //nolint // TODO remove deprecated module
 		ibc.AppModule{},
 		transfer.AppModule{},
 		vesting.AppModule{},
@@ -251,6 +251,7 @@ func createTestInput(
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
+	//nolint // TODO remove deprecated module
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
 		legacyAmino,

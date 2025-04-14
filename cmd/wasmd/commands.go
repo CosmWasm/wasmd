@@ -126,7 +126,7 @@ func initRootCmd(
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
+	crisis.AddModuleInitFlags(startCmd) //nolint // TODO remove deprecated module
 	wasm.AddModuleInitFlags(startCmd)
 }
 

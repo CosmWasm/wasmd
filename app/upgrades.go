@@ -75,6 +75,7 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 	}
 }
 
+// nolint // TODO remove deprecated module
 func setupLegacyKeyTables(k *paramskeeper.Keeper) {
 	for _, subspace := range k.GetSubspaces() {
 		subspace := subspace
