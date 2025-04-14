@@ -2,12 +2,14 @@ package simulation
 
 import (
 	"context"
-	"cosmossdk.io/x/tx/signing"
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/gogoproto/proto"
 	"math/rand"
 	"os"
+
+	"cosmossdk.io/x/tx/signing"
+
+	"github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/cosmos/gogoproto/proto"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
@@ -473,9 +475,9 @@ func BuildOperationInput(
 	app *baseapp.BaseApp,
 	ctx sdk.Context,
 	msg interface {
-	sdk.Msg
-	Type() string
-},
+		sdk.Msg
+		Type() string
+	},
 	simAccount simtypes.Account,
 	ak types.AccountKeeper,
 	bk BankKeeper,
