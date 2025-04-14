@@ -928,7 +928,7 @@ func TestEncodeIBCv2Msg(t *testing.T) {
 								Value:           []byte{},
 							},
 						},
-						Timeout: 1000,
+						Timeout: 1000000000000,
 					},
 				},
 			},
