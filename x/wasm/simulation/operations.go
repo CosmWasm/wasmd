@@ -6,17 +6,15 @@ import (
 	"math/rand"
 	"os"
 
-	"cosmossdk.io/x/tx/signing"
-
-	"github.com/cosmos/cosmos-sdk/codec/address"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/x/tx/signing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
