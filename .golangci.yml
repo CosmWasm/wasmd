@@ -15,13 +15,9 @@ linters:
   enable:
     - errcheck
     - dogsled
-    - exportloopref
     - goconst
     - gocritic
-    - gci
-    - gofumpt
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -30,7 +26,6 @@ linters:
     - staticcheck
     - revive
     - stylecheck
-    - typecheck
 #    - thelper # too many positives with table tests that have custom setup(*testing.T)
     - unconvert
     - unused
