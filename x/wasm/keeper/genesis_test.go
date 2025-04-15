@@ -33,7 +33,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestGenesisExportImport(t *testing.T) {
@@ -695,7 +694,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		nil,
 		tempDir,
 		nodeConfig,
-		wasmtypes.VMConfig{},
+		types.VMConfig{},
 		AvailableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
