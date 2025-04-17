@@ -918,7 +918,7 @@ func TestEncodeIBCv2Msg(t *testing.T) {
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC2: &wasmvmtypes.IBC2Msg{
 					SendPacket: &wasmvmtypes.IBC2SendPacketMsg{
-						ChannelID: myAddr.String(),
+						SourceClient: myAddr.String(),
 						Payloads: []wasmvmtypes.IBC2Payload{
 							{
 								SourcePort:      PortIDForContractV2(myAddr),
