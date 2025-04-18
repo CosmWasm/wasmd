@@ -360,7 +360,7 @@ func EncodeIBCv2Msg(sender sdk.AccAddress, msg *wasmvmtypes.IBC2Msg) ([]sdk.Msg,
 			})
 		}
 		msg := &channeltypesv2.MsgSendPacket{
-			SourceClient:     msg.SendPacket.ChannelID,
+			SourceClient:     msg.SendPacket.SourceClient,
 			TimeoutTimestamp: uint64(time.Unix(0, int64(msg.SendPacket.Timeout)).Unix()),
 			Payloads:         payloads,
 			Signer:           sender.String(),
