@@ -2,13 +2,15 @@ module github.com/CosmWasm/wasmd
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/CosmWasm/wasmvm/v2 v2.2.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.50.13
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.0
-	github.com/cosmos/iavl v1.2.4
+	github.com/cosmos/iavl v1.2.6
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.4
