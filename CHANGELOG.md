@@ -294,7 +294,7 @@ below to learn more!
 ### Notable changes:
 
 - If you are not coming from v0.32.0, please see the "Notables changes" below, first. Especially about CometBFT.
-- IBC-Go is a new major version including the "hucklebery" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
+- IBC-Go is a new major version including the "huckleberry" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
 - SDK 47 support is a big step from the SDK 45 version supported before. Make sure to read the upgrade guide for the SDK
   before applying any changes. Links below.
 - Some advice from working with SDK 47 that may affect you, too:
