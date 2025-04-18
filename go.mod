@@ -47,7 +47,7 @@ require (
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/ibc-go/v10 v10.1.0
 	github.com/distribution/reference v0.5.0
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.19.0
 	golang.org/x/sync v0.12.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422
