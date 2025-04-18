@@ -5,6 +5,7 @@ import (
 	fmt "fmt"
 	io "io"
 	math_bits "math/bits"
+	"slices"
 
 	proto "github.com/cosmos/gogoproto/proto"
 	"gopkg.in/yaml.v2"
@@ -366,15 +367,7 @@ func (m *AccessConfig) Equal(that interface{}) bool {
 	if m.Address != that1.Address {
 		return false
 	}
-	if len(m.Addresses) != len(that1.Addresses) {
-		return false
-	}
-	for i := range m.Addresses {
-		if m.Addresses[i] != that1.Addresses[i] {
-			return false
-		}
-	}
-	return true
+	return slices.Equal(m.Addresses, that1.Addresses)
 }
 
 func (m *Params) Equal(that interface{}) bool {
