@@ -18,7 +18,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
+	"github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
