@@ -40,7 +40,7 @@ func (k Keeper) OnOpenChannel(
 	gasLeft := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
-
+	// check if contract panicked / VM failed
 	if execErr != nil {
 		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
@@ -48,6 +48,7 @@ func (k Keeper) OnOpenChannel(
 		// If this gets executed, that's a bug in wasmvm
 		return "", errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
 	}
+	// check contract result
 	if res.Err != "" {
 		return "", types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
