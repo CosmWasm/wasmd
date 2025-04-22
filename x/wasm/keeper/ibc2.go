@@ -73,6 +73,21 @@ func (module IBC2Handler) OnTimeoutPacket(
 	payload channeltypesv2.Payload,
 	relayer sdk.AccAddress,
 ) error {
+	contractAddr, err := ContractFromPortID2(payload.SourcePort)
+	if err != nil {
+		return errorsmod.Wrapf(err, "contract port id")
+	}
+	msg := wasmvmtypes.IBC2PacketTimeoutMsg{
+		Payload:           newIBC2Payload(payload),
+		SourceClient:      sourceClient,
+		DestinationClient: destinationClient,
+		PacketSequence:    sequence,
+		Relayer:           relayer.String(),
+	}
+	err = module.keeper.OnTimeoutIBC2Packet(ctx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on timeout")
+	}
 	return nil
 }
 
@@ -96,7 +111,7 @@ func (k Keeper) OnRecvIBC2Packet(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2PacketReceiveMsg,
 ) channeltypesv2.RecvPacketResult {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-recv-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-recv-packet")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return channeltypesv2.RecvPacketResult{
@@ -163,6 +178,41 @@ func (k Keeper) OnRecvIBC2Packet(
 		Status:          channeltypesv2.PacketStatus_Success,
 		Acknowledgement: data,
 	}
+}
+
+// OnTimeoutIBC2Packet calls the contract to let it know the packet was never received
+// on the destination chain within the timeout boundaries.
+// The contract should handle this on the application level and undo the original operation
+func (k Keeper) OnTimeoutIBC2Packet(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	msg wasmvmtypes.IBC2PacketTimeoutMsg,
+) error {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-timeout-packet")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	env := types.NewEnv(ctx, contractAddr)
+	querier := k.newQueryHandler(ctx, contractAddr)
+
+	gasLeft := k.runtimeGasForContract(ctx)
+	res, gasUsed, execErr := k.wasmVM.IBC2PacketTimeout(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasUsed)
+	if execErr != nil {
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 func newIBC2Payload(payload channeltypesv2.Payload) wasmvmtypes.IBC2Payload {
