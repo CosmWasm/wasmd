@@ -83,8 +83,8 @@ func TestOnOpenChannel(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 		})
 	}
 }
@@ -189,8 +189,8 @@ func TestOnConnectChannel(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 			// verify msgs dispatched
 			require.Len(t, *capturedMsgs, len(spec.contractResp.Messages))
 			for i, m := range spec.contractResp.Messages {
@@ -299,8 +299,8 @@ func TestOnCloseChannel(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 			// verify msgs dispatched
 			require.Len(t, *capturedMsgs, len(spec.contractResp.Messages))
 			for i, m := range spec.contractResp.Messages {
@@ -495,8 +495,8 @@ func TestOnRecvPacket(t *testing.T) {
 			}
 
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 
 			// verify msgs dispatched on success/ err response
 			if spec.contractResp.Err != "" {
@@ -606,8 +606,8 @@ func TestOnAckPacket(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 			// verify msgs dispatched
 			require.Len(t, *capturedMsgs, len(spec.contractResp.Messages))
 			for i, m := range spec.contractResp.Messages {
@@ -726,8 +726,8 @@ func TestOnTimeoutPacket(t *testing.T) {
 			}
 			require.NoError(t, err)
 			// verify gas consumed
-			const storageCosts = storetypes.Gas(2903)
-			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
+			const storageCosts = storetypes.Gas(3903)
+			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts-types.DefaultInstanceCost)
 			// verify msgs dispatched
 			require.Len(t, *capturedMsgs, len(spec.contractResp.Messages))
 			for i, m := range spec.contractResp.Messages {
