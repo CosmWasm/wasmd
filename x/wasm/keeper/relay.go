@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
@@ -37,12 +36,7 @@ func (k Keeper) OnOpenChannel(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return "", errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-open-channel")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -91,12 +85,7 @@ func (k Keeper) OnConnectChannel(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-connect-channel")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -139,12 +128,7 @@ func (k Keeper) OnCloseChannel(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-close-channel")
 
 	params := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -186,12 +170,7 @@ func (k Keeper) OnRecvPacket(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-recv-packet")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -269,12 +248,7 @@ func (k Keeper) OnAckPacket(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-ack-packet")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -314,12 +288,7 @@ func (k Keeper) OnTimeoutPacket(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-timeout-packet")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -358,12 +327,7 @@ func (k Keeper) IBCSourceCallback(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-source-chain-callback")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
@@ -402,12 +366,7 @@ func (k Keeper) IBCDestinationCallback(
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx, discount := k.checkDiscountEligibility(sdkCtx, codeInfo.CodeHash, k.IsPinnedCode(ctx, contractInfo.CodeID))
-	msgBz, err := json.Marshal(msg) // this is not great
-	if err != nil {
-		// this should never happen, as we just built this message
-		return errorsmod.Wrap(types.ErrInvalidMsg, err.Error())
-	}
-	setupCost := k.gasRegister.SetupContractCost(discount, len(msgBz))
+	setupCost := k.gasRegister.SetupContractCost(discount, msg.ExpectedJSONSize())
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: ibc-destination-chain-callback")
 
 	env := types.NewEnv(ctx, k.txHash, contractAddr)
