@@ -24,6 +24,7 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }
 
+// The port prefix refers to "CosmWasm over IBC v2" and ensures packets are routed to the right entry points
 const portIDPrefixV2 = "wasm2"
 
 func PortIDForContractV2(addr sdk.AccAddress) string {
