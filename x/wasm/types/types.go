@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"slices"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -251,11 +252,8 @@ func (a *AbsoluteTxPosition) Bytes() []byte {
 // ValidateBasic syntax checks
 func (c ContractCodeHistoryEntry) ValidateBasic() error {
 	var found bool
-	for _, v := range AllCodeHistoryTypes {
-		if c.Operation == v {
-			found = true
-			break
-		}
+	if slices.Contains(AllCodeHistoryTypes, c.Operation) {
+		found = true
 	}
 	if !found {
 		return ErrInvalid.Wrap("operation")
@@ -420,11 +418,8 @@ func isSubset(super, sub []string) bool {
 	}
 	var matches int
 	for _, o := range sub {
-		for _, s := range super {
-			if o == s {
-				matches++
-				break
-			}
+		if slices.Contains(super, o) {
+			matches++
 		}
 	}
 	return matches == len(sub)

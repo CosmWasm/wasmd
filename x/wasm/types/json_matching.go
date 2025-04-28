@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"slices"
 )
 
 // isJSONObjectWithTopLevelKey returns true if the given bytes are a valid JSON object
@@ -22,10 +23,8 @@ func isJSONObjectWithTopLevelKey(jsonBytes RawContractMessage, allowedKeys []str
 
 	// Loop is executed exactly once
 	for topLevelKey := range document {
-		for _, allowedKey := range allowedKeys {
-			if allowedKey == topLevelKey {
-				return true, nil
-			}
+		if slices.Contains(allowedKeys, topLevelKey) {
+			return true, nil
 		}
 		return false, nil
 	}
