@@ -24,7 +24,7 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }
 
-const portIDPrefixV2 = "wasmV2"
+const portIDPrefixV2 = "wasm2"
 
 func PortIDForContractV2(addr sdk.AccAddress) string {
 	return portIDPrefixV2 + addr.String()
