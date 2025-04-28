@@ -28,16 +28,18 @@ Also CosmWasm 2.0 contracts remain compatible at the Wasm interface level.
 To extend the feature set over time, contracts can specify required [capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES.md) through cargo features in cosmwasm-std.
 The following table shows which of the [latest capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) are supported by certain wasmd versions.
 
-| capability   | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
-| ------------ | ------- | ------- | ------- | ------- | ------- | ---- |
-| iterator     | x       | x       | x       | x       | x       | x    |
-| stargate     | x       | x       | x       | x       | x       | x    |
-| staking      | x       | x       | x       | x       | x       | x    |
-| cosmwasm_1_1 | x       | x       | x       | x       | x       |      |
-| cosmwasm_1_2 | x       | x       | x       | x       |         |      |
-| cosmwasm_1_3 | x       | x       | x       |         |         |      |
-| cosmwasm_1_4 | x       | x       |         |         |         |      |
-| cosmwasm_2_0 | x       |         |         |         |         |      |
+| capability   | >= 0.54 | >= 0.52 | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
+| ------------ | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ---- |
+| iterator     | x       | x       | x       | x       | x       | x       | x       | x    |
+| stargate     | x       | x       | x       | x       | x       | x       | x       | x    |
+| staking      | x       | x       | x       | x       | x       | x       | x       | x    |
+| cosmwasm_1_1 | x       | x       | x       | x       | x       | x       | x       |      |
+| cosmwasm_1_2 | x       | x       | x       | x       | x       | x       |         |      |
+| cosmwasm_1_3 | x       | x       | x       | x       | x       |         |         |      |
+| cosmwasm_1_4 | x       | x       | x       | x       |         |         |         |      |
+| cosmwasm_2_0 | x       | x       | x       |         |         |         |         |      |
+| cosmwasm_2_1 | x       | x       |         |         |         |         |         |      |
+| cosmwasm_2_2 | x       |         |         |         |         |         |         |      |
 
 ### For node developers
 
@@ -53,6 +55,12 @@ The following table shows
 
 | wasmd  | compatible | specified                                                         |
 | ------ | ---------- | ----------------------------------------------------------------- |
+| 0.55.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.55.0/go.mod#L6) |
+| 0.54.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.54.0/go.mod#L6) |
+| 0.53.2 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.2/go.mod#L6) |
+| 0.53.1 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.1/go.mod#L6) |
+| 0.53.0 | 2.1.x      | [2.1.2](https://github.com/CosmWasm/wasmd/blob/v0.53.0/go.mod#L6) |
+| 0.52.0 | 2.1.x      | [2.1.0](https://github.com/CosmWasm/wasmd/blob/v0.52.0/go.mod#L6) |
 | 0.51.0 | 2.0.x      | [2.0.0](https://github.com/CosmWasm/wasmd/blob/v0.51.0/go.mod#L6) |
 | 0.50.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6) |
 | 0.45.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6) |
