@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
@@ -281,7 +281,7 @@ func getExpectedLibwasmVersion() string {
 		panic("can't read build info")
 	}
 	for _, d := range buildInfo.Deps {
-		if d.Path != "github.com/CosmWasm/wasmvm/v2" {
+		if d.Path != "github.com/CosmWasm/wasmvm/v3" {
 			continue
 		}
 		if d.Replace != nil {

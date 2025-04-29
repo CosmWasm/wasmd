@@ -10,7 +10,7 @@ import (
 	"os"
 	"strconv"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
