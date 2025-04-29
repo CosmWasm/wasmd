@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

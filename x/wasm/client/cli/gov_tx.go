@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	"github.com/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

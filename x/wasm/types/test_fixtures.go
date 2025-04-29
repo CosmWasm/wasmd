@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"math/rand"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 
 	sdkmath "cosmossdk.io/math"
 
