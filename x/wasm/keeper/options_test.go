@@ -139,7 +139,7 @@ func TestConstructorOptions(t *testing.T) {
 			},
 		},
 		"gov propagation": {
-			srcOpt: WitGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
+			srcOpt: WithGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
 			verify: func(t *testing.T, k Keeper) {
 				exp := map[types.AuthorizationPolicyAction]struct{}{
 					types.AuthZActionInstantiate:     {},

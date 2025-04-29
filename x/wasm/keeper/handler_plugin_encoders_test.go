@@ -986,14 +986,14 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"denom to short": {
+		"denom too short": {
 			src: wasmvmtypes.Coin{
 				Denom:  "f",
 				Amount: "1",
 			},
 			expErr: true,
 		},
-		"invalid demum char": {
+		"invalid denom char": {
 			src: wasmvmtypes.Coin{
 				Denom:  "&fff",
 				Amount: "1",

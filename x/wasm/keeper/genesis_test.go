@@ -33,7 +33,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestGenesisExportImport(t *testing.T) {
@@ -656,9 +655,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	t.Helper()
-	tempDir, err := os.MkdirTemp("", "wasm")
-	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	tempDir := t.TempDir()
 
 	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 
@@ -697,7 +694,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		nil,
 		tempDir,
 		nodeConfig,
-		wasmtypes.VMConfig{},
+		types.VMConfig{},
 		AvailableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		nil,
