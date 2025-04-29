@@ -258,9 +258,9 @@ jobs:
 workflows:
   test-suite:
     jobs:
-      # - docker-image:
-      #     requires:
-      #       - setup-dependencies
+      - docker-image:
+          requires:
+            - setup-dependencies
       - docker-tagged:
           filters:
             tags:
