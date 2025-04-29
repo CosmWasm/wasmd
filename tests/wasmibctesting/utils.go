@@ -21,6 +21,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+	hostv2 "github.com/cosmos/ibc-go/v10/modules/core/24-host/v2"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
 
@@ -486,6 +487,34 @@ func TimeoutPendingPackets(coord *ibctesting.Coordinator, path *WasmPath) error 
 		packetKey := host.PacketReceiptKey(packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 		proofUnreceived, proofHeight := dest.QueryProof(packetKey)
 		timeoutMsg := channeltypes.NewMsgTimeout(packet, packet.Sequence, proofUnreceived, proofHeight, src.Chain.SenderAccount.GetAddress().String())
+		_, err := path.chainA.SendMsgs(timeoutMsg)
+		if err != nil {
+			return err
+		}
+	}
+	*path.chainA.PendingSendPackets = []channeltypes.Packet{}
+	return nil
+}
+
+// TimeoutPendingPacketsV2 returns the package to source chain to let the IBCv2 app revert any operation.
+// from A to B
+func TimeoutPendingPacketsV2(coord *ibctesting.Coordinator, path *WasmPath) error {
+	src := path.EndpointA
+	dest := path.EndpointB
+
+	toSend := path.chainA.PendingSendPacketsV2
+	coord.Logf("Timeout %d Packets A->B\n", len(*toSend))
+	require.NoError(coord, src.UpdateClient())
+
+	// Increment time and commit block so that 1 minute delay period passes between send and receive
+	coord.IncrementTimeBy(time.Minute)
+	err := path.EndpointA.UpdateClient()
+	require.NoError(coord, err)
+	for _, packet := range *toSend {
+		// get proof of packet unreceived on dest
+		packetKey := hostv2.PacketReceiptKey(packet.GetDestinationClient(), packet.GetSequence())
+		proofUnreceived, proofHeight := dest.QueryProof(packetKey)
+		timeoutMsg := channeltypesv2.NewMsgTimeout(packet, proofUnreceived, proofHeight, src.Chain.SenderAccount.GetAddress().String())
 		_, err := path.chainA.SendMsgs(timeoutMsg)
 		if err != nil {
 			return err
