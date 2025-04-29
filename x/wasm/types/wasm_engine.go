@@ -306,6 +306,20 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCReceiveResult, uint64, error)
 
+	// IBC2PacketTimeout is available on IBCv2-enabled contracts and is called when an
+	// outgoing packet (previously sent by this contract) will probably never be executed.
+	IBC2PacketTimeout(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		packet wasmvmtypes.IBC2PacketTimeoutMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResult, uint64, error)
+
 	// Pin pins a code to an in-memory cache, such that is
 	// always loaded quickly when executed.
 	// Pin is idempotent.
