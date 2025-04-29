@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"runtime/debug"
 
@@ -285,6 +286,25 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
+func (q GrpcQuerier) CodeInfo(c context.Context, req *types.QueryCodeInfoRequest) (*types.QueryCodeInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	if req.CodeId == 0 {
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
+	}
+	info := queryCodeInfo(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
+	if info == nil {
+		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
+	}
+	return &types.QueryCodeInfoResponse{
+		CodeID:                info.CodeID,
+		Creator:               info.Creator,
+		Checksum:              info.DataHash,
+		InstantiatePermission: info.InstantiatePermission,
+	}, nil
+}
+
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
@@ -298,19 +318,10 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 }
 
 func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
-	if codeID == 0 {
-		return nil, nil
-	}
-	res := keeper.GetCodeInfo(ctx, codeID)
-	if res == nil {
+	info := queryCodeInfo(ctx, codeID, keeper)
+	if info == nil {
 		// nil, nil leads to 404 in rest handler
 		return nil, nil
-	}
-	info := types.CodeInfoResponse{
-		CodeID:                codeID,
-		Creator:               res.Creator,
-		DataHash:              res.CodeHash,
-		InstantiatePermission: res.InstantiateConfig,
 	}
 
 	code, err := keeper.GetByteCode(ctx, codeID)
@@ -318,7 +329,24 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 		return nil, errorsmod.Wrap(err, "loading wasm code")
 	}
 
-	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil
+	return &types.QueryCodeResponse{CodeInfoResponse: info, Data: code}, nil
+}
+
+func queryCodeInfo(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) *types.CodeInfoResponse {
+	if codeID == 0 {
+		return nil
+	}
+	res := keeper.GetCodeInfo(ctx, codeID)
+	if res == nil {
+		return nil
+	}
+	info := types.CodeInfoResponse{
+		CodeID:                codeID,
+		Creator:               res.Creator,
+		DataHash:              res.CodeHash,
+		InstantiatePermission: res.InstantiateConfig,
+	}
+	return &info
 }
 
 func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesRequest) (*types.QueryPinnedCodesResponse, error) {
@@ -375,8 +403,8 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
 	pageRes, err := query.FilteredPaginate(prefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
-			contracts = append(contracts, accAddres.String())
+			accAddress := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
+			contracts = append(contracts, accAddress.String())
 		}
 		return true, nil
 	})
@@ -410,6 +438,17 @@ func ensurePaginationParams(req *query.PageRequest) (*query.PageRequest, error) 
 		req.Limit = maxResultEntries
 	}
 	return req, nil
+}
+
+func (q GrpcQuerier) WasmLimitsConfig(c context.Context, req *types.QueryWasmLimitsConfigRequest) (*types.QueryWasmLimitsConfigResponse, error) {
+	json, err := json.Marshal(q.keeper.GetWasmLimits())
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryWasmLimitsConfigResponse{
+		Config: string(json),
+	}, nil
 }
 
 func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddressRequest) (*types.QueryBuildAddressResponse, error) {

@@ -232,3 +232,82 @@ func TestGasRegisterDecorator(t *testing.T) {
 		})
 	}
 }
+
+func TestTxContractsDecorator(t *testing.T) {
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	specs := map[string]struct {
+		empty          bool
+		simulate       bool
+		nextAssertAnte func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error)
+	}{
+		"simulation - empty tx contracts": {
+			empty:    true,
+			simulate: true,
+			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				txContracts, ok := types.TxContractsFromContext(ctx)
+				assert.True(t, ok)
+				require.True(t, simulate)
+				require.Empty(t, txContracts.GetContracts())
+				return ctx, nil
+			},
+		},
+		"not simulation - empty tx contracts": {
+			empty:    true,
+			simulate: false,
+			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				txContracts, ok := types.TxContractsFromContext(ctx)
+				assert.True(t, ok)
+				require.False(t, simulate)
+				require.Empty(t, txContracts.GetContracts())
+				return ctx, nil
+			},
+		},
+		"simulation - not empty tx contracts": {
+			empty:    false,
+			simulate: true,
+			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				txContracts, ok := types.TxContractsFromContext(ctx)
+				assert.True(t, ok)
+				require.True(t, simulate)
+				require.Empty(t, txContracts.GetContracts())
+				return ctx, nil
+			},
+		},
+		"not simulation - not empty tx contracts": {
+			empty:    false,
+			simulate: false,
+			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				txContracts, ok := types.TxContractsFromContext(ctx)
+				assert.True(t, ok)
+				require.False(t, simulate)
+				require.Empty(t, txContracts.GetContracts())
+				return ctx, nil
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := sdk.NewContext(ms, cmtproto.Header{
+				Height: 100,
+				Time:   time.Now(),
+			}, false, log.NewNopLogger())
+
+			if !spec.empty {
+				contracts := types.NewTxContracts()
+				contracts.AddContract([]byte("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5"))
+				ctx = types.WithTxContracts(ctx, contracts)
+			}
+
+			var anyTx sdk.Tx
+
+			// when
+			ante := keeper.NewTxContractsDecorator()
+			_, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, spec.nextAssertAnte)
+
+			// then
+			require.NoError(t, gotErr)
+		})
+	}
+}

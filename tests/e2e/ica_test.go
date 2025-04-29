@@ -23,7 +23,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 )
 
 func TestICA(t *testing.T) {

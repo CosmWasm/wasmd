@@ -102,6 +102,8 @@
     - [QueryAllContractStateResponse](#cosmwasm.wasm.v1.QueryAllContractStateResponse)
     - [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest)
     - [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse)
+    - [QueryCodeInfoRequest](#cosmwasm.wasm.v1.QueryCodeInfoRequest)
+    - [QueryCodeInfoResponse](#cosmwasm.wasm.v1.QueryCodeInfoResponse)
     - [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest)
     - [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse)
     - [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest)
@@ -122,6 +124,9 @@
     - [QueryRawContractStateResponse](#cosmwasm.wasm.v1.QueryRawContractStateResponse)
     - [QuerySmartContractStateRequest](#cosmwasm.wasm.v1.QuerySmartContractStateRequest)
     - [QuerySmartContractStateResponse](#cosmwasm.wasm.v1.QuerySmartContractStateResponse)
+    - [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest)
+    - [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse)
+
 
     - [Query](#cosmwasm.wasm.v1.Query)
 
@@ -1377,10 +1382,10 @@ a v1 governance proposal.
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's enviroment as sender |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encode message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 | `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
@@ -1407,7 +1412,7 @@ a v1 governance proposal.
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 
@@ -1478,7 +1483,7 @@ the x/gov module via a v1 governance proposal.
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 | `source` | [string](#string) |  | Source is the URL where the code is hosted |
@@ -1701,6 +1706,39 @@ method.
 
 
 
+<a name="cosmwasm.wasm.v1.QueryCodeInfoRequest"></a>
+
+### QueryCodeInfoRequest
+QueryCodeInfoRequest is the request type for the Query/CodeInfo RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryCodeInfoResponse"></a>
+
+### QueryCodeInfoResponse
+QueryCodeInfoResponse is the response type for the Query/CodeInfo RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  |  |
+| `creator` | [string](#string) |  |  |
+| `checksum` | [bytes](#bytes) |  |  |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryCodeRequest"></a>
 
 ### QueryCodeRequest
@@ -1709,7 +1747,7 @@ QueryCodeRequest is the request type for the Query/Code RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
 
 
 
@@ -1839,7 +1877,7 @@ RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodeID |
 | `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
@@ -2021,6 +2059,34 @@ Query/SmartContractState RPC method
 
 
 
+
+<a name="cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest"></a>
+
+### QueryWasmLimitsConfigRequest
+QueryWasmLimitsConfigRequest is the request type for the
+Query/WasmLimitsConfig RPC method.
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse"></a>
+
+### QueryWasmLimitsConfigResponse
+QueryWasmLimitsConfigResponse is the response type for the
+Query/WasmLimitsConfig RPC method. It contains the JSON encoded limits for
+static validation of Wasm files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `config` | [string](#string) |  |  |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -2041,11 +2107,13 @@ Query provides defines the gRPC querier service
 | `AllContractState` | [QueryAllContractStateRequest](#cosmwasm.wasm.v1.QueryAllContractStateRequest) | [QueryAllContractStateResponse](#cosmwasm.wasm.v1.QueryAllContractStateResponse) | AllContractState gets all raw store data for a single contract | GET|/cosmwasm/wasm/v1/contract/{address}/state|
 | `RawContractState` | [QueryRawContractStateRequest](#cosmwasm.wasm.v1.QueryRawContractStateRequest) | [QueryRawContractStateResponse](#cosmwasm.wasm.v1.QueryRawContractStateResponse) | RawContractState gets single key from the raw store data of a contract | GET|/cosmwasm/wasm/v1/contract/{address}/raw/{query_data}|
 | `SmartContractState` | [QuerySmartContractStateRequest](#cosmwasm.wasm.v1.QuerySmartContractStateRequest) | [QuerySmartContractStateResponse](#cosmwasm.wasm.v1.QuerySmartContractStateResponse) | SmartContractState get smart query result from the contract | GET|/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}|
-| `Code` | [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest) | [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse) | Code gets the binary code and metadata for a singe wasm code | GET|/cosmwasm/wasm/v1/code/{code_id}|
+| `Code` | [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest) | [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse) | Code gets the binary code and metadata for a single wasm code | GET|/cosmwasm/wasm/v1/code/{code_id}|
 | `Codes` | [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest) | [QueryCodesResponse](#cosmwasm.wasm.v1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes | GET|/cosmwasm/wasm/v1/code|
+| `CodeInfo` | [QueryCodeInfoRequest](#cosmwasm.wasm.v1.QueryCodeInfoRequest) | [QueryCodeInfoResponse](#cosmwasm.wasm.v1.QueryCodeInfoResponse) | CodeInfo gets the metadata for a single wasm code | GET|/cosmwasm/wasm/v1/code-info/{code_id}|
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
+| `WasmLimitsConfig` | [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest) | [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse) | WasmLimitsConfig gets the configured limits for static validation of Wasm files, encoded in JSON. | GET|/cosmwasm/wasm/v1/wasm-limits-config|
 | `BuildAddress` | [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest) | [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse) | BuildAddress builds a contract address | GET|/cosmwasm/wasm/v1/contract/build_address|
 
  <!-- end services -->
@@ -2330,7 +2398,7 @@ Since: 0.40
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional. As default the uploaded contract is pinned to cache. |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred from the authority account to the contract on instantiation |
 | `source` | [string](#string) |  | Source is the URL where the code is hosted |

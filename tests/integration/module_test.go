@@ -1,4 +1,4 @@
-package wasm
+package integration
 
 import (
 	"bytes"
@@ -19,11 +19,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
@@ -44,7 +45,7 @@ func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
 }
 
 type testData struct {
-	module           AppModule
+	module           wasm.AppModule
 	ctx              sdk.Context
 	acctKeeper       authkeeper.AccountKeeper
 	keeper           keeper.Keeper
@@ -53,7 +54,7 @@ type testData struct {
 	faucet           *keeper.TestFaucet
 	grpcQueryRouter  *baseapp.GRPCQueryRouter
 	msgServiceRouter *baseapp.MsgServiceRouter
-	encConf          params.EncodingConfig
+	encConf          moduletestutil.TestEncodingConfig
 }
 
 func setupTest(t *testing.T) testData {
@@ -65,7 +66,7 @@ func setupTest(t *testing.T) testData {
 
 	ctx, keepers := keeper.CreateTestInput(t, false, []string{
 		"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
 	})
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
@@ -73,7 +74,7 @@ func setupTest(t *testing.T) testData {
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(DefaultParams)),
+		module:           wasm.NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(DefaultParams)),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,
@@ -106,7 +107,7 @@ func mustLoad(path string) []byte {
 var (
 	addrAcc1     = keyPubAddr()
 	addr1        = addrAcc1.String()
-	testContract = mustLoad("./keeper/testdata/hackatom.wasm")
+	testContract = mustLoad("./testdata/hackatom.wasm")
 	maskContract = testdata.ReflectContractWasm()
 	oldContract  = mustLoad("./testdata/escrow_0.7.wasm")
 )
@@ -460,7 +461,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
 }
 
-func TestReadWasmConfig(t *testing.T) {
+func TestReadNodeConfig(t *testing.T) {
 	withViper := func(s string) *viper.Viper {
 		v := viper.New()
 		v.SetConfigType("toml")
@@ -468,17 +469,17 @@ func TestReadWasmConfig(t *testing.T) {
 		return v
 	}
 	var one uint64 = 1
-	defaults := types.DefaultWasmConfig()
+	defaults := types.DefaultNodeConfig()
 
 	specs := map[string]struct {
 		src servertypes.AppOptions
-		exp types.WasmConfig
+		exp types.NodeConfig
 	}{
 		"set query gas limit via opts": {
 			src: AppOptionsMock{
 				"wasm.query_gas_limit": 1,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SmartQueryGasLimit: 1,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
 			},
@@ -487,7 +488,7 @@ func TestReadWasmConfig(t *testing.T) {
 			src: AppOptionsMock{
 				"wasm.memory_cache_size": 2,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				MemoryCacheSize:    2,
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 			},
@@ -496,7 +497,7 @@ func TestReadWasmConfig(t *testing.T) {
 			src: AppOptionsMock{
 				"trace": true,
 			},
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
 				ContractDebugMode:  true,
@@ -511,12 +512,12 @@ func TestReadWasmConfig(t *testing.T) {
 			exp: defaults,
 		},
 		"custom config template values": {
-			src: withViper(types.ConfigTemplate(types.WasmConfig{
+			src: withViper(types.ConfigTemplate(types.NodeConfig{
 				SimulationGasLimit: &one,
 				SmartQueryGasLimit: 2,
 				MemoryCacheSize:    3,
 			})),
-			exp: types.WasmConfig{
+			exp: types.NodeConfig{
 				SimulationGasLimit: &one,
 				SmartQueryGasLimit: 2,
 				MemoryCacheSize:    3,
@@ -526,7 +527,7 @@ func TestReadWasmConfig(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := ReadWasmConfig(spec.src)
+			got, err := wasm.ReadNodeConfig(spec.src)
 			require.NoError(t, err)
 			assert.Equal(t, spec.exp, got)
 		})
@@ -595,7 +596,7 @@ func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, e
 	assert.Equal(t, expectedNum, len(res.CodeInfos))
 }
 
-func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) { //nolint:unparam
+func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -615,7 +616,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	assert.Equal(t, expectedBytes, rsp.Data)
 }
 
-func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) { //nolint:unparam
+func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -658,7 +659,7 @@ func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Conte
 	assert.Equal(t, expectedBz, rsp.Data)
 }
 
-func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) { //nolint:unparam
+func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) {
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractInfoRequest{Address: contractBech32Addr})
 	require.NoError(t, err)

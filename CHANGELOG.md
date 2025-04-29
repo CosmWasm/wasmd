@@ -2,7 +2,17 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...HEAD)
+
+## [v0.54.0](https://github.com/CosmWasm/wasmd/tree/v0.54.0) (2025-01-08)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.53.2...v0.54.0)
+
+- Bump wasmvm v2.2.1, which enables [CosmWasm 2.2.0](https://github.com/CosmWasm/cosmwasm/blob/v2.2.0/CHANGELOG.md#220---2024-12-17)
+- Bump cosmos-sdk [v0.50.11](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.11)
+- Fix AcceptListGrpcQuerier concurrency issues [\#2065](https://github.com/CosmWasm/wasmd/pull/2065)
+- Add customizable WasmLimits [\#1989](https://github.com/CosmWasm/wasmd/pull/1989)
+- Fix no-cgo keeper signature [\#2079](https://github.com/CosmWasm/wasmd/pull/2079)
 
 ## [v0.53.0](https://github.com/CosmWasm/wasmd/tree/v0.53.0) (2024-08-21)
 
@@ -162,7 +172,7 @@
 - Log query error before redacting [\#1593](https://github.com/CosmWasm/wasmd/issues/1593)
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
 - Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)
-- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+- Ensure some constraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
 - Ensure genesis import works with both address generators [\#1629](https://github.com/CosmWasm/wasmd/issues/1629)
 - Set default query limit and ensure constraints [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
 
@@ -174,7 +184,7 @@
   - If `port_id` is omitted, all channels bound to the contract's port will be listed.
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
   - Pagination limit is set to 100 for all-state-query. See also [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
-- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+- Ensure some constraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
   - Total number of code ids is limited to 50 for pin/unpin operations
 - Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
 
@@ -413,7 +423,7 @@ below to learn more!
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 
-- Add dependencies for protobuf and remove third_party forlder [/#1030](https://github.com/CosmWasm/wasmd/pull/1030)
+- Add dependencies for protobuf and remove third_party folder [/#1030](https://github.com/CosmWasm/wasmd/pull/1030)
 - Check wasmvm version on startup [\#1029](https://github.com/CosmWasm/wasmd/pull/1029/)
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
@@ -455,7 +465,7 @@ No
 
 **Fixed Bugs**
 
-- Fix: Make events in reply completely determinisitic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
+- Fix: Make events in reply completely deterministic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
 
 Migration notes:
 

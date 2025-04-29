@@ -1,4 +1,4 @@
-package wasm
+package integration
 
 import (
 	"encoding/json"
@@ -86,7 +86,7 @@ func TestInitGenesis(t *testing.T) {
 	q2 := newData.grpcQueryRouter
 
 	// initialize new app with genstate
-	_, err = keeper.InitGenesis(newData.ctx, &newData.keeper, *genState, newData.module.router)
+	_, err = keeper.InitGenesis(newData.ctx, &newData.keeper, *genState, newData.module.GetRouter())
 	require.NoError(t, err)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly

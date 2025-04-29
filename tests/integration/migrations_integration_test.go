@@ -1,4 +1,4 @@
-package keeper_test
+package integration
 
 import (
 	"testing"
@@ -22,7 +22,7 @@ func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
 	myAddress := sdk.AccAddress(rand.Bytes(address.Len))
 
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
+	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 
@@ -114,7 +114,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 
 	wasmApp := app.Setup(t)
 
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
+	upgradeHandler := func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 

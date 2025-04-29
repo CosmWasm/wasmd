@@ -20,7 +20,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/tests/e2e"
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 

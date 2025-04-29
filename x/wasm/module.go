@@ -103,32 +103,39 @@ var _ appmodule.AppModule = AppModule{}
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
 	AppModuleBasic
-	cdc           codec.Codec
-	keeper        *keeper.Keeper
-	accountKeeper types.AccountKeeper // for simulation
-	bankKeeper    simulation.BankKeeper
-	router        keeper.MessageRouter
+	cdc                codec.Codec
+	keeper             *keeper.Keeper
+	validatorSetSource keeper.ValidatorSetSource
+	accountKeeper      types.AccountKeeper // for simulation
+	bankKeeper         simulation.BankKeeper
+	router             keeper.MessageRouter
 	// legacySubspace is used solely for migration of x/params managed parameters
 	legacySubspace exported.Subspace
+}
+
+func (am AppModule) GetRouter() keeper.MessageRouter {
+	return am.router // marker
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
 	keeper *keeper.Keeper,
+	validatorSetSource keeper.ValidatorSetSource,
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
 	router *baseapp.MsgServiceRouter,
 	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{},
-		cdc:            cdc,
-		keeper:         keeper,
-		accountKeeper:  ak,
-		bankKeeper:     bk,
-		router:         router,
-		legacySubspace: ss,
+		AppModuleBasic:     AppModuleBasic{},
+		cdc:                cdc,
+		keeper:             keeper,
+		validatorSetSource: validatorSetSource,
+		accountKeeper:      ak,
+		bankKeeper:         bk,
+		router:             router,
+		legacySubspace:     ss,
 	}
 }
 
@@ -219,7 +226,7 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 
 // AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
 func AddModuleInitFlags(startCmd *cobra.Command) {
-	defaults := types.DefaultWasmConfig()
+	defaults := types.DefaultNodeConfig()
 	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
 	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
 	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
@@ -239,9 +246,9 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
 
-// ReadWasmConfig reads the wasm specifig configuration
-func ReadWasmConfig(opts servertypes.AppOptions) (types.WasmConfig, error) {
-	cfg := types.DefaultWasmConfig()
+// ReadNodeConfig reads the node specific configuration
+func ReadNodeConfig(opts servertypes.AppOptions) (types.NodeConfig, error) {
+	cfg := types.DefaultNodeConfig()
 	var err error
 	if v := opts.Get(flagWasmMemoryCacheSize); v != nil {
 		if cfg.MemoryCacheSize, err = cast.ToUint32E(v); err != nil {

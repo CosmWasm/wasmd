@@ -675,6 +675,9 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 			},
 		}, 0, nil
 	}
+	mockWasmVM.MigrateWithInfoFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, migrateInfo wasmvmtypes.MigrateInfo, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+		return mockWasmVM.MigrateFn(codeID, env, migrateMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
+	}
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy

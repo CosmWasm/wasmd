@@ -632,3 +632,74 @@ func TestContractCodeHistoryEntryValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestTxContractsAddContract(t *testing.T) {
+	specs := map[string]struct {
+		checksums [][]byte
+		expLen    int
+	}{
+		"single checksum": {
+			checksums: [][]byte{[]byte("checksum1")},
+			expLen:    1,
+		},
+		"duplicate checksums": {
+			checksums: [][]byte{[]byte("checksum1"), []byte("checksum1")},
+			expLen:    1,
+		},
+		"multiple checksums": {
+			checksums: [][]byte{[]byte("checksum1"), []byte("checksum2")},
+			expLen:    2,
+		},
+		"empty checksum": {
+			checksums: [][]byte{[]byte("")},
+			expLen:    0,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			txContracts := NewTxContracts()
+			require.Empty(t, txContracts.GetContracts())
+
+			for _, c := range spec.checksums {
+				txContracts.AddContract(c)
+			}
+
+			assert.Equal(t, spec.expLen, len(txContracts.GetContracts()))
+		})
+	}
+}
+
+func TestTxContractsExists(t *testing.T) {
+	specs := map[string]struct {
+		checksum  []byte
+		expExists bool
+	}{
+		"checksum exists": {
+			checksum:  []byte("checksum1"),
+			expExists: true,
+		},
+		"checksum does not exist": {
+			checksum:  []byte("checksum3"),
+			expExists: false,
+		},
+		"empty checksum": {
+			checksum:  []byte(""),
+			expExists: false,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			txContracts := NewTxContracts()
+			require.Empty(t, txContracts.GetContracts())
+			require.False(t, txContracts.Exists(spec.checksum))
+
+			// add checksums
+			txContracts.AddContract([]byte("checksum1"))
+			txContracts.AddContract([]byte("checksum2"))
+
+			assert.Equal(t, spec.expExists, txContracts.Exists(spec.checksum))
+		})
+	}
+}

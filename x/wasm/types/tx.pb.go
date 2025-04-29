@@ -1183,7 +1183,7 @@ type MsgStoreAndInstantiateContract struct {
 	UnpinCode bool `protobuf:"varint,5,opt,name=unpin_code,json=unpinCode,proto3" json:"unpin_code,omitempty"`
 	// Admin is an optional address that can execute migrations
 	Admin string `protobuf:"bytes,6,opt,name=admin,proto3" json:"admin,omitempty"`
-	// Label is optional metadata to be stored with a constract instance.
+	// Label is optional metadata to be stored with a contract instance.
 	Label string `protobuf:"bytes,7,opt,name=label,proto3" json:"label,omitempty"`
 	// Msg json encoded message to be passed to the contract on instantiation
 	Msg RawContractMessage `protobuf:"bytes,8,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`

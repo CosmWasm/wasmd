@@ -64,7 +64,7 @@ message InstantiateContractProposal {
   string admin = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
-  // Label is optional metadata to be stored with a constract instance.
+  // Label is optional metadata to be stored with a contract instance.
   string label = 6;
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 7 [
@@ -93,13 +93,13 @@ message InstantiateContract2Proposal {
   string title = 1;
   // Description is a human readable text
   string description = 2;
-  // RunAs is the address that is passed to the contract's enviroment as sender
+  // RunAs is the address that is passed to the contract's environment as sender
   string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Admin is an optional address that can execute migrations
   string admin = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
-  // Label is optional metadata to be stored with a constract instance.
+  // Label is optional metadata to be stored with a contract instance.
   string label = 6;
   // Msg json encode message to be passed to the contract on instantiation
   bytes msg = 7 [
@@ -330,7 +330,7 @@ message StoreAndInstantiateContractProposal {
   bool unpin_code = 6;
   // Admin is an optional address that can execute migrations
   string admin = 7;
-  // Label is optional metadata to be stored with a constract instance.
+  // Label is optional metadata to be stored with a contract instance.
   string label = 8;
   // Msg json encoded message to be passed to the contract on instantiation
   bytes msg = 9 [

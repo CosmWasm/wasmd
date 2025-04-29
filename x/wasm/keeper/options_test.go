@@ -113,13 +113,13 @@ func TestConstructorOptions(t *testing.T) {
 		"max query recursion limit": {
 			srcOpt: WithMaxQueryStackSize(1),
 			verify: func(t *testing.T, k Keeper) {
-				assert.IsType(t, uint32(1), k.maxQueryStackSize)
+				assert.Equal(t, uint32(1), k.maxQueryStackSize)
 			},
 		},
 		"max message recursion limit": {
 			srcOpt: WithMaxCallDepth(1),
 			verify: func(t *testing.T, k Keeper) {
-				assert.IsType(t, uint32(1), k.maxCallDepth)
+				assert.Equal(t, uint32(1), k.maxCallDepth)
 			},
 		},
 		"accepted account types": {
@@ -155,7 +155,7 @@ func TestConstructorOptions(t *testing.T) {
 			opt := spec.srcOpt
 			_, gotPostOptMarker := opt.(postOptsFn)
 			require.Equal(t, spec.isPostOpt, gotPostOptMarker)
-			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultNodeConfig(), types.VMConfig{}, AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

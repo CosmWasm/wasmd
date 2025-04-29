@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
@@ -301,4 +302,44 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 		}
 		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 	}
+}
+
+type reflectCustomQuery struct {
+	Ping        *struct{}      `json:"ping,omitempty"`
+	Capitalized *testdata.Text `json:"capitalized,omitempty"`
+}
+
+// this is from the go code back to the contract (capitalized or ping)
+type customQueryResponse struct {
+	Msg string `json:"msg"`
+}
+
+// reflectPlugins needs to be registered in test setup to handle custom query callbacks
+func reflectPlugins() *QueryPlugins {
+	return &QueryPlugins{
+		Custom: performCustomQuery,
+	}
+}
+
+func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+	var custom reflectCustomQuery
+	err := json.Unmarshal(request, &custom)
+	if err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+	if custom.Capitalized != nil {
+		msg := strings.ToUpper(custom.Capitalized.Text)
+		return json.Marshal(customQueryResponse{Msg: msg})
+	}
+	if custom.Ping != nil {
+		return json.Marshal(customQueryResponse{Msg: "pong"})
+	}
+	return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
+}
+
+func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
+	t.Helper()
+	bz, err := json.Marshal(query)
+	require.NoError(t, err)
+	return bz
 }

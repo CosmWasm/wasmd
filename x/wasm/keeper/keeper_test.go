@@ -15,13 +15,18 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -43,9 +48,12 @@ import (
 //go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
+//go:embed testdata/replier.wasm
+var replierWasm []byte
+
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -79,6 +87,24 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 
 	_, _, err := keepers.ContractKeeper.Create(ctx, nil, hackatomWasm, nil)
 	require.Error(t, err, "nil creator is not allowed")
+}
+
+func TestWasmLimits(t *testing.T) {
+	one := uint32(1)
+	cfg := types.DefaultNodeConfig()
+	ctx, keepers := createTestInput(t, false, AvailableCapabilities, cfg, types.VMConfig{
+		WasmLimits: wasmvmtypes.WasmLimits{
+			MaxImports: &one, // very low limit that every contract will fail
+		},
+	}, dbm.NewMemDB())
+	keeper := keepers.ContractKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+
+	_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "Import")
 }
 
 func TestCreateNilWasmCode(t *testing.T) {
@@ -216,7 +242,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	onlyOther := types.AccessTypeAnyOfAddresses.With(other)
 
 	specs := map[string]struct {
-		defaultPermssion    types.AccessType
+		defaultPermission   types.AccessType
 		requestedPermission *types.AccessConfig
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
@@ -224,42 +250,42 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		expError *errorsmod.Error
 	}{
 		"override everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"default to everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"explicitly set everybody": {
-			defaultPermssion:    types.AccessTypeEverybody,
+			defaultPermission:   types.AccessTypeEverybody,
 			requestedPermission: &types.AccessConfig{Permission: types.AccessTypeEverybody},
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"cannot override nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: &onlyCreator,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
 		"default to nobody": {
-			defaultPermssion:    types.AccessTypeNobody,
+			defaultPermission:   types.AccessTypeNobody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
 		},
 		"only defaults to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: nil,
 			grantedPermission:   onlyCreator,
 		},
 		"can explicitly set to code creator": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"cannot override which address in only": {
-			defaultPermssion:    types.AccessTypeAnyOfAddresses,
+			defaultPermission:   types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyOther,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
@@ -267,7 +293,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.InstantiateDefaultPermission = spec.defaultPermssion
+			params.InstantiateDefaultPermission = spec.defaultPermission
 			err := keeper.SetParams(ctx, params)
 			require.NoError(t, err)
 			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
@@ -333,31 +359,6 @@ func TestCreateWithSimulation(t *testing.T) {
 	code, err := keepers.WasmKeeper.GetByteCode(ctx, contractID)
 	require.NoError(t, err)
 	require.Equal(t, code, hackatomWasm)
-}
-
-func TestIsSimulationMode(t *testing.T) {
-	specs := map[string]struct {
-		ctx sdk.Context
-		exp bool
-	}{
-		"genesis block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
-			exp: false,
-		},
-		"any regular block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewGasMeter(10000000)),
-			exp: false,
-		},
-		"simulation": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
-			exp: true,
-		},
-	}
-	for msg := range specs {
-		t.Run(msg, func(t *testing.T) {
-			// assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
-		})
-	}
 }
 
 func TestCreateWithGzippedPayload(t *testing.T) {
@@ -1392,14 +1393,14 @@ func TestMigrate(t *testing.T) {
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
-		"all good with migration to older migrate version": {
-			admin:       creator,
-			caller:      creator,
-			initMsg:     initMsgBz,
-			fromCodeID:  hackatom420.CodeID,
-			toCodeID:    hackatom42.CodeID,
-			migrateMsg:  migMsgBz,
-			expVerifier: newVerifierAddr,
+		"contract returns error when downgrading version": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: hackatom420.CodeID,
+			toCodeID:   hackatom42.CodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
 		},
 	}
 
@@ -1617,9 +1618,14 @@ func TestIterateContractsByCode(t *testing.T) {
 
 func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
-	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
-		return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
-	}}
+	mockWasmVM := wasmtesting.MockWasmEngine{
+		MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		},
+		MigrateWithInfoFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, migrateInfo wasmvmtypes.MigrateInfo, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 1, nil
+		},
+	}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
@@ -1644,7 +1650,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 
 type sudoMsg struct {
 	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-	// Here we show that some priviledged Go module can make a call that should never be exposed
+	// Here we show that some privileged Go module can make a call that should never be exposed
 	// to end users (via Tx/Execute).
 	//
 	// The contract developer can choose to expose anything to sudo. This functionality is not a true
@@ -1690,7 +1696,7 @@ func TestSudo(t *testing.T) {
 	// now the community wants to get paid via sudo
 	msg := sudoMsg{
 		// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
-		// Here we show that some priviledged Go module can make a call that should never be exposed
+		// Here we show that some privileged Go module can make a call that should never be exposed
 		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
@@ -2171,6 +2177,176 @@ func TestReply(t *testing.T) {
 	}
 }
 
+type replierExecMsg struct {
+	MsgId                 byte             `json:"msg_id"`
+	SetDataInExecAndReply bool             `json:"set_data_in_exec_and_reply"`
+	ReturnOrderInReply    bool             `json:"return_order_in_reply"`
+	ExecError             bool             `json:"exec_error"`
+	ReplyError            bool             `json:"reply_error"`
+	ReplyOnNever          bool             `json:"reply_on_never"`
+	Messages              []replierExecMsg `json:"messages"`
+}
+
+func defaultRepliesMsgTemplate() replierExecMsg {
+	return replierExecMsg{
+		MsgId:                 1,
+		SetDataInExecAndReply: true,
+		ReturnOrderInReply:    false,
+		ExecError:             false,
+		ReplyError:            false,
+		ReplyOnNever:          false,
+		Messages: []replierExecMsg{
+			{
+				MsgId:                 2,
+				SetDataInExecAndReply: true,
+				ReturnOrderInReply:    false,
+				ExecError:             false,
+				ReplyError:            false,
+				ReplyOnNever:          false,
+				Messages: []replierExecMsg{
+					{
+						MsgId:                 3,
+						SetDataInExecAndReply: true,
+						ReturnOrderInReply:    false,
+						ExecError:             false,
+						ReplyError:            false,
+						ReplyOnNever:          false,
+						Messages:              []replierExecMsg{},
+					},
+				},
+			},
+			{
+				MsgId:                 4,
+				SetDataInExecAndReply: true,
+				ReturnOrderInReply:    false,
+				ExecError:             false,
+				ReplyError:            false,
+				ReplyOnNever:          false,
+				Messages: []replierExecMsg{
+					{
+						MsgId:                 5,
+						SetDataInExecAndReply: true,
+						ReturnOrderInReply:    false,
+						ExecError:             false,
+						ReplyError:            false,
+						ReplyOnNever:          false,
+						Messages:              []replierExecMsg{},
+					},
+				},
+			},
+		},
+	}
+}
+
+func repliesMsgTemplateReturnOrder() replierExecMsg {
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
+	repliesMsgTemplate.ReturnOrderInReply = true
+	return repliesMsgTemplate
+}
+
+func repliesMsgTemplateReplyNever() replierExecMsg {
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
+	repliesMsgTemplate.Messages[1].ReplyOnNever = true
+	return repliesMsgTemplate
+}
+
+func repliesMsgTemplateNoDataInResp() replierExecMsg {
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
+	repliesMsgTemplate.Messages[1].SetDataInExecAndReply = false
+	return repliesMsgTemplate
+}
+
+func repliesMsgTemplateExecError() replierExecMsg {
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
+	repliesMsgTemplate.Messages[0].Messages[0].ExecError = true
+	repliesMsgTemplate.ReturnOrderInReply = true
+	return repliesMsgTemplate
+}
+
+func repliesMsgTemplateReplyError() replierExecMsg {
+	repliesMsgTemplate := defaultRepliesMsgTemplate()
+	repliesMsgTemplate.Messages[0].ReplyError = true
+	repliesMsgTemplate.ReturnOrderInReply = true
+	return repliesMsgTemplate
+}
+
+var repliesTestScenarios = []struct {
+	name string
+	in   replierExecMsg
+	out  []byte
+}{
+	{
+		"Assert the depth-first order of message handling",
+		repliesMsgTemplateReturnOrder(),
+		[]byte{0xee, 0x1, 0xee, 0x2, 0xee, 0x3, 0xbb, 0x2, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1},
+	},
+	{
+		"Assert that with a list of submessages the `data` field will be set by the last submessage",
+		defaultRepliesMsgTemplate(),
+		[]byte{0xa, 0x6, 0xa, 0x2, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1},
+	},
+	{
+		"Assert that with a list of submessages the `data` field will be set by the last submessage that overrides it.",
+		repliesMsgTemplateReplyNever(),
+		[]byte{0xa, 0x6, 0xa, 0x2, 0xee, 0x3, 0xbb, 0x2, 0xbb, 0x1},
+	},
+
+	// Assert that in scenario C1 -> C4 -> C5 if C4 doesn't set `data`,
+	// the `data` set by C5 **is not forwarded** to the result of C1.
+	{
+		"Check data field forwarding",
+		repliesMsgTemplateNoDataInResp(),
+		[]byte{0xbb, 0x1},
+	},
+
+	// In this example we have the following scenario:
+	// `C1 -> C2 -> C3 -> reply(C2) -> reply(C1) -> C4 -> C5 -> reply(C4) -> reply(C1)`.
+	// The `C3` contract returns an error that is handled by reply entrypoint of `C2`.
+	// It means that the changes done by `C3` are reverted, but the rest of the changes are kept.
+	{
+		"Check error handling when execute fails",
+		repliesMsgTemplateExecError(),
+		[]byte{0xee, 0x1, 0xee, 0x2, 0xbb, 0x2, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1},
+	},
+
+	// The `C2` contract returns an error in reply entry-point that is handled by reply entrypoint of `C1`.
+	// It means that the changes done by either `C2` and `C3` are reverted, but the rest of the changes are kept.
+	{
+		"Check error handling when reply fails",
+		repliesMsgTemplateReplyError(),
+		[]byte{0xee, 0x1, 0xbb, 0x1, 0xee, 0x4, 0xee, 0x5, 0xbb, 0x4, 0xbb, 0x1},
+	},
+}
+
+func TestMultipleReplies(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	_, keeper, _ := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
+	creatorAddr := RandomAccountAddress(t)
+
+	contractID, _, err := keeper.Create(ctx, creator, replierWasm, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, []byte("{}"), "demo contract replier", deposit)
+	require.NoError(t, err)
+
+	for _, tt := range repliesTestScenarios {
+		t.Run(tt.name, func(t *testing.T) {
+			execMsg, err := json.Marshal(tt.in)
+			require.NoError(t, err)
+			em := sdk.NewEventManager()
+			res, err := keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, creatorAddr, execMsg, nil)
+			require.NoError(t, err)
+			require.NotNil(t, res)
+			assert.Equal(t, tt.out, res)
+		})
+	}
+}
+
 func TestQueryIsolation(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
@@ -2495,7 +2671,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 			creatorAddr:   mockAddress2,
 			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
 		},
-		"contractAdress": {
+		"contractAddress": {
 			creatorAddr:   gotAddr1,
 			contractsAddr: []string{gotAddr3.String()},
 		},
@@ -2717,4 +2893,94 @@ func must[t any](s t, err error) t {
 		panic(err)
 	}
 	return s
+}
+
+func TestCheckDiscountEligibility(t *testing.T) {
+	_, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	specs := map[string]struct {
+		isPinned          bool
+		initCtx           func() sdk.Context
+		checksum          []byte
+		expDiscount       bool
+		expLenTxContracts int
+		expNilContracts   bool
+	}{
+		"checksum pinned": {
+			isPinned: true,
+			checksum: []byte("pinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, types.NewTxContracts())
+			},
+			expDiscount:       true,
+			expLenTxContracts: 0,
+		},
+		"checksum unpinned - not in ctx": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, types.NewTxContracts())
+			},
+			expDiscount:       false,
+			expLenTxContracts: 1,
+		},
+		"checksum unpinned - already in ctx": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				txContracts := types.NewTxContracts()
+				txContracts.AddContract([]byte("unpinned checksum"))
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return types.WithTxContracts(ctx, txContracts)
+			},
+			expDiscount:       true,
+			expLenTxContracts: 1,
+		},
+		"no discount when tx contracts are not initialized": {
+			isPinned: false,
+			checksum: []byte("unpinned checksum"),
+			initCtx: func() sdk.Context {
+				ctx := sdk.NewContext(ms, cmtproto.Header{
+					Height: 100,
+					Time:   time.Now(),
+				}, false, log.NewNopLogger())
+				return ctx
+			},
+			expDiscount:     false,
+			expNilContracts: true,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := spec.initCtx()
+			ctx, discount := k.checkDiscountEligibility(ctx, spec.checksum, spec.isPinned)
+
+			assert.Equal(t, spec.expDiscount, discount)
+			txContracts, ok := types.TxContractsFromContext(ctx)
+			if spec.expNilContracts {
+				require.False(t, ok)
+				assert.Nil(t, txContracts.GetContracts())
+				return
+			}
+			require.True(t, ok)
+			assert.NotNil(t, txContracts.GetContracts())
+			assert.Equal(t, spec.expLenTxContracts, len(txContracts.GetContracts()))
+		})
+	}
 }

@@ -3,7 +3,7 @@
 package keeper
 
 import (
-	storetypes "cosmossdk.io/store/types"
+	corestoretypes "cosmossdk.io/core/store"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -14,7 +14,7 @@ import (
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(
 	cdc codec.Codec,
-	storeKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -27,8 +27,9 @@ func NewKeeper(
 	router MessageRouter,
 	_ GRPCQueryRouter,
 	homeDir string,
-	wasmConfig types.WasmConfig,
-	availableCapabilities string,
+	nodeConfig types.NodeConfig,
+	vmConfig types.VMConfig,
+	availableCapabilities []string,
 	authority string,
 	opts ...Option,
 ) Keeper {
