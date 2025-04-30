@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -681,11 +681,12 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 					Wrapf("address %s", contractAddr)
 			}
 			res := wasmvmtypes.ContractInfoResponse{
-				CodeID:  info.CodeID,
-				Creator: info.Creator,
-				Admin:   info.Admin,
-				Pinned:  k.IsPinnedCode(ctx, info.CodeID),
-				IBCPort: info.IBCPortID,
+				CodeID:   info.CodeID,
+				Creator:  info.Creator,
+				Admin:    info.Admin,
+				Pinned:   k.IsPinnedCode(ctx, info.CodeID),
+				IBCPort:  info.IBCPortID,
+				IBC2Port: info.IBC2PortID,
 			}
 			return json.Marshal(res)
 		case request.CodeInfo != nil:

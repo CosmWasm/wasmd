@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...HEAD)
 
+ - Register IBC v2 route and store the IBC v2 port in ContractInfo [\#2122](https://github.com/CosmWasm/wasmd/issues/2122)
+ - Add IBC v2 SendPacket message encoding [\#2110](https://github.com/CosmWasm/wasmd/issues/2110)
+
+
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.55.0)

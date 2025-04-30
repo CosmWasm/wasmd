@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -53,7 +53,7 @@ var replierWasm []byte
 
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2", "ibc2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -423,7 +423,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bcb0), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1bcb7), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -848,7 +848,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
 	types.RegisterMsgServer(router, NewMsgServerImpl(keeper))
-	keeper.messenger = NewDefaultMessageHandler(nil, router, nil, nil, nil, keepers.EncodingConfig.Codec, nil)
+	keeper.messenger = NewDefaultMessageHandler(nil, router, nil, nil, keepers.EncodingConfig.Codec, nil)
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 
@@ -960,7 +960,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1ace0), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1aceb), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
