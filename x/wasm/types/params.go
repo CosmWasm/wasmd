@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var AllAccessTypes []AccessType = []AccessType{
+var AllAccessTypes = []AccessType{
 	AccessTypeNobody,
 	AccessTypeAnyOfAddresses,
 	AccessTypeEverybody,
