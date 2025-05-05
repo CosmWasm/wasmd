@@ -23,3 +23,7 @@ type mockCMS struct {
 func (m *mockCMS) Write() {
 	*m.committed = true
 }
+
+func (m *mockCMS) RunAtomic(cb func(storetypes.CacheMultiStore) error) error {
+	return cb(m.CacheMultiStore())
+}
