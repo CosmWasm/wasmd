@@ -292,6 +292,18 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
+	IBC2PacketAckRecv(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		payload wasmvmtypes.IBC2AcknowledgeMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResult, uint64, error)
+
 	// IBC2PacketReceive is available on IBC2-enabled contracts and is called when an incoming
 	// payload is received on a channel belonging to this contract
 	IBC2PacketReceive(

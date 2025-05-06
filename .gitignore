@@ -45,3 +45,6 @@ dependency-graph.png
 *.aux
 *.out
 *.synctex.gz
+
+# Dev environment
+.direnv/
