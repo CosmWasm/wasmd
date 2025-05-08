@@ -827,6 +827,10 @@ func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []w
 			Exponent: u.Exponent,
 			Aliases:  u.Aliases,
 		}
+		// Returning nil may break cosmwasm-std
+		if u.Aliases == nil {
+			converted[i].Aliases = []string{}
+		}
 	}
 	return converted
 }
