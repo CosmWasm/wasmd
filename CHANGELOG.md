@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...HEAD)
 
+- Lower `DefaultMaxCallDepth` [\#2244](https://github.com/CosmWasm/wasmd/pull/2244)
+
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.55.0)
