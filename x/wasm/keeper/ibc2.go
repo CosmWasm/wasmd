@@ -105,25 +105,25 @@ func (module IBC2Handler) OnAcknowledgementPacket(
 		return errorsmod.Wrapf(err, "contract port id")
 	}
 	msg := wasmvmtypes.IBC2AcknowledgeMsg{
-		SourceChannel:      sourceClient,
-		DestinationChannel: destinationClient,
-		Data:               newIBC2Payload(payload),
-		Acknowledgement:    acknowledgement,
-		Relayer:            relayer.String(),
+		SourceClient:      sourceClient,
+		DestinationClient: destinationClient,
+		Data:              newIBC2Payload(payload),
+		Acknowledgement:   acknowledgement,
+		Relayer:           relayer.String(),
 	}
-	err = module.keeper.OnAckRecvIBC2Packet(ctx, contractAddr, msg)
+	err = module.keeper.OnAckIBC2Packet(ctx, contractAddr, msg)
 	if err != nil {
-		return errorsmod.Wrap(err, "on timeout")
+		return errorsmod.Wrap(err, "on ack")
 	}
 	return nil
 }
 
-func (k Keeper) OnAckRecvIBC2Packet(
+func (k Keeper) OnAckIBC2Packet(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2AcknowledgeMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-timeout-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-ack-packet")
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -134,7 +134,7 @@ func (k Keeper) OnAckRecvIBC2Packet(
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.IBC2PacketAckRecv(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.IBC2PacketAck(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())

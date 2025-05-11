@@ -292,7 +292,7 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.IBCBasicResult, uint64, error)
 
-	IBC2PacketAckRecv(
+	IBC2PacketAck(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
 		payload wasmvmtypes.IBC2AcknowledgeMsg,

@@ -141,7 +141,7 @@ type IBCContractKeeper interface {
 
 // IBC2ContractKeeper IBC2 lifecycle event handler
 type IBC2ContractKeeper interface {
-	OnAckRecvIBC2Packet(
+	OnAckIBC2Packet(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
 		msg wasmvmtypes.IBC2AcknowledgeMsg,
