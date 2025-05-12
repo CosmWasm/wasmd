@@ -13,7 +13,7 @@ sed -i "s/\"stake\"/\"$STAKE\"/" "$HOME"/.wasmd/config/genesis.json
 # this is essential for sub-1s block times (or header times go crazy)
 sed -i 's/"time_iota_ms": "1000"/"time_iota_ms": "10"/' "$HOME"/.wasmd/config/genesis.json
 
-if ! wasmd keys show validator; then
+if ! wasmd keys show validator > /dev/null 2>&1 ; then
   (echo "$PASSWORD"; echo "$PASSWORD") | wasmd keys add validator
 fi
 # hardcode the validator account for this instance
