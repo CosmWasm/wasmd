@@ -378,9 +378,10 @@ func (k Keeper) instantiate(
 		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
-	if report.HasIBC2EntryPoints {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
+
+	// TODO: Remove AddRoute in https://github.com/CosmWasm/wasmd/issues/2144
+	ibc2Port := PortIDForContractV2(contractAddress)
+	if !k.ibcRouterV2.HasRoute(ibc2Port) {
 		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
 		contractInfo.IBC2PortID = ibc2Port
 	}
@@ -548,13 +549,6 @@ func (k Keeper) migrate(
 		return nil, err
 	}
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
-
-	if report.HasIBC2EntryPoints && contractInfo.IBC2PortID != "" {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
-	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,

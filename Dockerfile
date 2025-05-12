@@ -17,8 +17,8 @@ COPY . /code/
 # See https://github.com/CosmWasm/wasmvm/releases
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v3.0.0-ibc2.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v3.0.0-ibc2.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
-RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 3bffc027c3467d6535fda10e13767194500208add1321709ebd79d2d507eb561
-RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 315605d243c71b2c29543af872fa84224632cfd2096755b34bb1798a0587bc42
+RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 7e61b5669dd2dac224605c055a59c1c23c52df98d7ab1a1cacac232ad8bb7f87
+RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep fcf85a9f4982fc496e75a84b01e6a4c46eebb8e39d5cd34a2d7c3faf3029b3cb
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build

@@ -35,6 +35,23 @@ func (module IBC2Handler) OnSendPacket(
 	payload channeltypesv2.Payload,
 	signer sdk.AccAddress,
 ) error {
+	contractAddr, err := ContractFromPortID2(payload.SourcePort)
+	if err != nil {
+		panic(errorsmod.Wrapf(err, "Invalid contract port id"))
+	}
+
+	msg := wasmvmtypes.IBC2PacketSendMsg{
+		Payload:           newIBC2Payload(payload),
+		SourceClient:      sourceClient,
+		DestinationClient: destinationClient,
+		PacketSequence:    sequence,
+		Signer:            signer.String(),
+	}
+
+	err = module.keeper.OnSendIBC2Packet(ctx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on ibc2 sent")
+	}
 	return nil
 }
 
@@ -200,6 +217,42 @@ func (k Keeper) OnTimeoutIBC2Packet(
 
 	gasLeft := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBC2PacketTimeout(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasUsed)
+	if execErr != nil {
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+}
+
+// OnSendIBC2Packet calls the contract to let it know the packet was sent
+// from the source port assigned to this contract.
+// The contract should handle this on the application level and verify
+// the message.
+func (k Keeper) OnSendIBC2Packet(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	msg wasmvmtypes.IBC2PacketSendMsg,
+) error {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-send-packet")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	env := types.NewEnv(ctx, contractAddr)
+	querier := k.newQueryHandler(ctx, contractAddr)
+
+	gasLeft := k.runtimeGasForContract(ctx)
+	res, gasUsed, execErr := k.wasmVM.IBC2PacketSend(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
