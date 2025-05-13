@@ -378,12 +378,6 @@ func (k Keeper) instantiate(
 		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
-	if report.HasIBC2EntryPoints {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
-	}
 
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
@@ -549,7 +543,7 @@ func (k Keeper) migrate(
 	}
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
 
-	if report.HasIBC2EntryPoints && contractInfo.IBC2PortID != "" {
+	if contractInfo.IBC2PortID != "" {
 		// register IBC v2 port
 		ibc2Port := PortIDForContractV2(contractAddress)
 		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
