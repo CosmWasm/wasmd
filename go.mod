@@ -42,7 +42,7 @@ require (
 	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/tx v0.13.7
 	cosmossdk.io/x/upgrade v0.1.4
-	github.com/CosmWasm/wasmvm/v3 v3.0.0-ibc2.0.0.20250511214518-c405846dced3
+	github.com/CosmWasm/wasmvm/v3 v3.0.0-ibc2.0
 	github.com/cometbft/cometbft v0.38.15
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/ibc-go/v10 v10.1.0
