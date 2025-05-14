@@ -7,7 +7,6 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -36,7 +35,6 @@ func NewKeeper(
 	vmConfig types.VMConfig,
 	availableCapabilities []string,
 	authority string,
-	ibcRouterV2 *ibcapi.Router,
 	opts ...Option,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -56,9 +54,8 @@ func NewKeeper(
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionInstantiate: {},
 		},
-		authority:   authority,
-		wasmLimits:  vmConfig.WasmLimits,
-		ibcRouterV2: ibcRouterV2,
+		authority:  authority,
+		wasmLimits: vmConfig.WasmLimits,
 	}
 	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
