@@ -25,17 +25,17 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 }
 
 // The port prefix refers to "CosmWasm over IBC v2" and ensures packets are routed to the right entry points
-const portIDPrefixV2 = "wasm2"
+const PortIDPrefixV2 = "wasm2"
 
 func PortIDForContractV2(addr sdk.AccAddress) string {
 	blockchainPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
-	return portIDPrefixV2 + strings.TrimPrefix(addr.String(), blockchainPrefix)
+	return PortIDPrefixV2 + strings.TrimPrefix(addr.String(), blockchainPrefix)
 }
 
 func ContractFromPortID2(portID string) (sdk.AccAddress, error) {
-	if !strings.HasPrefix(portID, portIDPrefixV2) {
+	if !strings.HasPrefix(portID, PortIDPrefixV2) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
 	blockchainPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
-	return sdk.AccAddressFromBech32(blockchainPrefix + portID[len(portIDPrefixV2):])
+	return sdk.AccAddressFromBech32(blockchainPrefix + portID[len(PortIDPrefixV2):])
 }

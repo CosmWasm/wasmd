@@ -598,8 +598,6 @@ func NewWasmApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	ibcRouterV2 := ibcapi.NewRouter()
-
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -620,7 +618,6 @@ func NewWasmApp(
 		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		ibcRouterV2,
 		wasmOpts...,
 	)
 
@@ -662,8 +659,11 @@ func NewWasmApp(
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	ibcRouterV2 := ibcapi.NewRouter()
 	ibcRouterV2 = ibcRouterV2.
-		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper))
+		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper)).
+		AddRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
+
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
 	clientKeeper := app.IBCKeeper.ClientKeeper
@@ -915,10 +915,6 @@ func NewWasmApp(
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
-
-		// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278
-		//       and add IBCv2 port ID prefix before calling `SetRouterV2` during WasmKeeper creation.
-		app.WasmKeeper.RegisterContractsInIbc2Router(ctx)
 	}
 
 	return app
