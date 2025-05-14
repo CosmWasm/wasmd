@@ -379,6 +379,13 @@ func (k Keeper) instantiate(
 		contractInfo.IBCPortID = ibcPort
 	}
 
+	// register IBC v2 port
+	ibc2Port := PortIDForContractV2(contractAddress)
+	if !k.ibcRouterV2.HasRoute(ibc2Port) {
+		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
+		contractInfo.IBC2PortID = ibc2Port
+	}
+
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
 	err = k.addToContractCodeSecondaryIndex(sdkCtx, contractAddress, historyEntry)
