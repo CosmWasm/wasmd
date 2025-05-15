@@ -25,15 +25,15 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 }
 
 // The port prefix refers to "CosmWasm over IBC v2" and ensures packets are routed to the right entry points
-const portIDPrefixV2 = "wasm2"
+const PortIDPrefixV2 = "wasm2"
 
 func PortIDForContractV2(addr sdk.AccAddress) string {
-	return portIDPrefixV2 + addr.String()
+	return PortIDPrefixV2 + addr.String()
 }
 
 func ContractFromPortID2(portID string) (sdk.AccAddress, error) {
-	if !strings.HasPrefix(portID, portIDPrefixV2) {
+	if !strings.HasPrefix(portID, PortIDPrefixV2) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
-	return sdk.AccAddressFromBech32(portID[len(portIDPrefixV2):])
+	return sdk.AccAddressFromBech32(portID[len(PortIDPrefixV2):])
 }

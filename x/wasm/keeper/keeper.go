@@ -15,7 +15,6 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -111,12 +110,6 @@ type Keeper struct {
 
 	// wasmLimits contains the limits sent to wasmvm on init
 	wasmLimits wasmvmtypes.WasmLimits
-
-	ibcRouterV2 *ibcapi.Router
-}
-
-func (k Keeper) GetIBCRouterV2() *ibcapi.Router {
-	return k.ibcRouterV2
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
@@ -378,12 +371,8 @@ func (k Keeper) instantiate(
 		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
-	if report.HasIBC2EntryPoints {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
-	}
+
+	contractInfo.IBC2PortID = PortIDForContractV2(contractAddress)
 
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
@@ -549,12 +538,7 @@ func (k Keeper) migrate(
 	}
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
 
-	if report.HasIBC2EntryPoints && contractInfo.IBC2PortID != "" {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
-	}
+	contractInfo.IBC2PortID = PortIDForContractV2(contractAddress)
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,
