@@ -550,13 +550,6 @@ func (k Keeper) migrate(
 	}
 	k.mustStoreContractInfo(ctx, contractAddress, contractInfo)
 
-	if contractInfo.IBC2PortID != "" {
-		// register IBC v2 port
-		ibc2Port := PortIDForContractV2(contractAddress)
-		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
-	}
-
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(newCodeID, 10)),
