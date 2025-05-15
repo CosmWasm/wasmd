@@ -939,6 +939,42 @@ func (k Keeper) QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, ke
 	return prefixStore.Get(key)
 }
 
+func (k Keeper) QueryRawRange(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-raw-range")
+
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), prefixStoreKey)
+	var iter storetypes.Iterator
+	if reverse {
+		iter = prefixStore.ReverseIterator(start, end)
+	} else {
+		iter = prefixStore.Iterator(start, end)
+	}
+	defer iter.Close()
+
+	var count uint16 = 0
+	for ; iter.Valid(); iter.Next() {
+		// keep track of count to honor the limit
+		if count == limit {
+			break
+		}
+		count++
+
+		// add key-value pair
+		results = append(results, wasmvmtypes.RawRangeEntry{Key: iter.Key(), Value: iter.Value()})
+	}
+
+	if iter.Valid() {
+		// if there are more results, set the next key
+		key := iter.Key()
+		nextKey = key
+	} else {
+		nextKey = nil
+	}
+
+	return
+}
+
 // internal helper function
 func (k Keeper) contractInstance(ctx context.Context, contractAddress sdk.AccAddress) (types.ContractInfo, types.CodeInfo, wasmvm.KVStore, error) {
 	store := k.storeService.OpenKVStore(ctx)
