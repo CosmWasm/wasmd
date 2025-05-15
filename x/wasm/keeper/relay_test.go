@@ -25,7 +25,7 @@ func TestOnOpenChannel(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 
 	specs := map[string]struct {
 		contractAddr sdk.AccAddress
@@ -95,7 +95,7 @@ func TestOnConnectChannel(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 
 	specs := map[string]struct {
 		contractAddr       sdk.AccAddress
@@ -207,7 +207,7 @@ func TestOnCloseChannel(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 
 	specs := map[string]struct {
 		contractAddr       sdk.AccAddress
@@ -317,7 +317,7 @@ func TestOnRecvPacket(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 	const storageCosts = storetypes.Gas(2903)
 
 	specs := map[string]struct {
@@ -519,7 +519,7 @@ func TestOnAckPacket(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 
 	specs := map[string]struct {
 		contractAddr       sdk.AccAddress
@@ -624,7 +624,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
-	const myContractGas = 256
+	const myContractGas = 40
 
 	specs := map[string]struct {
 		contractAddr       sdk.AccAddress
