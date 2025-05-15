@@ -628,6 +628,7 @@ type mockWasmQueryKeeper struct {
 	GetContractInfoFn func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 	QueryRawFn        func(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	QuerySmartFn      func(ctx context.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
+	QueryRawRangeFn   func(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte)
 	IsPinnedCodeFn    func(ctx context.Context, codeID uint64) bool
 	GetCodeInfoFn     func(ctx context.Context, codeID uint64) *types.CodeInfo
 }
@@ -644,6 +645,13 @@ func (m mockWasmQueryKeeper) QueryRaw(ctx context.Context, contractAddress sdk.A
 		panic("not expected to be called")
 	}
 	return m.QueryRawFn(ctx, contractAddress, key)
+}
+
+func (m mockWasmQueryKeeper) QueryRawRange(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte) {
+	if m.QueryRawRangeFn == nil {
+		panic("not expected to be called")
+	}
+	return m.QueryRawRangeFn(ctx, contractAddress, start, end, limit, reverse)
 }
 
 func (m mockWasmQueryKeeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
