@@ -952,6 +952,9 @@ func (k Keeper) QueryRawRange(ctx context.Context, contractAddress sdk.AccAddres
 	}
 	defer iter.Close()
 
+	// Make sure to set to empty array because the contract doesn't expect a null JSON value
+	results = []wasmvmtypes.RawRangeEntry{}
+
 	var count uint16 = 0
 	for ; iter.Valid(); iter.Next() {
 		// keep track of count to honor the limit

@@ -3131,6 +3131,8 @@ func TestQueryRawRange(t *testing.T) {
 			endBytes := toBytes(spec.end)
 
 			entries, next := k.QueryRawRange(ctx, contractAddress, startBytes, endBytes, spec.limit, spec.reverse)
+			// contract cannot handle nil, so we disallow it
+			require.NotNil(t, entries)
 
 			// converting the entries we get back instead of the entries we put in the spec because
 			// it makes for easier to read test outputs (actual integers instead of byte arrays)
