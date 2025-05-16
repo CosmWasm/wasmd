@@ -379,11 +379,12 @@ func (k Keeper) instantiate(
 		contractInfo.IBCPortID = ibcPort
 	}
 
-	// TODO: Remove AddRoute in https://github.com/CosmWasm/wasmd/issues/2144
 	ibc2Port := PortIDForContractV2(contractAddress)
+	contractInfo.IBC2PortID = ibc2Port
+
+	// TODO: Remove AddRoute in https://github.com/CosmWasm/wasmd/issues/2144
 	if !k.ibcRouterV2.HasRoute(ibc2Port) {
 		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
-		contractInfo.IBC2PortID = ibc2Port
 	}
 
 	// store contract before dispatch so that contract could be called back
@@ -513,6 +514,9 @@ func (k Keeper) migrate(
 		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
+
+	ibc2Port := PortIDForContractV2(contractAddress)
+	contractInfo.IBC2PortID = ibc2Port
 
 	var response *wasmvmtypes.Response
 
