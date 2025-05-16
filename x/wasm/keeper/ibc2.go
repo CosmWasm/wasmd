@@ -50,7 +50,7 @@ func (module IBC2Handler) OnSendPacket(
 
 	err = module.keeper.OnSendIBC2Packet(ctx, contractAddr, msg)
 	if err != nil {
-		return errorsmod.Wrap(err, "on ibc2 sent")
+		return errorsmod.Wrap(err, "on ibc2 send")
 	}
 	return nil
 }
@@ -232,10 +232,9 @@ func (k Keeper) OnTimeoutIBC2Packet(
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
-// OnSendIBC2Packet calls the contract to let it know the packet was sent
-// from the source port assigned to this contract.
-// The contract should handle this on the application level and verify
-// the message.
+// OnSendIBC2Packet calls the contract to inform it that the packet was sent from
+// the source port assigned to this contract. The contract should handle this at
+// the application level and verify the message.
 func (k Keeper) OnSendIBC2Packet(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
