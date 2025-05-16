@@ -214,7 +214,7 @@ func TestIBC2SendMsg(t *testing.T) {
 	err = wasmibctesting.RelayPendingPacketsV2(path)
 	require.NoError(t, err)
 
-	// Check that timeout message was sent to the contract
+	// Check that send message was sent to the contract
 	var response State
 	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
 	require.NoError(t, err)
