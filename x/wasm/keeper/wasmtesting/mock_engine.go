@@ -45,6 +45,7 @@ type MockWasmEngine struct {
 	IBCDestinationCallbackFn func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCDestinationCallbackMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error)
 	IBC2PacketReceiveFn      func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBC2PacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error)
 	IBC2PacketTimeoutFn      func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBC2PacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error)
+	IBC2PacketSendFn         func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBC2PacketSendMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error)
 	PinFn                    func(checksum wasmvm.Checksum) error
 	UnpinFn                  func(checksum wasmvm.Checksum) error
 	GetMetricsFn             func() (*wasmvmtypes.Metrics, error)
@@ -119,6 +120,13 @@ func (m *MockWasmEngine) IBC2PacketTimeout(codeID wasmvm.Checksum, env wasmvmtyp
 		panic("not supposed to be called!")
 	}
 	return m.IBC2PacketTimeoutFn(codeID, env, msg, store, goapi, querier, gasMeter, gasLimit, deserCost)
+}
+
+func (m *MockWasmEngine) IBC2PacketSend(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBC2PacketSendMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
+	if m.IBC2PacketSendFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.IBC2PacketSendFn(codeID, env, msg, store, goapi, querier, gasMeter, gasLimit, deserCost)
 }
 
 func (m *MockWasmEngine) StoreCode(codeID wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, uint64, error) {

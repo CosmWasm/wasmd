@@ -423,7 +423,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bcb7), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1c527), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -890,13 +890,14 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	}
 
 	// when
-	parentAddr, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+	contractAddress, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+	ibc2PortID := "wasm2" + contractAddress.String()
 
 	// then
 	require.NoError(t, err)
 	assert.Equal(t, []byte("parent"), data)
-	require.Equal(t, parentAddr.String(), capturedSenderAddr)
-	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String())
+	require.Equal(t, contractAddress.String(), capturedSenderAddr)
+	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"ibc2_port":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String(), ibc2PortID)
 	assert.JSONEq(t, expCodeInfo, string(capturedCodeInfo))
 }
 
@@ -960,7 +961,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1aceb), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1adc3), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
