@@ -722,7 +722,13 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			default:
 				return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unknown order %s", request.RawRange.Order)
 			}
-			k.QueryRawRange(ctx, addr, request.RawRange.Start, request.RawRange.End, request.RawRange.Limit, reverse)
+			data, nextKey := k.QueryRawRange(ctx, addr, request.RawRange.Start, request.RawRange.End, request.RawRange.Limit, reverse)
+			res := wasmvmtypes.RawRangeResponse{
+				Data:    data,
+				NextKey: nextKey,
+			}
+			return json.Marshal(res)
+
 		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 	}
