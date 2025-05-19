@@ -519,15 +519,6 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 		*path.chainA.PendingSendPacketsV2 = (*path.chainA.PendingSendPacketsV2)[1:]
 	}
 
-	for _, v := range *path.chainA.PendingAckPacketsV2 {
-		err := RelayAckPacketV2(path, v)
-		if err != nil {
-			return err
-		}
-
-		*path.chainA.PendingAckPacketsV2 = (*path.chainA.PendingAckPacketsV2)[1:]
-	}
-
 	src = path.EndpointB
 	require.NoError(path.chainB, src.UpdateClient())
 	for _, v := range *path.chainB.PendingSendPacketsV2 {
@@ -537,6 +528,17 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 		}
 
 		*path.chainB.PendingSendPacketsV2 = (*path.chainB.PendingSendPacketsV2)[1:]
+	}
+
+	// now relay all the stoopid acks :(
+
+	for _, v := range *path.chainA.PendingAckPacketsV2 {
+		err := RelayAckPacketV2(path, v)
+		if err != nil {
+			return err
+		}
+
+		*path.chainA.PendingAckPacketsV2 = (*path.chainA.PendingAckPacketsV2)[1:]
 	}
 
 	for _, v := range *path.chainB.PendingAckPacketsV2 {

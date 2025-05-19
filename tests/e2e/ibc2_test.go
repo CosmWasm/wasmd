@@ -83,10 +83,6 @@ func TestIBC2AckMsg(t *testing.T) {
 	err = wasmibctesting.RelayPendingPacketsV2(path)
 	require.NoError(t, err)
 
-	// Relay acknowledgements
-	err = wasmibctesting.RelayPendingPacketsV2(path)
-	require.NoError(t, err)
-
 	// Check if counter was incremented in the recv entry point
 	var response State
 
