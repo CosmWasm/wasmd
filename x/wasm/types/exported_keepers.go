@@ -156,4 +156,9 @@ type IBC2ContractKeeper interface {
 		contractAddr sdk.AccAddress,
 		msg wasmvmtypes.IBC2PacketTimeoutMsg,
 	) error
+	OnSendIBC2Packet(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.IBC2PacketSendMsg,
+	) error
 }

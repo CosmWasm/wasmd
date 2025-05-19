@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -22,11 +23,12 @@ type QueryMsg struct {
 
 // ibc2 contract response type
 type State struct {
-	IBC2PacketAckCounter     uint32 `json:"ibc2_packet_ack_counter"`
-	IBC2PacketReceiveCounter uint32 `json:"ibc2_packet_receive_counter"`
-	IBC2PacketTimeoutCounter uint32 `json:"ibc2_packet_timeout_counter"`
-	LastChannelID            string `json:"last_channel_id"`
-	LastPacketSeq            uint64 `json:"last_packet_seq"`
+	IBC2PacketAckCounter     uint32                         `json:"ibc2_packet_ack_counter"`
+	IBC2PacketReceiveCounter uint32                         `json:"ibc2_packet_receive_counter"`
+	IBC2PacketTimeoutCounter uint32                         `json:"ibc2_packet_timeout_counter"`
+	LastChannelID            string                         `json:"last_channel_id"`
+	LastPacketSeq            uint64                         `json:"last_packet_seq"`
+	LastPacketSent           *wasmvmtypes.IBC2PacketSendMsg `json:"last_packet_sent"`
 }
 
 // Message sent to the ibc2 contract over IBCv2 channel
@@ -218,4 +220,70 @@ func TestIBC2TimeoutMsg(t *testing.T) {
 	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), response.IBC2PacketTimeoutCounter)
+}
+
+func TestIBC2SendMsg(t *testing.T) {
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
+	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
+	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
+	require.NotEmpty(t, contractAddrA)
+
+	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	// Skip initial contract address to not overlap with ChainA
+	_ = chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
+	require.NotEmpty(t, contractAddrB)
+
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortA,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  contractPortB,
+		Version: ibctransfertypes.V1,
+		Order:   channeltypes.UNORDERED,
+	}
+
+	path.Path.SetupV2()
+
+	// IBC v2 Payload from contract on Chain B to contract on Chain A
+	payload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	var err error
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: false, SendAsyncAckForPrevMsg: false})
+	require.NoError(t, err)
+
+	// Message timeout
+	timeoutTimestamp := uint64(chainB.GetContext().BlockTime().Add(time.Minute).Unix())
+
+	_, err = path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.NoError(t, err)
+
+	// First message send through test.
+	// Contract replies back with the IbcPayload response.
+	err = wasmibctesting.RelayPendingPacketsV2(path)
+	require.NoError(t, err)
+
+	// Check that send message was sent to the contract
+	var response State
+	err = chainA.SmartQuery(contractAddrA.String(), QueryMsg{QueryState: struct{}{}}, &response)
+	require.NoError(t, err)
+	require.Equal(t, &wasmvmtypes.IBC2PacketSendMsg{
+		Payload: wasmvmtypes.IBC2Payload{
+			SourcePort:      wasmkeeper.PortIDForContractV2(contractAddrA),
+			DestinationPort: wasmkeeper.PortIDForContractV2(contractAddrB),
+			Version:         "mock-version",
+			Encoding:        "application/x-protobuf",
+			Value:           []byte(`{"response_without_ack":false,"send_async_ack_for_prev_msg":false}`),
+		},
+		SourceClient:      "07-tendermint-0",
+		DestinationClient: "07-tendermint-0",
+		PacketSequence:    1,
+		Signer:            contractAddrA.String(),
+	}, response.LastPacketSent)
 }
