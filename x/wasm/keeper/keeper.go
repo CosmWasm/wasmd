@@ -982,7 +982,7 @@ func (k Keeper) QueryRawRange(ctx context.Context, contractAddress sdk.AccAddres
 		nextKey = nil
 	}
 
-	return
+	return results, nextKey
 }
 
 // internal helper function
