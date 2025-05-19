@@ -822,7 +822,9 @@ func ParseAckFromEventsV2(events []abci.Event) ([]byte, error) {
 		if ev.Type == channeltypes.EventTypeWriteAck {
 			for _, attr := range ev.Attributes {
 				if attr.Key == channeltypesv2.AttributeKeyEncodedAckHex {
-					bz, err := hex.DecodeString(attr.Value)
+
+					// The first two bytes is a noise
+					bz, err := hex.DecodeString(attr.Value[4:])
 					if err != nil {
 						panic(err)
 					}
