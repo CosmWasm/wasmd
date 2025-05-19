@@ -80,7 +80,7 @@ func TestIBC2AckMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// First message send through test
-	err = wasmibctesting.RelayPendingPacketsV2(path)
+	err = wasmibctesting.RelayPendingPacketsWithAcksV2(path)
 	require.NoError(t, err)
 
 	// Check if counter was incremented in the recv entry point
