@@ -396,7 +396,6 @@ func MsgRecvPacketWithResultV2(endpoint *ibctesting.Endpoint, packet channeltype
 	msg := channeltypesv2.NewMsgRecvPacket(packet, proof, proofHeight, endpoint.Chain.SenderAccount.GetAddress().String())
 
 	res, err := endpoint.Chain.SendMsgs(msg)
-
 	if err != nil {
 		return nil, err
 	}
