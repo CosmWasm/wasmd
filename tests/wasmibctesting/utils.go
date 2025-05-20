@@ -577,7 +577,7 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 	return nil
 }
 
-// RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
+// RelayPendingPacketsWithAcksV2 sends pending packages between path.EndpointA and path.EndpointB along with acks
 func RelayPendingPacketsWithAcksV2(path *WasmPath) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
