@@ -164,7 +164,7 @@ func (k Keeper) OnAckIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
 // The method calls the contract to process the incoming IBC2 packet. The contract fully owns the data processing and
