@@ -64,12 +64,10 @@ type WasmTestChain struct {
 
 	PendingSendPackets   *[]channeltypes.Packet
 	PendingSendPacketsV2 *[]channeltypesv2.Packet
-
-	PendingAckPacketsV2 *[]PendingAckPacketV2
 }
 
 func NewWasmTestChain(chain *ibctesting.TestChain) *WasmTestChain {
-	res := WasmTestChain{TestChain: chain, PendingSendPackets: &[]channeltypes.Packet{}, PendingSendPacketsV2: &[]channeltypesv2.Packet{}, PendingAckPacketsV2: &[]PendingAckPacketV2{}}
+	res := WasmTestChain{TestChain: chain, PendingSendPackets: &[]channeltypes.Packet{}, PendingSendPacketsV2: &[]channeltypesv2.Packet{}}
 	res.SendMsgsOverride = res.OverrideSendMsgs
 	return &res
 }
@@ -80,26 +78,6 @@ func (chain *WasmTestChain) CaptureIBCEventsV2(result *abci.ExecTxResult) {
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
 		*chain.PendingSendPacketsV2 = append(*chain.PendingSendPacketsV2, toSend...)
-	}
-
-	toAck, err := ParsePacketsFromEventsV2(channeltypesv2.EventTypeWriteAck, result.Events)
-	if err != nil {
-		chain.Logf("no acknowledgements emitted")
-	}
-
-	if len(toAck) > 0 {
-		chain.Logf("found ack packet to relay")
-
-		mappedAcks := make([]PendingAckPacketV2, len(toAck))
-		for i, packet := range toAck {
-			mappedAcks[i] = PendingAckPacketV2{
-				Packet: packet,
-				Ack:    []byte{byte(0x01)},
-			}
-		}
-
-		// Keep a queue on the chain that we can relay in tests
-		*chain.PendingAckPacketsV2 = append(*chain.PendingAckPacketsV2, mappedAcks...)
 	}
 }
 
@@ -421,13 +399,19 @@ func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet) error {
 			return fmt.Errorf("tried to relay packet without ack but got ack")
 		}
 
+		var msg channeltypesv2.Acknowledgement
+		err = proto.Unmarshal(ack, &msg)
+		if err != nil {
+			return err
+		}
+
 		// packet found, relay from A to B
 		if err := path.EndpointA.UpdateClient(); err != nil {
 			return err
 		}
 
 		path.chainA.Logf("sending ack to other chain")
-		err = path.EndpointA.MsgAcknowledgePacket(packet, channeltypesv2.NewAcknowledgement(ack))
+		err = path.EndpointA.MsgAcknowledgePacket(packet, msg)
 		if err != nil {
 			return err
 		}
@@ -452,13 +436,19 @@ func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet) error {
 			return fmt.Errorf("tried to relay packet without ack but got ack")
 		}
 
+		var msg channeltypesv2.Acknowledgement
+		err = proto.Unmarshal(ack, &msg)
+		if err != nil {
+			return err
+		}
+
 		// packet found, relay from A to B
 		if err := path.EndpointB.UpdateClient(); err != nil {
 			return err
 		}
 
 		path.chainA.Logf("sending ack to other chain")
-		err = path.EndpointB.MsgAcknowledgePacket(packet, channeltypesv2.NewAcknowledgement(ack))
+		err = path.EndpointB.MsgAcknowledgePacket(packet, msg)
 		if err != nil {
 			return err
 		}
@@ -823,7 +813,7 @@ func ParseAckFromEventsV2(events []abci.Event) ([]byte, error) {
 			for _, attr := range ev.Attributes {
 				if attr.Key == channeltypesv2.AttributeKeyEncodedAckHex {
 					// The first two bytes is a noise
-					bz, err := hex.DecodeString(attr.Value[4:])
+					bz, err := hex.DecodeString(attr.Value)
 					if err != nil {
 						panic(err)
 					}
