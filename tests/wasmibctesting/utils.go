@@ -54,6 +54,11 @@ func (app WasmTestApp) GetTxConfig() client.TxConfig {
 	return app.TxConfig()
 }
 
+type PendingAckPacketV2 struct {
+	channeltypesv2.Packet
+	Ack []byte
+}
+
 type WasmTestChain struct {
 	*ibctesting.TestChain
 
@@ -361,6 +366,99 @@ func RelayPacketWithoutAck(path *ibctesting.Path, packet channeltypes.Packet) er
 	return fmt.Errorf("packet commitment does not exist on either endpoint for provided packet")
 }
 
+func MsgRecvPacketWithResultV2(endpoint *ibctesting.Endpoint, packet channeltypesv2.Packet) (*abci.ExecTxResult, error) {
+	// get proof of packet commitment from chainA
+	packetKey := hostv2.PacketCommitmentKey(packet.SourceClient, packet.Sequence)
+	proof, proofHeight := endpoint.Counterparty.QueryProof(packetKey)
+
+	msg := channeltypesv2.NewMsgRecvPacket(packet, proof, proofHeight, endpoint.Chain.SenderAccount.GetAddress().String())
+
+	res, err := endpoint.Chain.SendMsgs(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, endpoint.Counterparty.UpdateClient()
+}
+
+func RelayPacketV2(path *WasmPath, packet channeltypesv2.Packet) error {
+	pc := path.EndpointA.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointA.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
+	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
+		// packet found, relay from A to B
+		if err := path.EndpointB.UpdateClient(); err != nil {
+			return err
+		}
+
+		res, err := MsgRecvPacketWithResultV2(path.EndpointB, packet)
+		if err != nil {
+			return err
+		}
+
+		ack, err := ParseAckFromEventsV2(res.GetEvents())
+		if err != nil {
+			return fmt.Errorf("tried to relay packet without ack but got ack")
+		}
+
+		var msg channeltypesv2.Acknowledgement
+		err = proto.Unmarshal(ack, &msg)
+		if err != nil {
+			return err
+		}
+
+		// packet found, relay from A to B
+		if err := path.EndpointA.UpdateClient(); err != nil {
+			return err
+		}
+
+		path.chainA.Logf("sending ack to other chain")
+		err = path.EndpointA.MsgAcknowledgePacket(packet, msg)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	pc = path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeperV2.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourceClient(), packet.GetSequence())
+	if bytes.Equal(pc, channeltypesv2.CommitPacket(packet)) {
+		// packet found, relay B to A
+		if err := path.EndpointA.UpdateClient(); err != nil {
+			return err
+		}
+
+		res, err := MsgRecvPacketWithResultV2(path.EndpointA, packet)
+		if err != nil {
+			return err
+		}
+
+		ack, err := ParseAckFromEventsV2(res.GetEvents())
+		if err != nil {
+			return fmt.Errorf("tried to relay packet without ack but got ack")
+		}
+
+		var msg channeltypesv2.Acknowledgement
+		err = proto.Unmarshal(ack, &msg)
+		if err != nil {
+			return err
+		}
+
+		// packet found, relay from A to B
+		if err := path.EndpointB.UpdateClient(); err != nil {
+			return err
+		}
+
+		path.chainA.Logf("sending ack to other chain")
+		err = path.EndpointB.MsgAcknowledgePacket(packet, msg)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("packet commitment does not exist on either endpointV2 for provided packet")
+}
+
 // RelayPacketWithoutAckV2 attempts to relay the packet first on EndpointA and then on EndpointB
 // if EndpointA does not contain a packet commitment for that packet. An error is returned
 // if a relay step fails or the packet commitment does not exist on either endpoint.
@@ -460,6 +558,34 @@ func RelayPendingPacketsV2(path *WasmPath) error {
 	require.NoError(path.chainB, src.UpdateClient())
 	for _, v := range *path.chainB.PendingSendPacketsV2 {
 		err := RelayPacketWithoutAckV2(path, v)
+		if err != nil {
+			return err
+		}
+
+		*path.chainB.PendingSendPacketsV2 = (*path.chainB.PendingSendPacketsV2)[1:]
+	}
+	return nil
+}
+
+// RelayPendingPacketsWithAcksV2 sends pending packages between path.EndpointA and path.EndpointB along with acks
+func RelayPendingPacketsWithAcksV2(path *WasmPath) error {
+	// get all the packet to relay src->dest
+	src := path.EndpointA
+	require.NoError(path.chainA, src.UpdateClient())
+	path.chainA.Logf("Relay: %d PacketsV2 A->B, %d PacketsV2 B->A\n", len(*path.chainA.PendingSendPacketsV2), len(*path.chainB.PendingSendPacketsV2))
+	for _, v := range *path.chainA.PendingSendPacketsV2 {
+		err := RelayPacketV2(path, v)
+		if err != nil {
+			return err
+		}
+
+		*path.chainA.PendingSendPacketsV2 = (*path.chainA.PendingSendPacketsV2)[1:]
+	}
+
+	src = path.EndpointB
+	require.NoError(path.chainB, src.UpdateClient())
+	for _, v := range *path.chainB.PendingSendPacketsV2 {
+		err := RelayPacketV2(path, v)
 		if err != nil {
 			return err
 		}
@@ -667,6 +793,26 @@ func ParseAckFromEvents(events []abci.Event) ([]byte, error) {
 		if ev.Type == channeltypes.EventTypeWriteAck {
 			for _, attr := range ev.Attributes {
 				if attr.Key == channeltypes.AttributeKeyAckHex {
+					bz, err := hex.DecodeString(attr.Value)
+					if err != nil {
+						panic(err)
+					}
+					return bz, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("acknowledgement event attribute not found")
+}
+
+// ParseAckFromEventsV2 parses events emitted from a MsgRecvPacket and returns the
+// acknowledgement.
+func ParseAckFromEventsV2(events []abci.Event) ([]byte, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeWriteAck {
+			for _, attr := range ev.Attributes {
+				if attr.Key == channeltypesv2.AttributeKeyEncodedAckHex {
+					// The first two bytes is a noise
 					bz, err := hex.DecodeString(attr.Value)
 					if err != nil {
 						panic(err)

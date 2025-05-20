@@ -13,6 +13,7 @@
  - Add IBC v2 SendPacket message encoding [\#2110](https://github.com/CosmWasm/wasmd/issues/2110)
  - Remove IBC fee handling, as it is no longer supported by the IBC protocol [\#2254](https://github.com/CosmWasm/wasmd/pull/2254)
  - Add support for IBCv2 Send entry point [\#2252](https://github.com/CosmWasm/wasmd/pull/2252)
+ - Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 

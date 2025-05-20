@@ -117,7 +117,54 @@ func (module IBC2Handler) OnAcknowledgementPacket(
 	payload channeltypesv2.Payload,
 	relayer sdk.AccAddress,
 ) error {
+	contractAddr, err := ContractFromPortID2(payload.SourcePort)
+	if err != nil {
+		return errorsmod.Wrapf(err, "contract port id")
+	}
+	msg := wasmvmtypes.IBC2AcknowledgeMsg{
+		SourceClient:      sourceClient,
+		DestinationClient: destinationClient,
+		Data:              newIBC2Payload(payload),
+		Acknowledgement:   acknowledgement,
+		Relayer:           relayer.String(),
+	}
+	err = module.keeper.OnAckIBC2Packet(ctx, contractAddr, msg)
+	if err != nil {
+		return errorsmod.Wrap(err, "on ack")
+	}
 	return nil
+}
+
+func (k Keeper) OnAckIBC2Packet(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	msg wasmvmtypes.IBC2AcknowledgeMsg,
+) error {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-ack-packet")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	env := types.NewEnv(ctx, contractAddr)
+	querier := k.newQueryHandler(ctx, contractAddr)
+
+	gasLeft := k.runtimeGasForContract(ctx)
+	res, gasUsed, execErr := k.wasmVM.IBC2PacketAck(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gasLeft, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasUsed)
+	if execErr != nil {
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if res == nil {
+		// If this gets executed, that's a bug in wasmvm
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+	}
+	if res.Err != "" {
+		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
 // The method calls the contract to process the incoming IBC2 packet. The contract fully owns the data processing and
