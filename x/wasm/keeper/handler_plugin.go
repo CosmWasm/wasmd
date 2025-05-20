@@ -286,8 +286,8 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 		if contractIBC2PortID == "" {
 			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc2 not supported")
 		}
-		contractIBCChannelID := msg.IBC2.WriteAcknowledgement.SourceClient
-		if contractIBCChannelID == "" {
+		sourceClient := msg.IBC2.WriteAcknowledgement.SourceClient
+		if sourceClient == "" {
 			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc2 channel")
 		}
 

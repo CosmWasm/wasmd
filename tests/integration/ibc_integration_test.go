@@ -417,7 +417,7 @@ func TestIBCAsyncAck(t *testing.T) {
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// we don't expect an ack yet
-	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0])
+	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0], path.EndpointB)
 
 	noAckPacket := (*chainA.PendingSendPackets)[0]
 	chainA.PendingSendPackets = &[]channeltypes.Packet{}
