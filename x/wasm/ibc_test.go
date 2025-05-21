@@ -110,7 +110,7 @@ func TestOnRecvPacket(t *testing.T) {
 				},
 			}
 			channelVersion := ""
-			h := NewIBCHandler(&mock, nil, nil)
+			h := NewIBCHandler(&mock, nil, nil, nil)
 			em := &sdk.EventManager{}
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {
