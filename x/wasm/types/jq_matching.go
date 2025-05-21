@@ -11,7 +11,7 @@ import (
 
 // Accept only payload messages which pass the given JMESPath filter.
 func MatchJMESPaths(msg RawContractMessage, filters []string) (bool, error) {
-	var msg_data interface{}
+	var msg_data any
 	err := json.Unmarshal(msg, &msg_data)
 	if err != nil {
 		return false, ErrInvalid.Wrapf("Error unmarshaling message %s: %s", msg, err.Error())
@@ -20,7 +20,8 @@ func MatchJMESPaths(msg RawContractMessage, filters []string) (bool, error) {
 
 		result, err := jmespath.Search(filter, msg_data)
 		if err != nil {
-			return false, ErrInvalid.Wrapf("JMESPath filter %s applied on %s is invalid: %s", filter, msg_data, err.Error())
+			// We are not logging the error because of the undeterministic nature of json unmarshalling within go
+			return false, ErrInvalid.Wrapf("JMESPath filter %s applied on %s is invalid", filter, msg_data)
 		}
 		b, ok := result.(bool)
 		if !ok {
