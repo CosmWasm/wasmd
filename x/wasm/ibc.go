@@ -2,8 +2,10 @@ package wasm
 
 import (
 	"math"
+	"slices"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -34,11 +36,12 @@ type appVersionGetter interface {
 type IBCHandler struct {
 	keeper           types.IBCContractKeeper
 	channelKeeper    types.ChannelKeeper
+	transferKeeper   types.ICS20TransferPortSource
 	appVersionGetter appVersionGetter
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter) IBCHandler {
+	return IBCHandler{keeper: k, channelKeeper: ck, transferKeeper: tk, appVersionGetter: vg}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -412,9 +415,48 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		return err
 	}
 
+	var funds wasmvmtypes.Array[wasmvmtypes.Coin]
+	// detect successful transfer
+	successAck := []byte(`{"result":"AQ=="}`) // TODO: hardcoded check is not nice
+	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) &&
+		ack.Success() && slices.Equal(ack.Acknowledgement(), successAck) {
+		// decode packet
+		transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
+		if err != nil {
+			return errorsmod.Wrap(err, "unmarshal transfer packet data")
+		}
+
+		// validate receiver address
+		receiverAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
+		if err != nil {
+			return err
+		}
+		if receiverAddr.Equals(contractAddr) {
+			// fill funds with the transfer amount
+
+			// For a more in-depth explanation of the logic here, see the transfer module implementation:
+			// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
+			if transferData.Token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
+				// this is a denom coming from this chain, being sent back again
+				// remove prefix
+				transferData.Token.Denom.Trace = transferData.Token.Denom.Trace[1:]
+			} else {
+				// prefixing happens on the receiving end, so we need to do that here
+				trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
+				transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
+			}
+
+			funds = append(funds, wasmvmtypes.Coin{
+				Denom:  transferData.Token.GetDenom().IBCDenom(),
+				Amount: transferData.Token.GetAmount(),
+			})
+		}
+	}
+
 	msg := wasmvmtypes.IBCDestinationCallbackMsg{
 		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
 		Packet: newIBCPacket(packet),
+		Funds:  funds,
 	}
 
 	err = i.keeper.IBCDestinationCallback(cachedCtx, contractAddr, msg)
