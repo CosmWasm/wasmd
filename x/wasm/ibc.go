@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"encoding/json"
 	"math"
 	"slices"
 
@@ -416,21 +417,26 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	}
 
 	var funds wasmvmtypes.Array[wasmvmtypes.Coin]
-	// detect successful transfer
-	successAck := []byte(`{"result":"AQ=="}`) // TODO: hardcoded check is not nice
+
+	var parsedAck channeltypes.Acknowledgement_Result
+	err = json.Unmarshal(ack.Acknowledgement(), &parsedAck)
+
+	// detect successful IBC transfer, meaning:
+	// 1. it was sent to the transfer module
+	// 2. the acknowledgement was successful
 	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) &&
-		ack.Success() && slices.Equal(ack.Acknowledgement(), successAck) {
-		// decode packet
+		ack.Success() && err == nil && slices.Equal(parsedAck.Result, []byte{1}) {
+
 		transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
 		if err != nil {
 			return errorsmod.Wrap(err, "unmarshal transfer packet data")
 		}
 
-		// validate receiver address
 		receiverAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
 		if err != nil {
 			return err
 		}
+		// we only want to tell the contract about the funds if the transfer was sent to the contract
 		if receiverAddr.Equals(contractAddr) {
 			// fill funds with the transfer amount
 
