@@ -76,7 +76,7 @@ func (m msgServer) InstantiateContract(ctx context.Context, msg *types.MsgInstan
 	}, nil
 }
 
-// InstantiateContract2 instantiate a new contract with predicatable address generated
+// InstantiateContract2 instantiate a new contract with a predictable address generated
 func (m msgServer) InstantiateContract2(ctx context.Context, msg *types.MsgInstantiateContract2) (*types.MsgInstantiateContract2Response, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err

@@ -375,7 +375,7 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 
 // String implements the Stringer interface.
 func (p StoreAndInstantiateContractProposal) String() string {
-	return fmt.Sprintf(`Store And Instantiate Coontract Proposal:
+	return fmt.Sprintf(`Store And Instantiate Contract Proposal:
   Title:       %s
   Description: %s
   Run as:      %s
