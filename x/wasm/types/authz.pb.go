@@ -5,10 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
@@ -16,14 +12,15 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var (
-	_ = proto.Marshal
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -44,11 +41,9 @@ func (*StoreCodeAuthorization) ProtoMessage()    {}
 func (*StoreCodeAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{0}
 }
-
 func (m *StoreCodeAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StoreCodeAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreCodeAuthorization.Marshal(b, m, deterministic)
@@ -61,15 +56,12 @@ func (m *StoreCodeAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *StoreCodeAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreCodeAuthorization.Merge(m, src)
 }
-
 func (m *StoreCodeAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StoreCodeAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreCodeAuthorization.DiscardUnknown(m)
 }
@@ -89,11 +81,9 @@ func (*ContractExecutionAuthorization) ProtoMessage()    {}
 func (*ContractExecutionAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{1}
 }
-
 func (m *ContractExecutionAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractExecutionAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractExecutionAuthorization.Marshal(b, m, deterministic)
@@ -106,15 +96,12 @@ func (m *ContractExecutionAuthorization) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *ContractExecutionAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractExecutionAuthorization.Merge(m, src)
 }
-
 func (m *ContractExecutionAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractExecutionAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractExecutionAuthorization.DiscardUnknown(m)
 }
@@ -134,11 +121,9 @@ func (*ContractMigrationAuthorization) ProtoMessage()    {}
 func (*ContractMigrationAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{2}
 }
-
 func (m *ContractMigrationAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractMigrationAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractMigrationAuthorization.Marshal(b, m, deterministic)
@@ -151,15 +136,12 @@ func (m *ContractMigrationAuthorization) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *ContractMigrationAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractMigrationAuthorization.Merge(m, src)
 }
-
 func (m *ContractMigrationAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractMigrationAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractMigrationAuthorization.DiscardUnknown(m)
 }
@@ -183,11 +165,9 @@ func (*CodeGrant) ProtoMessage()    {}
 func (*CodeGrant) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{3}
 }
-
 func (m *CodeGrant) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CodeGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CodeGrant.Marshal(b, m, deterministic)
@@ -200,15 +180,12 @@ func (m *CodeGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *CodeGrant) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CodeGrant.Merge(m, src)
 }
-
 func (m *CodeGrant) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CodeGrant) XXX_DiscardUnknown() {
 	xxx_messageInfo_CodeGrant.DiscardUnknown(m)
 }
@@ -235,11 +212,9 @@ func (*ContractGrant) ProtoMessage()    {}
 func (*ContractGrant) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{4}
 }
-
 func (m *ContractGrant) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ContractGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ContractGrant.Marshal(b, m, deterministic)
@@ -252,15 +227,12 @@ func (m *ContractGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *ContractGrant) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ContractGrant.Merge(m, src)
 }
-
 func (m *ContractGrant) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ContractGrant) XXX_DiscardUnknown() {
 	xxx_messageInfo_ContractGrant.DiscardUnknown(m)
 }
@@ -280,11 +252,9 @@ func (*MaxCallsLimit) ProtoMessage()    {}
 func (*MaxCallsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{5}
 }
-
 func (m *MaxCallsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MaxCallsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MaxCallsLimit.Marshal(b, m, deterministic)
@@ -297,15 +267,12 @@ func (m *MaxCallsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *MaxCallsLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MaxCallsLimit.Merge(m, src)
 }
-
 func (m *MaxCallsLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MaxCallsLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_MaxCallsLimit.DiscardUnknown(m)
 }
@@ -325,11 +292,9 @@ func (*MaxFundsLimit) ProtoMessage()    {}
 func (*MaxFundsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{6}
 }
-
 func (m *MaxFundsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MaxFundsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MaxFundsLimit.Marshal(b, m, deterministic)
@@ -342,15 +307,12 @@ func (m *MaxFundsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *MaxFundsLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MaxFundsLimit.Merge(m, src)
 }
-
 func (m *MaxFundsLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MaxFundsLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_MaxFundsLimit.DiscardUnknown(m)
 }
@@ -373,11 +335,9 @@ func (*CombinedLimit) ProtoMessage()    {}
 func (*CombinedLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{7}
 }
-
 func (m *CombinedLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CombinedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CombinedLimit.Marshal(b, m, deterministic)
@@ -390,15 +350,12 @@ func (m *CombinedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *CombinedLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CombinedLimit.Merge(m, src)
 }
-
 func (m *CombinedLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CombinedLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_CombinedLimit.DiscardUnknown(m)
 }
@@ -408,7 +365,8 @@ var xxx_messageInfo_CombinedLimit proto.InternalMessageInfo
 // AllowAllMessagesFilter is a wildcard to allow any type of contract payload
 // message.
 // Since: wasmd 0.30
-type AllowAllMessagesFilter struct{}
+type AllowAllMessagesFilter struct {
+}
 
 func (m *AllowAllMessagesFilter) Reset()         { *m = AllowAllMessagesFilter{} }
 func (m *AllowAllMessagesFilter) String() string { return proto.CompactTextString(m) }
@@ -416,11 +374,9 @@ func (*AllowAllMessagesFilter) ProtoMessage()    {}
 func (*AllowAllMessagesFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{8}
 }
-
 func (m *AllowAllMessagesFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AllowAllMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AllowAllMessagesFilter.Marshal(b, m, deterministic)
@@ -433,15 +389,12 @@ func (m *AllowAllMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *AllowAllMessagesFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AllowAllMessagesFilter.Merge(m, src)
 }
-
 func (m *AllowAllMessagesFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AllowAllMessagesFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AllowAllMessagesFilter.DiscardUnknown(m)
 }
@@ -462,11 +415,9 @@ func (*AcceptedMessageKeysFilter) ProtoMessage()    {}
 func (*AcceptedMessageKeysFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{9}
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AcceptedMessageKeysFilter.Marshal(b, m, deterministic)
@@ -479,15 +430,12 @@ func (m *AcceptedMessageKeysFilter) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AcceptedMessageKeysFilter.Merge(m, src)
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AcceptedMessageKeysFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AcceptedMessageKeysFilter.DiscardUnknown(m)
 }
@@ -508,11 +456,9 @@ func (*AcceptedMessagesFilter) ProtoMessage()    {}
 func (*AcceptedMessagesFilter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{10}
 }
-
 func (m *AcceptedMessagesFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AcceptedMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AcceptedMessagesFilter.Marshal(b, m, deterministic)
@@ -525,20 +471,98 @@ func (m *AcceptedMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *AcceptedMessagesFilter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AcceptedMessagesFilter.Merge(m, src)
 }
-
 func (m *AcceptedMessagesFilter) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AcceptedMessagesFilter) XXX_DiscardUnknown() {
 	xxx_messageInfo_AcceptedMessagesFilter.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_AcceptedMessagesFilter proto.InternalMessageInfo
+
+// JQMatchFilter accepts only payload messages which pass the jq tests.
+// Since: wasmd 0.30 TODO(PR)
+type JQMatchFilter struct {
+	// Messages is the list of raw contract messages
+	Filters JQMatchFilter `protobuf:"bytes,1,rep,name=filters,proto3,castrepeated=JQMatchFilter" json:"filters"`
+}
+
+func (m *JQMatchFilter) Reset()         { *m = JQMatchFilter{} }
+func (m *JQMatchFilter) String() string { return proto.CompactTextString(m) }
+func (*JQMatchFilter) ProtoMessage()    {}
+func (*JQMatchFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_36ff3a20cf32b258, []int{11}
+}
+func (m *JQMatchFilter) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *JQMatchFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_JQMatchFilter.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *JQMatchFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JQMatchFilter.Merge(m, src)
+}
+func (m *JQMatchFilter) XXX_Size() int {
+	return m.Size()
+}
+func (m *JQMatchFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_JQMatchFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_JQMatchFilter proto.InternalMessageInfo
+
+// JQMatchFilter accepts only payload messages which pass the jq tests.
+// Since: wasmd 0.30 TODO(PR)
+type JQFilter struct {
+	// Messages is the list of raw contract messages
+	Filter        string `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	ExpectedValue []byte `protobuf:"bytes,2,opt,name=expected_value,json=expectedValue,proto3" json:"expected_value,omitempty"`
+}
+
+func (m *JQFilter) Reset()         { *m = JQFilter{} }
+func (m *JQFilter) String() string { return proto.CompactTextString(m) }
+func (*JQFilter) ProtoMessage()    {}
+func (*JQFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_36ff3a20cf32b258, []int{12}
+}
+func (m *JQFilter) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *JQFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_JQFilter.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *JQFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JQFilter.Merge(m, src)
+}
+func (m *JQFilter) XXX_Size() int {
+	return m.Size()
+}
+func (m *JQFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_JQFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_JQFilter proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*StoreCodeAuthorization)(nil), "cosmwasm.wasm.v1.StoreCodeAuthorization")
@@ -552,64 +576,72 @@ func init() {
 	proto.RegisterType((*AllowAllMessagesFilter)(nil), "cosmwasm.wasm.v1.AllowAllMessagesFilter")
 	proto.RegisterType((*AcceptedMessageKeysFilter)(nil), "cosmwasm.wasm.v1.AcceptedMessageKeysFilter")
 	proto.RegisterType((*AcceptedMessagesFilter)(nil), "cosmwasm.wasm.v1.AcceptedMessagesFilter")
+	proto.RegisterType((*JQMatchFilter)(nil), "cosmwasm.wasm.v1.JQMatchFilter")
+	proto.RegisterType((*JQFilter)(nil), "cosmwasm.wasm.v1.JQFilter")
 }
 
 func init() { proto.RegisterFile("cosmwasm/wasm/v1/authz.proto", fileDescriptor_36ff3a20cf32b258) }
 
 var fileDescriptor_36ff3a20cf32b258 = []byte{
-	// 817 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x55, 0xcf, 0x4f, 0x33, 0x45,
-	0x18, 0xee, 0x7e, 0xdf, 0x27, 0xd2, 0x81, 0xcf, 0x1f, 0x1b, 0x6c, 0x5a, 0x20, 0x5b, 0xb2, 0x2a,
-	0x56, 0x92, 0xee, 0xa6, 0xe8, 0xa9, 0x07, 0x4d, 0xb7, 0x5a, 0x35, 0x82, 0x31, 0x8b, 0x06, 0xe2,
-	0xa5, 0x99, 0xee, 0x0e, 0xdb, 0x91, 0xdd, 0x99, 0x66, 0x67, 0x0a, 0x14, 0x63, 0xbc, 0x7b, 0xf2,
-	0xec, 0xc9, 0x9b, 0xc6, 0x13, 0x87, 0xfe, 0x11, 0x84, 0xc4, 0x84, 0x78, 0xf2, 0x84, 0x0a, 0x07,
-	0xfe, 0x01, 0xe3, 0xc1, 0x93, 0x99, 0x1f, 0x6d, 0x69, 0x29, 0x04, 0x39, 0xf9, 0x5d, 0xa6, 0x9d,
-	0xf7, 0x9d, 0xf7, 0x7d, 0x9f, 0xe7, 0x9d, 0x67, 0xde, 0x05, 0xcb, 0x01, 0x65, 0xc9, 0x01, 0x64,
-	0x89, 0x2b, 0x97, 0xfd, 0x8a, 0x0b, 0xbb, 0xbc, 0x7d, 0xe4, 0x74, 0x52, 0xca, 0xa9, 0xf9, 0xd2,
-	0xc0, 0xeb, 0xc8, 0x65, 0xbf, 0xb2, 0xb8, 0x10, 0xd1, 0x88, 0x4a, 0xa7, 0x2b, 0xfe, 0xa9, 0x73,
-	0x8b, 0x05, 0x71, 0x8e, 0xb2, 0xa6, 0x72, 0xa8, 0x8d, 0x76, 0x59, 0x6a, 0xe7, 0xb6, 0x20, 0x43,
-	0xee, 0x7e, 0xa5, 0x85, 0x38, 0xac, 0xb8, 0x01, 0xc5, 0x44, 0xfb, 0x6f, 0x02, 0xe0, 0xbd, 0x0e,
-	0x1a, 0x44, 0x17, 0x22, 0x4a, 0xa3, 0x18, 0xb9, 0x72, 0xd7, 0xea, 0xee, 0xba, 0x90, 0xf4, 0xb4,
-	0xeb, 0x65, 0x98, 0x60, 0x42, 0x5d, 0xb9, 0x2a, 0x93, 0xfd, 0x83, 0x01, 0x72, 0x5b, 0x9c, 0xa6,
-	0xa8, 0x4e, 0x43, 0x54, 0xeb, 0xf2, 0x36, 0x4d, 0xf1, 0x11, 0xe4, 0x98, 0x12, 0xf3, 0x1d, 0x30,
-	0x13, 0xa5, 0x90, 0x70, 0x96, 0x37, 0x56, 0x1e, 0x97, 0xe6, 0xd6, 0x97, 0x9c, 0x49, 0x6a, 0x8e,
-	0x08, 0xfa, 0x40, 0x9c, 0xf1, 0xb2, 0x27, 0xe7, 0xc5, 0xcc, 0x4f, 0x57, 0xc7, 0x6b, 0x86, 0xaf,
-	0xa3, 0xaa, 0x8d, 0xd3, 0x7e, 0xd9, 0xd6, 0xc4, 0x54, 0x87, 0x34, 0x17, 0x67, 0xac, 0xce, 0xb7,
-	0x57, 0xc7, 0x6b, 0x4b, 0x92, 0xc8, 0x74, 0x1c, 0x76, 0xdf, 0x00, 0x56, 0x9d, 0x12, 0x9e, 0xc2,
-	0x80, 0xbf, 0x7f, 0x88, 0x82, 0xae, 0xb0, 0x8e, 0x43, 0xf5, 0x26, 0xa0, 0x16, 0xa7, 0x41, 0x55,
-	0x19, 0x6e, 0x85, 0xfb, 0xc9, 0xfd, 0xe1, 0xbe, 0x2a, 0xe1, 0xde, 0x8d, 0x69, 0x0c, 0xf6, 0x26,
-	0x8e, 0x52, 0xf8, 0x3f, 0x83, 0x3d, 0x1d, 0x93, 0xfd, 0x0d, 0xc8, 0x0e, 0x6f, 0xd5, 0x5c, 0x02,
-	0xd9, 0x80, 0x86, 0xa8, 0xd9, 0x86, 0xac, 0x9d, 0x37, 0x56, 0x8c, 0xd2, 0xbc, 0x3f, 0x2b, 0x0c,
-	0x1f, 0x42, 0xd6, 0x36, 0x3f, 0x07, 0x39, 0x4c, 0x18, 0x87, 0x84, 0x63, 0xc8, 0x51, 0xb3, 0x83,
-	0xd2, 0x04, 0x33, 0x86, 0x29, 0xc9, 0x3f, 0x5a, 0x31, 0x4a, 0x73, 0xeb, 0xd6, 0x4d, 0x36, 0xb5,
-	0x20, 0x40, 0x8c, 0xd5, 0x29, 0xd9, 0xc5, 0x91, 0xff, 0xca, 0xb5, 0xe8, 0x4f, 0x87, 0xc1, 0xf6,
-	0x5f, 0x06, 0x78, 0x3a, 0xc6, 0xda, 0x7c, 0x1b, 0xcc, 0x06, 0xda, 0x20, 0x41, 0x64, 0xbd, 0xfc,
-	0xaf, 0xfd, 0xf2, 0x82, 0x26, 0x5d, 0x0b, 0xc3, 0x14, 0x31, 0xb6, 0xc5, 0x53, 0x4c, 0x22, 0x7f,
-	0x78, 0xd2, 0xfc, 0x0c, 0x3c, 0x17, 0xe3, 0x04, 0x73, 0x8d, 0x66, 0xc1, 0x51, 0xef, 0xc2, 0x19,
-	0xbc, 0x0b, 0xa7, 0x46, 0x7a, 0x5e, 0xe9, 0xb4, 0x5f, 0x7e, 0xed, 0xd6, 0xa6, 0x8b, 0xce, 0x1c,
-	0x6d, 0x88, 0x24, 0x3b, 0xbe, 0x4a, 0x66, 0x6e, 0x83, 0x99, 0x5d, 0x1c, 0x73, 0x94, 0xe6, 0x1f,
-	0xdf, 0x91, 0xf6, 0xcd, 0xd3, 0x7e, 0xf9, 0xf5, 0xbb, 0xd3, 0x36, 0x64, 0x96, 0x1d, 0x5f, 0xa7,
-	0xb3, 0x09, 0x78, 0xba, 0x09, 0x0f, 0xeb, 0x30, 0x8e, 0x99, 0xac, 0x68, 0x2e, 0x83, 0x6c, 0x8a,
-	0x12, 0x88, 0x09, 0x26, 0x91, 0xa4, 0xfd, 0xc4, 0x1f, 0x19, 0xaa, 0xef, 0xde, 0x17, 0xb8, 0xb8,
-	0x78, 0x53, 0x5e, 0xfc, 0x58, 0x7a, 0xfb, 0x17, 0x43, 0x16, 0x6c, 0x74, 0x49, 0xa8, 0x0b, 0x7e,
-	0x05, 0x9e, 0x87, 0x09, 0xed, 0x8e, 0xe4, 0x58, 0x70, 0x74, 0x8b, 0xc5, 0x20, 0x1a, 0xca, 0xaa,
-	0x4e, 0x31, 0xf1, 0x1a, 0x42, 0x88, 0x3f, 0xff, 0x5e, 0x2c, 0x45, 0x98, 0xb7, 0xbb, 0x2d, 0x27,
-	0xa0, 0x89, 0x9e, 0x61, 0xfa, 0xa7, 0xcc, 0xc2, 0x3d, 0x3d, 0x96, 0x44, 0x00, 0xfb, 0xfe, 0xea,
-	0x78, 0x6d, 0x3e, 0x46, 0x11, 0x0c, 0x7a, 0x4d, 0x31, 0xca, 0x98, 0x52, 0xf1, 0xa0, 0xe2, 0x03,
-	0xf9, 0x8c, 0xd0, 0xdb, 0x7f, 0x4b, 0xd9, 0x24, 0x2d, 0x4c, 0x50, 0xa8, 0xf8, 0xbc, 0x01, 0x5e,
-	0x0c, 0x04, 0xdf, 0xe6, 0x64, 0x1b, 0x5f, 0x90, 0x66, 0x7f, 0x60, 0xbd, 0x4e, 0xfc, 0xd1, 0xb3,
-	0x40, 0x7c, 0x8c, 0xa6, 0x1d, 0x80, 0x5c, 0x2d, 0x8e, 0xe9, 0x41, 0x2d, 0x8e, 0x37, 0x11, 0x63,
-	0x30, 0x42, 0x4c, 0x69, 0xab, 0xfa, 0xd1, 0xbd, 0x55, 0x38, 0x9a, 0xc1, 0xd3, 0x53, 0xd9, 0x5f,
-	0x83, 0x82, 0x78, 0xbb, 0x1d, 0x8e, 0x42, 0xed, 0xf9, 0x18, 0xf5, 0xb4, 0xd3, 0x34, 0xc1, 0x93,
-	0x3d, 0xd4, 0x53, 0xaa, 0xc9, 0xfa, 0xf2, 0x7f, 0x75, 0xe3, 0x3f, 0xd5, 0xb6, 0x54, 0xed, 0xdb,
-	0x2a, 0xd8, 0x3f, 0x1a, 0x20, 0x37, 0xe1, 0x1d, 0x14, 0xf7, 0xc0, 0x6c, 0xa2, 0x2d, 0x12, 0xc0,
-	0xbc, 0xb7, 0xfa, 0xcf, 0x79, 0xd1, 0xf4, 0xe1, 0xc1, 0x70, 0xd0, 0x29, 0xb7, 0xb8, 0x88, 0x39,
-	0x4c, 0x62, 0x4c, 0x50, 0xf3, 0x4b, 0x46, 0x89, 0x3f, 0x8c, 0x7b, 0x58, 0xa3, 0xa6, 0xc2, 0xf1,
-	0xde, 0x3b, 0xf9, 0xd3, 0xca, 0x9c, 0x5c, 0x58, 0xc6, 0xd9, 0x85, 0x65, 0xfc, 0x71, 0x61, 0x19,
-	0xdf, 0x5d, 0x5a, 0x99, 0xb3, 0x4b, 0x2b, 0xf3, 0xdb, 0xa5, 0x95, 0xf9, 0x62, 0xf5, 0x9a, 0x6a,
-	0xea, 0x94, 0x25, 0xdb, 0x83, 0x8f, 0x78, 0xe8, 0x1e, 0xaa, 0x8f, 0xb9, 0x54, 0x4e, 0x6b, 0x46,
-	0x4e, 0x93, 0xb7, 0xfe, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x6c, 0xf0, 0x2f, 0x8c, 0x6b, 0x08, 0x00,
-	0x00,
+	// 917 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
+	0x14, 0xf6, 0xb6, 0x25, 0x8d, 0x27, 0x71, 0x81, 0x55, 0xb0, 0x9c, 0xa4, 0xda, 0x44, 0x0b, 0x2d,
+	0x26, 0x92, 0x77, 0x95, 0xc2, 0xc9, 0x48, 0x80, 0xd7, 0x10, 0xa0, 0x34, 0xa8, 0xdd, 0x02, 0xad,
+	0xb8, 0x58, 0xe3, 0xdd, 0xc9, 0x7a, 0xe8, 0xee, 0x8c, 0xb5, 0x33, 0x9b, 0xc4, 0x41, 0x88, 0x1b,
+	0x07, 0x4e, 0x9c, 0x39, 0x21, 0x71, 0x00, 0x71, 0xca, 0xc1, 0x7f, 0x44, 0x14, 0x09, 0xa9, 0xe2,
+	0xc4, 0xa9, 0x40, 0x72, 0xc8, 0x3f, 0x80, 0x38, 0x70, 0x42, 0xf3, 0x63, 0x9d, 0x6c, 0xe2, 0x44,
+	0x49, 0x4f, 0xf4, 0xb2, 0xf6, 0xbe, 0x37, 0xef, 0xbd, 0xef, 0x7b, 0xf3, 0xde, 0xa7, 0x05, 0xd7,
+	0x03, 0xca, 0x92, 0x0d, 0xc8, 0x12, 0x57, 0x3e, 0xd6, 0x97, 0x5d, 0x98, 0xf1, 0xde, 0x96, 0xd3,
+	0x4f, 0x29, 0xa7, 0xe6, 0x0b, 0xb9, 0xd7, 0x91, 0x8f, 0xf5, 0xe5, 0xb9, 0x99, 0x88, 0x46, 0x54,
+	0x3a, 0x5d, 0xf1, 0x4f, 0x9d, 0x9b, 0x9b, 0x15, 0xe7, 0x28, 0xeb, 0x28, 0x87, 0x7a, 0xd1, 0x2e,
+	0x4b, 0xbd, 0xb9, 0x5d, 0xc8, 0x90, 0xbb, 0xbe, 0xdc, 0x45, 0x1c, 0x2e, 0xbb, 0x01, 0xc5, 0x44,
+	0xfb, 0x4f, 0x02, 0xe0, 0x83, 0x3e, 0xca, 0xa3, 0x67, 0x23, 0x4a, 0xa3, 0x18, 0xb9, 0xf2, 0xad,
+	0x9b, 0xad, 0xb9, 0x90, 0x0c, 0xb4, 0xeb, 0x45, 0x98, 0x60, 0x42, 0x5d, 0xf9, 0x54, 0x26, 0xfb,
+	0x07, 0x03, 0x54, 0xef, 0x73, 0x9a, 0xa2, 0x36, 0x0d, 0x51, 0x2b, 0xe3, 0x3d, 0x9a, 0xe2, 0x2d,
+	0xc8, 0x31, 0x25, 0xe6, 0x5b, 0x60, 0x22, 0x4a, 0x21, 0xe1, 0xac, 0x66, 0x2c, 0x5e, 0xae, 0x4f,
+	0xdd, 0x9a, 0x77, 0x8e, 0x53, 0x73, 0x44, 0xd0, 0xfb, 0xe2, 0x8c, 0x57, 0xde, 0x79, 0xb2, 0x50,
+	0xfa, 0xf9, 0x60, 0x7b, 0xc9, 0xf0, 0x75, 0x54, 0x73, 0x65, 0x77, 0xd8, 0xb0, 0x35, 0x31, 0xd5,
+	0x21, 0xcd, 0xc5, 0x29, 0xd4, 0xf9, 0xf6, 0x60, 0x7b, 0x69, 0x5e, 0x12, 0x19, 0x8f, 0xc3, 0x1e,
+	0x1a, 0xc0, 0x6a, 0x53, 0xc2, 0x53, 0x18, 0xf0, 0xf7, 0x36, 0x51, 0x90, 0x09, 0x6b, 0x11, 0xaa,
+	0x77, 0x0c, 0xea, 0xc2, 0x38, 0xa8, 0x2a, 0xc3, 0xa9, 0x70, 0x3f, 0x3e, 0x3f, 0xdc, 0x97, 0x25,
+	0xdc, 0xb3, 0x31, 0x15, 0x60, 0xaf, 0xe2, 0x28, 0x85, 0xff, 0x33, 0xd8, 0xe3, 0x31, 0xd9, 0x5f,
+	0x83, 0xf2, 0xe8, 0x56, 0xcd, 0x79, 0x50, 0x0e, 0x68, 0x88, 0x3a, 0x3d, 0xc8, 0x7a, 0x35, 0x63,
+	0xd1, 0xa8, 0x4f, 0xfb, 0x93, 0xc2, 0xf0, 0x01, 0x64, 0x3d, 0xf3, 0x53, 0x50, 0xc5, 0x84, 0x71,
+	0x48, 0x38, 0x86, 0x1c, 0x75, 0xfa, 0x28, 0x4d, 0x30, 0x63, 0x98, 0x92, 0xda, 0xa5, 0x45, 0xa3,
+	0x3e, 0x75, 0xcb, 0x3a, 0xc9, 0xa6, 0x15, 0x04, 0x88, 0xb1, 0x36, 0x25, 0x6b, 0x38, 0xf2, 0x5f,
+	0x3a, 0x12, 0x7d, 0x77, 0x14, 0x6c, 0xff, 0x6d, 0x80, 0x4a, 0x81, 0xb5, 0xf9, 0x06, 0x98, 0x0c,
+	0xb4, 0x41, 0x82, 0x28, 0x7b, 0xb5, 0xdf, 0x86, 0x8d, 0x19, 0x4d, 0xba, 0x15, 0x86, 0x29, 0x62,
+	0xec, 0x3e, 0x4f, 0x31, 0x89, 0xfc, 0xd1, 0x49, 0xf3, 0x13, 0xf0, 0x5c, 0x8c, 0x13, 0xcc, 0x35,
+	0x9a, 0x19, 0x47, 0xed, 0x85, 0x93, 0xef, 0x85, 0xd3, 0x22, 0x03, 0xaf, 0xbe, 0x3b, 0x6c, 0xbc,
+	0x72, 0x6a, 0xd3, 0x45, 0x67, 0xb6, 0xee, 0x88, 0x24, 0x0f, 0x7d, 0x95, 0xcc, 0x7c, 0x00, 0x26,
+	0xd6, 0x70, 0xcc, 0x51, 0x5a, 0xbb, 0x7c, 0x46, 0xda, 0xd7, 0x76, 0x87, 0x8d, 0x1b, 0x67, 0xa7,
+	0x5d, 0x91, 0x59, 0x1e, 0xfa, 0x3a, 0x9d, 0x4d, 0x40, 0x65, 0x15, 0x6e, 0xb6, 0x61, 0x1c, 0x33,
+	0x59, 0xd1, 0xbc, 0x0e, 0xca, 0x29, 0x4a, 0x20, 0x26, 0x98, 0x44, 0x92, 0xf6, 0x15, 0xff, 0xd0,
+	0xd0, 0x7c, 0xfb, 0xbc, 0xc0, 0xc5, 0xc5, 0x9b, 0xf2, 0xe2, 0x0b, 0xe9, 0xed, 0x5f, 0x0d, 0x59,
+	0x70, 0x25, 0x23, 0xa1, 0x2e, 0xf8, 0x25, 0xb8, 0x0a, 0x13, 0x9a, 0x1d, 0x8e, 0xe3, 0xac, 0xa3,
+	0x5b, 0x2c, 0x84, 0x68, 0x34, 0x56, 0x6d, 0x8a, 0x89, 0xb7, 0x22, 0x06, 0xf1, 0x97, 0x3f, 0x16,
+	0xea, 0x11, 0xe6, 0xbd, 0xac, 0xeb, 0x04, 0x34, 0xd1, 0x1a, 0xa6, 0x7f, 0x1a, 0x2c, 0x7c, 0xa4,
+	0x65, 0x49, 0x04, 0xb0, 0xef, 0x0f, 0xb6, 0x97, 0xa6, 0x63, 0x14, 0xc1, 0x60, 0xd0, 0x11, 0x52,
+	0xc6, 0xd4, 0x14, 0xe7, 0x15, 0x9f, 0x92, 0xcf, 0x21, 0x7a, 0xfb, 0x1f, 0x39, 0x36, 0x49, 0x17,
+	0x13, 0x14, 0x2a, 0x3e, 0xaf, 0x82, 0xe7, 0x03, 0xc1, 0xb7, 0x73, 0xbc, 0x8d, 0xd7, 0xa4, 0xd9,
+	0xcf, 0xad, 0x47, 0x89, 0x5f, 0x7a, 0x16, 0x88, 0x17, 0x68, 0xda, 0x01, 0xa8, 0xb6, 0xe2, 0x98,
+	0x6e, 0xb4, 0xe2, 0x78, 0x15, 0x31, 0x06, 0x23, 0xc4, 0xd4, 0x6c, 0x35, 0x3f, 0x3c, 0xf7, 0x14,
+	0x1e, 0x6a, 0xf0, 0xf8, 0x54, 0xf6, 0x57, 0x60, 0x56, 0xec, 0x6e, 0x9f, 0xa3, 0x50, 0x7b, 0x3e,
+	0x42, 0x03, 0xed, 0x34, 0x4d, 0x70, 0xe5, 0x11, 0x1a, 0xa8, 0xa9, 0x29, 0xfb, 0xf2, 0x7f, 0xf3,
+	0xce, 0x85, 0x6a, 0x5b, 0xaa, 0xf6, 0x69, 0x15, 0xec, 0x9f, 0x0c, 0x50, 0x3d, 0xe6, 0xcd, 0x8b,
+	0x7b, 0x60, 0x32, 0xd1, 0x16, 0x09, 0x60, 0xda, 0xbb, 0xf9, 0xef, 0x93, 0x05, 0xd3, 0x87, 0x1b,
+	0x23, 0xa1, 0x53, 0x6e, 0x71, 0x11, 0x53, 0x98, 0xc4, 0x98, 0xa0, 0xce, 0x17, 0x8c, 0x12, 0x7f,
+	0x14, 0xf7, 0x74, 0x8d, 0x1a, 0x0b, 0xc7, 0xfe, 0xd1, 0x00, 0x95, 0xdb, 0xf7, 0x56, 0x21, 0x0f,
+	0x7a, 0x1a, 0xe0, 0x5d, 0x70, 0x55, 0xad, 0x78, 0xbe, 0x56, 0x73, 0x27, 0x75, 0xf1, 0xf6, 0x3d,
+	0x75, 0xd8, 0x9b, 0xd3, 0xe3, 0x55, 0xcc, 0xa1, 0x47, 0x46, 0xa7, 0x69, 0xbe, 0x73, 0x21, 0xb8,
+	0x6a, 0x66, 0x0a, 0xf9, 0xec, 0x6f, 0x0c, 0x30, 0x99, 0xd7, 0x34, 0xab, 0x23, 0x49, 0x93, 0xe2,
+	0x9a, 0x2b, 0x92, 0x79, 0x03, 0x5c, 0x43, 0x9b, 0x7d, 0x14, 0x70, 0x14, 0x76, 0xd6, 0x61, 0x9c,
+	0x21, 0xa9, 0xa4, 0xd3, 0x7e, 0x25, 0xb7, 0x7e, 0x26, 0x8c, 0xcd, 0x37, 0x2f, 0x84, 0xa6, 0xa2,
+	0xd1, 0x68, 0xbe, 0xef, 0xee, 0xfc, 0x65, 0x95, 0x76, 0xf6, 0x2c, 0xe3, 0xf1, 0x9e, 0x65, 0xfc,
+	0xb9, 0x67, 0x19, 0xdf, 0xed, 0x5b, 0xa5, 0xc7, 0xfb, 0x56, 0xe9, 0xf7, 0x7d, 0xab, 0xf4, 0xf9,
+	0xcd, 0x23, 0x4b, 0xd6, 0xa6, 0x2c, 0x79, 0x90, 0x7f, 0xf3, 0x84, 0xee, 0xa6, 0xfa, 0xf6, 0x91,
+	0x8b, 0xd6, 0x9d, 0x90, 0xe2, 0xfb, 0xfa, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x8e, 0xf9, 0xe6,
+	0xbd, 0x9a, 0x09, 0x00, 0x00,
 }
 
 func (m *StoreCodeAuthorization) Marshal() (dAtA []byte, err error) {
@@ -1013,6 +1045,80 @@ func (m *AcceptedMessagesFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *JQMatchFilter) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *JQMatchFilter) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *JQMatchFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Filters) > 0 {
+		for iNdEx := len(m.Filters) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Filters[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAuthz(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *JQFilter) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *JQFilter) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *JQFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ExpectedValue) > 0 {
+		i -= len(m.ExpectedValue)
+		copy(dAtA[i:], m.ExpectedValue)
+		i = encodeVarintAuthz(dAtA, i, uint64(len(m.ExpectedValue)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Filter) > 0 {
+		i -= len(m.Filter)
+		copy(dAtA[i:], m.Filter)
+		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Filter)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintAuthz(dAtA []byte, offset int, v uint64) int {
 	offset -= sovAuthz(v)
 	base := offset
@@ -1024,7 +1130,6 @@ func encodeVarintAuthz(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *StoreCodeAuthorization) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1192,14 +1297,44 @@ func (m *AcceptedMessagesFilter) Size() (n int) {
 	return n
 }
 
+func (m *JQMatchFilter) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Filters) > 0 {
+		for _, e := range m.Filters {
+			l = e.Size()
+			n += 1 + l + sovAuthz(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *JQFilter) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Filter)
+	if l > 0 {
+		n += 1 + l + sovAuthz(uint64(l))
+	}
+	l = len(m.ExpectedValue)
+	if l > 0 {
+		n += 1 + l + sovAuthz(uint64(l))
+	}
+	return n
+}
+
 func sovAuthz(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozAuthz(x uint64) (n int) {
 	return sovAuthz(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *StoreCodeAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1284,7 +1419,6 @@ func (m *StoreCodeAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1369,7 +1503,6 @@ func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1454,7 +1587,6 @@ func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CodeGrant) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1575,7 +1707,6 @@ func (m *CodeGrant) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractGrant) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1730,7 +1861,6 @@ func (m *ContractGrant) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MaxCallsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1800,7 +1930,6 @@ func (m *MaxCallsLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MaxFundsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1885,7 +2014,6 @@ func (m *MaxFundsLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CombinedLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1989,7 +2117,6 @@ func (m *CombinedLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AllowAllMessagesFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2040,7 +2167,6 @@ func (m *AllowAllMessagesFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2123,7 +2249,6 @@ func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AcceptedMessagesFilter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2206,7 +2331,206 @@ func (m *AcceptedMessagesFilter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *JQMatchFilter) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuthz
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: JQMatchFilter: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: JQMatchFilter: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Filters", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Filters = append(m.Filters, JQFilter{})
+			if err := m.Filters[len(m.Filters)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuthz(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *JQFilter) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuthz
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: JQFilter: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: JQFilter: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Filter", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Filter = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpectedValue", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ExpectedValue = append(m.ExpectedValue[:0], dAtA[iNdEx:postIndex]...)
+			if m.ExpectedValue == nil {
+				m.ExpectedValue = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuthz(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipAuthz(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

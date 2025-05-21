@@ -159,3 +159,30 @@ message AcceptedMessagesFilter {
     (amino.encoding) = "inline_json"
   ];
 }
+
+// JQMatchFilter accepts only payload messages which pass the jq tests.
+// Since: wasmd 0.30 TODO(PR)
+message JQMatchFilter {
+  option (amino.name) = "wasm/JQMatchFilter";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+
+  // Messages is the list of raw contract messages
+  repeated cosmwasm.wasm.v1.JQFilter filters = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "JQMatchFilter"
+  ];
+}
+
+// JQMatchFilter accepts only payload messages which pass the jq tests.
+// Since: wasmd 0.30 TODO(PR)
+message JQFilter {
+  option (amino.name) = "wasm/JQFilter";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+
+  // Messages is the list of raw contract messages
+  string filter = 1;
+  bytes expected_value = 2;
+}

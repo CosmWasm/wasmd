@@ -26,6 +26,8 @@
     - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
     - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
     - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [JQFilter](#cosmwasm.wasm.v1.JQFilter)
+    - [JQMatchFilter](#cosmwasm.wasm.v1.JQMatchFilter)
     - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
     - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
     - [StoreCodeAuthorization](#cosmwasm.wasm.v1.StoreCodeAuthorization)
@@ -444,6 +446,39 @@ migration. Since: wasmd 0.30
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.JQFilter"></a>
+
+### JQFilter
+JQMatchFilter accepts only payload messages which pass the jq tests.
+Since: wasmd 0.30 TODO(PR)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `filter` | [string](#string) |  | Messages is the list of raw contract messages |
+| `expected_value` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.JQMatchFilter"></a>
+
+### JQMatchFilter
+JQMatchFilter accepts only payload messages which pass the jq tests.
+Since: wasmd 0.30 TODO(PR)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `filters` | [JQFilter](#cosmwasm.wasm.v1.JQFilter) | repeated | Messages is the list of raw contract messages |
 
 
 

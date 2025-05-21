@@ -528,6 +528,44 @@ func (f AcceptedMessagesFilter) ValidateBasic() error {
 	return nil
 }
 
+// NewJQMatchFilter constructor
+func NewJQMatchFilter(acceptedKeys ...string) *JQMatchFilter {
+	return &JQMatchFilter{Keys: acceptedKeys}
+}
+
+// Accept only payload messages which pass the jq tests.
+func (f *JQMatchFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
+	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
+
+	ok, err := isJSONObjectWithTopLevelKey(msg, f.Keys)
+	if err != nil {
+		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
+	}
+	return ok, nil
+}
+
+// ValidateBasic validates the filter
+func (f JQMatchFilter) ValidateBasic() error {
+	if len(f.Keys) == 0 {
+		return ErrEmpty.Wrap("keys")
+	}
+	idx := make(map[string]struct{}, len(f.Keys))
+	for _, m := range f.Keys {
+		if m == "" {
+			return ErrEmpty.Wrap("key")
+		}
+		if m != strings.TrimSpace(m) {
+			return ErrInvalid.Wrapf("key %q contains whitespaces", m)
+		}
+		if _, exists := idx[m]; exists {
+			return ErrDuplicate.Wrapf("key %q", m)
+		}
+		idx[m] = struct{}{}
+	}
+	return nil
+}
+
 var (
 	_ ContractAuthzLimitX = &UndefinedLimit{}
 	_ ContractAuthzLimitX = &MaxCallsLimit{}
