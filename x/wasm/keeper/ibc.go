@@ -28,12 +28,14 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 const portIDPrefixV2 = "wasm2"
 
 func PortIDForContractV2(addr sdk.AccAddress) string {
-	return portIDPrefixV2 + addr.String()
+	blockchainPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	return portIDPrefixV2 + strings.TrimPrefix(addr.String(), blockchainPrefix)
 }
 
 func ContractFromPortID2(portID string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefixV2) {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
-	return sdk.AccAddressFromBech32(portID[len(portIDPrefixV2):])
+	blockchainPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	return sdk.AccAddressFromBech32(blockchainPrefix + portID[len(portIDPrefixV2):])
 }
