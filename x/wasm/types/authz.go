@@ -529,34 +529,36 @@ func (f AcceptedMessagesFilter) ValidateBasic() error {
 }
 
 // NewJQMatchFilter constructor
-func NewJQMatchFilter(acceptedKeys ...string) *JQMatchFilter {
-	return &JQMatchFilter{Keys: acceptedKeys}
+func NewJQMatchFilter(filters ...string) *JQMatchFilter {
+	return &JQMatchFilter{Filters: filters}
 }
 
 // Accept only payload messages which pass the jq tests.
 func (f *JQMatchFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	// Unmarshal once
 	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
 	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
 
-	ok, err := isJSONObjectWithTopLevelKey(msg, f.Keys)
+	value, err := MatchJMESPaths(msg, f.Filters)
 	if err != nil {
 		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
 	}
-	return ok, nil
+	if !value {
+		return false, ErrInvalid.Wrapf("JQ filters `%s` applied on %s returned a false value", f.Filters, msg)
+	}
+
+	return true, nil
 }
 
 // ValidateBasic validates the filter
 func (f JQMatchFilter) ValidateBasic() error {
-	if len(f.Keys) == 0 {
-		return ErrEmpty.Wrap("keys")
+	if len(f.Filters) == 0 {
+		return ErrEmpty.Wrap("filter")
 	}
-	idx := make(map[string]struct{}, len(f.Keys))
-	for _, m := range f.Keys {
+	idx := make(map[string]struct{}, len(f.Filters))
+	for _, m := range f.Filters {
 		if m == "" {
 			return ErrEmpty.Wrap("key")
-		}
-		if m != strings.TrimSpace(m) {
-			return ErrInvalid.Wrapf("key %q contains whitespaces", m)
 		}
 		if _, exists := idx[m]; exists {
 			return ErrDuplicate.Wrapf("key %q", m)

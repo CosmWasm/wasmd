@@ -5,17 +5,20 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -44,9 +47,11 @@ func (*MsgIBCSend) ProtoMessage()    {}
 func (*MsgIBCSend) Descriptor() ([]byte, []int) {
 	return fileDescriptor_af0d1c43ea53c4b9, []int{0}
 }
+
 func (m *MsgIBCSend) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgIBCSend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgIBCSend.Marshal(b, m, deterministic)
@@ -59,12 +64,15 @@ func (m *MsgIBCSend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *MsgIBCSend) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgIBCSend.Merge(m, src)
 }
+
 func (m *MsgIBCSend) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgIBCSend) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgIBCSend.DiscardUnknown(m)
 }
@@ -83,9 +91,11 @@ func (*MsgIBCSendResponse) ProtoMessage()    {}
 func (*MsgIBCSendResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_af0d1c43ea53c4b9, []int{1}
 }
+
 func (m *MsgIBCSendResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgIBCSendResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgIBCSendResponse.Marshal(b, m, deterministic)
@@ -98,12 +108,15 @@ func (m *MsgIBCSendResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *MsgIBCSendResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgIBCSendResponse.Merge(m, src)
 }
+
 func (m *MsgIBCSendResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgIBCSendResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgIBCSendResponse.DiscardUnknown(m)
 }
@@ -111,8 +124,7 @@ func (m *MsgIBCSendResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgIBCSendResponse proto.InternalMessageInfo
 
 // MsgIBCWriteAcknowledgementResponse
-type MsgIBCWriteAcknowledgementResponse struct {
-}
+type MsgIBCWriteAcknowledgementResponse struct{}
 
 func (m *MsgIBCWriteAcknowledgementResponse) Reset()         { *m = MsgIBCWriteAcknowledgementResponse{} }
 func (m *MsgIBCWriteAcknowledgementResponse) String() string { return proto.CompactTextString(m) }
@@ -120,9 +132,11 @@ func (*MsgIBCWriteAcknowledgementResponse) ProtoMessage()    {}
 func (*MsgIBCWriteAcknowledgementResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_af0d1c43ea53c4b9, []int{2}
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgIBCWriteAcknowledgementResponse.Marshal(b, m, deterministic)
@@ -135,12 +149,15 @@ func (m *MsgIBCWriteAcknowledgementResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgIBCWriteAcknowledgementResponse.Merge(m, src)
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgIBCWriteAcknowledgementResponse.DiscardUnknown(m)
 }
@@ -158,9 +175,11 @@ func (*MsgIBCCloseChannel) ProtoMessage()    {}
 func (*MsgIBCCloseChannel) Descriptor() ([]byte, []int) {
 	return fileDescriptor_af0d1c43ea53c4b9, []int{3}
 }
+
 func (m *MsgIBCCloseChannel) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgIBCCloseChannel) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgIBCCloseChannel.Marshal(b, m, deterministic)
@@ -173,12 +192,15 @@ func (m *MsgIBCCloseChannel) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *MsgIBCCloseChannel) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgIBCCloseChannel.Merge(m, src)
 }
+
 func (m *MsgIBCCloseChannel) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgIBCCloseChannel) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgIBCCloseChannel.DiscardUnknown(m)
 }
@@ -359,6 +381,7 @@ func encodeVarintIbc(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *MsgIBCSend) Size() (n int) {
 	if m == nil {
 		return 0
@@ -419,9 +442,11 @@ func (m *MsgIBCCloseChannel) Size() (n int) {
 func sovIbc(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozIbc(x uint64) (n int) {
 	return sovIbc(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *MsgIBCSend) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -576,6 +601,7 @@ func (m *MsgIBCSend) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgIBCSendResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -645,6 +671,7 @@ func (m *MsgIBCSendResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgIBCWriteAcknowledgementResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -695,6 +722,7 @@ func (m *MsgIBCWriteAcknowledgementResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgIBCCloseChannel) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -777,6 +805,7 @@ func (m *MsgIBCCloseChannel) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipIbc(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
