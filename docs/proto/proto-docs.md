@@ -26,7 +26,7 @@
     - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
     - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
     - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
-    - [JQMatchFilter](#cosmwasm.wasm.v1.JQMatchFilter)
+    - [JMESPathFilter](#cosmwasm.wasm.v1.JMESPathFilter)
     - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
     - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
     - [StoreCodeAuthorization](#cosmwasm.wasm.v1.StoreCodeAuthorization)
@@ -451,10 +451,10 @@ migration. Since: wasmd 0.30
 
 
 
-<a name="cosmwasm.wasm.v1.JQMatchFilter"></a>
+<a name="cosmwasm.wasm.v1.JMESPathFilter"></a>
 
-### JQMatchFilter
-JQMatchFilter accepts only payload messages which pass the jq tests.
+### JMESPathFilter
+JMESPathFilter accepts only payload messages which pass the jq tests.
 Since: wasmd 0.30 TODO(PR)
 
 

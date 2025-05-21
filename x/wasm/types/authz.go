@@ -528,13 +528,13 @@ func (f AcceptedMessagesFilter) ValidateBasic() error {
 	return nil
 }
 
-// NewJQMatchFilter constructor
-func NewJQMatchFilter(filters ...string) *JQMatchFilter {
-	return &JQMatchFilter{Filters: filters}
+// NewJMESPathFilter constructor
+func NewJMESPathFilter(filters ...string) *JMESPathFilter {
+	return &JMESPathFilter{Filters: filters}
 }
 
 // Accept only payload messages which pass the jq tests.
-func (f *JQMatchFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *JMESPathFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
 	// Unmarshal once
 	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
 	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
@@ -551,7 +551,7 @@ func (f *JQMatchFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, e
 }
 
 // ValidateBasic validates the filter
-func (f JQMatchFilter) ValidateBasic() error {
+func (f JMESPathFilter) ValidateBasic() error {
 	if len(f.Filters) == 0 {
 		return ErrEmpty.Wrap("filter")
 	}
