@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestJqFilterAccept(t *testing.T) {
+func TestJMESPathFilterAccept(t *testing.T) {
 	specs := map[string]struct {
 		src       []byte
 		filter    string

@@ -540,8 +540,8 @@ func (m *AcceptedMessagesFilter) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AcceptedMessagesFilter proto.InternalMessageInfo
 
-// JMESPathFilter accepts only payload messages which pass the jq tests.
-// Since: wasmd 0.30 TODO(PR)
+// JMESPathFilter accepts only payload messages which pass the JMESPath filter
+// tests. Since: wasmd 0.30 TODO(PR)
 type JMESPathFilter struct {
 	// Messages is the list of raw contract messages
 	Filters []string `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`

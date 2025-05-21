@@ -533,7 +533,7 @@ func NewJMESPathFilter(filters ...string) *JMESPathFilter {
 	return &JMESPathFilter{Filters: filters}
 }
 
-// Accept only payload messages which pass the jq tests.
+// Accept only payload messages which pass the JMESPath conditions.
 func (f *JMESPathFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
 	// Unmarshal once
 	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
@@ -544,7 +544,7 @@ func (f *JMESPathFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, 
 		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
 	}
 	if !value {
-		return false, ErrInvalid.Wrapf("JQ filters `%s` applied on %s returned a false value", f.Filters, msg)
+		return false, ErrInvalid.Wrapf("JMESPath filters `%s` applied on %s returned a false value", f.Filters, msg)
 	}
 
 	return true, nil

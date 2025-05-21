@@ -454,8 +454,8 @@ migration. Since: wasmd 0.30
 <a name="cosmwasm.wasm.v1.JMESPathFilter"></a>
 
 ### JMESPathFilter
-JMESPathFilter accepts only payload messages which pass the jq tests.
-Since: wasmd 0.30 TODO(PR)
+JMESPathFilter accepts only payload messages which pass the JMESPath filter
+tests. Since: wasmd 0.30 TODO(PR)
 
 
 | Field | Type | Label | Description |
