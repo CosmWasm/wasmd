@@ -145,8 +145,9 @@ func TestIBCCallbacks(t *testing.T) {
 				assert.Equal(t, []byte("{\"result\":\"AQ==\"}"), response.IBCDestinationCallbacks[0].Ack.Data)
 				assert.Equal(t,
 					wasmvmtypes.Array[wasmvmtypes.Coin]{wasmvmtypes.NewCoin(1, ibcDenom)},
-					response.IBCDestinationCallbacks[0].Funds,
+					response.IBCDestinationCallbacks[0].Transfer.Funds,
 				)
+				assert.Equal(t, contractAddrA.String(), response.IBCDestinationCallbacks[0].Transfer.Receiver)
 
 				balances := chainB.GetWasmApp().BankKeeper.GetAllBalances(chainB.GetContext(), contractAddrB)
 				// sanity check that the balance of the contract is correct
@@ -184,13 +185,13 @@ func TestIBCCallbacks(t *testing.T) {
 	}
 }
 
-func TestIBCDestinationCallbackFunds(t *testing.T) {
+func TestIBCDestinationCallbackTransfer(t *testing.T) {
 	// scenario:
 	// given two chains
 	//   with an ics-20 channel established
 	//   and an ibc-callbacks contract deployed on chain A
 	// when someone sends an ibc transfer to chain B and back to the contract on A
-	// then the contract on A should receive a destination chain callback with correct funds
+	// then the contract on A should receive a destination chain callback with correct transfer info
 
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
@@ -226,7 +227,7 @@ func TestIBCDestinationCallbackFunds(t *testing.T) {
 	contractAddr := chainA.InstantiateContract(codeID, []byte(`{}`))
 	require.NotEmpty(t, contractAddr)
 
-	// when someone sends an ibc transfer to chain B and back to the contract on A
+	// when someone sends an ibc transfer to chain B
 	chainA.SendMsgs(
 		ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
 			oneToken[0], actorChainA.String(), actorChainB.String(), chainA.GetTimeoutHeight(), 0, ""),
@@ -252,8 +253,10 @@ func TestIBCDestinationCallbackFunds(t *testing.T) {
 	// the denom should be reversed back correctly to the original denom
 	assert.Equal(t,
 		wasmvmtypes.Array[wasmvmtypes.Coin]{wasmvmtypes.NewCoin(1, sdk.DefaultBondDenom)},
-		response.IBCDestinationCallbacks[0].Funds,
+		response.IBCDestinationCallbacks[0].Transfer.Funds,
 	)
+	assert.Equal(t, contractAddr.String(), response.IBCDestinationCallbacks[0].Transfer.Receiver)
+	assert.Equal(t, actorChainB.String(), response.IBCDestinationCallbacks[0].Transfer.Sender)
 }
 
 func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {

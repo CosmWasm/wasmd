@@ -416,7 +416,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		return err
 	}
 
-	var funds wasmvmtypes.Array[wasmvmtypes.Coin]
+	var transfer *wasmvmtypes.IBCTransferCallback
 
 	var parsedAck channeltypes.Acknowledgement_Result
 	err = json.Unmarshal(ack.Acknowledgement(), &parsedAck)
@@ -432,37 +432,40 @@ func (i IBCHandler) IBCReceivePacketCallback(
 			return errorsmod.Wrap(err, "unmarshal transfer packet data")
 		}
 
+		// just making sure we have a valid address
 		receiverAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
 		if err != nil {
 			return err
 		}
-		// we only want to tell the contract about the funds if the transfer was sent to the contract
-		if receiverAddr.Equals(contractAddr) {
-			// fill funds with the transfer amount
 
-			// For a more in-depth explanation of the logic here, see the transfer module implementation:
-			// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
-			if transferData.Token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
-				// this is a denom coming from this chain, being sent back again
-				// remove prefix
-				transferData.Token.Denom.Trace = transferData.Token.Denom.Trace[1:]
-			} else {
-				// prefixing happens on the receiving end, so we need to do that here
-				trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
-				transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
-			}
+		// For a more in-depth explanation of the logic here, see the transfer module implementation:
+		// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
+		if transferData.Token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
+			// this is a denom coming from this chain, being sent back again
+			// remove prefix
+			transferData.Token.Denom.Trace = transferData.Token.Denom.Trace[1:]
+		} else {
+			// prefixing happens on the receiving end, so we need to do that here
+			trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
+			transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
+		}
 
-			funds = append(funds, wasmvmtypes.Coin{
-				Denom:  transferData.Token.GetDenom().IBCDenom(),
-				Amount: transferData.Token.GetAmount(),
-			})
+		transfer = &wasmvmtypes.IBCTransferCallback{
+			Receiver: receiverAddr.String(),
+			Sender:   transferData.Sender,
+			Funds: wasmvmtypes.Array[wasmvmtypes.Coin]{
+				{
+					Denom:  transferData.Token.GetDenom().IBCDenom(),
+					Amount: transferData.Token.GetAmount(),
+				},
+			},
 		}
 	}
 
 	msg := wasmvmtypes.IBCDestinationCallbackMsg{
-		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
-		Packet: newIBCPacket(packet),
-		Funds:  funds,
+		Ack:      wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
+		Packet:   newIBCPacket(packet),
+		Transfer: transfer,
 	}
 
 	err = i.keeper.IBCDestinationCallback(cachedCtx, contractAddr, msg)
