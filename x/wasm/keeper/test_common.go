@@ -247,7 +247,7 @@ func createTestInput(
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
-	paramsKeeper := paramskeeper.NewKeeper(
+	paramsKeeper := paramskeeper.NewKeeper( //nolint // TODO remove deprecated module
 		appCodec,
 		legacyAmino,
 		keys[paramstypes.StoreKey],
