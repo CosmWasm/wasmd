@@ -6,6 +6,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -82,6 +83,16 @@ type ChannelKeeper interface {
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
+}
+
+// ChannelKeeperV2 defines the expected IBC2 channel keeper
+type ChannelKeeperV2 interface {
+	WriteAcknowledgement(
+		ctx sdk.Context,
+		clientID string,
+		sequence uint64,
+		ack channeltypesv2.Acknowledgement,
+	) error
 }
 
 // ICS4Wrapper defines the method for an IBC data package to be submitted.
