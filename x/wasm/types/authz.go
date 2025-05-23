@@ -528,6 +528,46 @@ func (f AcceptedMessagesFilter) ValidateBasic() error {
 	return nil
 }
 
+// NewJMESPathFilter constructor
+func NewJMESPathFilter(filters ...string) *JMESPathFilter {
+	return &JMESPathFilter{Filters: filters}
+}
+
+// Accept only payload messages which pass the JMESPath conditions.
+func (f *JMESPathFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	// Unmarshal once
+	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
+	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
+
+	value, err := MatchJMESPaths(msg, f.Filters)
+	if err != nil {
+		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
+	}
+	if !value {
+		return false, ErrInvalid.Wrapf("JMESPath filters `%s` applied on %s returned a false value", f.Filters, msg)
+	}
+
+	return true, nil
+}
+
+// ValidateBasic validates the filter
+func (f JMESPathFilter) ValidateBasic() error {
+	if len(f.Filters) == 0 {
+		return ErrEmpty.Wrap("filter")
+	}
+	idx := make(map[string]struct{}, len(f.Filters))
+	for _, m := range f.Filters {
+		if m == "" {
+			return ErrEmpty.Wrap("key")
+		}
+		if _, exists := idx[m]; exists {
+			return ErrDuplicate.Wrapf("key %q", m)
+		}
+		idx[m] = struct{}{}
+	}
+	return nil
+}
+
 var (
 	_ ContractAuthzLimitX = &UndefinedLimit{}
 	_ ContractAuthzLimitX = &MaxCallsLimit{}

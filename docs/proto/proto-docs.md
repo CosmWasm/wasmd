@@ -26,6 +26,7 @@
     - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
     - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
     - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [JMESPathFilter](#cosmwasm.wasm.v1.JMESPathFilter)
     - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
     - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
     - [StoreCodeAuthorization](#cosmwasm.wasm.v1.StoreCodeAuthorization)
@@ -444,6 +445,22 @@ migration. Since: wasmd 0.30
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.JMESPathFilter"></a>
+
+### JMESPathFilter
+JMESPathFilter accepts only payload messages which pass the JMESPath filter
+tests. Since: wasmd 0.30 TODO(PR)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `filters` | [string](#string) | repeated | Messages is the list of raw contract messages |
 
 
 

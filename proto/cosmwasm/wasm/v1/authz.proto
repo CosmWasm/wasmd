@@ -159,3 +159,14 @@ message AcceptedMessagesFilter {
     (amino.encoding) = "inline_json"
   ];
 }
+
+// JMESPathFilter accepts only payload messages which pass the JMESPath filter
+// tests. Since: wasmd 0.30 TODO(PR)
+message JMESPathFilter {
+  option (amino.name) = "wasm/JMESPathFilter";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+
+  // Messages is the list of raw contract messages
+  repeated string filters = 1;
+}

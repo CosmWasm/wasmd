@@ -35,6 +35,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&AllowAllMessagesFilter{}, "wasm/AllowAllMessagesFilter", nil)
 	cdc.RegisterConcrete(&AcceptedMessageKeysFilter{}, "wasm/AcceptedMessageKeysFilter", nil)
 	cdc.RegisterConcrete(&AcceptedMessagesFilter{}, "wasm/AcceptedMessagesFilter", nil)
+	cdc.RegisterConcrete(&JMESPathFilter{}, "wasm/JMESPathFilter", nil)
 
 	cdc.RegisterInterface((*ContractAuthzLimitX)(nil), nil)
 	cdc.RegisterConcrete(&MaxCallsLimit{}, "wasm/MaxCallsLimit", nil)
@@ -92,6 +93,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&AllowAllMessagesFilter{},
 		&AcceptedMessageKeysFilter{},
 		&AcceptedMessagesFilter{},
+		&JMESPathFilter{},
 	)
 
 	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzLimitX", (*ContractAuthzLimitX)(nil))
