@@ -1,9 +1,7 @@
 run:
   tests: true
   timeout: 15m
-  sort-results: true
   allow-parallel-runners: true
-  exclude-dir: testutil/testdata
 
 linters:
   disable-all: true
@@ -31,6 +29,8 @@ linters:
     - unused
 
 issues:
+  exclude-dirs:
+    - testutil/testdata
   exclude-files:
     - server/grpc/gogoreflection/fix_registration.go
     - ".*\\.pb\\.go$"
@@ -132,11 +132,8 @@ linters-settings:
     extra-rules: true
   dogsled:
     max-blank-identifiers: 6
-  maligned:
-    suggest-new: true
   nolintlint:
     allow-unused: false
-    allow-leading-space: true
     require-explanation: false
     require-specific: false
   gosimple:
@@ -146,3 +143,6 @@ linters-settings:
       - regexpMust
       - appendAssign
       - ifElseChain
+
+output:
+  sort-results: true
