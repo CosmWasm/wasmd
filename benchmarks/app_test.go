@@ -16,6 +16,7 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -35,7 +36,10 @@ import (
 func setup(db dbm.DB, withGenesis bool) (*app.WasmApp, app.GenesisState) {
 	logLevel := log.LevelOption(zerolog.InfoLevel)
 
-	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
+	// Disable prunning for testing purposes to prevent dangling background
+	// goroutines left between test scenarios
+	disablePrunning := baseapp.SetIAVLSyncPruning(true)
+	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil, disablePrunning)
 
 	if withGenesis {
 		return wasmApp, wasmApp.DefaultGenesis()

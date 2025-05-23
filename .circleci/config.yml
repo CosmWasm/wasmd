@@ -80,7 +80,8 @@ jobs:
 
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.60.3
+      - image: golangci/golangci-lint:v1.64.8
+    resource_class: large
     steps:
       - checkout
       - run:

@@ -13,8 +13,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
@@ -47,7 +47,7 @@ func TestGovVoteByContract(t *testing.T) {
 	signer := chain.SenderAccount.GetAddress().String()
 	app := chain.GetWasmApp()
 	govKeeper, accountKeeper := app.GovKeeper, app.AccountKeeper
-	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), distributiontypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
+	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), protocolpooltypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
 	require.False(t, communityPoolBalance.IsZero())
 
 	gParams, err := govKeeper.Params.Get(chain.GetContext())
@@ -89,7 +89,7 @@ func TestGovVoteByContract(t *testing.T) {
 			// given a unique recipient
 			recipientAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
 			// and a new proposal
-			payloadMsg := &distributiontypes.MsgCommunityPoolSpend{
+			payloadMsg := &protocolpooltypes.MsgCommunityPoolSpend{
 				Authority: govAcctAddr.String(),
 				Recipient: recipientAddr.String(),
 				Amount:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
