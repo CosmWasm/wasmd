@@ -7,10 +7,10 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/CosmWasm/wasmd/app/upgrades"
 	epochstypes "github.com/cosmos/cosmos-sdk/x/epochs/types"
 	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
+
+	"github.com/CosmWasm/wasmd/app/upgrades"
 )
 
 // UpgradeName defines the on-chain upgrade name
