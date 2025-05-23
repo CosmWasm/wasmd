@@ -90,6 +90,8 @@ func TestContractFromPortID2(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expAddr, gotAddr)
+			gotPort := PortIDForContractV2(gotAddr)
+			assert.Equal(t, spec.srcPort, gotPort)
 		})
 	}
 }
