@@ -423,7 +423,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1c527), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1c473), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -891,7 +891,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 
 	// when
 	contractAddress, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
-	ibc2PortID := "wasm2" + contractAddress.String()
+	ibc2PortID := PortIDForContractV2(contractAddress)
 
 	// then
 	require.NoError(t, err)
@@ -961,7 +961,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1adc3), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1adb1), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)

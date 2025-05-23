@@ -14,6 +14,8 @@
  - Remove IBC fee handling, as it is no longer supported by the IBC protocol [\#2254](https://github.com/CosmWasm/wasmd/pull/2254)
  - Add support for IBCv2 Send entry point [\#2252](https://github.com/CosmWasm/wasmd/pull/2252)
  - Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
+ - IBCv2 WriteAcknowledgement handler for async ACK [\#2173](https://github.com/CosmWasm/wasmd/pull/2173)
+ - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
