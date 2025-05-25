@@ -2,13 +2,13 @@ package wasmtesting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,7 +18,7 @@ import (
 type MockChannelKeeper struct {
 	GetChannelFn                   func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSendFn          func(ctx sdk.Context, portID, channelID string) (uint64, bool)
-	ChanCloseInitFn                func(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
+	ChanCloseInitFn                func(ctx sdk.Context, portID, channelID string) error
 	GetAllChannelsFn               func(ctx sdk.Context) []channeltypes.IdentifiedChannel
 	SetChannelFn                   func(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 	GetAllChannelsWithPortPrefixFn func(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
@@ -45,11 +45,11 @@ func (m *MockChannelKeeper) GetNextSequenceSend(ctx sdk.Context, portID, channel
 	return m.GetNextSequenceSendFn(ctx, portID, channelID)
 }
 
-func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error {
+func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string) error {
 	if m.ChanCloseInitFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.ChanCloseInitFn(ctx, portID, channelID, chanCap)
+	return m.ChanCloseInitFn(ctx, portID, channelID)
 }
 
 func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel {
@@ -69,27 +69,26 @@ func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string
 var _ types.ICS4Wrapper = &MockICS4Wrapper{}
 
 type MockICS4Wrapper struct {
-	SendPacketFn           func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
-	WriteAcknowledgementFn func(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
+	SendPacketFn           func(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
+	WriteAcknowledgementFn func(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
 }
 
-func (m *MockICS4Wrapper) SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+func (m *MockICS4Wrapper) SendPacket(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 	if m.SendPacketFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.SendPacketFn(ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	return m.SendPacketFn(ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
 func (m *MockICS4Wrapper) WriteAcknowledgement(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 	acknowledgement ibcexported.Acknowledgement,
 ) error {
 	if m.WriteAcknowledgementFn == nil {
 		panic("not supposed to be called!")
 	}
-	return m.WriteAcknowledgementFn(ctx, chanCap, packet, acknowledgement)
+	return m.WriteAcknowledgementFn(ctx, packet, acknowledgement)
 }
 
 func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
@@ -101,33 +100,6 @@ func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.
 			}
 		}
 	}
-}
-
-type MockCapabilityKeeper struct {
-	GetCapabilityFn          func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
-	ClaimCapabilityFn        func(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
-	AuthenticateCapabilityFn func(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool
-}
-
-func (m MockCapabilityKeeper) GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
-	if m.GetCapabilityFn == nil {
-		panic("not supposed to be called!")
-	}
-	return m.GetCapabilityFn(ctx, name)
-}
-
-func (m MockCapabilityKeeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	if m.ClaimCapabilityFn == nil {
-		panic("not supposed to be called!")
-	}
-	return m.ClaimCapabilityFn(ctx, cap, name)
-}
-
-func (m MockCapabilityKeeper) AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool {
-	if m.AuthenticateCapabilityFn == nil {
-		panic("not supposed to be called!")
-	}
-	return m.AuthenticateCapabilityFn(ctx, capability, name)
 }
 
 var _ types.ICS20TransferPortSource = &MockIBCTransferKeeper{}
@@ -166,7 +138,7 @@ func (m *IBCContractKeeperMock) LoadAsyncAckPacket(ctx context.Context, portID, 
 	key := portID + fmt.Sprint(len(channelID)) + channelID
 	packet, ok := m.packets[key]
 	if !ok {
-		return channeltypes.Packet{}, fmt.Errorf("packet not found")
+		return channeltypes.Packet{}, errors.New("packet not found")
 	}
 	return packet, nil
 }

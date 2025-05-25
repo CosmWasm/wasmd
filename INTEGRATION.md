@@ -6,14 +6,14 @@ If you want to use Wasm in your own app, here is how you can get this working
 quickly and easily. 
 First start with this [article](https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc) 
 in the "CosmWasm for CTOs" series that gives you a high level view. 
-Then check to make sure you fit the pre-requisites,
+Then check to make sure you fit the prerequisites,
 then integrate the `x/wasm` module as described below, and finally, you
 can add custom messages and queries to your custom Go/SDK modules, exposing
 them to any chain-specific contract.
 
 ## Prerequisites
 
-The pre-requisites of integrating `x/wasm` into your custom app is to be using 
+The prerequisites of integrating `x/wasm` into your custom app are to be using 
 a compatible version of the Cosmos SDK, and to accept some limits to the
 hardware it runs on.
 
@@ -74,7 +74,7 @@ to `bank` and `staking`... more below on [customization](#Adding-Custom-Hooks)).
 
 The requirement here is that you have imported the standard sdk modules
 from the Cosmos SDK, and enabled them in `app.go`. If so, you can just look
-at [`wasmd/app/app.go`](https://github.com/CosmWasm/wasmd/blob/master/app/app.go#)
+at [`wasmd/app/app.go`](https://github.com/CosmWasm/wasmd/blob/master/app/app.go)
 for how to do so (just search there for lines with `wasm`).
 
 `wasmd` also comes with 2 custom `ante handlers`: 
@@ -131,7 +131,7 @@ token contracts, your exchange code can simply call `wasm.Keeper.Execute`
 with a properly formatted message to move funds, or `wasm.Keeper.SmartQuery`
 to check balances.
 
-If you look at the unit tests in [`x/wasm/internal/keeper`](https://github.com/CosmWasm/wasmd/tree/master/x/wasm/internal/keeper),
+If you look at the unit tests in [`x/wasm/keeper`](https://github.com/CosmWasm/wasmd/tree/master/x/wasm/keeper),
 it should be pretty straight forward.
 
 <!-- TODO dead link above -->

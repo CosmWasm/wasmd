@@ -3,16 +3,17 @@ package keeper
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -432,7 +433,8 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
-			res, err := encoder.Encode(sdk.Context{}, tc.sender, "", tc.srcMsg)
+			gm := storetypes.NewInfiniteGasMeter()
+			res, err := encoder.Encode(sdk.Context{}.WithGasMeter(gm), tc.sender, "", tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, err)
 				return
@@ -611,86 +613,6 @@ func TestEncodeIbcMsg(t *testing.T) {
 					PortId:    "wasm." + addr1.String(),
 					ChannelId: "channel-1",
 					Signer:    addr1.String(),
-				},
-			},
-		},
-		"IBC PayPacketFee": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					PayPacketFee: &wasmvmtypes.PayPacketFeeMsg{
-						ChannelID: "myChannelID",
-						Fee: wasmvmtypes.IBCFee{
-							TimeoutFee: []wasmvmtypes.Coin{
-								{
-									Denom:  "ALX",
-									Amount: "1",
-								},
-							},
-						},
-						PortID:   "myIBCPort",
-						Relayers: []string{},
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibcfee.MsgPayPacketFee{
-					Fee: ibcfee.Fee{
-						TimeoutFee: []sdk.Coin{
-							{
-								Denom:  "ALX",
-								Amount: sdkmath.NewInt(1),
-							},
-						},
-					},
-					SourcePortId:    "myIBCPort",
-					SourceChannelId: "myChannelID",
-					Signer:          addr1.String(),
-					Relayers:        []string{},
-				},
-			},
-		},
-		"IBC PayPacketFeeAsync": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					PayPacketFeeAsync: &wasmvmtypes.PayPacketFeeAsyncMsg{
-						ChannelID: "myChannelID",
-						Fee: wasmvmtypes.IBCFee{
-							TimeoutFee: []wasmvmtypes.Coin{
-								{
-									Denom:  "ALX",
-									Amount: "1",
-								},
-							},
-						},
-						PortID:   "myIBCPort",
-						Relayers: []string{},
-						Sequence: 42,
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibcfee.MsgPayPacketFeeAsync{
-					PacketId: channeltypes.PacketId{
-						PortId:    "myIBCPort",
-						ChannelId: "myChannelID",
-						Sequence:  42,
-					},
-					PacketFee: ibcfee.PacketFee{
-						Fee: ibcfee.Fee{
-							TimeoutFee: []sdk.Coin{
-								{
-									Denom:  "ALX",
-									Amount: sdkmath.NewInt(1),
-								},
-							},
-						},
-						RefundAddress: addr1.String(),
-						Relayers:      []string{},
-					},
 				},
 			},
 		},
@@ -931,6 +853,74 @@ func TestEncodeGovMsg(t *testing.T) {
 	}
 }
 
+func TestEncodeIBCv2Msg(t *testing.T) {
+	var (
+		myAddr   = RandomAccountAddress(t)
+		destAddr = RandomAccountAddress(t)
+	)
+
+	cases := map[string]struct {
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		transferPortSource types.ICS20TransferPortSource
+		// set if valid
+		output []sdk.Msg
+		// set if expect mapping fails
+		expError bool
+	}{
+		"IBC2 SendPacket": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC2: &wasmvmtypes.IBC2Msg{
+					SendPacket: &wasmvmtypes.IBC2SendPacketMsg{
+						SourceClient: myAddr.String(),
+						Payloads: []wasmvmtypes.IBC2Payload{
+							{
+								SourcePort:      PortIDForContractV2(myAddr),
+								DestinationPort: PortIDForContractV2(destAddr),
+								Version:         "v1",
+								Encoding:        "json",
+								Value:           []byte{},
+							},
+						},
+						Timeout: 1000000000000,
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&channeltypesv2.MsgSendPacket{
+					SourceClient:     myAddr.String(),
+					TimeoutTimestamp: 1000,
+					Signer:           myAddr.String(),
+					Payloads: []channeltypesv2.Payload{
+						{
+							SourcePort:      PortIDForContractV2(myAddr),
+							DestinationPort: PortIDForContractV2(destAddr),
+							Version:         "v1",
+							Encoding:        "json",
+							Value:           []byte{},
+						},
+					},
+				},
+			},
+		},
+	}
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var ctx sdk.Context
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
+			res, gotEncErr := encoder.Encode(ctx, tc.sender, "myIBCPort", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, gotEncErr)
+				return
+			}
+			require.NoError(t, gotEncErr)
+			assert.Equal(t, tc.output, res)
+		})
+	}
+}
+
 func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 	specs := map[string]struct {
 		src    wasmvmtypes.Coin
@@ -951,14 +941,14 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"denom to short": {
+		"denom too short": {
 			src: wasmvmtypes.Coin{
 				Denom:  "f",
 				Amount: "1",
 			},
 			expErr: true,
 		},
-		"invalid demum char": {
+		"invalid denom char": {
 			src: wasmvmtypes.Coin{
 				Denom:  "&fff",
 				Amount: "1",

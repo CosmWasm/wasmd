@@ -3,13 +3,11 @@ package wasm
 import (
 	"math"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -50,7 +48,6 @@ func (i IBCHandler) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -88,10 +85,6 @@ func (i IBCHandler) OnChanOpenInit(
 		acceptedVersion = version
 	}
 
-	// Claim channel capability passed back by IBC module
-	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return "", errorsmod.Wrap(err, "claim capability")
-	}
 	return acceptedVersion, nil
 }
 
@@ -101,7 +94,6 @@ func (i IBCHandler) OnChanOpenTry(
 	order channeltypes.Order,
 	connectionHops []string,
 	portID, channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
@@ -135,17 +127,6 @@ func (i IBCHandler) OnChanOpenTry(
 	}
 	if version == "" {
 		version = counterpartyVersion
-	}
-
-	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
-	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
-	// If module can already authenticate the capability then module already owns it, so we don't need to claim
-	// Otherwise, module does not have channel capability, and we must claim it from IBC
-	if !i.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
-		// Only claim channel capability passed back by IBC module if we do not already own it
-		if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-			return "", errorsmod.Wrap(err, "claim capability")
-		}
 	}
 
 	return version, nil
@@ -272,6 +253,7 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel,
 // OnRecvPacket implements the IBCModule interface
 func (i IBCHandler) OnRecvPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
@@ -299,6 +281,7 @@ func (i IBCHandler) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface
 func (i IBCHandler) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -320,7 +303,7 @@ func (i IBCHandler) OnAcknowledgementPacket(
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, channelVersion string, packet channeltypes.Packet, relayer sdk.AccAddress) error {
 	contractAddr, err := keeper.ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
@@ -344,6 +327,7 @@ func (i IBCHandler) IBCSendPacketCallback(
 	packetData []byte,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	_, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -363,6 +347,7 @@ func (i IBCHandler) IBCOnAcknowledgementPacketCallback(
 	relayer sdk.AccAddress,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -392,6 +377,7 @@ func (i IBCHandler) IBCOnTimeoutPacketCallback(
 	relayer sdk.AccAddress,
 	contractAddress,
 	packetSenderAddress string,
+	version string,
 ) error {
 	contractAddr, err := validateSender(contractAddress, packetSenderAddress)
 	if err != nil {
@@ -418,6 +404,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 	contractAddress string,
+	version string,
 ) error {
 	// sender validation makes no sense here, as the receiver is never the sender
 	contractAddr, err := sdk.AccAddressFromBech32(contractAddress)

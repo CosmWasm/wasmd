@@ -13,7 +13,7 @@ This documents how CosmWasm contracts are expected to interact with IBC.
   If this feature is enabled, it is considered "IBC Enabled", and that info will
   be stored in the ContractInfo. (For mock, we assume all contracts are IBC enabled)
   
-Also, please read the [IBC Docs](https://docs.cosmos.network/master/ibc/overview.html)
+Also, please read the [IBC Docs](https://ibc.cosmos.network/v8/ibc/overview/)
 for detailed descriptions of the terms *Port*, *Client*, *Connection*,
 and *Channel*
   
@@ -32,8 +32,8 @@ as how contracts can properly identify their counterparty.
 * If a *Channel* is being established with a registered `wasm.xyz` port,
   the `x/wasm.Keeper` will handle this and call into the appropriate
   contract to determine supported protocol versions during the
-  [`ChanOpenTry` and `ChanOpenAck` phases](https://docs.cosmos.network/master/ibc/overview.html#channels).
-  (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
+  [`ChanOpenTry` and `ChanOpenAck` phases](https://ibc.cosmos.network/v8/ibc/overview/#channels).
+  (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/v0.45/ibc/custom.html#channel-handshake-version-negotiation))
 * Both the *Port* and the *Channel* are fully owned by one contract.
 * `x/wasm` will allow both *ORDERED* and *UNORDERED* channels and pass that mode
   down to the contract in `OnChanOpenTry`, so the contract can decide if it accepts
@@ -122,9 +122,9 @@ To clarify:
     parties in this way.
   * Other ideas: have a special field we send on `OnChanOpenInit` that
     specifies the destination contract, and allow any *ChannelID*.
-    However, looking at [`OnChanOpenInit` function signature](https://docs.cosmos.network/master/ibc/custom.html#implement-ibcmodule-interface-and-callbacks),
+    However, looking at [`OnChanOpenInit` function signature](https://docs.cosmos.network/v0.45/ibc/custom.html#implement-ibcmodule-interface-and-callbacks),
     I don't see a place to put this extra info, without abusing the version field,
-    which is a [specified field](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation):
+    which is a [specified field](https://docs.cosmos.network/v0.45/ibc/custom.html#channel-handshake-version-negotiation):
     ```
     Versions must be strings but can implement any versioning structure. 
     If your application plans to have linear releases then semantic versioning is recommended.

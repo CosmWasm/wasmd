@@ -7,7 +7,7 @@ This document is an extension to [CONTRIBUTING](./CONTRIBUTING.md) and provides 
 * Code must be well structured:
     * packages must have a limited responsibility (different concerns can go to different packages),
     * types must be easy to compose,
-    * think about maintainbility and testability.
+    * think about maintainability and testability.
 * "Depend upon abstractions, [not] concretions".
 * Try to limit the number of methods you are exposing. It's easier to expose something later than to hide it.
 * Follow agreed-upon design patterns and naming conventions.

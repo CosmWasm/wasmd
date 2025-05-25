@@ -2,7 +2,7 @@
 
 With stargate, we have access to the `x/upgrade` module, which we can use to perform
 inline upgrades. Please first read both the basic 
-[x/upgrade spec](https://github.com/cosmos/cosmos-sdk/blob/master/x/upgrade/spec/01_concepts.md)
+[x/upgrade spec](https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/upgrade/spec/01_concepts.md)
 and [go docs](https://godoc.org/github.com/cosmos/cosmos-sdk/x/upgrade#hdr-Performing_Upgrades)
 for the background on the module.
 
@@ -321,7 +321,7 @@ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
 
 On a real network, operators will have to be awake when the upgrade plan is activated
 and manually perform this switch, or use some automated tooling like 
-[cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/master/cosmovisor/README.md).
+[cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/main/tools/cosmovisor/README.md).
 
 ## Check final state
 

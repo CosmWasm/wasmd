@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	app2 "github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -30,7 +29,7 @@ const (
 
 var doNotTimeout = clienttypes.NewHeight(1, 1111111)
 
-func TestPinPong(t *testing.T) {
+func TestPingPong(t *testing.T) {
 	// custom IBC protocol example
 	// scenario: given two chains,
 	//           with a contract on chain A and chain B
@@ -49,8 +48,8 @@ func TestPinPong(t *testing.T) {
 			wasmtesting.NewIBCContractMockWasmEngine(pongContract),
 		)}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
-		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
-		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(2))
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
 	_ = chainB.SeedNewContractInstance() // skip 1 instance so that addresses are not the same
 	var (
@@ -58,7 +57,7 @@ func TestPinPong(t *testing.T) {
 		pongContractAddr = chainB.SeedNewContractInstance()
 	)
 	require.NotEqual(t, pingContractAddr, pongContractAddr)
-	coordinator.CommitBlock(chainA, chainB)
+	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 
 	pingContract.chain = chainA
 	pingContract.contractAddr = pingContractAddr
@@ -71,19 +70,19 @@ func TestPinPong(t *testing.T) {
 		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
 	)
 
-	path := wasmibctesting.NewPath(chainA, chainB)
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  counterpartyPortID,
-		Version: ibctransfertypes.Version,
+		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
-	coordinator.SetupConnections(path)
-	coordinator.CreateChannels(path)
+	coordinator.SetupConnections(&path.Path)
+	coordinator.CreateChannels(&path.Path)
 
 	// trigger start game via execute
 	const startValue uint64 = 100
@@ -98,15 +97,15 @@ func TestPinPong(t *testing.T) {
 		Msg:      s.GetBytes(),
 	}
 	// on chain A
-	_, err := path.EndpointA.Chain.SendMsgs(startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
 
 	// when some rounds are played
 	for i := 1; i <= rounds; i++ {
 		t.Logf("++ round: %d\n", i)
 
-		require.Len(t, chainA.PendingSendPackets, 1)
-		err := coordinator.RelayAndAckPendingPackets(path)
+		require.Len(t, *chainA.PendingSendPackets, 1)
+		wasmibctesting.RelayAndAckPendingPackets(path)
 		require.NoError(t, err)
 	}
 
@@ -129,7 +128,7 @@ var _ wasmtesting.IBCContractCallbacks = &player{}
 // player is a (mock) contract that sends and receives ibc packages
 type player struct {
 	t            *testing.T
-	chain        *wasmibctesting.TestChain
+	chain        *wasmibctesting.WasmTestChain
 	contractAddr sdk.AccAddress
 	actor        string // either ping or pong
 	execCalls    int    // number of calls to Execute method (checkTx + deliverTx)
@@ -176,7 +175,7 @@ func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.Mes
 	}, 0, nil
 }
 
-// OnIBCChannelOpen ensures to accept only configured version
+// IBCChannelOpen ensures to accept only configured version
 func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCChannelOpenResult, uint64, error) {
 	if msg.GetChannel().Version != p.actor {
 		return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
@@ -184,7 +183,7 @@ func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmt
 	return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
 }
 
-// OnIBCChannelConnect persists connection endpoints
+// IBCChannelConnect persists connection endpoints
 func (p player) IBCChannelConnect(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	p.storeEndpoint(store, msg.GetChannel())
 	return &wasmvmtypes.IBCBasicResult{Ok: &wasmvmtypes.IBCBasicResponse{}}, 0, nil
@@ -252,7 +251,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 	nextValue := p.incrementCounter(lastBallSentKey, store)
 	newHit := NewHit(p.actor, nextValue)
 	respHit := &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
-		ChannelID: packet.Src.ChannelID,
+		ChannelID: packet.Dest.ChannelID,
 		Data:      newHit.GetBytes(),
 		Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
 			Revision: doNotTimeout.RevisionNumber,
@@ -273,7 +272,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 	}, 0, nil
 }
 
-// OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
+// IBCPacketAck handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	// parse received data and store
 	var sentBall hit
@@ -312,7 +311,7 @@ func (p player) incrementCounter(key []byte, store wasmvm.KVStore) uint64 {
 }
 
 func (p player) QueryState(key []byte) uint64 {
-	app := p.chain.App.(*app2.WasmApp)
+	app := p.chain.GetWasmApp()
 	raw := app.WasmKeeper.QueryRaw(p.chain.GetContext(), p.contractAddr, key)
 	return sdk.BigEndianToUint64(raw)
 }

@@ -175,8 +175,8 @@ func WithAcceptedAccountTypesOnContractInstantiation(accts ...sdk.AccountI) Opti
 	})
 }
 
-// WitGovSubMsgAuthZPropagated overwrites the default gov authorization policy for sub-messages
-func WitGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Option {
+// WithGovSubMsgAuthZPropagated overwrites the default gov authorization policy for sub-messages
+func WithGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Option {
 	x := make(map[types.AuthorizationPolicyAction]struct{}, len(entries))
 	for _, e := range entries {
 		x[e] = struct{}{}

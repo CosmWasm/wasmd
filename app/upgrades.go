@@ -40,7 +40,6 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 		AccountKeeper:         &app.AccountKeeper,
 		ParamsKeeper:          &app.ParamsKeeper,
 		ConsensusParamsKeeper: &app.ConsensusParamsKeeper,
-		CapabilityKeeper:      app.CapabilityKeeper,
 		IBCKeeper:             app.IBCKeeper,
 		Codec:                 app.appCodec,
 		GetStoreKey:           app.GetKey,
@@ -78,8 +77,6 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 
 func setupLegacyKeyTables(k *paramskeeper.Keeper) {
 	for _, subspace := range k.GetSubspaces() {
-		subspace := subspace
-
 		var keyTable paramstypes.KeyTable
 		switch subspace.Name() {
 		case authtypes.ModuleName:

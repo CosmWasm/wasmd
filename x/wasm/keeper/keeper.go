@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -89,8 +90,6 @@ type Keeper struct {
 	cdc                   codec.Codec
 	accountKeeper         types.AccountKeeper
 	bank                  CoinTransferrer
-	portKeeper            types.PortKeeper
-	capabilityKeeper      types.CapabilityKeeper
 	wasmVM                types.WasmEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
@@ -112,6 +111,12 @@ type Keeper struct {
 
 	// wasmLimits contains the limits sent to wasmvm on init
 	wasmLimits wasmvmtypes.WasmLimits
+
+	ibcRouterV2 *ibcapi.Router
+}
+
+func (k Keeper) GetIBCRouterV2() *ibcapi.Router {
+	return k.ibcRouterV2
 }
 
 func (k Keeper) getUploadAccessConfig(ctx context.Context) types.AccessConfig {
@@ -370,11 +375,16 @@ func (k Keeper) instantiate(
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
-		ibcPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
-		if err != nil {
-			return nil, nil, err
-		}
+		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
+	}
+
+	ibc2Port := PortIDForContractV2(contractAddress)
+	contractInfo.IBC2PortID = ibc2Port
+
+	// TODO: Remove AddRoute in https://github.com/CosmWasm/wasmd/issues/2144
+	if !k.ibcRouterV2.HasRoute(ibc2Port) {
+		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
 	}
 
 	// store contract before dispatch so that contract could be called back
@@ -501,12 +511,12 @@ func (k Keeper) migrate(
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
 	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
 		// add ibc port
-		ibcPort, err := k.ensureIbcPort(sdkCtx, contractAddress)
-		if err != nil {
-			return nil, err
-		}
+		ibcPort := PortIDForContract(contractAddress)
 		contractInfo.IBCPortID = ibcPort
 	}
+
+	ibc2Port := PortIDForContractV2(contractAddress)
+	contractInfo.IBC2PortID = ibc2Port
 
 	var response *wasmvmtypes.Response
 
@@ -1200,7 +1210,6 @@ func (k Keeper) checkDiscountEligibility(ctx sdk.Context, checksum []byte, isPin
 
 	txContracts, ok := types.TxContractsFromContext(ctx)
 	if !ok || txContracts.GetContracts() == nil {
-		k.Logger(ctx).Warn("cannot get tx contracts from context")
 		return ctx, false
 	} else if txContracts.Exists(checksum) {
 		return ctx, true

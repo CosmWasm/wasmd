@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
-	"golang.org/x/exp/slices"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -278,9 +278,9 @@ func (c WasmdCli) AddKey(name string) string {
 }
 
 // AddKeyFromSeed recovers the key from given seed and add it to default keyring. Returns address
-func (c WasmdCli) AddKeyFromSeed(name, mnemoic string) string {
+func (c WasmdCli) AddKeyFromSeed(name, mnemonic string) string {
 	cmd := c.withKeyringFlags("keys", "add", name, "--recover")
-	out, _ := c.runWithInput(cmd, strings.NewReader(mnemoic))
+	out, _ := c.runWithInput(cmd, strings.NewReader(mnemonic))
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr

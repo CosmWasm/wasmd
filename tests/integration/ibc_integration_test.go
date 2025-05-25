@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/tests/ibctesting"
+	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -33,10 +32,10 @@ func TestIBCReflectContract(t *testing.T) {
 
 	var (
 		coordinator = wasmibctesting.NewCoordinator(t, 2)
-		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
-		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(2))
+		chainA      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+		chainB      = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 	)
-	coordinator.CommitBlock(chainA, chainB)
+	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 
 	initMsg := []byte(`{}`)
 	codeID := chainA.StoreCodeFile("./testdata/ibc_reflect_send.wasm").CodeID
@@ -53,11 +52,11 @@ func TestIBCReflectContract(t *testing.T) {
 		sourcePortID      = chainA.ContractInfo(sendContractAddr).IBCPortID
 		counterpartPortID = chainB.ContractInfo(reflectContractAddr).IBCPortID
 	)
-	coordinator.CommitBlock(chainA, chainB)
+	coordinator.CommitBlock(chainA.TestChain, chainB.TestChain)
 	coordinator.UpdateTime()
 
-	require.Equal(t, chainA.CurrentHeader.Time, chainB.CurrentHeader.Time)
-	path := wasmibctesting.NewPath(chainA, chainB)
+	require.Equal(t, chainA.ProposedHeader.Time, chainB.ProposedHeader.Time)
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
 		Version: "ibc-reflect-v1",
@@ -69,8 +68,9 @@ func TestIBCReflectContract(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 
-	coordinator.SetupConnections(path)
-	coordinator.CreateChannels(path)
+	coordinator.SetupConnections(&path.Path)
+
+	coordinator.CreateChannels(&path.Path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -90,12 +90,13 @@ func TestIBCReflectContract(t *testing.T) {
 	// https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/keeper/packet.go#L121-L132
 
 	// ensure the expected packet was prepared, and relay it
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
-	err := coordinator.RelayAndAckPendingPackets(path)
+
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
+	err := wasmibctesting.RelayAndAckPendingPackets(path)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// let's query the source contract and make sure it registered an address
 	query := ReflectSendQueryMsg{Account: &AccountQuery{ChannelID: path.EndpointA.ChannelID}}
@@ -106,7 +107,7 @@ func TestIBCReflectContract(t *testing.T) {
 	require.Empty(t, account.RemoteBalance)
 
 	// close channel
-	coordinator.CloseChannel(path)
+	wasmibctesting.CloseChannel(coordinator, &path.Path)
 
 	// let's query the source contract and make sure it registered an address
 	account = AccountResponse{}
@@ -174,15 +175,15 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
-				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(2))
+				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 				myContractAddr = chainA.SeedNewContractInstance()
-				appA           = chainA.App.(*app.WasmApp)
+				appA           = chainA.GetWasmApp()
 				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
-			path := wasmibctesting.NewPath(chainA, chainB)
-			coordinator.SetupClients(path)
-			coordinator.CreateConnections(path)
+			path := wasmibctesting.NewWasmPath(chainA, chainB)
+			coordinator.SetupClients(&path.Path)
+			coordinator.CreateConnections(&path.Path)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
 				Version: spec.startVersion,
@@ -202,7 +203,7 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 }
 
 func TestOnChanOpenTryVersion(t *testing.T) {
-	const startVersion = ibctransfertypes.Version
+	const startVersion = ibctransfertypes.V1
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
 		expVersion  string
@@ -234,14 +235,14 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
-				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(2))
+				chainA         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(1)))
+				chainB         = wasmibctesting.NewWasmTestChain(coordinator.GetChain(ibctesting.GetChainID(2)))
 				myContractAddr = chainA.SeedNewContractInstance()
 				contractInfo   = chainA.ContractInfo(myContractAddr)
 			)
 
-			path := wasmibctesting.NewPath(chainA, chainB)
-			coordinator.SetupConnections(path)
+			path := wasmibctesting.NewWasmPath(chainA, chainB)
+			coordinator.SetupConnections(&path.Path)
 
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
@@ -250,7 +251,7 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 			}
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  ibctransfertypes.PortID,
-				Version: ibctransfertypes.Version,
+				Version: ibctransfertypes.V1,
 				Order:   channeltypes.UNORDERED,
 			}
 
@@ -301,8 +302,8 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			}
 			var (
 				coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA = coord.GetChain(wasmibctesting.GetChainID(1))
-				chainB = coord.GetChain(wasmibctesting.GetChainID(2))
+				chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+				chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 			)
 			// setup chain A contract metadata for mock
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
@@ -318,7 +319,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			var (
 				sourcePortID      = chainA.ContractInfo(myMockContractAddr).IBCPortID
 				counterpartPortID = chainB.ContractInfo(ibcReflectContractAddr).IBCPortID
-				path              = wasmibctesting.NewPath(chainA, chainB)
+				path              = wasmibctesting.NewWasmPath(chainA, chainB)
 			)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
@@ -327,20 +328,20 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 			}
 
-			coord.SetupConnections(path)
-			coord.CreateChannels(path)
-			coord.CommitBlock(chainA, chainB)
-			require.Equal(t, 0, len(chainA.PendingSendPackets))
-			require.Equal(t, 0, len(chainB.PendingSendPackets))
+			coord.SetupConnections(&path.Path)
+			coord.CreateChannels(&path.Path)
+			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
+			require.Equal(t, 0, len(*chainA.PendingSendPackets))
+			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 			// when an ibc packet is sent from chain A to chain B
-			capturedAck := mockContractEngine.SubmitIBCPacket(t, path, chainA, myMockContractAddr, spec.packetData)
-			coord.CommitBlock(chainA, chainB)
+			capturedAck := mockContractEngine.SubmitIBCPacket(t, &path.Path, chainA, myMockContractAddr, spec.packetData)
+			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-			require.Equal(t, 1, len(chainA.PendingSendPackets))
-			require.Equal(t, 0, len(chainB.PendingSendPackets))
+			require.Equal(t, 1, len(*chainA.PendingSendPackets))
+			require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
-			err = coord.RelayAndAckPendingPackets(path)
+			err = wasmibctesting.RelayAndAckPendingPackets(path)
 
 			// then
 			if spec.expPacketNotHandled {
@@ -376,8 +377,8 @@ func TestIBCAsyncAck(t *testing.T) {
 	}
 	var (
 		coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-		chainA = coord.GetChain(wasmibctesting.GetChainID(1))
-		chainB = coord.GetChain(wasmibctesting.GetChainID(2))
+		chainA = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+		chainB = wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 	)
 	// setup chain A contract metadata for mock
 	myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
@@ -393,7 +394,7 @@ func TestIBCAsyncAck(t *testing.T) {
 	var (
 		sourcePortID      = chainA.ContractInfo(myMockContractAddr).IBCPortID
 		counterpartPortID = chainB.ContractInfo(ibcReflectContractAddr).IBCPortID
-		path              = wasmibctesting.NewPath(chainA, chainB)
+		path              = wasmibctesting.NewWasmPath(chainA, chainB)
 	)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
@@ -402,23 +403,24 @@ func TestIBCAsyncAck(t *testing.T) {
 		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
 	}
 
-	coord.SetupConnections(path)
-	coord.CreateChannels(path)
-	coord.CommitBlock(chainA, chainB)
-	require.Equal(t, 0, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	coord.SetupConnections(&path.Path)
+	coord.CreateChannels(&path.Path)
+	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
+	require.Equal(t, 0, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// when the "no_ack" ibc packet is sent from chain A to chain B
-	capturedAck := mockContractEngine.SubmitIBCPacket(t, path, chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
-	coord.CommitBlock(chainA, chainB)
+	capturedAck := mockContractEngine.SubmitIBCPacket(t, &path.Path, chainA, myMockContractAddr, []byte(`{"no_ack":{}}`))
+	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 
-	require.Equal(t, 1, len(chainA.PendingSendPackets))
-	require.Equal(t, 0, len(chainB.PendingSendPackets))
+	require.Equal(t, 1, len(*chainA.PendingSendPackets))
+	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// we don't expect an ack yet
-	err = path.RelayPacketWithoutAck(chainA.PendingSendPackets[0], nil)
-	noAckPacket := chainA.PendingSendPackets[0]
-	chainA.PendingSendPackets = []channeltypes.Packet{}
+	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0], path.EndpointB)
+
+	noAckPacket := (*chainA.PendingSendPackets)[0]
+	chainA.PendingSendPackets = &[]channeltypes.Packet{}
 	require.NoError(t, err)
 	assert.Nil(t, *capturedAck)
 
@@ -466,7 +468,7 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 }
 
 // SubmitIBCPacket starts an IBC packet transfer on given chain and captures the ack returned
-func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmibctesting.Path, chainA *wasmibctesting.TestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
+func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *ibctesting.Path, chainA *wasmibctesting.WasmTestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
 	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
 	x.MockWasmEngine.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {

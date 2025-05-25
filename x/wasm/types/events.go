@@ -3,7 +3,8 @@ package types
 import (
 	"fmt"
 
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -34,6 +35,15 @@ const (
 // details if any.
 func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack exported.Acknowledgement, err error) {
 	success := err == nil && (ack == nil || ack.Success())
+	emitEvent(ctx, contractAddr, success, err)
+}
+
+func EmitAcknowledgementIBC2Event(ctx sdk.Context, contractAddr sdk.AccAddress, ack channeltypesv2.RecvPacketResult, err error) {
+	success := err == nil && (ack.Acknowledgement == nil || ack.Status == channeltypesv2.PacketStatus_Success)
+	emitEvent(ctx, contractAddr, success, err)
+}
+
+func emitEvent(ctx sdk.Context, contractAddr sdk.AccAddress, success bool, err error) {
 	attributes := []sdk.Attribute{
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String()),

@@ -3,10 +3,10 @@ package types
 import (
 	"context"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -127,11 +127,6 @@ type IBCContractKeeper interface {
 		contractAddr sdk.AccAddress,
 		msg wasmvmtypes.IBCDestinationCallbackMsg,
 	) error
-	// ClaimCapability allows the transfer module to claim a capability
-	// that IBC module passes to it
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
-	// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
-	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 
 	// LoadAsyncAckPacket loads a previously stored packet. See StoreAsyncAckPacket for more details.
 	// Both the portID and channelID are the ones on the destination chain (the chain that this is executed on).
@@ -142,4 +137,28 @@ type IBCContractKeeper interface {
 	StoreAsyncAckPacket(ctx context.Context, packet channeltypes.Packet) error
 	// DeleteAsyncAckPacket deletes a previously stored packet. See StoreAsyncAckPacket for more details.
 	DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64)
+}
+
+// IBC2ContractKeeper IBC2 lifecycle event handler
+type IBC2ContractKeeper interface {
+	OnAckIBC2Packet(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.IBC2AcknowledgeMsg,
+	) error
+	OnRecvIBC2Packet(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.IBC2PacketReceiveMsg,
+	) channeltypesv2.RecvPacketResult
+	OnTimeoutIBC2Packet(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.IBC2PacketTimeoutMsg,
+	) error
+	OnSendIBC2Packet(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		msg wasmvmtypes.IBC2PacketSendMsg,
+	) error
 }

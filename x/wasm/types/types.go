@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
@@ -20,11 +20,12 @@ const (
 	defaultSmartQueryGasLimit uint64 = 3_000_000
 	defaultContractDebugMode         = false
 
-	// ContractAddrLen defines a valid address length for contracts
-	ContractAddrLen = 32
 	// SDKAddrLen defines a valid address length that was used in sdk address generation
 	SDKAddrLen = 20
 )
+
+// ContractAddrLen defines a valid address length for contracts
+var ContractAddrLen = 32
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {

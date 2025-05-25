@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,7 +139,7 @@ func TestConstructorOptions(t *testing.T) {
 			},
 		},
 		"gov propagation": {
-			srcOpt: WitGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
+			srcOpt: WithGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
 			verify: func(t *testing.T, k Keeper) {
 				exp := map[types.AuthorizationPolicyAction]struct{}{
 					types.AuthZActionInstantiate:     {},
@@ -155,7 +155,7 @@ func TestConstructorOptions(t *testing.T) {
 			opt := spec.srcOpt
 			_, gotPostOptMarker := opt.(postOptsFn)
 			require.Equal(t, spec.isPostOpt, gotPostOptMarker)
-			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultNodeConfig(), types.VMConfig{}, AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, types.DefaultNodeConfig(), types.VMConfig{}, AvailableCapabilities, "", nil, spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

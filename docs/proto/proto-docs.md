@@ -236,6 +236,7 @@ ContractInfo stores a WASM contract instance
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. |
 | `ibc_port_id` | [string](#string) |  |  |
+| `ibc2_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
 
 
@@ -960,7 +961,7 @@ the x/gov module via a v1 governance proposal.
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
-| `access_config_updates` | [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate) | repeated | AccessConfigUpdate contains the list of code ids and the access config to be applied. |
+| `access_config_updates` | [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate) | repeated | AccessConfigUpdates contains the list of code ids and the access config to be applied. |
 
 
 

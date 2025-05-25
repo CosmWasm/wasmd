@@ -7,11 +7,19 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
+	"cosmossdk.io/x/tx/signing"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/address"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -114,6 +122,80 @@ func BenchmarkTxSending(b *testing.B) {
 				_, err = appInfo.App.Commit()
 				require.NoError(b, err)
 				height++
+			}
+		})
+	}
+}
+
+func BenchmarkUnpackAny(b *testing.B) {
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: signing.Options{
+			AddressCodec: address.Bech32Codec{
+				Bech32Prefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			},
+			ValidatorAddressCodec: address.Bech32Codec{
+				Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
+			},
+		},
+	})
+	require.NoError(b, err)
+
+	cdc := codec.NewProtoCodec(interfaceRegistry)
+	std.RegisterInterfaces(interfaceRegistry)
+
+	mustCreateAny := func(b *testing.B, v proto.Message) *codectypes.Any {
+		b.Helper()
+		any, err := codectypes.NewAnyWithValue(v)
+		require.NoError(b, err)
+		return any
+	}
+
+	createNested := func(b *testing.B, depth int) *codectypes.Any {
+		b.Helper()
+		// create nested MsgExecs
+		nested := authz.NewMsgExec(sdk.AccAddress{}, []sdk.Msg{})
+		for i := 0; i < depth; i++ {
+			nested = authz.NewMsgExec(sdk.AccAddress{}, []sdk.Msg{&nested})
+		}
+
+		return mustCreateAny(b, &nested)
+	}
+
+	cases := map[string]struct {
+		msg    *codectypes.Any
+		expErr bool
+	}{
+		"garbage any": {
+			msg: &codectypes.Any{
+				TypeUrl: "aslasdf",
+				Value:   []byte("oiuwurjtlwerlwmt032498u50j3oehr943q;l348u58q=-afvu89 290i32-1[1]"),
+			},
+			expErr: true,
+		},
+		"single MsgExec": {
+			msg: createNested(b, 1),
+		},
+		"10000 MsgExec": {
+			msg: createNested(b, 10000),
+		},
+		"100000 MsgExec": {
+			msg: createNested(b, 100000),
+		},
+	}
+
+	for name, tc := range cases {
+		b.Run(name, func(b *testing.B) {
+			b.Logf("%s msg size %v", name, len(tc.msg.Value))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				var msg sdk.Msg
+				err := cdc.UnpackAny(tc.msg, &msg)
+				if tc.expErr {
+					require.Error(b, err)
+				} else {
+					require.NoError(b, err)
+				}
 			}
 		})
 	}

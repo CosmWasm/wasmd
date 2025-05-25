@@ -661,7 +661,7 @@ type UpdateInstantiateConfigProposal struct {
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty" yaml:"title"`
 	// Description is a human readable text
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" yaml:"description"`
-	// AccessConfigUpdate contains the list of code ids and the access config
+	// AccessConfigUpdates contains the list of code ids and the access config
 	// to be applied.
 	AccessConfigUpdates []AccessConfigUpdate `protobuf:"bytes,3,rep,name=access_config_updates,json=accessConfigUpdates,proto3" json:"access_config_updates"`
 }

@@ -1,14 +1,18 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func prepareCleanup(t *testing.T) {
@@ -67,6 +71,24 @@ func TestBuildContractAddressClassic(t *testing.T) {
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
+}
+
+func TestBuildContractAddressPredictableShort(t *testing.T) {
+	types.ContractAddrLen = 20
+	// reset to default value after test completion
+	defer func() { types.ContractAddrLen = 32 }()
+
+	checksum, err := hex.DecodeString("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
+	require.NoError(t, err)
+	creator, err := sdk.AccAddressFromHexUnsafe("9999999999aaaaaaaaaabbbbbbbbbbcccccccccc")
+	require.NoError(t, err)
+	salt, err := hex.DecodeString("61")
+	require.NoError(t, err)
+	expAddr, err := sdk.AccAddressFromHexUnsafe("5e865d3e45ad3e961f77fd77d46543417ced44d9")
+	require.NoError(t, err)
+
+	addr := BuildContractAddressPredictable(checksum, creator, salt, []byte{})
+	assert.Equal(t, expAddr, addr)
 }
 
 func TestBuildContractAddressPredictable(t *testing.T) {

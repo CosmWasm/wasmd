@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -49,7 +49,7 @@ const (
 	DefaultEventAttributeDataCost uint64 = 1
 	// DefaultContractMessageDataCost is how much SDK gas is charged *per byte* of the message that goes to the contract
 	// This is used with len(msg). Note that the message is deserialized in the receiving contract and this is charged
-	// with wasm gas already. The derserialization of results is also charged in wasmvm. I am unsure if we need to add
+	// with wasm gas already. The deserialization of results is also charged in wasmvm. I am unsure if we need to add
 	// additional costs here.
 	// Note: also used for error fields on reply, and data on reply. Maybe these should be pulled out to a different (non-zero) field
 	DefaultContractMessageDataCost uint64 = 0
@@ -106,7 +106,7 @@ type WasmGasRegisterConfig struct {
 	// See also https://github.com/CosmWasm/wasmd/issues/1798 for more thinking around
 	// discount cases.
 	InstanceCostDiscount storetypes.Gas
-	// CompileCosts costs to persist and "compile" a new wasm contract
+	// CompileCost costs to persist and "compile" a new wasm contract
 	CompileCost storetypes.Gas
 	// UncompressCost costs per byte to unpack a contract
 	UncompressCost wasmvmtypes.UFraction
@@ -252,7 +252,7 @@ func calcWithFreeTier(storedBytes, freeTier uint64) (uint64, uint64) {
 func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	x := source * g.c.GasMultiplier
 	if x < source {
-		panic(storetypes.ErrorOutOfGas{Descriptor: "overflow"})
+		panic(storetypes.ErrorGasOverflow{Descriptor: "ToWasmVMGas"})
 	}
 	return x
 }

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -178,7 +178,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.NewTestLogger(t))
+	gasLimit := types.DefaultInstanceCost + 5000
 
 	specs := map[string]struct {
 		doInContract func()
@@ -186,7 +186,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}{
 		"out of gas": {
 			doInContract: func() {
-				ctx.GasMeter().ConsumeGas(ctx.GasMeter().Limit()+1, "test - consume more than limit")
+				ctx.GasMeter().ConsumeGas(gasLimit+1, "test - consume more than limit")
 			},
 			expErr: sdkErrors.ErrOutOfGas,
 		},
@@ -199,6 +199,9 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			// reset gas meter
+			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasLimit)).WithLogger(log.NewTestLogger(t))
+
 			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmEngine{QueryFn: func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.QueryResult, uint64, error) {
 				spec.doInContract()
 				return &wasmvmtypes.QueryResult{}, 0, nil
