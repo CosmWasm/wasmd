@@ -1369,6 +1369,7 @@ var (
 		(*CallHostFunctionResponse)(nil), // 18: cosmwasm.CallHostFunctionResponse
 	}
 )
+
 var file_wasmvm_proto_depIdxs = []int32{
 	0,  // 0: cosmwasm.InstantiateRequest.context:type_name -> cosmwasm.Context
 	0,  // 1: cosmwasm.ExecuteRequest.context:type_name -> cosmwasm.Context
