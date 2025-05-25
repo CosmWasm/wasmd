@@ -1,15 +1,8 @@
 package keeper
 
 import (
-<<<<<<< HEAD
-=======
-	"path/filepath"
-
-	wasmvm "github.com/CosmWasm/wasmvm/v3"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
->>>>>>> upstream/main
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 
@@ -72,13 +65,13 @@ func NewKeeper(
 	keeper.messenger = callDepthMessageHandler{keeper.messenger, keeper.maxCallDepth}
 	// only set the wasmvm if no one set this in the options
 	// NewVM does a lot, so better not to create it and silently drop it.
-   if keeper.wasmVM == nil {
-       var err error
-       keeper.wasmVM, err = types.NewGRPCEngine("")
-       if err != nil {
-           panic(err)
-       }
-   }
+	if keeper.wasmVM == nil {
+		var err error
+		keeper.wasmVM, err = types.NewGRPCEngine("")
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	for _, o := range postOpts {
 		o.apply(keeper)

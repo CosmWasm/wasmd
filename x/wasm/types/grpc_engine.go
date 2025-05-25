@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmgrpc "github.com/CosmWasm/wasmd/proto"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 )
 
 // grpcEngine is a WasmEngine implementation using gRPC to talk to a remote WasmVMService.
@@ -522,6 +522,103 @@ func (g *grpcEngine) IBCDestinationCallback(
 	msgBytes := []byte{} // TODO: serialize msg properly
 	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcDestinationCallback(context.Background(), req)
+	if err != nil {
+		return nil, 0, err
+	}
+	if resp.Error != "" {
+		return nil, resp.GasUsed, errors.New(resp.Error)
+	}
+	return &wasmvmtypes.IBCBasicResult{}, resp.GasUsed, nil
+}
+
+// IBC2 methods
+func (g *grpcEngine) IBC2PacketAck(
+	checksum wasmvmtypes.Checksum,
+	env wasmvmtypes.Env,
+	payload wasmvmtypes.IBC2AcknowledgeMsg,
+	store wasmvmtypes.KVStore,
+	goapi wasmvmtypes.GoAPI,
+	querier wasmvmtypes.Querier,
+	gasMeter wasmvmtypes.GasMeter,
+	gasLimit uint64,
+	deserCost wasmvmtypes.UFraction,
+) (*wasmvmtypes.IBCBasicResult, uint64, error) {
+	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
+	msgBytes := []byte{} // TODO: serialize payload properly
+	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	resp, err := g.client.Ibc2PacketAck(context.Background(), req)
+	if err != nil {
+		return nil, 0, err
+	}
+	if resp.Error != "" {
+		return nil, resp.GasUsed, errors.New(resp.Error)
+	}
+	return &wasmvmtypes.IBCBasicResult{}, resp.GasUsed, nil
+}
+
+func (g *grpcEngine) IBC2PacketReceive(
+	checksum wasmvmtypes.Checksum,
+	env wasmvmtypes.Env,
+	payload wasmvmtypes.IBC2PacketReceiveMsg,
+	store wasmvmtypes.KVStore,
+	goapi wasmvmtypes.GoAPI,
+	querier wasmvmtypes.Querier,
+	gasMeter wasmvmtypes.GasMeter,
+	gasLimit uint64,
+	deserCost wasmvmtypes.UFraction,
+) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
+	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
+	msgBytes := []byte{} // TODO: serialize payload properly
+	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	resp, err := g.client.Ibc2PacketReceive(context.Background(), req)
+	if err != nil {
+		return nil, 0, err
+	}
+	if resp.Error != "" {
+		return nil, resp.GasUsed, errors.New(resp.Error)
+	}
+	return &wasmvmtypes.IBCReceiveResult{}, resp.GasUsed, nil
+}
+
+func (g *grpcEngine) IBC2PacketTimeout(
+	checksum wasmvmtypes.Checksum,
+	env wasmvmtypes.Env,
+	packet wasmvmtypes.IBC2PacketTimeoutMsg,
+	store wasmvmtypes.KVStore,
+	goapi wasmvmtypes.GoAPI,
+	querier wasmvmtypes.Querier,
+	gasMeter wasmvmtypes.GasMeter,
+	gasLimit uint64,
+	deserCost wasmvmtypes.UFraction,
+) (*wasmvmtypes.IBCBasicResult, uint64, error) {
+	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
+	msgBytes := []byte{} // TODO: serialize packet properly
+	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	resp, err := g.client.Ibc2PacketTimeout(context.Background(), req)
+	if err != nil {
+		return nil, 0, err
+	}
+	if resp.Error != "" {
+		return nil, resp.GasUsed, errors.New(resp.Error)
+	}
+	return &wasmvmtypes.IBCBasicResult{}, resp.GasUsed, nil
+}
+
+func (g *grpcEngine) IBC2PacketSend(
+	checksum wasmvmtypes.Checksum,
+	env wasmvmtypes.Env,
+	packet wasmvmtypes.IBC2PacketSendMsg,
+	store wasmvmtypes.KVStore,
+	goapi wasmvmtypes.GoAPI,
+	querier wasmvmtypes.Querier,
+	gasMeter wasmvmtypes.GasMeter,
+	gasLimit uint64,
+	deserCost wasmvmtypes.UFraction,
+) (*wasmvmtypes.IBCBasicResult, uint64, error) {
+	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
+	msgBytes := []byte{} // TODO: serialize packet properly
+	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	resp, err := g.client.Ibc2PacketSend(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
 	}
