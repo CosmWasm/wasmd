@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmgrpc "github.com/CosmWasm/wasmd/proto"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 )
 
@@ -297,13 +297,13 @@ func (g *grpcEngine) GetMetrics() (*wasmvmtypes.Metrics, error) {
 	}
 	return &wasmvmtypes.Metrics{
 		HitsPinnedMemoryCache:     resp.Metrics.HitsPinnedMemoryCache,
-		HitsMemoryCache:          resp.Metrics.HitsMemoryCache,
-		HitsFsCache:              resp.Metrics.HitsFsCache,
-		Misses:                   resp.Metrics.Misses,
+		HitsMemoryCache:           resp.Metrics.HitsMemoryCache,
+		HitsFsCache:               resp.Metrics.HitsFsCache,
+		Misses:                    resp.Metrics.Misses,
 		ElementsPinnedMemoryCache: resp.Metrics.ElementsPinnedMemoryCache,
-		ElementsMemoryCache:      resp.Metrics.ElementsMemoryCache,
-		SizePinnedMemoryCache:    resp.Metrics.SizePinnedMemoryCache,
-		SizeMemoryCache:          resp.Metrics.SizeMemoryCache,
+		ElementsMemoryCache:       resp.Metrics.ElementsMemoryCache,
+		SizePinnedMemoryCache:     resp.Metrics.SizePinnedMemoryCache,
+		SizeMemoryCache:           resp.Metrics.SizeMemoryCache,
 	}, nil
 }
 
@@ -319,7 +319,7 @@ func (g *grpcEngine) GetPinnedMetrics() (*wasmvmtypes.PinnedMetrics, error) {
 	if resp.PinnedMetrics == nil {
 		return nil, errors.New("no pinned metrics returned")
 	}
-	
+
 	var perModule []wasmvmtypes.PerModuleEntry
 	for checksum, metrics := range resp.PinnedMetrics.PerModule {
 		perModule = append(perModule, wasmvmtypes.PerModuleEntry{
@@ -330,7 +330,7 @@ func (g *grpcEngine) GetPinnedMetrics() (*wasmvmtypes.PinnedMetrics, error) {
 			},
 		})
 	}
-	
+
 	return &wasmvmtypes.PinnedMetrics{
 		PerModule: perModule,
 	}, nil

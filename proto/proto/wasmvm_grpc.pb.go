@@ -8,6 +8,7 @@ package proto
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -156,24 +157,31 @@ type UnimplementedWasmVMServiceServer struct{}
 func (UnimplementedWasmVMServiceServer) LoadModule(context.Context, *LoadModuleRequest) (*LoadModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoadModule not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Instantiate(context.Context, *InstantiateRequest) (*InstantiateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Instantiate not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Execute(context.Context, *ExecuteRequest) (*ExecuteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Migrate(context.Context, *MigrateRequest) (*MigrateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Migrate not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Sudo(context.Context, *SudoRequest) (*SudoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sudo not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Reply(context.Context, *ReplyRequest) (*ReplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reply not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) AnalyzeCode(context.Context, *AnalyzeCodeRequest) (*AnalyzeCodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AnalyzeCode not implemented")
 }

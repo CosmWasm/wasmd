@@ -18,7 +18,8 @@ service WasmVMService {
   rpc RemoveModule(RemoveModuleRequest) returns (RemoveModuleResponse);
   rpc PinModule(PinModuleRequest) returns (PinModuleResponse);
   rpc UnpinModule(UnpinModuleRequest) returns (UnpinModuleResponse);
-  rpc GetCode(GetCodeRequest) returns (GetCodeResponse); // Retrieve raw WASM bytes
+  rpc GetCode(GetCodeRequest)
+      returns (GetCodeResponse); // Retrieve raw WASM bytes
 
   // Contract execution calls
   rpc Instantiate(InstantiateRequest) returns (InstantiateResponse);
@@ -33,7 +34,8 @@ service WasmVMService {
 
   // Metrics
   rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
-  rpc GetPinnedMetrics(GetPinnedMetricsRequest) returns (GetPinnedMetricsResponse);
+  rpc GetPinnedMetrics(GetPinnedMetricsRequest)
+      returns (GetPinnedMetricsResponse);
 
   // IBC Entry Points
   // All IBC calls typically share a similar request/response structure
@@ -55,9 +57,7 @@ service WasmVMService {
 
 // --- Common Message Types ---
 
-message LoadModuleRequest {
-  bytes module_bytes = 1;
-}
+message LoadModuleRequest { bytes module_bytes = 1; }
 
 message LoadModuleResponse {
   string checksum = 1; // SHA256 checksum of the module (hex encoded)
@@ -73,8 +73,9 @@ message InstantiateRequest {
 }
 
 message InstantiateResponse {
-  string contract_id = 1; // Identifier for the instantiated contract, typically derived from request_id or a unique hash
-  bytes data = 2; // Binary response data from the contract
+  string contract_id = 1; // Identifier for the instantiated contract, typically
+                          // derived from request_id or a unique hash
+  bytes data = 2;         // Binary response data from the contract
   uint64 gas_used = 3;
   string error = 4;
 }
@@ -104,10 +105,11 @@ message QueryResponse {
   bytes result = 1; // Binary query response data
   string error = 2;
 }
- 
+
 message MigrateRequest {
   string contract_id = 1; // Hex encoded checksum of the existing contract
-  string checksum = 2; // Hex encoded checksum of the new WASM module for migration
+  string checksum =
+      2; // Hex encoded checksum of the new WASM module for migration
   Context context = 3;
   bytes migrate_msg = 4;
   uint64 gas_limit = 5;
@@ -153,14 +155,17 @@ message AnalyzeCodeRequest {
 }
 
 message AnalyzeCodeResponse {
-  repeated string required_capabilities = 1; // Comma-separated list of required capabilities
+  repeated string required_capabilities =
+      1; // Comma-separated list of required capabilities
   bool has_ibc_entry_points = 2; // True if IBC entry points are detected
   string error = 3;
 }
 
-// HostService: RPC interface for host function callbacks (used by the VM to call back into the host)
+// HostService: RPC interface for host function callbacks (used by the VM to
+// call back into the host)
 service HostService {
-  rpc CallHostFunction(CallHostFunctionRequest) returns (CallHostFunctionResponse);
+  rpc CallHostFunction(CallHostFunctionRequest)
+      returns (CallHostFunctionResponse);
 }
 
 message CallHostFunctionRequest {

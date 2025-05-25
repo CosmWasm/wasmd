@@ -8,6 +8,7 @@ package proto
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -410,78 +411,103 @@ type UnimplementedWasmVMServiceServer struct{}
 func (UnimplementedWasmVMServiceServer) LoadModule(context.Context, *LoadModuleRequest) (*LoadModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoadModule not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) RemoveModule(context.Context, *RemoveModuleRequest) (*RemoveModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveModule not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) PinModule(context.Context, *PinModuleRequest) (*PinModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PinModule not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) UnpinModule(context.Context, *UnpinModuleRequest) (*UnpinModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnpinModule not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) GetCode(context.Context, *GetCodeRequest) (*GetCodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCode not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Instantiate(context.Context, *InstantiateRequest) (*InstantiateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Instantiate not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Execute(context.Context, *ExecuteRequest) (*ExecuteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Migrate(context.Context, *MigrateRequest) (*MigrateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Migrate not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Sudo(context.Context, *SudoRequest) (*SudoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sudo not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Reply(context.Context, *ReplyRequest) (*ReplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reply not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) AnalyzeCode(context.Context, *AnalyzeCodeRequest) (*AnalyzeCodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AnalyzeCode not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) GetPinnedMetrics(context.Context, *GetPinnedMetricsRequest) (*GetPinnedMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPinnedMetrics not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcChannelOpen(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcChannelOpen not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcChannelConnect(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcChannelConnect not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcChannelClose(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcChannelClose not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcPacketReceive(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcPacketReceive not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcPacketAck(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcPacketAck not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcPacketTimeout(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcPacketTimeout not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcSourceCallback(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcSourceCallback not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) IbcDestinationCallback(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IbcDestinationCallback not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Ibc2PacketReceive(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ibc2PacketReceive not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Ibc2PacketAck(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ibc2PacketAck not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Ibc2PacketTimeout(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ibc2PacketTimeout not implemented")
 }
+
 func (UnimplementedWasmVMServiceServer) Ibc2PacketSend(context.Context, *IbcMsgRequest) (*IbcMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ibc2PacketSend not implemented")
 }
