@@ -1,13 +1,6 @@
-//go:build cgo
-
 package keeper
 
 import (
-	"path/filepath"
-
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 
@@ -71,21 +64,13 @@ func NewKeeper(
 	keeper.messenger = callDepthMessageHandler{keeper.messenger, keeper.maxCallDepth}
 	// only set the wasmvm if no one set this in the options
 	// NewVM does a lot, so better not to create it and silently drop it.
-	if keeper.wasmVM == nil {
-		var err error
-		keeper.wasmVM, err = wasmvm.NewVMWithConfig(wasmvmtypes.VMConfig{
-			Cache: wasmvmtypes.CacheOptions{
-				BaseDir:                  filepath.Join(homeDir, "wasm"),
-				AvailableCapabilities:    availableCapabilities,
-				MemoryCacheSizeBytes:     wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
-				InstanceMemoryLimitBytes: wasmvmtypes.NewSizeMebi(contractMemoryLimit),
-			},
-			WasmLimits: vmConfig.WasmLimits,
-		}, nodeConfig.ContractDebugMode)
-		if err != nil {
-			panic(err)
-		}
-	}
+   if keeper.wasmVM == nil {
+       var err error
+       keeper.wasmVM, err = types.NewGRPCEngine("")
+       if err != nil {
+           panic(err)
+       }
+   }
 
 	for _, o := range postOpts {
 		o.apply(keeper)
