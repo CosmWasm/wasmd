@@ -9,6 +9,10 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...v0.60.0)
 
 - Bump cosmos-sdk [v0.53.0](https://github.com/CosmWasm/wasmd/pull/2250)
+- Streamline Stargate/gRPC querier interfaces [\#2249](https://github.com/CosmWasm/wasmd/pull/2249)
+- Use gas overflow error for `ToWasmVMGas` [\#2248](https://github.com/CosmWasm/wasmd/pull/2248)
+- Make sure Aliases in DenomUnit is not nil [\#2246](https://github.com/CosmWasm/wasmd/pull/2246)
+- Make validateAddress cheaper if canonicalization fails [\#2245](https://github.com/CosmWasm/wasmd/pull/2245)
 - Lower `DefaultMaxCallDepth` [\#2244](https://github.com/CosmWasm/wasmd/pull/2244)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
