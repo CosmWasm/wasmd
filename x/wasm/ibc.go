@@ -1,9 +1,7 @@
 package wasm
 
 import (
-	"encoding/json"
 	"math"
-	"slices"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -418,14 +416,11 @@ func (i IBCHandler) IBCReceivePacketCallback(
 
 	var transfer *wasmvmtypes.IBCTransferCallback
 
-	var parsedAck channeltypes.Acknowledgement_Result
-	err = json.Unmarshal(ack.Acknowledgement(), &parsedAck)
-
 	// detect successful IBC transfer, meaning:
 	// 1. it was sent to the transfer module
 	// 2. the acknowledgement was successful
 	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) &&
-		ack.Success() && err == nil && slices.Equal(parsedAck.Result, []byte{1}) {
+		ack.Success() && err == nil {
 
 		transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
 		if err != nil {
