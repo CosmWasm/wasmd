@@ -2,8 +2,13 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.0...HEAD)
 
+## [v0.60.0](https://github.com/CosmWasm/wasmd/tree/v0.60.0) (2025-05-26)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...v0.60.0)
+
+- Bump cosmos-sdk [v0.53.0](https://github.com/CosmWasm/wasmd/pull/2250)
 - Lower `DefaultMaxCallDepth` [\#2244](https://github.com/CosmWasm/wasmd/pull/2244)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
