@@ -419,8 +419,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 	// detect successful IBC transfer, meaning:
 	// 1. it was sent to the transfer module
 	// 2. the acknowledgement was successful
-	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) &&
-		ack.Success() && err == nil {
+	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) && ack.Success() {
 
 		transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
 		if err != nil {
