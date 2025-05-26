@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	wasmgrpc "github.com/CosmWasm/wasmd/proto"
-	wasmvm "github.com/CosmWasm/wasmvm/v3"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 )
 
 // grpcEngineEnhanced is an enhanced WasmEngine implementation that supports storage and query operations

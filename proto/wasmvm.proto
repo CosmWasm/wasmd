@@ -36,7 +36,8 @@ service WasmVMService {
   rpc Reply(ReplyRequest) returns (ReplyResponse);
 
   // Storage-aware contract execution calls (enhanced versions)
-  rpc InstantiateWithStorage(ExtendedInstantiateRequest) returns (InstantiateResponse);
+  rpc InstantiateWithStorage(ExtendedInstantiateRequest)
+      returns (InstantiateResponse);
   rpc ExecuteWithStorage(ExtendedExecuteRequest) returns (ExecuteResponse);
   rpc QueryWithStorage(ExtendedQueryRequest) returns (QueryResponse);
   rpc MigrateWithStorage(ExtendedMigrateRequest) returns (MigrateResponse);
@@ -72,22 +73,26 @@ service WasmVMService {
 // and use other host-provided functionality
 service HostService {
   // Legacy generic host function call
-  rpc CallHostFunction(CallHostFunctionRequest) returns (CallHostFunctionResponse);
-  
+  rpc CallHostFunction(CallHostFunctionRequest)
+      returns (CallHostFunctionResponse);
+
   // Storage operations
   rpc StorageGet(StorageGetRequest) returns (StorageGetResponse);
   rpc StorageSet(StorageSetRequest) returns (StorageSetResponse);
   rpc StorageDelete(StorageDeleteRequest) returns (StorageDeleteResponse);
-  rpc StorageIterator(StorageIteratorRequest) returns (stream StorageIteratorResponse);
-  rpc StorageReverseIterator(StorageReverseIteratorRequest) returns (stream StorageReverseIteratorResponse);
-  
+  rpc StorageIterator(StorageIteratorRequest)
+      returns (stream StorageIteratorResponse);
+  rpc StorageReverseIterator(StorageReverseIteratorRequest)
+      returns (stream StorageReverseIteratorResponse);
+
   // Query operations
   rpc QueryChain(QueryChainRequest) returns (QueryChainResponse);
-  
+
   // GoAPI operations
   rpc HumanizeAddress(HumanizeAddressRequest) returns (HumanizeAddressResponse);
-  rpc CanonicalizeAddress(CanonicalizeAddressRequest) returns (CanonicalizeAddressResponse);
-  
+  rpc CanonicalizeAddress(CanonicalizeAddressRequest)
+      returns (CanonicalizeAddressResponse);
+
   // Gas meter operations
   rpc ConsumeGas(ConsumeGasRequest) returns (ConsumeGasResponse);
   rpc GetGasRemaining(GetGasRemainingRequest) returns (GetGasRemainingResponse);
@@ -263,18 +268,14 @@ message StorageSetRequest {
   bytes value = 3;
 }
 
-message StorageSetResponse {
-  string error = 1;
-}
+message StorageSetResponse { string error = 1; }
 
 message StorageDeleteRequest {
   string request_id = 1;
   bytes key = 2;
 }
 
-message StorageDeleteResponse {
-  string error = 1;
-}
+message StorageDeleteResponse { string error = 1; }
 
 message StorageIteratorRequest {
   string request_id = 1;
@@ -344,13 +345,9 @@ message ConsumeGasRequest {
   string descriptor = 3;
 }
 
-message ConsumeGasResponse {
-  string error = 1;
-}
+message ConsumeGasResponse { string error = 1; }
 
-message GetGasRemainingRequest {
-  string request_id = 1;
-}
+message GetGasRemainingRequest { string request_id = 1; }
 
 message GetGasRemainingResponse {
   uint64 gas_remaining = 1;
