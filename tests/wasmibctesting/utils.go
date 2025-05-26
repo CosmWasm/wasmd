@@ -75,7 +75,7 @@ func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
 
 func (chain *WasmTestChain) OverrideSendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	chain.SendMsgsOverride = nil
-	result, err := chain.TestChain.SendMsgs(msgs...)
+	result, err := chain.SendMsgs(msgs...)
 	chain.SendMsgsOverride = chain.OverrideSendMsgs
 	chain.CaptureIBCEvents(result)
 	return result, err
