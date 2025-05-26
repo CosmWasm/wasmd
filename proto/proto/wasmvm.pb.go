@@ -7,11 +7,12 @@
 package proto
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -1344,28 +1345,31 @@ func file_wasmvm_proto_rawDescGZIP() []byte {
 	return file_wasmvm_proto_rawDescData
 }
 
-var file_wasmvm_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
-var file_wasmvm_proto_goTypes = []any{
-	(*Context)(nil),                  // 0: cosmwasm.Context
-	(*LoadModuleRequest)(nil),        // 1: cosmwasm.LoadModuleRequest
-	(*LoadModuleResponse)(nil),       // 2: cosmwasm.LoadModuleResponse
-	(*InstantiateRequest)(nil),       // 3: cosmwasm.InstantiateRequest
-	(*InstantiateResponse)(nil),      // 4: cosmwasm.InstantiateResponse
-	(*ExecuteRequest)(nil),           // 5: cosmwasm.ExecuteRequest
-	(*ExecuteResponse)(nil),          // 6: cosmwasm.ExecuteResponse
-	(*QueryRequest)(nil),             // 7: cosmwasm.QueryRequest
-	(*QueryResponse)(nil),            // 8: cosmwasm.QueryResponse
-	(*MigrateRequest)(nil),           // 9: cosmwasm.MigrateRequest
-	(*MigrateResponse)(nil),          // 10: cosmwasm.MigrateResponse
-	(*SudoRequest)(nil),              // 11: cosmwasm.SudoRequest
-	(*SudoResponse)(nil),             // 12: cosmwasm.SudoResponse
-	(*ReplyRequest)(nil),             // 13: cosmwasm.ReplyRequest
-	(*ReplyResponse)(nil),            // 14: cosmwasm.ReplyResponse
-	(*AnalyzeCodeRequest)(nil),       // 15: cosmwasm.AnalyzeCodeRequest
-	(*AnalyzeCodeResponse)(nil),      // 16: cosmwasm.AnalyzeCodeResponse
-	(*CallHostFunctionRequest)(nil),  // 17: cosmwasm.CallHostFunctionRequest
-	(*CallHostFunctionResponse)(nil), // 18: cosmwasm.CallHostFunctionResponse
-}
+var (
+	file_wasmvm_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+	file_wasmvm_proto_goTypes  = []any{
+		(*Context)(nil),                  // 0: cosmwasm.Context
+		(*LoadModuleRequest)(nil),        // 1: cosmwasm.LoadModuleRequest
+		(*LoadModuleResponse)(nil),       // 2: cosmwasm.LoadModuleResponse
+		(*InstantiateRequest)(nil),       // 3: cosmwasm.InstantiateRequest
+		(*InstantiateResponse)(nil),      // 4: cosmwasm.InstantiateResponse
+		(*ExecuteRequest)(nil),           // 5: cosmwasm.ExecuteRequest
+		(*ExecuteResponse)(nil),          // 6: cosmwasm.ExecuteResponse
+		(*QueryRequest)(nil),             // 7: cosmwasm.QueryRequest
+		(*QueryResponse)(nil),            // 8: cosmwasm.QueryResponse
+		(*MigrateRequest)(nil),           // 9: cosmwasm.MigrateRequest
+		(*MigrateResponse)(nil),          // 10: cosmwasm.MigrateResponse
+		(*SudoRequest)(nil),              // 11: cosmwasm.SudoRequest
+		(*SudoResponse)(nil),             // 12: cosmwasm.SudoResponse
+		(*ReplyRequest)(nil),             // 13: cosmwasm.ReplyRequest
+		(*ReplyResponse)(nil),            // 14: cosmwasm.ReplyResponse
+		(*AnalyzeCodeRequest)(nil),       // 15: cosmwasm.AnalyzeCodeRequest
+		(*AnalyzeCodeResponse)(nil),      // 16: cosmwasm.AnalyzeCodeResponse
+		(*CallHostFunctionRequest)(nil),  // 17: cosmwasm.CallHostFunctionRequest
+		(*CallHostFunctionResponse)(nil), // 18: cosmwasm.CallHostFunctionResponse
+	}
+)
+
 var file_wasmvm_proto_depIdxs = []int32{
 	0,  // 0: cosmwasm.InstantiateRequest.context:type_name -> cosmwasm.Context
 	0,  // 1: cosmwasm.ExecuteRequest.context:type_name -> cosmwasm.Context
