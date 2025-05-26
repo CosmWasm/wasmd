@@ -435,12 +435,15 @@ func (i IBCHandler) IBCReceivePacketCallback(
 
 		// For a more in-depth explanation of the logic here, see the transfer module implementation:
 		// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
+		// and the sequence diagram in the ICS20 spec:
+		// https://github.com/cosmos/ibc/blob/9be3630/spec/app/ics-020-fungible-token-transfer/README.md#data-structures
 		if transferData.Token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
-			// this is a denom coming from this chain, being sent back again
-			// remove prefix
+			// This is a denom coming from this chain, being sent back again, so we remove the prefix.
+			// See for example the "A -> C" step in the sequence diagram.
 			transferData.Token.Denom.Trace = transferData.Token.Denom.Trace[1:]
 		} else {
 			// prefixing happens on the receiving end, so we need to do that here
+			// See for example the "C -> A" step in the sequence diagram.
 			trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
 			transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
 		}
