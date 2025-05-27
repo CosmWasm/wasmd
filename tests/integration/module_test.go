@@ -167,7 +167,6 @@ func TestHandleCreate(t *testing.T) {
 	}
 
 	for name, tc := range cases {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			data := setupTest(t)
 
@@ -635,9 +634,7 @@ func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
 
 	hasAddrs := make([]string, len(rsp.Contracts))
-	for i, r := range rsp.Contracts { //nolint:gosimple
-		hasAddrs[i] = r
-	}
+	copy(hasAddrs, rsp.Contracts)
 	assert.Equal(t, expContractAddrs, hasAddrs)
 }
 

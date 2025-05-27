@@ -78,7 +78,7 @@ func setup(t *testing.T) TestEnv {
 		Order:   channeltypes.UNORDERED,
 	}
 
-	path.Path.SetupV2()
+	path.SetupV2()
 
 	return TestEnv{
 		contractPortA: contractPortA,

@@ -68,9 +68,7 @@ func TestIBCReflectContract(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 
-	coordinator.SetupConnections(&path.Path)
-
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -328,8 +326,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 			}
 
-			coord.SetupConnections(&path.Path)
-			coord.CreateChannels(&path.Path)
+			coord.Setup(&path.Path)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 			require.Equal(t, 0, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -403,8 +400,7 @@ func TestIBCAsyncAck(t *testing.T) {
 		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
 	}
 
-	coord.SetupConnections(&path.Path)
-	coord.CreateChannels(&path.Path)
+	coord.Setup(&path.Path)
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -471,7 +467,7 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *ibctesting.Path, chainA *wasmibctesting.WasmTestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
 	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
-	x.MockWasmEngine.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
+	x.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		return &wasmvmtypes.ContractResult{
 			Ok: &wasmvmtypes.Response{
 				Messages: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
@@ -482,7 +478,7 @@ func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *ibcte
 	}
 	// capture acknowledgement
 	var gotAck []byte
-	x.MockWasmEngine.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
+	x.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 		gotAck = msg.Acknowledgement.Data
 		return &wasmvmtypes.IBCBasicResult{Ok: &wasmvmtypes.IBCBasicResponse{}}, 0, nil
 	}

@@ -24,7 +24,7 @@ func TestChainUpgrade(t *testing.T) {
 	// when a chain upgrade proposal is executed
 	// then the chain upgrades successfully
 
-	legacyBinary := FetchExecutable(t, "v0.41.0")
+	legacyBinary := FetchExecutable(t, "v0.51.0")
 	t.Logf("+++ legacy binary: %s\n", legacyBinary)
 	currentBranchBinary := sut.ExecBinary
 	sut.ExecBinary = legacyBinary
@@ -34,7 +34,7 @@ func TestChainUpgrade(t *testing.T) {
 
 	const (
 		upgradeHeight int64 = 22
-		upgradeName         = "v0.50"
+		upgradeName         = "v0.60"
 	)
 
 	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
@@ -79,8 +79,8 @@ func TestChainUpgrade(t *testing.T) {
 	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
-	proposalStatus := gjson.Get(raw, "status").String()
-	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
+	proposalStatus := gjson.Get(raw, "proposal.status").Int()
+	require.Equal(t, int64(3), proposalStatus, raw)
 
 	t.Log("waiting for upgrade info")
 	sut.AwaitUpgradeInfo(t)

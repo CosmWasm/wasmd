@@ -164,6 +164,11 @@ func (k Keeper) OnAckIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
+	// Check if res.Ok is nil before accessing it
+	if res.Ok == nil {
+		return nil
+	}
+
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
@@ -208,6 +213,14 @@ func (k Keeper) OnRecvIBC2Packet(
 		return channeltypesv2.RecvPacketResult{
 			Status:          channeltypesv2.PacketStatus_Failure,
 			Acknowledgement: []byte(res.Err),
+		}
+	}
+
+	// Check if res.Ok is nil before accessing it
+	if res.Ok == nil {
+		return channeltypesv2.RecvPacketResult{
+			Status:          channeltypesv2.PacketStatus_Failure,
+			Acknowledgement: []byte("IBC2 entry point not supported"),
 		}
 	}
 
@@ -266,6 +279,11 @@ func (k Keeper) OnTimeoutIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
+	// Check if res.Ok is nil before accessing it
+	if res.Ok == nil {
+		return nil
+	}
+
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
@@ -301,7 +319,12 @@ func (k Keeper) OnSendIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+	// Check if res.Ok is nil before accessing it
+	if res.Ok == nil {
+		return nil
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
 func newIBC2Payload(payload channeltypesv2.Payload) wasmvmtypes.IBC2Payload {
