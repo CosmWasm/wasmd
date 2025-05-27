@@ -68,9 +68,7 @@ func TestIBCReflectContract(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 
-	coordinator.SetupConnections(&path.Path)
-
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -328,8 +326,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 			}
 
-			coord.SetupConnections(&path.Path)
-			coord.CreateChannels(&path.Path)
+			coord.Setup(&path.Path)
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 			require.Equal(t, 0, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -403,8 +400,7 @@ func TestIBCAsyncAck(t *testing.T) {
 		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
 	}
 
-	coord.SetupConnections(&path.Path)
-	coord.CreateChannels(&path.Path)
+	coord.Setup(&path.Path)
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))

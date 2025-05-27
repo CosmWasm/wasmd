@@ -123,8 +123,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				Order:   channeltypes.UNORDERED,
 			}
 
-			coordinator.SetupConnections(&path.Path)
-			coordinator.CreateChannels(&path.Path)
+			coordinator.Setup(&path.Path)
 
 			originalChainABalance := chainA.Balance(chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 			// when transfer via sdk transfer from A (module) -> B (contract)
@@ -195,8 +194,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	// when contract is triggered to send IBCTransferMsg
 	receiverAddress := chainB.SenderAccount.GetAddress()
@@ -267,8 +265,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	// when contract is triggered to send the ibc package to chain B
 	timeout := uint64(chainB.LatestCommittedHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
@@ -342,8 +339,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 	coordinator.UpdateTime()
 
 	// when contract is triggered to send the ibc package to chain B
@@ -429,8 +425,7 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	// when contract is triggered to send the ibc package to chain B
 	timeout := uint64(chainB.LatestCommittedHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
@@ -490,8 +485,7 @@ func TestContractHandlesChannelClose(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 	wasmibctesting.CloseChannel(coordinator, &path.Path)
 	assert.True(t, myContractB.closeCalled)
 }
@@ -540,8 +534,7 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	coordinator.Setup(&path.Path)
 
 	closeIBCChannelMsg := &types.MsgExecuteContract{
 		Sender:   chainA.SenderAccount.GetAddress().String(),

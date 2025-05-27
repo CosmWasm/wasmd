@@ -9,19 +9,36 @@
     - [AnalyzeCodeResponse](#cosmwasm.AnalyzeCodeResponse)
     - [CallHostFunctionRequest](#cosmwasm.CallHostFunctionRequest)
     - [CallHostFunctionResponse](#cosmwasm.CallHostFunctionResponse)
+    - [CanonicalizeAddressRequest](#cosmwasm.CanonicalizeAddressRequest)
+    - [CanonicalizeAddressResponse](#cosmwasm.CanonicalizeAddressResponse)
+    - [ConsumeGasRequest](#cosmwasm.ConsumeGasRequest)
+    - [ConsumeGasResponse](#cosmwasm.ConsumeGasResponse)
     - [Context](#cosmwasm.Context)
+    - [CreateChecksumRequest](#cosmwasm.CreateChecksumRequest)
+    - [CreateChecksumResponse](#cosmwasm.CreateChecksumResponse)
     - [ExecuteRequest](#cosmwasm.ExecuteRequest)
     - [ExecuteResponse](#cosmwasm.ExecuteResponse)
+    - [ExtendedContext](#cosmwasm.ExtendedContext)
+    - [ExtendedExecuteRequest](#cosmwasm.ExtendedExecuteRequest)
+    - [ExtendedInstantiateRequest](#cosmwasm.ExtendedInstantiateRequest)
+    - [ExtendedMigrateRequest](#cosmwasm.ExtendedMigrateRequest)
+    - [ExtendedQueryRequest](#cosmwasm.ExtendedQueryRequest)
     - [GetCodeRequest](#cosmwasm.GetCodeRequest)
     - [GetCodeResponse](#cosmwasm.GetCodeResponse)
+    - [GetGasRemainingRequest](#cosmwasm.GetGasRemainingRequest)
+    - [GetGasRemainingResponse](#cosmwasm.GetGasRemainingResponse)
     - [GetMetricsRequest](#cosmwasm.GetMetricsRequest)
     - [GetMetricsResponse](#cosmwasm.GetMetricsResponse)
     - [GetPinnedMetricsRequest](#cosmwasm.GetPinnedMetricsRequest)
     - [GetPinnedMetricsResponse](#cosmwasm.GetPinnedMetricsResponse)
+    - [HumanizeAddressRequest](#cosmwasm.HumanizeAddressRequest)
+    - [HumanizeAddressResponse](#cosmwasm.HumanizeAddressResponse)
     - [IbcMsgRequest](#cosmwasm.IbcMsgRequest)
     - [IbcMsgResponse](#cosmwasm.IbcMsgResponse)
     - [InstantiateRequest](#cosmwasm.InstantiateRequest)
     - [InstantiateResponse](#cosmwasm.InstantiateResponse)
+    - [LibwasmvmVersionRequest](#cosmwasm.LibwasmvmVersionRequest)
+    - [LibwasmvmVersionResponse](#cosmwasm.LibwasmvmVersionResponse)
     - [LoadModuleRequest](#cosmwasm.LoadModuleRequest)
     - [LoadModuleResponse](#cosmwasm.LoadModuleResponse)
     - [Metrics](#cosmwasm.Metrics)
@@ -32,12 +49,24 @@
     - [PinModuleResponse](#cosmwasm.PinModuleResponse)
     - [PinnedMetrics](#cosmwasm.PinnedMetrics)
     - [PinnedMetrics.PerModuleEntry](#cosmwasm.PinnedMetrics.PerModuleEntry)
+    - [QueryChainRequest](#cosmwasm.QueryChainRequest)
+    - [QueryChainResponse](#cosmwasm.QueryChainResponse)
     - [QueryRequest](#cosmwasm.QueryRequest)
     - [QueryResponse](#cosmwasm.QueryResponse)
     - [RemoveModuleRequest](#cosmwasm.RemoveModuleRequest)
     - [RemoveModuleResponse](#cosmwasm.RemoveModuleResponse)
     - [ReplyRequest](#cosmwasm.ReplyRequest)
     - [ReplyResponse](#cosmwasm.ReplyResponse)
+    - [StorageDeleteRequest](#cosmwasm.StorageDeleteRequest)
+    - [StorageDeleteResponse](#cosmwasm.StorageDeleteResponse)
+    - [StorageGetRequest](#cosmwasm.StorageGetRequest)
+    - [StorageGetResponse](#cosmwasm.StorageGetResponse)
+    - [StorageIteratorRequest](#cosmwasm.StorageIteratorRequest)
+    - [StorageIteratorResponse](#cosmwasm.StorageIteratorResponse)
+    - [StorageReverseIteratorRequest](#cosmwasm.StorageReverseIteratorRequest)
+    - [StorageReverseIteratorResponse](#cosmwasm.StorageReverseIteratorResponse)
+    - [StorageSetRequest](#cosmwasm.StorageSetRequest)
+    - [StorageSetResponse](#cosmwasm.StorageSetResponse)
     - [SudoRequest](#cosmwasm.SudoRequest)
     - [SudoResponse](#cosmwasm.SudoResponse)
     - [UnpinModuleRequest](#cosmwasm.UnpinModuleRequest)
@@ -123,6 +152,71 @@
 
 
 
+<a name="cosmwasm.CanonicalizeAddressRequest"></a>
+
+### CanonicalizeAddressRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `human` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.CanonicalizeAddressResponse"></a>
+
+### CanonicalizeAddressResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `canonical` | [bytes](#bytes) |  |  |
+| `gas_used` | [uint64](#uint64) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.ConsumeGasRequest"></a>
+
+### ConsumeGasRequest
+Gas meter messages
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `amount` | [uint64](#uint64) |  |  |
+| `descriptor` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.ConsumeGasResponse"></a>
+
+### ConsumeGasResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.Context"></a>
 
 ### Context
@@ -134,6 +228,37 @@ Context message for blockchain-related information
 | `block_height` | [uint64](#uint64) |  |  |
 | `sender` | [string](#string) |  |  |
 | `chain_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.CreateChecksumRequest"></a>
+
+### CreateChecksumRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `wasm_code` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.CreateChecksumResponse"></a>
+
+### CreateChecksumResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `checksum` | [string](#string) |  | Hex encoded checksum |
+| `error` | [string](#string) |  |  |
 
 
 
@@ -176,6 +301,98 @@ Context message for blockchain-related information
 
 
 
+<a name="cosmwasm.ExtendedContext"></a>
+
+### ExtendedContext
+ExtendedContext includes callback service information for storage support
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `context` | [Context](#cosmwasm.Context) |  |  |
+| `callback_service` | [string](#string) |  | Address of the HostService for callbacks |
+
+
+
+
+
+
+<a name="cosmwasm.ExtendedExecuteRequest"></a>
+
+### ExtendedExecuteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_id` | [string](#string) |  |  |
+| `context` | [ExtendedContext](#cosmwasm.ExtendedContext) |  |  |
+| `msg` | [bytes](#bytes) |  |  |
+| `gas_limit` | [uint64](#uint64) |  |  |
+| `request_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.ExtendedInstantiateRequest"></a>
+
+### ExtendedInstantiateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `checksum` | [string](#string) |  |  |
+| `context` | [ExtendedContext](#cosmwasm.ExtendedContext) |  |  |
+| `init_msg` | [bytes](#bytes) |  |  |
+| `gas_limit` | [uint64](#uint64) |  |  |
+| `request_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.ExtendedMigrateRequest"></a>
+
+### ExtendedMigrateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_id` | [string](#string) |  |  |
+| `checksum` | [string](#string) |  |  |
+| `context` | [ExtendedContext](#cosmwasm.ExtendedContext) |  |  |
+| `migrate_msg` | [bytes](#bytes) |  |  |
+| `gas_limit` | [uint64](#uint64) |  |  |
+| `request_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.ExtendedQueryRequest"></a>
+
+### ExtendedQueryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_id` | [string](#string) |  |  |
+| `context` | [ExtendedContext](#cosmwasm.ExtendedContext) |  |  |
+| `query_msg` | [bytes](#bytes) |  |  |
+| `request_id` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.GetCodeRequest"></a>
 
 ### GetCodeRequest
@@ -200,6 +417,37 @@ Context message for blockchain-related information
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `module_bytes` | [bytes](#bytes) |  | Raw WASM bytes |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.GetGasRemainingRequest"></a>
+
+### GetGasRemainingRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.GetGasRemainingResponse"></a>
+
+### GetGasRemainingResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `gas_remaining` | [uint64](#uint64) |  |  |
 | `error` | [string](#string) |  |  |
 
 
@@ -252,6 +500,39 @@ Context message for blockchain-related information
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `pinned_metrics` | [PinnedMetrics](#cosmwasm.PinnedMetrics) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.HumanizeAddressRequest"></a>
+
+### HumanizeAddressRequest
+GoAPI messages
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `canonical` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.HumanizeAddressResponse"></a>
+
+### HumanizeAddressResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `human` | [string](#string) |  |  |
+| `gas_used` | [uint64](#uint64) |  |  |
 | `error` | [string](#string) |  |  |
 
 
@@ -328,6 +609,32 @@ This structure is reused across all IBC-related RPC calls in WasmVMService
 
 Binary response data from the contract |
 | `gas_used` | [uint64](#uint64) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.LibwasmvmVersionRequest"></a>
+
+### LibwasmvmVersionRequest
+Utility message types
+
+
+
+
+
+
+<a name="cosmwasm.LibwasmvmVersionResponse"></a>
+
+### LibwasmvmVersionResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `version` | [string](#string) |  |  |
 | `error` | [string](#string) |  |  |
 
 
@@ -502,6 +809,39 @@ Binary response data from the contract |
 
 
 
+<a name="cosmwasm.QueryChainRequest"></a>
+
+### QueryChainRequest
+Query messages
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `query` | [bytes](#bytes) |  | Serialized QueryRequest |
+| `gas_limit` | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.QueryChainResponse"></a>
+
+### QueryChainResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `result` | [bytes](#bytes) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.QueryRequest"></a>
 
 ### QueryRequest
@@ -602,6 +942,172 @@ Binary response data from the contract |
 
 
 
+<a name="cosmwasm.StorageDeleteRequest"></a>
+
+### StorageDeleteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `key` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageDeleteResponse"></a>
+
+### StorageDeleteResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageGetRequest"></a>
+
+### StorageGetRequest
+Storage messages
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `key` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageGetResponse"></a>
+
+### StorageGetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `value` | [bytes](#bytes) |  |  |
+| `exists` | [bool](#bool) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageIteratorRequest"></a>
+
+### StorageIteratorRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `start` | [bytes](#bytes) |  |  |
+| `end` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageIteratorResponse"></a>
+
+### StorageIteratorResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key` | [bytes](#bytes) |  |  |
+| `value` | [bytes](#bytes) |  |  |
+| `done` | [bool](#bool) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageReverseIteratorRequest"></a>
+
+### StorageReverseIteratorRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `start` | [bytes](#bytes) |  |  |
+| `end` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageReverseIteratorResponse"></a>
+
+### StorageReverseIteratorResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key` | [bytes](#bytes) |  |  |
+| `value` | [bytes](#bytes) |  |  |
+| `done` | [bool](#bool) |  |  |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageSetRequest"></a>
+
+### StorageSetRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `request_id` | [string](#string) |  |  |
+| `key` | [bytes](#bytes) |  |  |
+| `value` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.StorageSetResponse"></a>
+
+### StorageSetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `error` | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.SudoRequest"></a>
 
 ### SudoRequest
@@ -677,12 +1183,23 @@ Binary response data from the contract |
 <a name="cosmwasm.HostService"></a>
 
 ### HostService
-HostService: RPC interface for host function callbacks (used by the VM to
-call back into the host)
+HostService: Enhanced RPC interface for host function callbacks
+This service is called by the VM to interact with storage, query chain state,
+and use other host-provided functionality
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `CallHostFunction` | [CallHostFunctionRequest](#cosmwasm.CallHostFunctionRequest) | [CallHostFunctionResponse](#cosmwasm.CallHostFunctionResponse) |  | |
+| `CallHostFunction` | [CallHostFunctionRequest](#cosmwasm.CallHostFunctionRequest) | [CallHostFunctionResponse](#cosmwasm.CallHostFunctionResponse) | Legacy generic host function call | |
+| `StorageGet` | [StorageGetRequest](#cosmwasm.StorageGetRequest) | [StorageGetResponse](#cosmwasm.StorageGetResponse) | Storage operations | |
+| `StorageSet` | [StorageSetRequest](#cosmwasm.StorageSetRequest) | [StorageSetResponse](#cosmwasm.StorageSetResponse) |  | |
+| `StorageDelete` | [StorageDeleteRequest](#cosmwasm.StorageDeleteRequest) | [StorageDeleteResponse](#cosmwasm.StorageDeleteResponse) |  | |
+| `StorageIterator` | [StorageIteratorRequest](#cosmwasm.StorageIteratorRequest) | [StorageIteratorResponse](#cosmwasm.StorageIteratorResponse) stream |  | |
+| `StorageReverseIterator` | [StorageReverseIteratorRequest](#cosmwasm.StorageReverseIteratorRequest) | [StorageReverseIteratorResponse](#cosmwasm.StorageReverseIteratorResponse) stream |  | |
+| `QueryChain` | [QueryChainRequest](#cosmwasm.QueryChainRequest) | [QueryChainResponse](#cosmwasm.QueryChainResponse) | Query operations | |
+| `HumanizeAddress` | [HumanizeAddressRequest](#cosmwasm.HumanizeAddressRequest) | [HumanizeAddressResponse](#cosmwasm.HumanizeAddressResponse) | GoAPI operations | |
+| `CanonicalizeAddress` | [CanonicalizeAddressRequest](#cosmwasm.CanonicalizeAddressRequest) | [CanonicalizeAddressResponse](#cosmwasm.CanonicalizeAddressResponse) |  | |
+| `ConsumeGas` | [ConsumeGasRequest](#cosmwasm.ConsumeGasRequest) | [ConsumeGasResponse](#cosmwasm.ConsumeGasResponse) | Gas meter operations | |
+| `GetGasRemaining` | [GetGasRemainingRequest](#cosmwasm.GetGasRemainingRequest) | [GetGasRemainingResponse](#cosmwasm.GetGasRemainingResponse) |  | |
 
 
 <a name="cosmwasm.WasmVMService"></a>
@@ -703,9 +1220,15 @@ WasmVMService: RPC interface for wasmvm
 | `Migrate` | [MigrateRequest](#cosmwasm.MigrateRequest) | [MigrateResponse](#cosmwasm.MigrateResponse) |  | |
 | `Sudo` | [SudoRequest](#cosmwasm.SudoRequest) | [SudoResponse](#cosmwasm.SudoResponse) |  | |
 | `Reply` | [ReplyRequest](#cosmwasm.ReplyRequest) | [ReplyResponse](#cosmwasm.ReplyResponse) |  | |
+| `InstantiateWithStorage` | [ExtendedInstantiateRequest](#cosmwasm.ExtendedInstantiateRequest) | [InstantiateResponse](#cosmwasm.InstantiateResponse) | Storage-aware contract execution calls (enhanced versions) | |
+| `ExecuteWithStorage` | [ExtendedExecuteRequest](#cosmwasm.ExtendedExecuteRequest) | [ExecuteResponse](#cosmwasm.ExecuteResponse) |  | |
+| `QueryWithStorage` | [ExtendedQueryRequest](#cosmwasm.ExtendedQueryRequest) | [QueryResponse](#cosmwasm.QueryResponse) |  | |
+| `MigrateWithStorage` | [ExtendedMigrateRequest](#cosmwasm.ExtendedMigrateRequest) | [MigrateResponse](#cosmwasm.MigrateResponse) |  | |
 | `AnalyzeCode` | [AnalyzeCodeRequest](#cosmwasm.AnalyzeCodeRequest) | [AnalyzeCodeResponse](#cosmwasm.AnalyzeCodeResponse) | Code analysis | |
 | `GetMetrics` | [GetMetricsRequest](#cosmwasm.GetMetricsRequest) | [GetMetricsResponse](#cosmwasm.GetMetricsResponse) | Metrics | |
 | `GetPinnedMetrics` | [GetPinnedMetricsRequest](#cosmwasm.GetPinnedMetricsRequest) | [GetPinnedMetricsResponse](#cosmwasm.GetPinnedMetricsResponse) |  | |
+| `LibwasmvmVersion` | [LibwasmvmVersionRequest](#cosmwasm.LibwasmvmVersionRequest) | [LibwasmvmVersionResponse](#cosmwasm.LibwasmvmVersionResponse) | Utility functions | |
+| `CreateChecksum` | [CreateChecksumRequest](#cosmwasm.CreateChecksumRequest) | [CreateChecksumResponse](#cosmwasm.CreateChecksumResponse) |  | |
 | `IbcChannelOpen` | [IbcMsgRequest](#cosmwasm.IbcMsgRequest) | [IbcMsgResponse](#cosmwasm.IbcMsgResponse) | IBC Entry Points All IBC calls typically share a similar request/response structure with checksum, context, message, gas limit, and request ID. Their responses usually contain data, gas used, and an error. | |
 | `IbcChannelConnect` | [IbcMsgRequest](#cosmwasm.IbcMsgRequest) | [IbcMsgResponse](#cosmwasm.IbcMsgResponse) |  | |
 | `IbcChannelClose` | [IbcMsgRequest](#cosmwasm.IbcMsgRequest) | [IbcMsgResponse](#cosmwasm.IbcMsgResponse) |  | |

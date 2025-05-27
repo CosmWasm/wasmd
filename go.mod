@@ -2,7 +2,7 @@ module github.com/CosmWasm/wasmd
 
 go 1.24.0
 
-replace github.com/CosmWasm/wasmvm/v3 => github.com/faddat/wasmvm/v3 v3.0.0-20250526081247-c12b3f299ea1
+replace github.com/CosmWasm/wasmvm/v3 => github.com/faddat/wasmvm/v3 v3.0.0-20250527083646-310c54f09be0
 
 require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
@@ -53,7 +53,6 @@ require (
 	github.com/spf13/viper v1.20.1
 	golang.org/x/sync v0.13.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250414145226-207652e42e2e
-	google.golang.org/protobuf v1.36.6
 )
 
 require (
@@ -226,6 +225,7 @@ require (
 	golang.org/x/time v0.10.0 // indirect
 	google.golang.org/api v0.222.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250422160041-2d3770c4ea7f // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect

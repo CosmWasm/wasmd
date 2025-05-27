@@ -4,6 +4,7 @@ package types
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	wasmgrpc "github.com/CosmWasm/wasmd/proto"
+	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 )
@@ -67,7 +68,7 @@ func (g *grpcEngine) SimulateStoreCode(code wasmvm.WasmCode, gasLimit uint64) (w
 }
 
 func (g *grpcEngine) AnalyzeCode(checksum wasmvmtypes.Checksum) (*wasmvmtypes.AnalysisReport, error) {
-	req := &wasmgrpc.AnalyzeCodeRequest{Checksum: string(checksum)}
+	req := &wasmgrpc.AnalyzeCodeRequest{Checksum: hex.EncodeToString(checksum)}
 	resp, err := g.client.AnalyzeCode(context.Background(), req)
 	if err != nil {
 		return nil, err
@@ -94,7 +95,7 @@ func (g *grpcEngine) Instantiate(
 	deserCost wasmvmtypes.UFraction,
 ) (*wasmvmtypes.ContractResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: info.Sender, ChainId: env.Block.ChainID}
-	req := &wasmgrpc.InstantiateRequest{Checksum: string(checksum), Context: ctx, InitMsg: initMsg, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.InstantiateRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, InitMsg: initMsg, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Instantiate(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -118,7 +119,7 @@ func (g *grpcEngine) Execute(
 	deserCost wasmvmtypes.UFraction,
 ) (*wasmvmtypes.ContractResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: info.Sender, ChainId: env.Block.ChainID}
-	req := &wasmgrpc.ExecuteRequest{ContractId: string(checksum), Context: ctx, Msg: executeMsg, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.ExecuteRequest{ContractId: hex.EncodeToString(checksum), Context: ctx, Msg: executeMsg, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Execute(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -141,7 +142,7 @@ func (g *grpcEngine) Query(
 	deserCost wasmvmtypes.UFraction,
 ) (*wasmvmtypes.QueryResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
-	req := &wasmgrpc.QueryRequest{ContractId: string(checksum), Context: ctx, QueryMsg: queryMsg, RequestId: ""}
+	req := &wasmgrpc.QueryRequest{ContractId: hex.EncodeToString(checksum), Context: ctx, QueryMsg: queryMsg, RequestId: ""}
 	resp, err := g.client.Query(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -164,7 +165,7 @@ func (g *grpcEngine) Migrate(
 	deserCost wasmvmtypes.UFraction,
 ) (*wasmvmtypes.ContractResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
-	req := &wasmgrpc.MigrateRequest{ContractId: string(checksum), Checksum: string(checksum), Context: ctx, MigrateMsg: migrateMsg, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.MigrateRequest{ContractId: hex.EncodeToString(checksum), Checksum: hex.EncodeToString(checksum), Context: ctx, MigrateMsg: migrateMsg, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Migrate(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -203,7 +204,7 @@ func (g *grpcEngine) Sudo(
 	deserCost wasmvmtypes.UFraction,
 ) (*wasmvmtypes.ContractResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
-	req := &wasmgrpc.SudoRequest{ContractId: string(checksum), Context: ctx, Msg: sudoMsg, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.SudoRequest{ContractId: hex.EncodeToString(checksum), Context: ctx, Msg: sudoMsg, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Sudo(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -230,7 +231,7 @@ func (g *grpcEngine) Reply(
 	if err != nil {
 		return nil, 0, err
 	}
-	req := &wasmgrpc.ReplyRequest{ContractId: string(checksum), Context: ctx, ReplyMsg: replyMsg, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.ReplyRequest{ContractId: hex.EncodeToString(checksum), Context: ctx, ReplyMsg: replyMsg, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Reply(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -242,7 +243,7 @@ func (g *grpcEngine) Reply(
 }
 
 func (g *grpcEngine) GetCode(checksum wasmvmtypes.Checksum) (wasmvm.WasmCode, error) {
-	req := &wasmgrpc.GetCodeRequest{Checksum: string(checksum)}
+	req := &wasmgrpc.GetCodeRequest{Checksum: hex.EncodeToString(checksum)}
 	resp, err := g.client.GetCode(context.Background(), req)
 	if err != nil {
 		return nil, err
@@ -260,7 +261,7 @@ func (g *grpcEngine) Cleanup() {
 }
 
 func (g *grpcEngine) Pin(checksum wasmvmtypes.Checksum) error {
-	req := &wasmgrpc.PinModuleRequest{Checksum: string(checksum)}
+	req := &wasmgrpc.PinModuleRequest{Checksum: hex.EncodeToString(checksum)}
 	resp, err := g.client.PinModule(context.Background(), req)
 	if err != nil {
 		return err
@@ -272,7 +273,7 @@ func (g *grpcEngine) Pin(checksum wasmvmtypes.Checksum) error {
 }
 
 func (g *grpcEngine) Unpin(checksum wasmvmtypes.Checksum) error {
-	req := &wasmgrpc.UnpinModuleRequest{Checksum: string(checksum)}
+	req := &wasmgrpc.UnpinModuleRequest{Checksum: hex.EncodeToString(checksum)}
 	resp, err := g.client.UnpinModule(context.Background(), req)
 	if err != nil {
 		return err
@@ -351,7 +352,7 @@ func (g *grpcEngine) IBCChannelOpen(
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	// Serialize the channel message - this would need proper serialization in a real implementation
 	msgBytes := []byte{} // TODO: serialize channel properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcChannelOpen(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -376,7 +377,7 @@ func (g *grpcEngine) IBCChannelConnect(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize channel properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcChannelConnect(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -400,7 +401,7 @@ func (g *grpcEngine) IBCChannelClose(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize channel properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcChannelClose(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -424,7 +425,7 @@ func (g *grpcEngine) IBCPacketReceive(
 ) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize packet properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcPacketReceive(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -448,7 +449,7 @@ func (g *grpcEngine) IBCPacketAck(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize ack properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcPacketAck(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -472,7 +473,7 @@ func (g *grpcEngine) IBCPacketTimeout(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize packet properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcPacketTimeout(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -496,7 +497,7 @@ func (g *grpcEngine) IBCSourceCallback(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize msg properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcSourceCallback(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -520,7 +521,7 @@ func (g *grpcEngine) IBCDestinationCallback(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize msg properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.IbcDestinationCallback(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -545,7 +546,7 @@ func (g *grpcEngine) IBC2PacketAck(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize payload properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Ibc2PacketAck(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -569,7 +570,7 @@ func (g *grpcEngine) IBC2PacketReceive(
 ) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize payload properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Ibc2PacketReceive(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -593,7 +594,7 @@ func (g *grpcEngine) IBC2PacketTimeout(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize packet properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Ibc2PacketTimeout(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
@@ -617,7 +618,7 @@ func (g *grpcEngine) IBC2PacketSend(
 ) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	ctx := &wasmgrpc.Context{BlockHeight: env.Block.Height, Sender: "", ChainId: env.Block.ChainID}
 	msgBytes := []byte{} // TODO: serialize packet properly
-	req := &wasmgrpc.IbcMsgRequest{Checksum: string(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
+	req := &wasmgrpc.IbcMsgRequest{Checksum: hex.EncodeToString(checksum), Context: ctx, Msg: msgBytes, GasLimit: gasLimit, RequestId: ""}
 	resp, err := g.client.Ibc2PacketSend(context.Background(), req)
 	if err != nil {
 		return nil, 0, err
