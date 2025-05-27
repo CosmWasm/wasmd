@@ -143,7 +143,7 @@ func (h *HostServiceHandler) HandleConsumeGas(ctx context.Context, requestID str
 		return err
 	}
 
-	// GasMeter doesn't have ConsumeGas method in the interface, 
+	// GasMeter doesn't have ConsumeGas method in the interface,
 	// it's handled internally by the VM
 	// This would need to be implemented differently in the actual VM integration
 	return nil
