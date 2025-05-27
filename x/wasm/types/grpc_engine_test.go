@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
+	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-
-	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 )
 
 // Helper functions for GoAPI

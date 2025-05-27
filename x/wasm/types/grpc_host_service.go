@@ -127,7 +127,7 @@ func (h *HostServiceHandler) HandleHumanizeAddress(ctx context.Context, requestI
 }
 
 // HandleCanonicalizeAddress processes an address canonicalization request
-func (h *HostServiceHandler) HandleCanonicalizeAddress(ctx context.Context, requestID string, human string) ([]byte, uint64, error) {
+func (h *HostServiceHandler) HandleCanonicalizeAddress(ctx context.Context, requestID, human string) ([]byte, uint64, error) {
 	resources, err := h.getResources(requestID)
 	if err != nil {
 		return nil, 0, err
@@ -188,7 +188,7 @@ func (h *HostServiceHandler) HandleStorageReverseIterator(ctx context.Context, r
 }
 
 // Next advances the iterator and returns the key-value pair
-func (ih *IteratorHandler) Next() (key []byte, value []byte, done bool) {
+func (ih *IteratorHandler) Next() (key, value []byte, done bool) {
 	if !ih.iter.Valid() {
 		return nil, nil, true
 	}

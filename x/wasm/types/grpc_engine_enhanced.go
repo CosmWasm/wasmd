@@ -9,12 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // grpcEngineEnhanced is an enhanced WasmEngine implementation that supports storage and query operations
@@ -28,7 +27,7 @@ type grpcEngineEnhanced struct {
 }
 
 // NewGRPCEngineEnhanced creates an enhanced gRPC engine with storage support
-func NewGRPCEngineEnhanced(vmAddr string, hostServiceAddr string) (WasmEngine, error) {
+func NewGRPCEngineEnhanced(vmAddr, hostServiceAddr string) (WasmEngine, error) {
 	if vmAddr == "" {
 		vmAddr = "localhost:50051"
 	}
