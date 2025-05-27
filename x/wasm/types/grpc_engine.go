@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmgrpc "github.com/CosmWasm/wasmvm/v3/rpc"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 )
 
