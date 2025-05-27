@@ -1,36 +1,20 @@
+version: 2
+
 run:
   tests: true
   timeout: 15m
   sort-results: true
   allow-parallel-runners: true
-  exclude-dir: testutil/testdata
+  exclude-dirs:
+    - testutil/testdata
 
 linters:
-  disable-all: true
   enable:
     - errcheck
-    - dogsled
-    - copyloopvar
-    - goconst
-    - gocritic
-    - gci
-    - gofumpt
-    - gosec
-    - gosimple
     - govet
     - ineffassign
-    - misspell
-    - nakedret
-    - nolintlint
     - staticcheck
-    - revive
-    - stylecheck
-    - typecheck
-    #    - thelper # too many positives with table tests that have custom setup(*testing.T)
-    - unconvert
     - unused
-
-issues:
   exclude-files:
     - server/grpc/gogoreflection/fix_registration.go
     - ".*\\.pb\\.go$"

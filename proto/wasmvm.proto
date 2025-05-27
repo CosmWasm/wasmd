@@ -49,6 +49,10 @@ service WasmVMService {
   rpc GetPinnedMetrics(GetPinnedMetricsRequest)
       returns (GetPinnedMetricsResponse);
 
+  // Utility functions
+  rpc LibwasmvmVersion(LibwasmvmVersionRequest) returns (LibwasmvmVersionResponse);
+  rpc CreateChecksum(CreateChecksumRequest) returns (CreateChecksumResponse);
+
   // IBC Entry Points
   // All IBC calls typically share a similar request/response structure
   // with checksum, context, message, gas limit, and request ID.
@@ -441,4 +445,21 @@ message IbcMsgResponse {
   bytes data = 1; // Binary response data from the contract
   uint64 gas_used = 2;
   string error = 3;
+}
+
+// Utility message types
+message LibwasmvmVersionRequest {}
+
+message LibwasmvmVersionResponse {
+  string version = 1;
+  string error = 2;
+}
+
+message CreateChecksumRequest {
+  bytes wasm_code = 1;
+}
+
+message CreateChecksumResponse {
+  string checksum = 1; // Hex encoded checksum
+  string error = 2;
 }

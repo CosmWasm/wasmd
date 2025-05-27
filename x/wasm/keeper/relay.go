@@ -339,6 +339,9 @@ func (k Keeper) IBCDestinationCallback(
 }
 
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {
+	if res == nil {
+		return nil
+	}
 	_, err := k.handleContractResponse(ctx, addr, id, res.Messages, res.Attributes, nil, res.Events)
 	return err
 }
