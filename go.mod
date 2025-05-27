@@ -5,6 +5,7 @@ go 1.24.0
 replace github.com/CosmWasm/wasmvm/v3 => github.com/faddat/wasmvm/v3 v3.0.0-20250527083646-310c54f09be0
 
 require (
+	github.com/CosmWasm/wasmvm/v3 v3.0.0-ibc2.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.53.0
 	github.com/cosmos/gogogateway v1.2.0 // indirect
@@ -44,7 +45,6 @@ require (
 	cosmossdk.io/x/nft v0.1.1
 	cosmossdk.io/x/tx v0.14.0
 	cosmossdk.io/x/upgrade v0.2.0
-	github.com/CosmWasm/wasmvm/v3 v3.0.0-ibc2.1
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/ibc-go/v10 v10.2.0
@@ -219,7 +219,7 @@ require (
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
