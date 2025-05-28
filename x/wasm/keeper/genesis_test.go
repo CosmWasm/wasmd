@@ -13,6 +13,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -698,7 +699,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		types.VMConfig{},
 		AvailableCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		nil,
+		ibcapi.NewRouter(),
 	)
 	return &srcKeeper, ctx
 }

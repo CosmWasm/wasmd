@@ -382,7 +382,7 @@ func (k Keeper) instantiate(
 	ibc2Port := PortIDForContractV2(contractAddress)
 	contractInfo.IBC2PortID = ibc2Port
 
-	// TODO: Remove AddRoute in https://github.com/CosmWasm/wasmd/issues/2144
+	// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278
 	if !k.ibcRouterV2.HasRoute(ibc2Port) {
 		k.ibcRouterV2.AddRoute(ibc2Port, NewIBC2Handler(k))
 	}
@@ -1091,6 +1091,13 @@ func (k Keeper) importContractState(ctx context.Context, contractAddress sdk.Acc
 		}
 		prefixStore.Set(model.Key, model.Value)
 	}
+
+	// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278
+	contractPortIBC2ID := PortIDForContractV2(contractAddress)
+	if !k.ibcRouterV2.HasRoute(contractPortIBC2ID) {
+		k.ibcRouterV2.AddRoute(contractPortIBC2ID, NewIBC2Handler(k))
+	}
+
 	return nil
 }
 
@@ -1130,6 +1137,24 @@ func (k Keeper) IterateCodeInfos(ctx context.Context, cb func(uint64, types.Code
 			return
 		}
 	}
+}
+
+// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278 (remove this method)
+func (k Keeper) IterateContractAddresses(ctx context.Context, cb func(sdk.AccAddress)) {
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.ContractKeyPrefix)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		cb(iter.Key())
+	}
+}
+
+// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278 (remove this method)
+func (k Keeper) RegisterContractsInIbc2Router(ctx context.Context) {
+	k.IterateContractAddresses(ctx, func(contractAddr sdk.AccAddress) {
+		k.ibcRouterV2.AddRoute(PortIDForContractV2(contractAddr), NewIBC2Handler(k))
+	})
 }
 
 func (k Keeper) GetByteCode(ctx context.Context, codeID uint64) ([]byte, error) {
