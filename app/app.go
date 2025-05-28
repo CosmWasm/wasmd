@@ -915,6 +915,10 @@ func NewWasmApp(
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
+
+		// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278
+		//       and add IBCv2 port ID prefix before calling `SetRouterV2` during WasmKeeper creation.
+		app.WasmKeeper.RegisterContractsInIbc2Router(ctx)
 	}
 
 	return app
