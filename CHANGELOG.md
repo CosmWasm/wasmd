@@ -16,6 +16,7 @@
  - Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
  - IBCv2 WriteAcknowledgement handler for async ACK [\#2173](https://github.com/CosmWasm/wasmd/pull/2173)
  - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
+ - Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 

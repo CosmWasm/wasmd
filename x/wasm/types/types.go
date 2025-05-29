@@ -1,6 +1,7 @@
 package types
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -291,7 +292,8 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 		},
 	}
 	if txCounter, ok := TXCounter(ctx); ok {
-		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter}
+		hash := sha256.Sum256(ctx.TxBytes())
+		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter, Hash: hash[:]}
 	}
 	return env
 }

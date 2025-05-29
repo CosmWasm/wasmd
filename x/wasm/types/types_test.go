@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"strings"
 	"testing"
 	"time"
@@ -299,6 +300,7 @@ func TestNewEnv(t *testing.T) {
 	myTime := time.Unix(0, 1619700924259075000)
 	t.Logf("++ unix: %d", myTime.UnixNano())
 	var myContractAddr sdk.AccAddress = randBytes(ContractAddrLen)
+	txHash, _ := hex.DecodeString("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 	specs := map[string]struct {
 		srcCtx sdk.Context
 		exp    wasmvmtypes.Env
@@ -314,7 +316,7 @@ func TestNewEnv(t *testing.T) {
 				Contract: wasmvmtypes.ContractInfo{
 					Address: myContractAddr.String(),
 				},
-				Transaction: &wasmvmtypes.TransactionInfo{Index: 0},
+				Transaction: &wasmvmtypes.TransactionInfo{Index: 0, Hash: txHash},
 			},
 		},
 		"without tx counter": {

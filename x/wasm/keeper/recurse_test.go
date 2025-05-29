@@ -56,8 +56,8 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = 64_191
-		GasWork50 uint64 = 64_438
+		GasNoWork uint64 = 64197
+		GasWork50 uint64 = 64444
 		// should be discounted exactly by the difference between normal instance cost and discounted instance cost
 		GasNoWorkDiscounted uint64 = GasNoWork - (types.DefaultInstanceCost - types.DefaultInstanceCostDiscount)
 		GasWork50Discounted uint64 = GasWork50 - (types.DefaultInstanceCost - types.DefaultInstanceCostDiscount)
@@ -214,7 +214,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
-		GasWork2k uint64 = 77_020 // = SetupContractCost + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 77026 // = SetupContractCost + x // we have 6x gas used in cpu than in the instance
 
 		// should be discounted exactly by the difference between normal instance cost and discounted instance cost
 		GasWork2kDiscounted uint64 = GasWork2k - (types.DefaultInstanceCost - types.DefaultInstanceCostDiscount)
@@ -223,7 +223,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		GasReturnHashed uint64 = 64
 
 		// lots of additional gas for long error message
-		GasError uint64 = 3408
+		GasError uint64 = 3411
 	)
 
 	cases := map[string]struct {
