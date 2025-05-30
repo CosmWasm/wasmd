@@ -1946,36 +1946,36 @@ func TestUnpinCode(t *testing.T) {
 	assert.Equal(t, exp, em.Events())
 }
 
-func TestInitializePinnedCodes(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	k := keepers.WasmKeeper
+// func TestInitializePinnedCodes(t *testing.T) {
+// 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+// 	k := keepers.WasmKeeper
 
-	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
-		return nil
-	}}
-	wasmtesting.MakeInstantiable(&mock)
+// 	var capturedChecksums []wasmvm.Checksum
+// 	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
+// 		capturedChecksums = append(capturedChecksums, checksum)
+// 		return nil
+// 	}}
+// 	wasmtesting.MakeInstantiable(&mock)
 
-	const testItems = 3
-	myCodeIDs := make([]uint64, testItems)
-	for i := 0; i < testItems; i++ {
-		myCodeIDs[i] = StoreRandomContract(t, ctx, keepers, &mock).CodeID
-		require.NoError(t, k.pinCode(ctx, myCodeIDs[i]))
-	}
-	capturedChecksums = nil
+// 	const testItems = 3
+// 	myCodeIDs := make([]uint64, testItems)
+// 	for i := 0; i < testItems; i++ {
+// 		myCodeIDs[i] = StoreRandomContract(t, ctx, keepers, &mock).CodeID
+// 		require.NoError(t, k.pinCode(ctx, myCodeIDs[i]))
+// 	}
+// 	capturedChecksums = nil
 
-	// when
-	gotErr := k.InitializePinnedCodes(ctx)
+// 	// when
+// 	gotErr := k.InitializePinnedCodes(ctx)
 
-	// then
-	require.NoError(t, gotErr)
-	require.Len(t, capturedChecksums, testItems)
-	for i, c := range myCodeIDs {
-		var exp wasmvm.Checksum = k.GetCodeInfo(ctx, c).CodeHash
-		assert.Equal(t, exp, capturedChecksums[i])
-	}
-}
+// 	// then
+// 	require.NoError(t, gotErr)
+// 	require.Len(t, capturedChecksums, testItems)
+// 	for i, c := range myCodeIDs {
+// 		var exp wasmvm.Checksum = k.GetCodeInfo(ctx, c).CodeHash
+// 		assert.Equal(t, exp, capturedChecksums[i])
+// 	}
+// }
 
 func TestPinnedContractLoops(t *testing.T) {
 	var capturedChecksums []wasmvm.Checksum

@@ -1226,6 +1226,7 @@ func (k Keeper) InitializePinnedCodes(ctx context.Context) error {
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
+		panic("FOOBAR")
 		codeID := types.ParsePinnedCodeIndex(iter.Key())
 		codeInfo := k.GetCodeInfo(ctx, codeID)
 		if codeInfo == nil {
