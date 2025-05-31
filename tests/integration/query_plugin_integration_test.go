@@ -30,7 +30,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmKeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -709,7 +708,7 @@ func TestDistributionQuery(t *testing.T) {
 
 func TestIBCListChannelsQuery(t *testing.T) {
 	cdc := wasmKeeper.MakeEncodingConfig(t).Codec
-	pCtx, keepers := keeper.CreateTestInput(t, false, ReflectCapabilities, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
+	pCtx, keepers := wasmKeeper.CreateTestInput(t, false, ReflectCapabilities, wasmKeeper.WithMessageEncoders(reflectEncoders(cdc)), wasmKeeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 	nonIbcExample := wasmKeeper.InstantiateReflectExampleContract(t, pCtx, keepers)
 	// add an ibc port for testing
