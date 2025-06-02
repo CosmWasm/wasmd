@@ -1,7 +1,6 @@
 package types
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -271,7 +270,7 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+func NewEnv(ctx sdk.Context, txHash func([]byte) []byte, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	// safety checks before casting below
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
@@ -292,8 +291,7 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 		},
 	}
 	if txCounter, ok := TXCounter(ctx); ok {
-		hash := sha256.Sum256(ctx.TxBytes())
-		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter, Hash: hash[:]}
+		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter, Hash: txHash(ctx.TxBytes())}
 	}
 	return env
 }

@@ -147,7 +147,7 @@ func (k Keeper) OnAckIBC2Packet(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -184,7 +184,7 @@ func (k Keeper) OnRecvIBC2Packet(
 		}
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -249,7 +249,7 @@ func (k Keeper) OnTimeoutIBC2Packet(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -284,7 +284,7 @@ func (k Keeper) OnSendIBC2Packet(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)

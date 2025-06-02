@@ -301,6 +301,7 @@ func TestNewEnv(t *testing.T) {
 	t.Logf("++ unix: %d", myTime.UnixNano())
 	var myContractAddr sdk.AccAddress = randBytes(ContractAddrLen)
 	txHash, _ := hex.DecodeString("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+	txHasher := func(data []byte) []byte { return txHash }
 	specs := map[string]struct {
 		srcCtx sdk.Context
 		exp    wasmvmtypes.Env
@@ -335,7 +336,7 @@ func TestNewEnv(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, spec.exp, NewEnv(spec.srcCtx, myContractAddr))
+			assert.Equal(t, spec.exp, NewEnv(spec.srcCtx, txHasher, myContractAddr))
 		})
 	}
 }
