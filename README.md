@@ -85,7 +85,7 @@ The supported systems are limited by the dlls created in [`wasmvm`](https://gith
 However, **M1 macs are not fully supported.** (Experimental support was merged with wasmd 0.24)
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
-using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19).
+using glibc (CentOS 7 uses 2.12, obsolete Debian Jessie uses 2.19).
 
 As of `0.9.0` we support `muslc` Linux systems, in particular **Alpine linux**,
 which is popular in docker distributions. Note that we do **not** store the
