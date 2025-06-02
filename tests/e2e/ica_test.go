@@ -41,7 +41,6 @@ func TestICA(t *testing.T) {
 	controllerChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	path := wasmibctesting.NewWasmPath(controllerChain, hostChain)
-	coord.SetupConnections(&path.Path)
 
 	specs := map[string]struct {
 		icaVersion string
@@ -64,6 +63,9 @@ func TestICA(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			// Setup connections first
+			coord.SetupConnections(&path.Path)
+
 			icaControllerKey := secp256k1.GenPrivKey()
 			icaControllerAddr := sdk.AccAddress(icaControllerKey.PubKey().Address().Bytes())
 			controllerChain.Fund(icaControllerAddr, sdkmath.NewInt(1_000))
@@ -73,20 +75,28 @@ func TestICA(t *testing.T) {
 			require.NoError(t, err)
 			chanID, portID, version := parseIBCChannelEvents(t, res)
 
-			// next open channels on both sides
+			// Configure the path with ICA channel information
 			path.EndpointA.ChannelID = chanID
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  portID,
 				Version: version,
 				Order:   channeltypes.ORDERED,
 			}
-			path.EndpointB.ChannelID = ""
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  icatypes.HostPortID,
 				Version: icatypes.Version,
 				Order:   channeltypes.ORDERED,
 			}
-			coord.CreateChannels(&path.Path)
+
+			// Complete the channel handshake
+			err = path.EndpointB.ChanOpenTry()
+			require.NoError(t, err)
+
+			err = path.EndpointA.ChanOpenAck()
+			require.NoError(t, err)
+
+			err = path.EndpointB.ChanOpenConfirm()
+			require.NoError(t, err)
 
 			// assert ICA exists on controller
 			contApp := controllerChain.GetWasmApp()

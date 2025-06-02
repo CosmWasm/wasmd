@@ -1,12 +1,6 @@
-//go:build cgo
-
 package keeper
 
 import (
-	"path/filepath"
-
-	wasmvm "github.com/CosmWasm/wasmvm/v3"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	"cosmossdk.io/collections"
@@ -73,15 +67,7 @@ func NewKeeper(
 	// NewVM does a lot, so better not to create it and silently drop it.
 	if keeper.wasmVM == nil {
 		var err error
-		keeper.wasmVM, err = wasmvm.NewVMWithConfig(wasmvmtypes.VMConfig{
-			Cache: wasmvmtypes.CacheOptions{
-				BaseDir:                  filepath.Join(homeDir, "wasm"),
-				AvailableCapabilities:    availableCapabilities,
-				MemoryCacheSizeBytes:     wasmvmtypes.NewSizeMebi(nodeConfig.MemoryCacheSize),
-				InstanceMemoryLimitBytes: wasmvmtypes.NewSizeMebi(contractMemoryLimit),
-			},
-			WasmLimits: vmConfig.WasmLimits,
-		}, nodeConfig.ContractDebugMode)
+		keeper.wasmVM, err = types.NewGRPCEngine("")
 		if err != nil {
 			panic(err)
 		}
