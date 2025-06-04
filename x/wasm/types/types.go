@@ -270,7 +270,7 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+func NewEnv(ctx sdk.Context, txHash func([]byte) []byte, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	// safety checks before casting below
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
@@ -291,7 +291,7 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 		},
 	}
 	if txCounter, ok := TXCounter(ctx); ok {
-		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter}
+		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter, Hash: txHash(ctx.TxBytes())}
 	}
 	return env
 }

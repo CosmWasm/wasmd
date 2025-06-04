@@ -1,6 +1,7 @@
 package system
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,9 +13,12 @@ import (
 	"testing"
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+	"google.golang.org/protobuf/encoding/protowire"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -425,6 +429,60 @@ func (c WasmdCli) Version() string {
 	v, ok := c.run([]string{"version"})
 	require.True(c.t, ok)
 	return v
+}
+
+// ParseMsgExecuteContractResponse parses the protobuf response from MsgExecuteContract
+// and extracts the bytes from field number 1 without importing the type definition in x/wasm/types.
+//
+// This takes the protobuf data that is saved in the response's `data` field.
+func ParseMsgExecuteContractResponse(protoData []byte) ([]byte, error) {
+	// Unmarshal top-level ExecTxResult
+	var execResult abci.ExecTxResult
+	if err := proto.Unmarshal(protoData, &execResult); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal ExecTxResult: %w", err)
+	}
+
+	// Unmarshal the underlying Any message
+	var anyMsg codectypes.Any
+	if err := proto.Unmarshal(execResult.Data, &anyMsg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal Any message: %w", err)
+	}
+
+	if anyMsg.TypeUrl != "/cosmwasm.wasm.v1.MsgExecuteContractResponse" {
+		return nil, fmt.Errorf("unexpected type URL: %s, expected /cosmwasm.wasm.v1.MsgExecuteContractResponse", anyMsg.TypeUrl)
+	}
+
+	// Unmarshal the inner `MsgExecuteContractResponse` message
+	// It has binary data in field number 1
+	innerBytes := anyMsg.Value
+	for len(innerBytes) > 0 {
+		// Read tag and wire type
+		tagNum, wireType, n := protowire.ConsumeTag(innerBytes)
+		if n < 0 {
+			return nil, protowire.ParseError(n)
+		}
+		innerBytes = innerBytes[n:]
+
+		// Process field number 1 (our target), skip others
+		if tagNum == 1 {
+			if wireType != protowire.BytesType {
+				return nil, errors.New("field 1 has unexpected wire type")
+			}
+			v, n := protowire.ConsumeBytes(innerBytes)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			return v, nil
+		} else {
+			n = protowire.ConsumeFieldValue(tagNum, wireType, innerBytes)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			innerBytes = innerBytes[n:]
+		}
+	}
+
+	return nil, errors.New("field 1 not found in inner message")
 }
 
 // RequireTxSuccess require the received response to contain the success code
