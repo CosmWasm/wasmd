@@ -4,6 +4,7 @@ package system
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -124,4 +125,42 @@ func TestMultiContract(t *testing.T) {
 	assert.Equal(t, int64(80), cli.QueryBalance(reflectContractAddr, "stake"))
 	assert.Equal(t, int64(0), cli.QueryBalance(hackatomContractAddr, "stake"))
 	assert.Equal(t, int64(70), cli.QueryBalance(bobAddr, "stake"))
+}
+
+func TestTxHashExec(t *testing.T) {
+	// Given a cyberpunk contract
+	// When  a MirrorEnv is executed in a transaction
+	// Then	 the correct transaction hash is passed to the contract and comes back in the response
+
+	sut.ResetChain(t)
+	sut.StartChain(t)
+
+	cli := NewWasmdCLI(t, sut, verbose)
+
+	t.Log("Upload cyberpunk code")
+	codeID := cli.WasmStore("./testdata/cyberpunk.wasm.gzip", "--from=node0", "--gas=4000000", "--fees=4stake")
+
+	t.Log("Instantiate cyberpunk contract")
+	contractAddr := cli.WasmInstantiate(codeID, "{}", "--admin="+defaultSrcAddr, "--label=cyberpunk_contract", "--from="+defaultSrcAddr)
+
+	t.Log("Execute cyberpunk contract")
+	execMsg := `{"mirror_env":{}}`
+	rsp := cli.WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas=4000000", "--fees=4stake")
+	RequireTxSuccess(t, rsp)
+
+	// take the expected tx hash from the response
+	txHash, err := hex.DecodeString(gjson.Get(rsp, "txhash").String())
+	require.NoError(t, err)
+
+	// extract the response from the contract
+	respData, err := hex.DecodeString(gjson.Get(rsp, "data").String())
+	require.NoError(t, err)
+	contractResponse, err := ParseMsgExecuteContractResponse(respData)
+	require.NoError(t, err)
+	// `Env` uses the `Binary` type which is a base64 encoded
+	envHash, err := base64.StdEncoding.DecodeString(gjson.GetBytes(contractResponse, "transaction.hash").String())
+	require.NoError(t, err)
+
+	// compare the hash we got in the response with the one the contract received
+	assert.Equal(t, txHash, envHash)
 }

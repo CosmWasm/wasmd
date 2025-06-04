@@ -34,7 +34,7 @@ func (k Keeper) OnOpenChannel(
 		return "", err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -67,7 +67,7 @@ func (k Keeper) OnConnectChannel(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -105,7 +105,7 @@ func (k Keeper) OnCloseChannel(
 		return err
 	}
 
-	params := types.NewEnv(ctx, contractAddr)
+	params := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -142,7 +142,7 @@ func (k Keeper) OnRecvPacket(
 		return nil, err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -215,7 +215,7 @@ func (k Keeper) OnAckPacket(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -250,7 +250,7 @@ func (k Keeper) OnTimeoutPacket(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -284,7 +284,7 @@ func (k Keeper) IBCSourceCallback(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)
@@ -318,7 +318,7 @@ func (k Keeper) IBCDestinationCallback(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := types.NewEnv(ctx, k.txHash, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gasLeft := k.runtimeGasForContract(ctx)

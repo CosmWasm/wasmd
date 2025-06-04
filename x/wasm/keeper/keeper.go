@@ -109,6 +109,12 @@ type Keeper struct {
 	// should be the x/gov module account.
 	authority string
 
+	// txHash is a function to calculate the transaction hash from the raw transaction bytes.
+	// This is used to provide the transaction hash to the wasmvm engine and currently defaults to
+	// sha256 hashing, which is the hash currently used in CometBFT:
+	// https://github.com/cometbft/cometbft/blob/v1.0.1/crypto/tmhash/hash.go#L19-L22
+	txHash func([]byte) []byte
+
 	// wasmLimits contains the limits sent to wasmvm on init
 	wasmLimits wasmvmtypes.WasmLimits
 
@@ -338,7 +344,7 @@ func (k Keeper) instantiate(
 	}
 
 	// prepare params for contract instantiate call
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(sdkCtx, k.txHash, contractAddress)
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
@@ -440,7 +446,7 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 		}
 	}
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(sdkCtx, k.txHash, contractAddress)
 	info := types.NewInfo(caller, coins)
 
 	// prepare querier
@@ -596,7 +602,7 @@ func (k Keeper) callMigrateEntrypoint(
 	setupCost := k.gasRegister.SetupContractCost(discount, len(msg))
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: migrate")
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(sdkCtx, k.txHash, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
@@ -646,7 +652,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 
 	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: sudo")
 
-	env := types.NewEnv(sdkCtx, contractAddress)
+	env := types.NewEnv(sdkCtx, k.txHash, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddress)
@@ -688,7 +694,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	replyCosts := k.gasRegister.ReplyCosts(true, reply)
 	ctx.GasMeter().ConsumeGas(replyCosts, "Loading CosmWasm module: reply")
 
-	env := types.NewEnv(ctx, contractAddress)
+	env := types.NewEnv(ctx, k.txHash, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -885,7 +891,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 	// prepare querier
 	querier := k.newQueryHandler(sdkCtx, contractAddr)
 
-	env := types.NewEnv(sdkCtx, contractAddr)
+	env := types.NewEnv(sdkCtx, k.txHash, contractAddr)
 	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(sdkCtx), k.runtimeGasForContract(sdkCtx), costJSONDeserialization)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if qErr != nil {

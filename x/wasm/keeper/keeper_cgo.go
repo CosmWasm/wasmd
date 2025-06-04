@@ -3,6 +3,7 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"path/filepath"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
@@ -58,6 +59,7 @@ func NewKeeper(
 			types.AuthZActionInstantiate: {},
 		},
 		authority:   authority,
+		txHash:      func(data []byte) []byte { sum := sha256.Sum256(data); return sum[:] },
 		wasmLimits:  vmConfig.WasmLimits,
 		ibcRouterV2: ibcRouterV2,
 	}

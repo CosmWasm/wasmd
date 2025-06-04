@@ -122,6 +122,12 @@ func TestConstructorOptions(t *testing.T) {
 				assert.Equal(t, uint32(1), k.maxCallDepth)
 			},
 		},
+		"custom tx hash": {
+			srcOpt: WithCustomTxHash(func(data []byte) []byte { return []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9} }),
+			verify: func(t *testing.T, k Keeper) {
+				assert.Equal(t, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, k.txHash([]byte("test")))
+			},
+		},
 		"accepted account types": {
 			srcOpt: WithAcceptedAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}, &vestingtypes.ContinuousVestingAccount{}),
 			verify: func(t *testing.T, k Keeper) {
