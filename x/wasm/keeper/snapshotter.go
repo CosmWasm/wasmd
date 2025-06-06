@@ -117,6 +117,8 @@ func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
 }
 
 func finalizeV1(ctx sdk.Context, k *Keeper) error {
+	// TODO: Remove the registration of each contract in https://github.com/CosmWasm/wasmd/issues/2278
+	k.RegisterContractsInIbc2Router(ctx)
 	// FIXME: ensure all codes have been uploaded?
 	return k.InitializePinnedCodes(ctx)
 }
