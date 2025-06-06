@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	client "github.com/cometbft/cometbft/rpc/client/http"
-	cmtypes "github.com/cometbft/cometbft/types"
+	client "github.com/cometbft/cometbft/v2/rpc/client/http"
+	cmtypes "github.com/cometbft/cometbft/v2/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +17,7 @@ type RPCClient struct {
 
 // NewRPCClient constructor
 func NewRPCClient(t *testing.T, addr string) RPCClient {
-	httpClient, err := client.New(addr, "/websocket")
+	httpClient, err := client.New(addr)
 	require.NoError(t, err)
 	require.NoError(t, httpClient.Start())
 	t.Cleanup(func() { _ = httpClient.Stop() })

@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	tmcmd "github.com/cometbft/cometbft/v2/cmd/cometbft/commands"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/server"
