@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	tmbytes "github.com/cometbft/cometbft/v2/libs/bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
