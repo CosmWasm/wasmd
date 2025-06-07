@@ -8,6 +8,7 @@ package v2
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 
@@ -60,10 +61,8 @@ func validateAccessType(i interface{}) error {
 	if a == AccessTypeUnspecified {
 		return errorsmod.Wrap(types.ErrEmpty, "type")
 	}
-	for _, v := range AllAccessTypes {
-		if v == a {
-			return nil
-		}
+	if slices.Contains(AllAccessTypes, a) {
+		return nil
 	}
 	return errorsmod.Wrapf(types.ErrInvalid, "unknown type: %q", a)
 }
