@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -77,6 +78,36 @@ func TestStoreCodeValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestRawContractMessageVulnerabilities demonstrates known JSON handling vulnerabilities
+func TestRawContractMessageVulnerabilities(t *testing.T) {
+	// Field length vulnerability: large string values are accepted without limit
+	var sb strings.Builder
+	const largeSize = 1 << 20
+	sb.Grow(largeSize + 16)
+	sb.WriteString(`{"foo":"`)
+	sb.WriteString(strings.Repeat("a", largeSize))
+	sb.WriteString(`"}`)
+	msgLarge := RawContractMessage([]byte(sb.String()))
+	require.NoError(t, msgLarge.ValidateBasic(), "large JSON field should be accepted")
+
+	// Depth vulnerability: deeply nested JSON is accepted without depth checks
+	nested := "{}"
+	const depth = 10000
+	for i := 0; i < depth; i++ {
+		nested = fmt.Sprintf("{\"a\":%s}", nested)
+	}
+	msgDeep := RawContractMessage([]byte(nested))
+	require.NoError(t, msgDeep.ValidateBasic(), "deeply nested JSON should be accepted")
+
+	// Numeric boundary vulnerability: extremely large numbers are accepted syntactically
+	msgNum := RawContractMessage([]byte(`{"num":123456789012345678901234567890}`))
+	require.NoError(t, msgNum.ValidateBasic(), "JSON with large numeric values should be accepted")
+
+	// Special character injection: control characters in strings are accepted if valid escape
+	msgSpecial := RawContractMessage([]byte(`{"ctrl":"\u0000"}`))
+	require.NoError(t, msgSpecial.ValidateBasic(), "JSON with special Unicode escapes should be accepted")
 }
 
 func TestInstantiateContractValidation(t *testing.T) {
