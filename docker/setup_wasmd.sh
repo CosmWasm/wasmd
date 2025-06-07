@@ -21,8 +21,9 @@ echo "$PASSWORD" | wasmd genesis add-genesis-account validator "1000000000$STAKE
 
 # (optionally) add a few more genesis accounts
 for addr in "$@"; do
-  echo $addr
-  wasmd genesis add-genesis-account "$addr" "1000000000$STAKE,1000000000$FEE"
+  echo -e "\nAdding new account: $addr"
+  (echo "$PASSWORD"; echo "$PASSWORD") | wasmd keys add "$addr"
+  echo "$PASSWORD" | wasmd genesis add-genesis-account "$addr" "1000000000$STAKE,1000000000$FEE"
 done
 
 # submit a genesis validator tx
