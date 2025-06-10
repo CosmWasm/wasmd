@@ -158,7 +158,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 	t.Helper()
 	s.Log("Start chain\n")
 	s.ChainStarted = true
-	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
+	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info", "--log_no_color", "--db_backend=goleveldb"}, xargs...)...)
 
 	s.AwaitNodeUp(t, s.rpcAddr)
 
