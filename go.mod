@@ -23,7 +23,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.54.0-alpha.0.0.20250609200650-1521447c77da
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/iavl v1.2.6
-	github.com/cosmos/ibc-go/v10 v10.0.0-beta.0.0.20250604231944-493e1d9fc888
+	github.com/cosmos/ibc-go/v10 v10.0.0-beta.0.0.20250611193252-a9170dcac535
 	github.com/distribution/reference v0.5.0
 	github.com/golang/protobuf v1.5.4
 	github.com/google/gofuzz v1.2.0
