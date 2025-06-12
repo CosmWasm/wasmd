@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmttypes "github.com/cometbft/cometbft/types"
+	abci "github.com/cometbft/cometbft/v2/abci/types"
+	cmtjson "github.com/cometbft/cometbft/v2/libs/json"
+	cmttypes "github.com/cometbft/cometbft/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
@@ -105,7 +105,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 
 		// Initialize the chain
 		_, err = app.InitChain(
-			&abci.RequestInitChain{
+			&abci.InitChainRequest{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: simtestutil.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
@@ -165,7 +165,7 @@ func SetupWithGenesisValSet(
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simtestutil.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
-	_, err = app.InitChain(&abci.RequestInitChain{
+	_, err = app.InitChain(&abci.InitChainRequest{
 		ChainId:         chainID,
 		Time:            time.Now().UTC(),
 		Validators:      []abci.ValidatorUpdate{},
@@ -175,7 +175,7 @@ func SetupWithGenesisValSet(
 	})
 	require.NoError(t, err)
 
-	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err = app.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height:             app.LastBlockHeight() + 1,
 		Hash:               app.LastCommitID().Hash,
 		NextValidatorsHash: valSet.Hash(),
@@ -290,7 +290,7 @@ func NewTestNetworkFixture() network.TestFixture {
 }
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
+func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.FinalizeBlockResponse, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
@@ -307,7 +307,7 @@ func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.B
 	bz, err := txCfg.TxEncoder()(tx)
 	require.NoError(t, err)
 
-	return app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	return app.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height: app.LastBlockHeight() + 1,
 		Time:   blockTime,
 		Txs:    [][]byte{bz},

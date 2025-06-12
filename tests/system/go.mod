@@ -4,7 +4,7 @@ go 1.23.6
 
 require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
-	github.com/cosmos/cosmos-sdk v0.53.0
+	github.com/cosmos/cosmos-sdk v0.54.0-alpha.0.0.20250610194259-ef7b561f7019
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.0 // indirect
 	github.com/cosmos/iavl v1.2.2 // indirect
@@ -25,7 +25,7 @@ require (
 
 require (
 	cosmossdk.io/math v1.5.3
-	github.com/cometbft/cometbft v0.38.17
+
 	github.com/tidwall/gjson v1.14.2
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
@@ -162,6 +162,7 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 	pgregory.net/rapid v1.2.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
+	github.com/cometbft/cometbft/v2 v2.0.0-alpha.1
 )
 
 replace (
@@ -176,3 +177,9 @@ replace (
 	// pin version! 126854af5e6d has issues with the store so that queries fail
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
+
+replace github.com/cometbft/cometbft/v2 => github.com/cometbft/cometbft/v2 v2.0.0-alpha.1
+
+replace github.com/cometbft/cometbft/api => github.com/cometbft/cometbft/api v1.1.0-alpha.1
+
+replace github.com/cosmos/ibc-go/v10 => github.com/cosmos/ibc-go/v10 v10.0.0-beta.0.0.20250611233349-11dfe65dd5c8
