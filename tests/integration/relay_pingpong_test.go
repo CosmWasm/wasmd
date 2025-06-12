@@ -81,8 +81,7 @@ func TestPinPong(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	path.Setup()
 
 	// trigger start game via execute
 	const startValue uint64 = 100

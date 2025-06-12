@@ -68,9 +68,7 @@ func TestIBCReflectContract(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 
-	coordinator.SetupConnections(&path.Path)
-
-	coordinator.CreateChannels(&path.Path)
+	path.Setup()
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -182,8 +180,8 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
 			path := wasmibctesting.NewWasmPath(chainA, chainB)
-			coordinator.SetupClients(&path.Path)
-			coordinator.CreateConnections(&path.Path)
+			path.SetupClients()
+			path.CreateConnections()
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
 				Version: spec.startVersion,
@@ -242,7 +240,7 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 			)
 
 			path := wasmibctesting.NewWasmPath(chainA, chainB)
-			coordinator.SetupConnections(&path.Path)
+			path.SetupConnections()
 
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
@@ -328,8 +326,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 				PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 			}
 
-			coord.SetupConnections(&path.Path)
-			coord.CreateChannels(&path.Path)
+			path.Setup()
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 			require.Equal(t, 0, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -403,8 +400,7 @@ func TestIBCAsyncAck(t *testing.T) {
 		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
 	}
 
-	coord.SetupConnections(&path.Path)
-	coord.CreateChannels(&path.Path)
+	path.Setup()
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))

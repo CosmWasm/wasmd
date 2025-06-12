@@ -86,7 +86,7 @@ func TestICA(t *testing.T) {
 				Version: icatypes.Version,
 				Order:   channeltypes.ORDERED,
 			}
-			coord.CreateChannels(&path.Path)
+			path.CreateChannels()
 
 			// assert ICA exists on controller
 			contApp := controllerChain.GetWasmApp()
