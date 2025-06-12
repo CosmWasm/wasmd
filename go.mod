@@ -12,7 +12,7 @@ require (
 	cosmossdk.io/errors v1.0.3-0.20250604174653-810d15dd6d16
 	cosmossdk.io/log v1.6.1-0.20250604174653-810d15dd6d16
 	cosmossdk.io/math v1.5.4-0.20250604174653-810d15dd6d16
-	cosmossdk.io/store v1.10.0-rc.1.0.20250604174653-810d15dd6d16
+	cosmossdk.io/store v1.10.0-rc.1.0.20250609200650-1521447c77da
 	cosmossdk.io/tools/confix v0.1.2
 	cosmossdk.io/x/tx v1.2.0-alpha.0.0.20250604174653-810d15dd6d16
 	github.com/CosmWasm/wasmvm/v3 v3.0.0-ibc2.1
@@ -196,7 +196,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.35.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
@@ -248,3 +248,5 @@ retract (
 	// see https://github.com/CosmWasm/wasmd/issues/1651
 	v0.42.0
 )
+
+replace github.com/cosmos/ibc-go/v10 => github.com/cosmos/ibc-go/v10 v10.0.0-beta.0.0.20250611233349-11dfe65dd5c8

@@ -328,7 +328,6 @@ func createTestInput(
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
-		nil,
 		upgradeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
