@@ -397,10 +397,10 @@ func TestIBCAsyncAck(t *testing.T) {
 		path              = wasmibctesting.NewWasmPath(chainA, chainB)
 	)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
+		PortID: sourcePortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.UNORDERED,
+		PortID: counterpartPortID, Version: "ibc-reflect-v1", Order: channeltypes.ORDERED,
 	}
 
 	coord.SetupConnections(&path.Path)
