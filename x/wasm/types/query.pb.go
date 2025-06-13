@@ -11,7 +11,7 @@ import (
 	math "math"
 	math_bits "math/bits"
 
-	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
+	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/v2/libs/bytes"
 	_ "github.com/cosmos/cosmos-proto"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"

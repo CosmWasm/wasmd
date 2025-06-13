@@ -5,7 +5,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/v2/libs/rand"
 
 	errorsmod "cosmossdk.io/errors"
 

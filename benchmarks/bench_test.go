@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/v2/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
@@ -116,7 +116,7 @@ func BenchmarkTxSending(b *testing.B) {
 					require.NoError(b, err)
 					xxx[j] = bz
 				}
-				_, err := appInfo.App.FinalizeBlock(&abci.RequestFinalizeBlock{Txs: xxx, Height: height, Time: time.Now()})
+				_, err := appInfo.App.FinalizeBlock(&abci.FinalizeBlockRequest{Txs: xxx, Height: height, Time: time.Now()})
 				require.NoError(b, err)
 
 				_, err = appInfo.App.Commit()
