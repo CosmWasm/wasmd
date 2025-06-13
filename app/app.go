@@ -662,7 +662,7 @@ func NewWasmApp(
 	ibcRouterV2 := ibcapi.NewRouter()
 	ibcRouterV2 = ibcRouterV2.
 		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper)).
-		AddRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
+		AddPrefixRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
 
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
