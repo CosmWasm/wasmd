@@ -73,52 +73,16 @@ func NewWasmTestChain(chain *ibctesting.TestChain) *WasmTestChain {
 }
 
 func (chain *WasmTestChain) CaptureIBCEventsV2(result *abci.ExecTxResult) {
-	toSend, err := ParsePacketsFromEventsV2(channeltypesv2.EventTypeSendPacket, result.Events)
-	require.NoError(chain, err)
+	toSend, err := ibctesting.ParseIBCV2Packets(channeltypesv2.EventTypeSendPacket, result.Events)
 	if len(toSend) > 0 {
+		require.NoError(chain, err)
 		// Keep a queue on the chain that we can relay in tests
 		*chain.PendingSendPacketsV2 = append(*chain.PendingSendPacketsV2, toSend...)
 	}
 }
 
-// TODO: Remove this once it's implemented in the `ibc-go`.
-// https://github.com/cosmos/ibc-go/issues/8284
-//
-// ParsePacketsFromEventsV2 parses events emitted from a MsgRecvPacket and returns
-// all the packets found.
-// Returns an error if no packet is found.
-func ParsePacketsFromEventsV2(eventType string, events []abci.Event) ([]channeltypesv2.Packet, error) {
-	ferr := func(err error) ([]channeltypesv2.Packet, error) {
-		return nil, fmt.Errorf("wasmd.ParsePacketsFromEventsV2: %w", err)
-	}
-	var packets []channeltypesv2.Packet
-	for _, ev := range events {
-		if ev.Type == eventType {
-			for _, attr := range ev.Attributes {
-				switch attr.Key {
-				case channeltypesv2.AttributeKeyEncodedPacketHex:
-					data, err := hex.DecodeString(attr.Value)
-					if err != nil {
-						return ferr(err)
-					}
-					var packet channeltypesv2.Packet
-					err = proto.Unmarshal(data, &packet)
-					if err != nil {
-						return ferr(err)
-					}
-					packets = append(packets, packet)
-
-				default:
-					continue
-				}
-			}
-		}
-	}
-	return packets, nil
-}
-
 func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
-	toSend, _ := ibctesting.ParsePacketsFromEvents(channeltypes.EventTypeSendPacket, result.Events)
+	toSend, _ := ibctesting.ParseIBCV1Packets(channeltypes.EventTypeSendPacket, result.Events)
 
 	// IBCv1 and IBCv2 `EventTypeSendPacket` are the same
 	// and the [`ParsePacketsFromEvents`] parses both of them as they were IBCv1
