@@ -78,15 +78,15 @@ func TestICA(t *testing.T) {
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  portID,
 				Version: version,
-				Order:   channeltypes.ORDERED,
+				Order:   channeltypes.UNORDERED,
 			}
 			path.EndpointB.ChannelID = ""
 			path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  icatypes.HostPortID,
 				Version: icatypes.Version,
-				Order:   channeltypes.ORDERED,
+				Order:   channeltypes.UNORDERED,
 			}
-			coord.CreateChannels(&path.Path)
+			path.CreateChannels()
 
 			// assert ICA exists on controller
 			contApp := controllerChain.GetWasmApp()
