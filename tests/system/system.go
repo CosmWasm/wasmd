@@ -18,10 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/sync"
-	client "github.com/cometbft/cometbft/rpc/client/http"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cometbft/cometbft/v2/libs/sync"
+	client "github.com/cometbft/cometbft/v2/rpc/client/http"
+	ctypes "github.com/cometbft/cometbft/v2/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/v2/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
 
@@ -158,7 +158,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 	t.Helper()
 	s.Log("Start chain\n")
 	s.ChainStarted = true
-	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
+	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info", "--db_backend=goleveldb"}, xargs...)...)
 
 	s.AwaitNodeUp(t, s.rpcAddr)
 
@@ -249,7 +249,7 @@ func (s *SystemUnderTest) AwaitUpgradeInfo(t *testing.T) {
 			case err == nil:
 				found = true
 			case !os.IsNotExist(err):
-				t.Fatalf(err.Error())
+				t.Fatal(err.Error())
 			}
 		})
 		time.Sleep(s.blockTime / 2)
@@ -274,7 +274,7 @@ func (s *SystemUnderTest) AwaitNodeUp(t *testing.T, rpcAddr string) {
 	go func() { // query for a non empty block on status page
 		t.Logf("Checking node status: %s\n", rpcAddr)
 		for {
-			con, err := client.New(rpcAddr, "/websocket")
+			con, err := client.New(rpcAddr)
 			if err != nil || con.Start() != nil {
 				time.Sleep(time.Second)
 				continue
@@ -682,6 +682,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		"--moniker=" + moniker,
 		"--log_level=info",
 		"--home", nodePath,
+		"--db_backend", "goleveldb",
 	}
 	s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 	cmd = exec.Command( //nolint:gosec
@@ -744,7 +745,7 @@ type EventListener struct {
 
 // NewEventListener event listener
 func NewEventListener(t *testing.T, rpcAddr string) *EventListener {
-	httpClient, err := client.New(rpcAddr, "/websocket")
+	httpClient, err := client.New(rpcAddr)
 	require.NoError(t, err)
 	require.NoError(t, httpClient.Start())
 	return &EventListener{client: httpClient, t: t}

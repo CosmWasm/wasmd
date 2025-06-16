@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/v2/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func TestWasmdExport(t *testing.T) {
 	})
 
 	// finalize block so we have CheckTx state set
-	_, err := gapp.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err := gapp.FinalizeBlock(&abci.FinalizeBlockRequest{
 		Height: 1,
 	})
 	require.NoError(t, err)

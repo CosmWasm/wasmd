@@ -3,7 +3,7 @@ package keeper
 import (
 	"encoding/json"
 
-	tmBytes "github.com/cometbft/cometbft/libs/bytes"
+	tmBytes "github.com/cometbft/cometbft/v2/libs/bytes"
 	fuzz "github.com/google/gofuzz"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

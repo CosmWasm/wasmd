@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	corestoretypes "cosmossdk.io/core/store"
-	circuitante "cosmossdk.io/x/circuit/ante"
-	circuitkeeper "cosmossdk.io/x/circuit/keeper"
+	circuitante "github.com/cosmos/cosmos-sdk/x/circuit/ante"
+	circuitkeeper "github.com/cosmos/cosmos-sdk/x/circuit/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
