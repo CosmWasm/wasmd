@@ -158,7 +158,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 	t.Helper()
 	s.Log("Start chain\n")
 	s.ChainStarted = true
-	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
+	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info", "--db_backend=goleveldb"}, xargs...)...)
 
 	s.AwaitNodeUp(t, s.rpcAddr)
 
@@ -682,6 +682,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		"--moniker=" + moniker,
 		"--log_level=info",
 		"--home", nodePath,
+		"--db_backend", "goleveldb",
 	}
 	s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 	cmd = exec.Command( //nolint:gosec
