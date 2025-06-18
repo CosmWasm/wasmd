@@ -266,7 +266,7 @@ type IBC2RawPacketHandler struct {
 	channelKeeperV2 types.ChannelKeeperV2
 }
 
-// NewIBCRawPacketHandler constructor
+// NewIBC2RawPacketHandler constructor
 func NewIBC2RawPacketHandler(channelKeeperV2 types.ChannelKeeperV2) IBC2RawPacketHandler {
 	return IBC2RawPacketHandler{
 		channelKeeperV2: channelKeeperV2,
