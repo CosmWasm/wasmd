@@ -60,12 +60,12 @@ func TestIBCReflectContract(t *testing.T) {
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  sourcePortID,
 		Version: "ibc-reflect-v1",
-		Order:   channeltypes.UNORDERED,
+		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  counterpartPortID,
 		Version: "ibc-reflect-v1",
-		Order:   channeltypes.UNORDERED,
+		Order:   channeltypes.ORDERED,
 	}
 
 	coordinator.SetupConnections(&path.Path)
