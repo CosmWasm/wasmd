@@ -39,7 +39,7 @@ var (
 	// ErrInvalidMsg error when we cannot process the error returned from the contract
 	ErrInvalidMsg = errorsmod.Register(DefaultCodespace, 10, "invalid CosmosMsg from the contract")
 
-	// ErrMigrationFailed error for rust execution contract failure
+	// ErrMigrationFailed error for rust migration contract failure
 	ErrMigrationFailed = errorsmod.Register(DefaultCodespace, 11, "migrate wasm contract failed")
 
 	// ErrEmpty error for empty content
