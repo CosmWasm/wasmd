@@ -4,6 +4,7 @@ import (
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -34,11 +35,12 @@ type appVersionGetter interface {
 type IBCHandler struct {
 	keeper           types.IBCContractKeeper
 	channelKeeper    types.ChannelKeeper
+	transferKeeper   types.ICS20TransferPortSource
 	appVersionGetter appVersionGetter
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter) IBCHandler {
+	return IBCHandler{keeper: k, channelKeeper: ck, transferKeeper: tk, appVersionGetter: vg}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -412,9 +414,55 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		return err
 	}
 
+	var transfer *wasmvmtypes.IBCTransferCallback
+
+	// detect successful IBC transfer, meaning:
+	// 1. it was sent to the transfer module
+	// 2. the acknowledgement was successful
+	if packet.GetDestPort() == i.transferKeeper.GetPort(cachedCtx) && ack.Success() {
+
+		transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
+		if err != nil {
+			return errorsmod.Wrap(err, "unmarshal transfer packet data")
+		}
+
+		// just making sure we have a valid address
+		receiverAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
+		if err != nil {
+			return err
+		}
+
+		// For a more in-depth explanation of the logic here, see the transfer module implementation:
+		// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
+		// and the sequence diagram in the ICS20 spec:
+		// https://github.com/cosmos/ibc/blob/9be3630/spec/app/ics-020-fungible-token-transfer/README.md#data-structures
+		if transferData.Token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
+			// This is a denom coming from this chain, being sent back again, so we remove the prefix.
+			// See for example the "A -> C" step in the sequence diagram.
+			transferData.Token.Denom.Trace = transferData.Token.Denom.Trace[1:]
+		} else {
+			// prefixing happens on the receiving end, so we need to do that here
+			// See for example the "C -> A" step in the sequence diagram.
+			trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
+			transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
+		}
+
+		transfer = &wasmvmtypes.IBCTransferCallback{
+			Receiver: receiverAddr.String(),
+			Sender:   transferData.Sender,
+			Funds: wasmvmtypes.Array[wasmvmtypes.Coin]{
+				{
+					Denom:  transferData.Token.GetDenom().IBCDenom(),
+					Amount: transferData.Token.GetAmount(),
+				},
+			},
+		}
+	}
+
 	msg := wasmvmtypes.IBCDestinationCallbackMsg{
-		Ack:    wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
-		Packet: newIBCPacket(packet),
+		Ack:      wasmvmtypes.IBCAcknowledgement{Data: ack.Acknowledgement()},
+		Packet:   newIBCPacket(packet),
+		Transfer: transfer,
 	}
 
 	err = i.keeper.IBCDestinationCallback(cachedCtx, contractAddr, msg)
