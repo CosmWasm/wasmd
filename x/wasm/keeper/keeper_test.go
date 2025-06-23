@@ -3155,5 +3155,4 @@ func TestQueryRawRange(t *testing.T) {
 			assert.Equal(t, expNextBz, next)
 		})
 	}
-
 }

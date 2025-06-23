@@ -676,7 +676,6 @@ func TestRawRangeWasmQuerier(t *testing.T) {
 			assert.Equal(t, spec.expRes, gotRes)
 		})
 	}
-
 }
 
 func TestQueryErrors(t *testing.T) {
