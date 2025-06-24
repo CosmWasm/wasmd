@@ -10,7 +10,7 @@ import (
 // DefaultMaxQueryStackSize maximum size of the stack of recursive queries a contract can make
 const DefaultMaxQueryStackSize uint32 = 10
 
-const DefaultMaxCallDepth uint32 = 500
+const DefaultMaxCallDepth uint32 = 100
 
 // WasmEngine defines the WASM contract runtime engine.
 type WasmEngine interface {

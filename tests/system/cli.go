@@ -519,6 +519,11 @@ var (
 		const oogMsg = "out of gas"
 		return expErrWithMsg(t, err, args, oogMsg)
 	}
+	// ErrMaxCallDepthMatcher requires error with "max call depth exceeded" message
+	ErrMaxCallDepthMatcher RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
+		const expMsg = "max call depth exceeded"
+		return expErrWithMsg(t, err, args, expMsg)
+	}
 	// ErrTimeoutMatcher requires time out message
 	ErrTimeoutMatcher RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
 		const expMsg = "timed out waiting for tx to be included in a block"
