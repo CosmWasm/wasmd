@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -29,7 +29,7 @@ const (
 
 var doNotTimeout = clienttypes.NewHeight(1, 1111111)
 
-func TestPinPong(t *testing.T) {
+func TestPingPong(t *testing.T) {
 	// custom IBC protocol example
 	// scenario: given two chains,
 	//           with a contract on chain A and chain B
@@ -82,7 +82,7 @@ func TestPinPong(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	path.CreateChannels()
 
 	// trigger start game via execute
 	const startValue uint64 = 100
@@ -175,7 +175,7 @@ func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.Mes
 	}, 0, nil
 }
 
-// OnIBCChannelOpen ensures to accept only configured version
+// IBCChannelOpen ensures to accept only configured version
 func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCChannelOpenResult, uint64, error) {
 	if msg.GetChannel().Version != p.actor {
 		return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
@@ -183,7 +183,7 @@ func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmt
 	return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
 }
 
-// OnIBCChannelConnect persists connection endpoints
+// IBCChannelConnect persists connection endpoints
 func (p player) IBCChannelConnect(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	p.storeEndpoint(store, msg.GetChannel())
 	return &wasmvmtypes.IBCBasicResult{Ok: &wasmvmtypes.IBCBasicResponse{}}, 0, nil
@@ -272,7 +272,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 	}, 0, nil
 }
 
-// OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
+// IBCPacketAck handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	// parse received data and store
 	var sentBall hit

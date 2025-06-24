@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -70,7 +70,7 @@ func TestIBCReflectContract(t *testing.T) {
 
 	coordinator.SetupConnections(&path.Path)
 
-	coordinator.CreateChannels(&path.Path)
+	path.CreateChannels()
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)
@@ -85,7 +85,7 @@ func TestIBCReflectContract(t *testing.T) {
 	// only writes I see: https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/keeper/packet.go#L115-L116
 	// commitment is hashed packet: https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/types/packet.go#L14-L34
 	// how is the relayer supposed to get the original packet data??
-	// eg. ibctransfer doesn't store the packet either: https://github.com/cosmos/cosmos-sdk/blob/master/x/ibc/applications/transfer/keeper/relay.go#L145-L162
+	// eg. ibctransfer doesn't store the packet either: https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/applications/transfer/keeper/relay.go#L145-L162
 	// ... or I guess the original packet data is only available in the event logs????
 	// https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/keeper/packet.go#L121-L132
 
@@ -329,7 +329,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			}
 
 			coord.SetupConnections(&path.Path)
-			coord.CreateChannels(&path.Path)
+			path.CreateChannels()
 			coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 			require.Equal(t, 0, len(*chainA.PendingSendPackets))
 			require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -404,7 +404,7 @@ func TestIBCAsyncAck(t *testing.T) {
 	}
 
 	coord.SetupConnections(&path.Path)
-	coord.CreateChannels(&path.Path)
+	path.CreateChannels()
 	coord.CommitBlock(chainA.TestChain, chainB.TestChain)
 	require.Equal(t, 0, len(*chainA.PendingSendPackets))
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
@@ -417,7 +417,7 @@ func TestIBCAsyncAck(t *testing.T) {
 	require.Equal(t, 0, len(*chainB.PendingSendPackets))
 
 	// we don't expect an ack yet
-	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0])
+	err = wasmibctesting.RelayPacketWithoutAck(&path.Path, (*chainA.PendingSendPackets)[0], path.EndpointB)
 
 	noAckPacket := (*chainA.PendingSendPackets)[0]
 	chainA.PendingSendPackets = &[]channeltypes.Packet{}

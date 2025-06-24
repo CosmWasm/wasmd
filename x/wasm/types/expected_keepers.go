@@ -6,6 +6,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -84,13 +85,20 @@ type ChannelKeeper interface {
 	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
 }
 
+// ChannelKeeperV2 defines the expected IBC2 channel keeper
+type ChannelKeeperV2 interface {
+	WriteAcknowledgement(
+		ctx sdk.Context,
+		clientID string,
+		sequence uint64,
+		ack channeltypesv2.Acknowledgement,
+	) error
+}
+
 // ICS4Wrapper defines the method for an IBC data package to be submitted.
 // The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
 // can add functionality on top of it. See ics4Wrapper in ibc-go.
 // It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
-//
-// For example, when ics-29 fee middleware is set up for the wasm ibc-stack, then the IBCFeeKeeper should be used, so
-// that they are in sync.
 type ICS4Wrapper interface {
 	// SendPacket is called by a module in order to send an IBC packet on a channel.
 	// The packet sequence generated for the packet to be sent is returned. An error

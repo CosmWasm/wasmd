@@ -375,7 +375,7 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 
 // String implements the Stringer interface.
 func (p StoreAndInstantiateContractProposal) String() string {
-	return fmt.Sprintf(`Store And Instantiate Coontract Proposal:
+	return fmt.Sprintf(`Store And Instantiate Contract Proposal:
   Title:       %s
   Description: %s
   Run as:      %s
@@ -730,7 +730,7 @@ func (p UnpinCodesProposal) String() string {
 
 func validateProposalCommons(title, description string) error {
 	if strings.TrimSpace(title) != title {
-		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal title must not start/end with white spaces")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal title must not start/end with whitespaces")
 	}
 	if len(title) == 0 {
 		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
@@ -739,7 +739,7 @@ func validateProposalCommons(title, description string) error {
 		return errorsmod.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", v1beta1.MaxTitleLength)
 	}
 	if strings.TrimSpace(description) != description {
-		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with whitespaces")
 	}
 	if len(description) == 0 {
 		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")

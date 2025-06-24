@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
@@ -587,6 +587,97 @@ func TestCodeInfoWasmQuerier(t *testing.T) {
 	}
 }
 
+func TestRawRangeWasmQuerier(t *testing.T) {
+	myValidContractAddr := keeper.RandomBech32AccountAddress(t)
+	validResponse := wasmvmtypes.RawRangeResponse{
+		Data: []wasmvmtypes.RawRangeEntry{
+			{
+				Key:   []byte("key1"),
+				Value: []byte("value"),
+			},
+		},
+		NextKey: nil,
+	}
+	var ctx sdk.Context
+	specs := map[string]struct {
+		req    *wasmvmtypes.WasmQuery
+		mock   mockWasmQueryKeeper
+		expRes wasmvmtypes.RawRangeResponse
+		expErr bool
+	}{
+		"all good": {
+			req: &wasmvmtypes.WasmQuery{
+				RawRange: &wasmvmtypes.RawRangeQuery{
+					ContractAddr: myValidContractAddr,
+					Start:        []byte("key0"),
+					End:          []byte("key2"),
+					Limit:        10,
+					Order:        "ascending",
+				},
+			},
+			mock: mockWasmQueryKeeper{
+				QueryRawRangeFn: func(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte) {
+					return validResponse.Data, validResponse.NextKey
+				},
+			},
+			expRes: validResponse,
+		},
+		"all good - descending": {
+			req: &wasmvmtypes.WasmQuery{
+				RawRange: &wasmvmtypes.RawRangeQuery{
+					ContractAddr: myValidContractAddr,
+					Start:        []byte("start"),
+					End:          []byte("end"),
+					Limit:        10,
+					Order:        "descending",
+				},
+			},
+			mock: mockWasmQueryKeeper{
+				QueryRawRangeFn: func(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte) {
+					return []wasmvmtypes.RawRangeEntry{}, nil
+				},
+			},
+			expRes: wasmvmtypes.RawRangeResponse{
+				Data:    []wasmvmtypes.RawRangeEntry{},
+				NextKey: nil,
+			},
+		},
+		"invalid addr": {
+			req: &wasmvmtypes.WasmQuery{
+				RawRange: &wasmvmtypes.RawRangeQuery{
+					ContractAddr: "not a valid addr",
+					Order:        "ascending",
+				},
+			},
+			expErr: true,
+		},
+		"invalid order": {
+			req: &wasmvmtypes.WasmQuery{
+				RawRange: &wasmvmtypes.RawRangeQuery{
+					ContractAddr: myValidContractAddr,
+					Order:        "not a valid order",
+				},
+			},
+			expErr: true,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			q := keeper.WasmQuerier(spec.mock)
+			gotBz, gotErr := q(ctx, spec.req)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			var gotRes wasmvmtypes.RawRangeResponse
+			require.NoError(t, json.Unmarshal(gotBz, &gotRes))
+			assert.Equal(t, spec.expRes, gotRes)
+		})
+	}
+}
+
 func TestQueryErrors(t *testing.T) {
 	specs := map[string]struct {
 		src    error
@@ -628,6 +719,7 @@ type mockWasmQueryKeeper struct {
 	GetContractInfoFn func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 	QueryRawFn        func(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	QuerySmartFn      func(ctx context.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
+	QueryRawRangeFn   func(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte)
 	IsPinnedCodeFn    func(ctx context.Context, codeID uint64) bool
 	GetCodeInfoFn     func(ctx context.Context, codeID uint64) *types.CodeInfo
 }
@@ -644,6 +736,13 @@ func (m mockWasmQueryKeeper) QueryRaw(ctx context.Context, contractAddress sdk.A
 		panic("not expected to be called")
 	}
 	return m.QueryRawFn(ctx, contractAddress, key)
+}
+
+func (m mockWasmQueryKeeper) QueryRawRange(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte) {
+	if m.QueryRawRangeFn == nil {
+		panic("not expected to be called")
+	}
+	return m.QueryRawRangeFn(ctx, contractAddress, start, end, limit, reverse)
 }
 
 func (m mockWasmQueryKeeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {

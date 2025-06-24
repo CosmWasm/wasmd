@@ -3,6 +3,7 @@
 package system
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -99,4 +100,12 @@ func TestVestingAccounts(t *testing.T) {
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(100000000))), GetGenesisBalance([]byte(raw), vest1Addr))
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(100000001))), GetGenesisBalance([]byte(raw), vest2Addr))
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(200000002))), GetGenesisBalance([]byte(raw), vest3Addr))
+}
+
+func TestParseMsgExecuteContractResponse(t *testing.T) {
+	data, err := hex.DecodeString("12FA010A2C2F636F736D7761736D2E7761736D2E76312E4D736745786563757465436F6E7472616374526573706F6E736512C9010AC6017B22626C6F636B223A7B22686569676874223A31352C2274696D65223A2231373438393437343035313834313738303030222C22636861696E5F6964223A2274657374696E67227D2C227472616E73616374696F6E223A7B22696E646578223A302C2268617368223A22227D2C22636F6E7472616374223A7B2261646472657373223A227761736D3134686A32746176713866706573647778786375343472747933686839307668756A7276636D73746C347A723374786D6676773973307068673464227D7D")
+	require.NoError(t, err)
+	contractResponse, err := ParseMsgExecuteContractResponse(data)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"block":{"height":15,"time":"1748947405184178000","chain_id":"testing"},"transaction":{"index":0,"hash":""},"contract":{"address":"wasm14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s0phg4d"}}`, string(contractResponse))
 }

@@ -15,6 +15,20 @@
 - Make validateAddress cheaper if canonicalization fails [\#2245](https://github.com/CosmWasm/wasmd/pull/2245)
 - Lower `DefaultMaxCallDepth` [\#2244](https://github.com/CosmWasm/wasmd/pull/2244)
 
+ - chore: Change port prefix for IBCv2 messages to "wasm2" [\#2229](https://github.com/CosmWasm/wasmd/pull/2229)
+ - feat: IBCv2 timeout handler [\#2226](https://github.com/CosmWasm/wasmd/pull/2226)
+ - chore: source_client instead of channel_id in IBCv2 [\#2223](https://github.com/CosmWasm/wasmd/pull/2223)
+ - fix: Use seconds instead of nanoseconds for IBCv2 msg [\#2214](https://github.com/CosmWasm/wasmd/pull/2214)
+ - Register IBC v2 route and store the IBC v2 port in ContractInfo [\#2122](https://github.com/CosmWasm/wasmd/issues/2122)
+ - chore: Remove unused keepers [\#2190](https://github.com/CosmWasm/wasmd/pull/2190)
+ - Add IBC v2 SendPacket message encoding [\#2110](https://github.com/CosmWasm/wasmd/issues/2110)
+ - Remove IBC fee handling, as it is no longer supported by the IBC protocol [\#2254](https://github.com/CosmWasm/wasmd/pull/2254)
+ - Add support for IBCv2 Send entry point [\#2252](https://github.com/CosmWasm/wasmd/pull/2252)
+ - Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
+ - IBCv2 WriteAcknowledgement handler for async ACK [\#2173](https://github.com/CosmWasm/wasmd/pull/2173)
+ - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
+ - Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
+
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.55.0)
@@ -305,7 +319,7 @@ below to learn more!
 ### Notable changes:
 
 - If you are not coming from v0.32.0, please see the "Notables changes" below, first. Especially about CometBFT.
-- IBC-Go is a new major version including the "hucklebery" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
+- IBC-Go is a new major version including the "huckleberry" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
 - SDK 47 support is a big step from the SDK 45 version supported before. Make sure to read the upgrade guide for the SDK
   before applying any changes. Links below.
 - Some advice from working with SDK 47 that may affect you, too:
@@ -450,7 +464,7 @@ below to learn more!
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
 - Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
-- Upgrade to ibc-go v3.3.0 REQUIRES [MIGRATION](https://github.com/cosmos/ibc-go/blob/v3.2.3/docs/migrations/support-denoms-with-slashes.md) [\#1016](https://github.com/CosmWasm/wasmd/pull/1016)
+- Upgrade to ibc-go v3.3.0 REQUIRES [MIGRATION](https://github.com/cosmos/ibc-go/blob/main/docs/docs/05-migrations/01-support-denoms-with-slashes.md) [\#1016](https://github.com/CosmWasm/wasmd/pull/1016)
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
 - Upgrade wasmvm to v1.1.1 [\#1012](https://github.com/CosmWasm/wasmd/pull/1012), see [wasmvm v1.1.1](https://github.com/CosmWasm/wasmvm/releases/tag/v1.1.1)
 - Add documentation how to add x/wasm to a new Cosmos SDK chain [\#876](https://github.com/CosmWasm/wasmd/issues/876)
@@ -474,7 +488,7 @@ below to learn more!
 
 ### Migration notes:
 
-- See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v3.3.0/docs/migrations/support-denoms-with-slashes.md)
+- See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/main/docs/docs/05-migrations/01-support-denoms-with-slashes.md)
 
 ## [v0.28.0](https://github.com/CosmWasm/wasmd/tree/v0.28.0) (2022-07-29)
 

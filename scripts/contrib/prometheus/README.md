@@ -40,7 +40,7 @@ Note the `format` parameter in the request for the endpoint:
 # port 9090 is used by wasmd already
 docker run -it -v $(pwd)/scripts/contrib/prometheus:/prometheus  -p9091:9090  prom/prometheus --config.file=/prometheus/prometheus.yaml
 ```
-* Open [console](http://localhost:9091) and find `wasm_`service metrics
+* Open [console](http://localhost:9091) and find `wasm_` service metrics
 
 ## Run Grafana
 

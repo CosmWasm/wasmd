@@ -128,13 +128,15 @@ jobs:
       - run:
           name: Build and run system tests
           command: make test-system
+      # In case of failure, collect some debugging data and store it
       - run:
+          name: Move output to artifacts
           command: |
-            mkdir -p /tmp/system-test-workspace
-            mv  /home/circleci/project/tests/system/testnet /tmp/system-test-workspace
+            mkdir -p /tmp/test-system-artifacts
+            mv  /home/circleci/project/tests/system/testnet /tmp/test-system-artifacts
           when: on_fail
       - store_artifacts:
-          path: /tmp/system-test-workspace
+          path: /tmp/test-system-artifacts
 
   benchmark:
     executor: golang
@@ -165,8 +167,6 @@ jobs:
           name: Run simulations
           command: |
             make test-sim-deterministic test-sim-multi-seed-short test-sim-import-export
-      - store_artifacts:
-          path: /tmp
 
   upload-coverage:
     executor: golang
@@ -198,14 +198,14 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: Build Docker artifact
+          name: Build Docker image
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .
       - run:
           name: Ensure libwasmvm version is correct
           command: |
             IN_DOCKER=$(docker run --rm "cosmwasm/wasmd:${CIRCLE_SHA1}" /usr/bin/wasmd query wasm libwasmvm-version)
             echo "Runtime libwasmvm-version in docker: $IN_DOCKER"
-            IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d" " -f2 | cut -d"v" -f2)
+            IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm/v3 | cut -d" " -f2 | cut -d"v" -f2)
             echo "wasmvm version in go.mod: $IN_GOMOD"
             if [[ "$IN_DOCKER" != "$IN_GOMOD" ]]; then
               echo "Mismatch of wasmvm versions detected"
@@ -232,7 +232,7 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: Build Docker artifact
+          name: Build Docker image
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_TAG}" .
       - run:
           name: Push application Docker image to docker hub

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -108,6 +108,7 @@ type wasmQueryKeeper interface {
 	contractMetaDataSource
 	GetCodeInfo(ctx context.Context, codeID uint64) *types.CodeInfo
 	QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QueryRawRange(ctx context.Context, contractAddress sdk.AccAddress, start, end []byte, limit uint16, reverse bool) (results []wasmvmtypes.RawRangeEntry, nextKey []byte)
 	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
 	IsPinnedCode(ctx context.Context, codeID uint64) bool
 }
@@ -681,11 +682,12 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 					Wrapf("address %s", contractAddr)
 			}
 			res := wasmvmtypes.ContractInfoResponse{
-				CodeID:  info.CodeID,
-				Creator: info.Creator,
-				Admin:   info.Admin,
-				Pinned:  k.IsPinnedCode(ctx, info.CodeID),
-				IBCPort: info.IBCPortID,
+				CodeID:   info.CodeID,
+				Creator:  info.Creator,
+				Admin:    info.Admin,
+				Pinned:   k.IsPinnedCode(ctx, info.CodeID),
+				IBCPort:  info.IBCPortID,
+				IBC2Port: info.IBC2PortID,
 			}
 			return json.Marshal(res)
 		case request.CodeInfo != nil:
@@ -704,6 +706,29 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 				Checksum: info.CodeHash,
 			}
 			return json.Marshal(res)
+		case request.RawRange != nil:
+			contractAddr := request.RawRange.ContractAddr
+			addr, err := sdk.AccAddressFromBech32(contractAddr)
+			if err != nil {
+				return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, contractAddr)
+			}
+
+			var reverse bool
+			switch request.RawRange.Order {
+			case "ascending":
+				reverse = false
+			case "descending":
+				reverse = true
+			default:
+				return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unknown order %s", request.RawRange.Order)
+			}
+			data, nextKey := k.QueryRawRange(ctx, addr, request.RawRange.Start, request.RawRange.End, request.RawRange.Limit, reverse)
+			res := wasmvmtypes.RawRangeResponse{
+				Data:    data,
+				NextKey: nextKey,
+			}
+			return json.Marshal(res)
+
 		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 	}

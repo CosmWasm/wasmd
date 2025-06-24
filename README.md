@@ -28,16 +28,18 @@ Also CosmWasm 2.0 contracts remain compatible at the Wasm interface level.
 To extend the feature set over time, contracts can specify required [capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES.md) through cargo features in cosmwasm-std.
 The following table shows which of the [latest capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) are supported by certain wasmd versions.
 
-| capability   | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
-| ------------ | ------- | ------- | ------- | ------- | ------- | ---- |
-| iterator     | x       | x       | x       | x       | x       | x    |
-| stargate     | x       | x       | x       | x       | x       | x    |
-| staking      | x       | x       | x       | x       | x       | x    |
-| cosmwasm_1_1 | x       | x       | x       | x       | x       |      |
-| cosmwasm_1_2 | x       | x       | x       | x       |         |      |
-| cosmwasm_1_3 | x       | x       | x       |         |         |      |
-| cosmwasm_1_4 | x       | x       |         |         |         |      |
-| cosmwasm_2_0 | x       |         |         |         |         |      |
+| capability   | >= 0.54 | >= 0.52 | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
+| ------------ | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ---- |
+| iterator     | x       | x       | x       | x       | x       | x       | x       | x    |
+| stargate     | x       | x       | x       | x       | x       | x       | x       | x    |
+| staking      | x       | x       | x       | x       | x       | x       | x       | x    |
+| cosmwasm_1_1 | x       | x       | x       | x       | x       | x       | x       |      |
+| cosmwasm_1_2 | x       | x       | x       | x       | x       | x       |         |      |
+| cosmwasm_1_3 | x       | x       | x       | x       | x       |         |         |      |
+| cosmwasm_1_4 | x       | x       | x       | x       |         |         |         |      |
+| cosmwasm_2_0 | x       | x       | x       |         |         |         |         |      |
+| cosmwasm_2_1 | x       | x       |         |         |         |         |         |      |
+| cosmwasm_2_2 | x       |         |         |         |         |         |         |      |
 
 ### For node developers
 
@@ -53,6 +55,12 @@ The following table shows
 
 | wasmd  | compatible | specified                                                         |
 | ------ | ---------- | ----------------------------------------------------------------- |
+| 0.55.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.55.0/go.mod#L6) |
+| 0.54.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.54.0/go.mod#L6) |
+| 0.53.2 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.2/go.mod#L6) |
+| 0.53.1 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.1/go.mod#L6) |
+| 0.53.0 | 2.1.x      | [2.1.2](https://github.com/CosmWasm/wasmd/blob/v0.53.0/go.mod#L6) |
+| 0.52.0 | 2.1.x      | [2.1.0](https://github.com/CosmWasm/wasmd/blob/v0.52.0/go.mod#L6) |
 | 0.51.0 | 2.0.x      | [2.0.0](https://github.com/CosmWasm/wasmd/blob/v0.51.0/go.mod#L6) |
 | 0.50.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6) |
 | 0.45.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6) |
@@ -77,7 +85,7 @@ The supported systems are limited by the dlls created in [`wasmvm`](https://gith
 However, **M1 macs are not fully supported.** (Experimental support was merged with wasmd 0.24)
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
-using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19).
+using glibc (CentOS 7 uses 2.12, obsolete Debian Jessie uses 2.19).
 
 As of `0.9.0` we support `muslc` Linux systems, in particular **Alpine linux**,
 which is popular in docker distributions. Note that we do **not** store the
@@ -236,7 +244,7 @@ We strongly suggest **to limit the max block gas in the genesis** and not use th
       "max_gas": "SET_YOUR_MAX_VALUE",
 ```
 
-Tip: if you want to lock this down to a permisisoned network, the following script can edit the genesis file
+Tip: if you want to lock this down to a permissioned network, the following script can edit the genesis file
 to only allow permissioned use of code upload or instantiating:
 
 `sed -i 's/permission": "Everybody"/permission": "Nobody"/'  .../config/genesis.json`
@@ -257,7 +265,6 @@ Or even testing the app and bringing up critical issues. The following have help
 - Shane Vitarana [shanev](https://github.com/shanev)
 - Billy Rennekamp [okwme](https://github.com/okwme)
 - Westaking [westaking](https://github.com/westaking)
-- Marko [marbar3778](https://github.com/marbar3778)
 - JayB [kogisin](https://github.com/kogisin)
 - Rick Dudley [AFDudley](https://github.com/AFDudley)
 - KamiD [KamiD](https://github.com/KamiD)

@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	_ "embed"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -51,9 +52,12 @@ var hackatomWasm []byte
 //go:embed testdata/replier.wasm
 var replierWasm []byte
 
+//go:embed testdata/queue.wasm
+var queueWasm []byte
+
 var AvailableCapabilities = []string{
 	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
-	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2",
+	"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2", "ibc2",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -423,7 +427,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bcb0), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1c479), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -890,13 +894,14 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	}
 
 	// when
-	parentAddr, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+	contractAddress, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+	ibc2PortID := PortIDForContractV2(contractAddress)
 
 	// then
 	require.NoError(t, err)
 	assert.Equal(t, []byte("parent"), data)
-	require.Equal(t, parentAddr.String(), capturedSenderAddr)
-	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String())
+	require.Equal(t, contractAddress.String(), capturedSenderAddr)
+	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"ibc2_port":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String(), ibc2PortID)
 	assert.JSONEq(t, expCodeInfo, string(capturedCodeInfo))
 }
 
@@ -960,7 +965,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1ace0), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1adb7), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -2981,6 +2986,173 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			require.True(t, ok)
 			assert.NotNil(t, txContracts.GetContracts())
 			assert.Equal(t, spec.expLenTxContracts, len(txContracts.GetContracts()))
+		})
+	}
+}
+
+func TestQueryRawRange(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	// Create queue contract and instantiate
+	creator := RandomAccountAddress(t)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, queueWasm, nil)
+	require.NoError(t, err)
+	initMsgBz := []byte("{}")
+	contractAddress, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "queue", nil)
+
+	type EnqueueMsg struct {
+		Value int32 `json:"value"`
+	}
+	type QueueExecMsg struct {
+		Enqueue *EnqueueMsg `json:"enqueue"`
+		// ...
+	}
+
+	// fill contract storage with 100 items
+	for i := range 100 {
+		enqueueMsg := QueueExecMsg{
+			Enqueue: &EnqueueMsg{Value: int32(i)},
+		}
+		execMsg, err := json.Marshal(enqueueMsg)
+		require.NoError(t, err)
+		_, err = keepers.ContractKeeper.Execute(ctx, contractAddress, creator, execMsg, nil)
+		require.NoError(t, err)
+	}
+
+	type QueueEntry struct {
+		key uint32
+		val int32
+	}
+
+	optUint32 := func(v uint32) *uint32 {
+		return &v
+	}
+
+	specs := map[string]struct {
+		start      *uint32
+		end        *uint32
+		limit      uint16
+		reverse    bool
+		expEntries []QueueEntry
+		expNext    *uint32
+	}{
+		"non-existent range": {
+			start:      optUint32(100),
+			end:        optUint32(200),
+			limit:      10,
+			expEntries: []QueueEntry{},
+			expNext:    nil,
+		},
+		"limited middle range": {
+			start: optUint32(10),
+			end:   optUint32(50),
+			limit: 5,
+			expEntries: []QueueEntry{
+				{key: 10, val: 10},
+				{key: 11, val: 11},
+				{key: 12, val: 12},
+				{key: 13, val: 13},
+				{key: 14, val: 14},
+			},
+			expNext: optUint32(15),
+		},
+		"limited range with no end": {
+			start: optUint32(10),
+			end:   nil,
+			limit: 2,
+			expEntries: []QueueEntry{
+				{key: 10, val: 10},
+				{key: 11, val: 11},
+			},
+			expNext: optUint32(12),
+		},
+		"limited range with no start": {
+			start: nil,
+			end:   optUint32(50),
+			limit: 2,
+			expEntries: []QueueEntry{
+				{key: 0, val: 0},
+				{key: 1, val: 1},
+			},
+			expNext: optUint32(2),
+		},
+		"unbounded range": {
+			start: nil,
+			end:   nil,
+			limit: 1,
+			expEntries: []QueueEntry{
+				{key: 0, val: 0},
+			},
+			expNext: optUint32(1),
+		},
+		"unbounded reversed range": {
+			start:   nil,
+			end:     nil,
+			limit:   1,
+			reverse: true,
+			expEntries: []QueueEntry{
+				{key: 99, val: 99},
+			},
+			expNext: optUint32(98),
+		},
+		"full bounded reversed range": {
+			start:   optUint32(0),
+			end:     optUint32(2),
+			limit:   100,
+			reverse: true,
+			expEntries: []QueueEntry{
+				{key: 1, val: 1},
+				{key: 0, val: 0},
+			},
+			expNext: nil, // no next key because range is fully covered
+		},
+		"start > end, reversed": {
+			start:      optUint32(50),
+			end:        optUint32(10),
+			limit:      5,
+			reverse:    true,
+			expEntries: []QueueEntry{},
+			expNext:    nil,
+		},
+	}
+
+	toBytes := func(v *uint32) []byte {
+		if v == nil {
+			return nil
+		}
+		return binary.BigEndian.AppendUint32(nil, *v)
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// queue contract uses big endian encoded uint32 as key
+			startBytes := toBytes(spec.start)
+			endBytes := toBytes(spec.end)
+
+			entries, next := k.QueryRawRange(ctx, contractAddress, startBytes, endBytes, spec.limit, spec.reverse)
+			// contract cannot handle nil, so we disallow it
+			require.NotNil(t, entries)
+
+			// converting the entries we get back instead of the entries we put in the spec because
+			// it makes for easier to read test outputs (actual integers instead of byte arrays)
+			convertedEntries := make([]QueueEntry, len(entries))
+			for i, entry := range entries {
+				// values are json-encoded as `{"value":<value>}`
+				// so we need to unmarshal it and extract the value
+				var value EnqueueMsg
+				err := json.Unmarshal(entry.Value, &value)
+				require.NoError(t, err)
+
+				convertedEntries[i] = QueueEntry{
+					key: binary.BigEndian.Uint32(entry.Key),
+					val: value.Value,
+				}
+			}
+
+			expNextBz := toBytes(spec.expNext)
+			assert.Equal(t, spec.expEntries, convertedEntries)
+			assert.Equal(t, expNextBz, next)
 		})
 	}
 }

@@ -102,7 +102,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 	// allow everybody was not migrated
 	assert.Equal(t, types.AllowEverybody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code2).InstantiateConfig)
 
-	// allow nodoby was not migrated
+	// allow nobody was not migrated
 	assert.Equal(t, types.AllowNobody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code3).InstantiateConfig)
 }
 

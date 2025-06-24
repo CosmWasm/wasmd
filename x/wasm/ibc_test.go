@@ -3,7 +3,7 @@ package wasm
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
@@ -110,7 +110,7 @@ func TestOnRecvPacket(t *testing.T) {
 				},
 			}
 			channelVersion := ""
-			h := NewIBCHandler(&mock, nil, nil)
+			h := NewIBCHandler(&mock, nil, nil, nil)
 			em := &sdk.EventManager{}
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {

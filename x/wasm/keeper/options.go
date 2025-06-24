@@ -164,6 +164,18 @@ func WithMaxCallDepth(m uint32) Option {
 	})
 }
 
+// WithCustomTxHash sets a custom function to calculate the transaction hash that is passed to the contracts.
+// This is intended for chains that use a different hash function than the default in CometBFT.
+func WithCustomTxHash(f func(data []byte) []byte) Option {
+	if f == nil {
+		panic("must not be nil")
+	}
+
+	return optsFn(func(k *Keeper) {
+		k.txHash = f
+	})
+}
+
 // WithAcceptedAccountTypesOnContractInstantiation sets the accepted account types. Account types of this list won't be overwritten or cause a failure
 // when they exist for an address on contract instantiation.
 //
@@ -175,8 +187,8 @@ func WithAcceptedAccountTypesOnContractInstantiation(accts ...sdk.AccountI) Opti
 	})
 }
 
-// WitGovSubMsgAuthZPropagated overwrites the default gov authorization policy for sub-messages
-func WitGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Option {
+// WithGovSubMsgAuthZPropagated overwrites the default gov authorization policy for sub-messages
+func WithGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Option {
 	x := make(map[types.AuthorizationPolicyAction]struct{}, len(entries))
 	for _, e := range entries {
 		x[e] = struct{}{}

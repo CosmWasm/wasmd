@@ -3,10 +3,11 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"path/filepath"
 
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -27,6 +28,7 @@ func NewKeeper(
 	distrKeeper types.DistributionKeeper,
 	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
+	channelKeeperV2 types.ChannelKeeperV2,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
 	_ GRPCQueryRouter,
@@ -55,9 +57,10 @@ func NewKeeper(
 			types.AuthZActionInstantiate: {},
 		},
 		authority:  authority,
+		txHash:     func(data []byte) []byte { sum := sha256.Sum256(data); return sum[:] },
 		wasmLimits: vmConfig.WasmLimits,
 	}
-	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeper, bankKeeper, cdc, portSource)
+	keeper.messenger = NewDefaultMessageHandler(keeper, router, ics4Wrapper, channelKeeperV2, bankKeeper, cdc, portSource)
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	preOpts, postOpts := splitOpts(opts)
 	for _, o := range preOpts {

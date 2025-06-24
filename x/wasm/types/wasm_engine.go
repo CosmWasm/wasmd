@@ -1,8 +1,8 @@
 package types
 
 import (
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 
 	storetypes "cosmossdk.io/store/types"
 )
@@ -284,6 +284,60 @@ type WasmEngine interface {
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
 		msg wasmvmtypes.IBCDestinationCallbackMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResult, uint64, error)
+
+	IBC2PacketAck(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		payload wasmvmtypes.IBC2AcknowledgeMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResult, uint64, error)
+
+	// IBC2PacketReceive is available on IBC2-enabled contracts and is called when an incoming
+	// payload is received on a channel belonging to this contract
+	IBC2PacketReceive(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		payload wasmvmtypes.IBC2PacketReceiveMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCReceiveResult, uint64, error)
+
+	// IBC2PacketTimeout is available on IBCv2-enabled contracts and is called when an
+	// outgoing packet (previously sent by this contract) will probably never be executed.
+	IBC2PacketTimeout(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		packet wasmvmtypes.IBC2PacketTimeoutMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResult, uint64, error)
+
+	// IBC2PacketSend is available on IBCv2-enabled contracts and is called to verify an
+	// outgoing packet before it is sent to another blockchain.
+	IBC2PacketSend(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		packet wasmvmtypes.IBC2PacketSendMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
