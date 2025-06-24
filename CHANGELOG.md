@@ -2,7 +2,28 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.0...HEAD)
+
+## [v0.61.0](https://github.com/CosmWasm/wasmd/tree/v0.61.0) (2025-06-24)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...v0.61.0)
+
+- Update to wasmvm 3.0.0 [\#2304](https://github.com/CosmWasm/wasmd/pull/2304)
+- Add Transfer special handling to IBC destination callback if it's a transfer message [\#2267](https://github.com/CosmWasm/wasmd/pull/2267)
+- Implement RawRange query [\#2263](https://github.com/CosmWasm/wasmd/pull/2263)
+- chore: Change port prefix for IBCv2 messages to "wasm2" [\#2229](https://github.com/CosmWasm/wasmd/pull/2229)
+- feat: IBCv2 timeout handler [\#2226](https://github.com/CosmWasm/wasmd/pull/2226)
+- chore: source_client instead of channel_id in IBCv2 [\#2223](https://github.com/CosmWasm/wasmd/pull/2223)
+- fix: Use seconds instead of nanoseconds for IBCv2 msg [\#2214](https://github.com/CosmWasm/wasmd/pull/2214)
+- Register IBC v2 route and store the IBC v2 port in ContractInfo [\#2122](https://github.com/CosmWasm/wasmd/issues/2122)
+- chore: Remove unused keepers [\#2190](https://github.com/CosmWasm/wasmd/pull/2190)
+- Add IBC v2 SendPacket message encoding [\#2110](https://github.com/CosmWasm/wasmd/issues/2110)
+- Remove IBC fee handling, as it is no longer supported by the IBC protocol [\#2254](https://github.com/CosmWasm/wasmd/pull/2254)
+- Add support for IBCv2 Send entry point [\#2252](https://github.com/CosmWasm/wasmd/pull/2252)
+- Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
+- IBCv2 WriteAcknowledgement handler for async ACK [\#2173](https://github.com/CosmWasm/wasmd/pull/2173)
+- Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
+- Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
 
 ## [v0.60.0](https://github.com/CosmWasm/wasmd/tree/v0.60.0) (2025-05-26)
 
@@ -14,20 +35,6 @@
 - Make sure Aliases in DenomUnit is not nil [\#2246](https://github.com/CosmWasm/wasmd/pull/2246)
 - Make validateAddress cheaper if canonicalization fails [\#2245](https://github.com/CosmWasm/wasmd/pull/2245)
 - Lower `DefaultMaxCallDepth` [\#2244](https://github.com/CosmWasm/wasmd/pull/2244)
-
- - chore: Change port prefix for IBCv2 messages to "wasm2" [\#2229](https://github.com/CosmWasm/wasmd/pull/2229)
- - feat: IBCv2 timeout handler [\#2226](https://github.com/CosmWasm/wasmd/pull/2226)
- - chore: source_client instead of channel_id in IBCv2 [\#2223](https://github.com/CosmWasm/wasmd/pull/2223)
- - fix: Use seconds instead of nanoseconds for IBCv2 msg [\#2214](https://github.com/CosmWasm/wasmd/pull/2214)
- - Register IBC v2 route and store the IBC v2 port in ContractInfo [\#2122](https://github.com/CosmWasm/wasmd/issues/2122)
- - chore: Remove unused keepers [\#2190](https://github.com/CosmWasm/wasmd/pull/2190)
- - Add IBC v2 SendPacket message encoding [\#2110](https://github.com/CosmWasm/wasmd/issues/2110)
- - Remove IBC fee handling, as it is no longer supported by the IBC protocol [\#2254](https://github.com/CosmWasm/wasmd/pull/2254)
- - Add support for IBCv2 Send entry point [\#2252](https://github.com/CosmWasm/wasmd/pull/2252)
- - Introduce IBCv2 endpoint for receiving message acknowledgements [\#2261](https://github.com/CosmWasm/wasmd/pull/2261)
- - IBCv2 WriteAcknowledgement handler for async ACK [\#2173](https://github.com/CosmWasm/wasmd/pull/2173)
- - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
- - Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
