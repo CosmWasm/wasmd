@@ -13,7 +13,7 @@ This is often empty, but sometimes custom protobuf formats to return essential i
 
 Every message in the SDK may add events to the EventManager and these are then added to the final ABCI result that is returned
 to Tendermint. Events are exposed in 3 different ways over the Tendermint API (which is the only way a client can query).
-First of all is the `events` field on the transaction result (when you query a transaction by hash, you can see all event emitted
+First of all is the `events` field on the transaction result (when you query a transaction by hash, you can see all events emitted
 by it). Secondly is the `log` field on the same transaction result. And third is the query interface to search or subscribe for
 transactions. 
 
@@ -415,6 +415,6 @@ sdk.NewEvent(
 
 ## IBC Events
 
-All IBC entry points are only called by external accounts and not from contracts. They need to contain proofs of state of other blockchains and cannot be called by other contracts on the same chain. Therefore, the event emitted are not essential for cross-contract calls, and `x/wasm` does not emit custom events for these actions.
+All IBC entry points are only called by external accounts and not from contracts. They need to contain proofs of state of other blockchains and cannot be called by other contracts on the same chain. Therefore, the events emitted are not essential for cross-contract calls, and `x/wasm` does not emit custom events for these actions.
 
 There are well-defined events emitted by the IBC base layer and are required for the relayer functionality. If you wish to subscribe to these, you can find them [defined in the `ibc-go` codebase](https://github.com/cosmos/ibc-go/blob/main/modules/core/04-channel/keeper/events.go).
