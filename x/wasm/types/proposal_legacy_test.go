@@ -43,7 +43,7 @@ func TestValidateProposalCommons(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"prevent leading white spaces in title": {
+		"prevent leading whitespaces in title": {
 			src: commonProposal{
 				Title:       " Foo",
 				Description: "Bar",
@@ -63,7 +63,7 @@ func TestValidateProposalCommons(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"prevent leading white spaces in description": {
+		"prevent leading whitespaces in description": {
 			src: commonProposal{
 				Title:       "Foo",
 				Description: " Bar",
