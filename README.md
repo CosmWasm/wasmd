@@ -271,4 +271,4 @@ Or even testing the app and bringing up critical issues. The following have help
 - Valery Litvin [litvintech](https://github.com/litvintech)
 - Leonardo Bragagnolo [bragaz](https://github.com/bragaz)
 
-Sorry if I forgot you from this list, just contact me or add yourself in a PR :)
+Sorry if I forgot you from this list, just contract me or add yourself in a PR :)
