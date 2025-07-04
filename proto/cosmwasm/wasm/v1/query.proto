@@ -90,6 +90,15 @@ service Query {
         "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
   }
 
+  // ContractsByCodeAndCreator gets the contracts by code and creator
+  rpc ContractsByCodeAndCreator(QueryContractsByCodeAndCreatorRequest)
+      returns (QueryContractsByCodeAndCreatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get =
+        "/cosmwasm/wasm/v1/contracts/code_and_creator/{creator_address}/"
+        "{code_id}";
+  }
+
   // WasmLimitsConfig gets the configured limits for static validation of Wasm
   // files, encoded in JSON.
   rpc WasmLimitsConfig(QueryWasmLimitsConfigRequest)
@@ -317,6 +326,27 @@ message QueryContractsByCreatorRequest {
 // QueryContractsByCreatorResponse is the response type for the
 // Query/ContractsByCreator RPC method.
 message QueryContractsByCreatorResponse {
+  // ContractAddresses result set
+  repeated string contract_addresses = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryContractsByCodeAndCreatorRequest is the request type for the
+// Query/ContractsByCodeAndCreator RPC method.
+message QueryContractsByCodeAndCreatorRequest {
+  // CreatorAddress is the address of contract creator
+  string creator_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // CodeID is the code id of the contract
+  uint64 code_id = 2; // grpc-gateway_out does not support Go style CodeID
+  // Pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+// QueryContractsByCodeAndCreatorResponse is the response type for the
+// Query/ContractsByCodeAndCreator RPC method.
+message QueryContractsByCodeAndCreatorResponse {
   // ContractAddresses result set
   repeated string contract_addresses = 1
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];

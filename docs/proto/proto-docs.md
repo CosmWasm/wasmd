@@ -73,6 +73,8 @@
     - [QueryContractHistoryResponse](#cosmwasm.wasm.v1.QueryContractHistoryResponse)
     - [QueryContractInfoRequest](#cosmwasm.wasm.v1.QueryContractInfoRequest)
     - [QueryContractInfoResponse](#cosmwasm.wasm.v1.QueryContractInfoResponse)
+    - [QueryContractsByCodeAndCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorRequest)
+    - [QueryContractsByCodeAndCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorResponse)
     - [QueryContractsByCodeRequest](#cosmwasm.wasm.v1.QueryContractsByCodeRequest)
     - [QueryContractsByCodeResponse](#cosmwasm.wasm.v1.QueryContractsByCodeResponse)
     - [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest)
@@ -1233,6 +1235,43 @@ method
 
 
 
+<a name="cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorRequest"></a>
+
+### QueryContractsByCodeAndCreatorRequest
+QueryContractsByCodeAndCreatorRequest is the request type for the
+Query/ContractsByCodeAndCreator RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator_address` | [string](#string) |  | CreatorAddress is the address of contract creator |
+| `code_id` | [uint64](#uint64) |  | CodeID is the code id of the contract
+
+grpc-gateway_out does not support Go style CodeID |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | Pagination defines an optional pagination for the request. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorResponse"></a>
+
+### QueryContractsByCodeAndCreatorResponse
+QueryContractsByCodeAndCreatorResponse is the response type for the
+Query/ContractsByCodeAndCreator RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_addresses` | [string](#string) | repeated | ContractAddresses result set |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | Pagination defines the pagination in the response. |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryContractsByCodeRequest"></a>
 
 ### QueryContractsByCodeRequest
@@ -1478,6 +1517,7 @@ Query provides defines the gRPC querier service
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
+| `ContractsByCodeAndCreator` | [QueryContractsByCodeAndCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorRequest) | [QueryContractsByCodeAndCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCodeAndCreatorResponse) | ContractsByCodeAndCreator gets the contracts by code and creator | GET|/cosmwasm/wasm/v1/contracts/code_and_creator/{creator_address}/{code_id}|
 | `WasmLimitsConfig` | [QueryWasmLimitsConfigRequest](#cosmwasm.wasm.v1.QueryWasmLimitsConfigRequest) | [QueryWasmLimitsConfigResponse](#cosmwasm.wasm.v1.QueryWasmLimitsConfigResponse) | WasmLimitsConfig gets the configured limits for static validation of Wasm files, encoded in JSON. | GET|/cosmwasm/wasm/v1/wasm-limits-config|
 | `BuildAddress` | [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest) | [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse) | BuildAddress builds a contract address | GET|/cosmwasm/wasm/v1/contract/build_address|
 
