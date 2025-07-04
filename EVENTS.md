@@ -241,7 +241,7 @@ always be tagged with `_contract_address` by the Go module, so this is trust-wor
 this field. Beyond this, the `attributes` returned by the contract, these are appended to the same event.
 
 A contract may also return custom `events`. These are multiple events, each with their own type as well as attributes.
-When they are received, `x/wasm` prepends `wasm-` to the event type returned by the contact to avoid them trying to fake
+When they are received, `x/wasm` prepends `wasm-` to the event type returned by the contract to avoid them trying to fake
 an eg. `transfer` event from the bank module. The output here may look like:
 
 ```go
