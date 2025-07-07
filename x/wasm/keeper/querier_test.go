@@ -1098,6 +1098,112 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	}
 }
 
+func TestQueryContractsByCodeAndCreatorList(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
+
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
+	require.NoError(t, err)
+
+	_, bob := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	// manage some realistic block settings
+	var h int64 = 10
+	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
+		ctx = ctx.WithBlockHeight(height)
+		meter := storetypes.NewGasMeter(1000000)
+		ctx = ctx.WithGasMeter(meter)
+		ctx = ctx.WithBlockGasMeter(meter)
+		return ctx
+	}
+
+	var allExpectedContracts []string
+	// create 10 contracts with real block/gas setup
+	for i := 0; i < 10; i++ {
+		ctx = setBlock(ctx, h)
+		h++
+		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		allExpectedContracts = append(allExpectedContracts, contract.String())
+		require.NoError(t, err)
+	}
+
+	specs := map[string]struct {
+		srcQuery        *types.QueryContractsByCodeAndCreatorRequest
+		expContractAddr []string
+		expErr          error
+	}{
+		"query all": {
+			srcQuery: &types.QueryContractsByCodeAndCreatorRequest{
+				CodeId:         codeID,
+				CreatorAddress: creator.String(),
+			},
+			expContractAddr: allExpectedContracts,
+			expErr:          nil,
+		},
+		"with pagination offset": {
+			srcQuery: &types.QueryContractsByCodeAndCreatorRequest{
+				CodeId:         codeID,
+				CreatorAddress: creator.String(),
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expErr: errLegacyPaginationUnsupported,
+		},
+		"with pagination limit": {
+			srcQuery: &types.QueryContractsByCodeAndCreatorRequest{
+				CodeId:         codeID,
+				CreatorAddress: creator.String(),
+				Pagination: &query.PageRequest{
+					Limit: 1,
+				},
+			},
+			expContractAddr: allExpectedContracts[0:1],
+			expErr:          nil,
+		},
+		"nil creator": {
+			srcQuery: &types.QueryContractsByCodeAndCreatorRequest{
+				Pagination: &query.PageRequest{},
+			},
+			expContractAddr: allExpectedContracts,
+			expErr:          errors.New("empty address string is not allowed"),
+		},
+		"nil req": {
+			srcQuery:        nil,
+			expContractAddr: allExpectedContracts,
+			expErr:          status.Error(codes.InvalidArgument, "empty request"),
+		},
+	}
+
+	q := Querier(keepers.WasmKeeper)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, gotErr := q.ContractsByCodeAndCreator(ctx, spec.srcQuery)
+			if spec.expErr != nil {
+				require.Error(t, gotErr)
+				assert.ErrorContains(t, gotErr, spec.expErr.Error())
+				return
+			}
+			require.NoError(t, gotErr)
+			require.NotNil(t, got)
+			assert.Equal(t, spec.expContractAddr, got.ContractAddresses)
+		})
+	}
+}
+
 func fromBase64(s string) []byte {
 	r, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
