@@ -116,14 +116,14 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
 
 	_, err = wasmApp.InitChain(
-		&abci.RequestInitChain{
+		&abci.InitChainRequest{
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: consensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
 	require.NoError(b, err)
-	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: wasmApp.LastBlockHeight() + 1})
+	_, err = wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: wasmApp.LastBlockHeight() + 1})
 	require.NoError(b, err)
 
 	return wasmApp
@@ -174,7 +174,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	// add wasm contract
 	height := int64(1)
 	txGen := moduletestutil.MakeTestEncodingConfig().TxConfig
-	_, err := wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height, Time: time.Now()})
+	_, err := wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: height, Time: time.Now()})
 	require.NoError(b, err)
 
 	// upload the code
@@ -228,7 +228,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	evt := res.Events[len(res.Events)-1]
 	attr := evt.Attributes[0]
 	contractAddr := attr.Value
-	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
+	_, err = wasmApp.FinalizeBlock(&abci.FinalizeBlockRequest{Height: height})
 	require.NoError(b, err)
 	_, err = wasmApp.Commit()
 	require.NoError(b, err)

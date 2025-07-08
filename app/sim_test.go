@@ -128,7 +128,7 @@ func TestAppImportExport(t *testing.T) {
 	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
-	initReq := &abci.RequestInitChain{
+	initReq := &abci.InitChainRequest{
 		AppStateBytes: exported.AppState,
 	}
 
@@ -242,7 +242,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
-	_, err = newApp.InitChain(&abci.RequestInitChain{
+	_, err = newApp.InitChain(&abci.InitChainRequest{
 		ChainId:       SimAppChainID,
 		AppStateBytes: exported.AppState,
 	})

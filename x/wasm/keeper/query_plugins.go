@@ -367,7 +367,7 @@ func AcceptListGrpcQuerier(acceptList AcceptedQueries, queryRouter GRPCQueryRout
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := handler(ctx, &abci.RequestQuery{
+		res, err := handler(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -425,7 +425,7 @@ func AcceptListStargateQuerier(acceptList AcceptedQueries, queryRouter GRPCQuery
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := route(ctx, &abci.RequestQuery{
+		res, err := route(ctx, &abci.QueryRequest{
 			Data: request.Data,
 			Path: request.Path,
 		})

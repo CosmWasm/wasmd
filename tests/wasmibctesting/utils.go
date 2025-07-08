@@ -259,7 +259,7 @@ func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response i
 		return err
 	}
 
-	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.QueryRequest{
 		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})
