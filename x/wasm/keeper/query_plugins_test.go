@@ -853,7 +853,7 @@ type mockedQueryRouter struct {
 }
 
 func (m mockedQueryRouter) Route(_ string) baseapp.GRPCQueryHandler {
-	return func(ctx sdk.Context, req *abci.RequestQuery) (*abci.ResponseQuery, error) {
+	return func(ctx sdk.Context, req *abci.QueryRequest) (*abci.QueryResponse, error) {
 		balanceReq := &banktypes.QueryBalanceRequest{}
 		if err := m.codec.Unmarshal(req.Data, balanceReq); err != nil {
 			return nil, err
@@ -869,7 +869,7 @@ func (m mockedQueryRouter) Route(_ string) baseapp.GRPCQueryHandler {
 			return nil, err
 		}
 
-		return &abci.ResponseQuery{
+		return &abci.QueryResponse{
 			Value: resValue,
 		}, nil
 	}
