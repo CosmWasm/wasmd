@@ -14,9 +14,9 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v2"
+	abci "github.com/cometbft/cometbft/v2/abci/types"
+	"github.com/cometbft/cometbft/v2/libs/rand"
 	dbm "github.com/cosmos/cosmos-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	client "github.com/cometbft/cometbft/rpc/client/http"
-	cmtypes "github.com/cometbft/cometbft/types"
+	client "github.com/cometbft/cometbft/v2/rpc/client/http"
+	cmtypes "github.com/cometbft/cometbft/v2/types"
 	"github.com/stretchr/testify/require"
 )
 

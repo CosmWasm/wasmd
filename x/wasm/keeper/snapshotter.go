@@ -5,7 +5,7 @@ import (
 	"io"
 	"math"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/cometbft/cometbft/api/cometbft/types/v2"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"

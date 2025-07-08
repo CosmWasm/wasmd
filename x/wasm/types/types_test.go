@@ -9,7 +9,7 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/v2/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

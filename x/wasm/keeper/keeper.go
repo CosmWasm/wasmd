@@ -111,7 +111,7 @@ type Keeper struct {
 	// txHash is a function to calculate the transaction hash from the raw transaction bytes.
 	// This is used to provide the transaction hash to the wasmvm engine and currently defaults to
 	// sha256 hashing, which is the hash currently used in CometBFT:
-	// https://github.com/cometbft/cometbft/blob/v1.0.1/crypto/tmhash/hash.go#L19-L22
+	// https://github.com/cometbft/cometbft/v2/blob/v1.0.1/crypto/tmhash/hash.go#L19-L22
 	txHash func([]byte) []byte
 
 	// wasmLimits contains the limits sent to wasmvm on init

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/v2/libs/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
