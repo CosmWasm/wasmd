@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/v2/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

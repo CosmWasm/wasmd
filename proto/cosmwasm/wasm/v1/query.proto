@@ -234,8 +234,9 @@ message QueryCodeInfoResponse {
 
   uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
   string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  bytes checksum = 3 [ (gogoproto.casttype) =
-                           "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
+  bytes checksum = 3
+      [ (gogoproto.casttype) =
+            "github.com/cometbft/cometbft/v2/libs/bytes.HexBytes" ];
   AccessConfig instantiate_permission = 4
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
@@ -251,7 +252,7 @@ message CodeInfoResponse {
   string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes data_hash = 3
       [ (gogoproto.casttype) =
-            "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
+            "github.com/cometbft/cometbft/v2/libs/bytes.HexBytes" ];
   // Used in v1beta1
   reserved 4, 5;
   AccessConfig instantiate_permission = 6
