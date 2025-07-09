@@ -31,15 +31,15 @@ const eventTypeMinLength = 2
 func newCustomEvents(evts wasmvmtypes.Array[wasmvmtypes.Event], contractAddr sdk.AccAddress) (sdk.Events, error) {
 	events := make(sdk.Events, 0, len(evts))
 	for _, e := range evts {
-		typ := strings.TrimSpace(e.Type)
-		if len(typ) <= eventTypeMinLength {
-			return nil, errorsmod.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Event type too short: '%s'", typ))
+		eventType := strings.TrimSpace(e.Type)
+		if len(eventType) <= eventTypeMinLength {
+			return nil, errorsmod.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Event type too short: '%s'", eventType))
 		}
 		attributes, err := contractSDKEventAttributes(e.Attributes, contractAddr)
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, sdk.NewEvent(fmt.Sprintf("%s%s", types.CustomContractEventPrefix, typ), attributes...))
+		events = append(events, sdk.NewEvent(fmt.Sprintf("%s%s", types.CustomContractEventPrefix, eventType), attributes...))
 	}
 	return events, nil
 }

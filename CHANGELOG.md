@@ -2,7 +2,13 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.2...HEAD)
+
+## [v0.54.2](https://github.com/CosmWasm/wasmd/tree/v0.54.2) (2025-07-09)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.54.2)
+
+- Bump cosmos-sdk to [v0.50.14](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.14) which includes a security fix to [ISA-2025-005](https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-p22h-3m2v-cmgh)
 
 ## [v0.54.0](https://github.com/CosmWasm/wasmd/tree/v0.54.0) (2025-01-08)
 
