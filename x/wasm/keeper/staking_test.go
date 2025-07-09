@@ -105,7 +105,7 @@ func TestInitializeStaking(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	// upload staking derivates code
+	// upload staking derivate code
 	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, _, err := keeper.Create(ctx, creator, stakingCode, nil)
@@ -124,7 +124,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivate - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -182,7 +182,7 @@ func initializeStaking(t *testing.T) initInfo {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	// upload staking derivates code
+	// upload staking derivate code
 	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, _, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
@@ -201,7 +201,7 @@ func initializeStaking(t *testing.T) initInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivate - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
