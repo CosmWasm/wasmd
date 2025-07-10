@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -414,13 +415,18 @@ func (c WasmdCli) SubmitAndVoteGovProposal(proposalJson string, args ...string) 
 	proposals := gjson.Get(raw, "proposals.#.id").Array()
 	require.NotEmpty(c.t, proposals, raw)
 	ourProposalID := proposals[len(proposals)-1].String() // last is ours
+
+	var wg sync.WaitGroup
+	wg.Add(c.nodesCount)
 	for i := 0; i < c.nodesCount; i++ {
 		go func(i int) { // do parallel
+			defer wg.Done()
 			c.t.Logf("Voting: validator %d\n", i)
 			rsp = c.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", c.GetKeyAddr(fmt.Sprintf("node%d", i)))
 			RequireTxSuccess(c.t, rsp)
 		}(i)
 	}
+	wg.Wait()
 	return ourProposalID
 }
 
