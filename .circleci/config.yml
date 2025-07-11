@@ -241,20 +241,6 @@ jobs:
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
 
-  release-tagged:
-    executor: golang
-    steps:
-      - checkout
-      - gh/setup:
-          token: WASMD_GITHUB_RELEASES_TOKEN
-      - run:
-          name: Create release
-          command: |
-            gh release create ${CIRCLE_TAG} \
-            --title "$CIRCLE_TAG" \
-            --draft \
-            --notes "See the [CHANGELOG](https://github.com/CosmWasm/wasmd/blob/${CIRCLE_TAG}/CHANGELOG.md) for details on the changes in this version."
-
 workflows:
   test-suite:
     jobs:
@@ -298,11 +284,3 @@ workflows:
       - simulations:
           requires:
             - setup-dependencies
-      - release-tagged:
-          filters:
-            tags:
-              only:
-                - /^v.*/
-            branches:
-              ignore:
-                - /.*/
