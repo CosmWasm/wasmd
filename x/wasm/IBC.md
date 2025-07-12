@@ -14,9 +14,10 @@ This documents how CosmWasm contracts are expected to interact with IBC.
   be stored in the ContractInfo. (For mock, we assume all contracts are IBC enabled)
   
 Also, please read the [IBC Docs](https://ibc.cosmos.network/v8/ibc/overview/)
-for detailed descriptions of the terms *Port*, *Client*, *Connection*,
-and *Channel*
-  
+for detailed descriptions of the terms [*Port*](https://ibc.cosmos.network/v8/ibc/overview/#ports),
+[*Client*](https://ibc.cosmos.network/v8/ibc/overview/#clients), [*Connection*](https://ibc.cosmos.network/v8/ibc/overview/#connections),
+and [*Channel*](https://ibc.cosmos.network/v8/ibc/overview/#channels)
+
 ## Overview
 
 We use "One Port per Contract", which is the most straight-forward mapping, treating each contract 
