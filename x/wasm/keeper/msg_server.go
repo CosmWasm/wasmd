@@ -392,7 +392,7 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 		return nil, errorsmod.Wrap(types.ErrInvalid, "permission")
 	}
 	addresses := params.CodeUploadAccess.Addresses
-	newAddresses := make([]string, 0)
+	newAddresses := make([]string, 0, len(addresses))
 	for _, addr := range addresses {
 		if slices.Contains(req.Addresses, addr) {
 			continue
