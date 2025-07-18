@@ -517,7 +517,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 		},
 		SilenceUsage: true,
 	}
-	// proposal flagsExecute
+	// proposal flags
 	addCommonProposalFlags(cmd)
 	return cmd
 }
