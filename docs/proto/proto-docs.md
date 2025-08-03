@@ -1554,7 +1554,7 @@ MsgExecuteContract submits the given message data to a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on execution |
@@ -1588,7 +1588,7 @@ code id.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
@@ -1609,7 +1609,7 @@ code id with a predictable address.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
@@ -1663,7 +1663,7 @@ MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
@@ -1945,7 +1945,7 @@ MsgUpdateAdmin sets a new admin for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `new_admin` | [string](#string) |  | NewAdmin address to be set |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 
@@ -1972,7 +1972,7 @@ MsgUpdateContractLabel sets a new label for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `new_label` | [string](#string) |  | NewLabel string to be set |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 
@@ -1999,7 +1999,7 @@ MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `code_id` | [uint64](#uint64) |  | CodeID references the stored WASM code |
 | `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission is the new access control |
 
