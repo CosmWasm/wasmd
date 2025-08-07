@@ -81,7 +81,7 @@ func (p *WasmVMMetricsCollector) Collect(c chan<- prometheus.Metric) {
 		}
 	}
 
-	// Node about fs metrics:
+	// Note about fs metrics:
 	// The number of elements and the size of elements in the file system cache cannot easily be obtained.
 	// We had to either scan the whole directory of potentially thousands of files or track the values when files are added or removed.
 	// Such a tracking would need to be on disk such that the values are not cleared when the node is restarted.
