@@ -37,7 +37,7 @@ type recurseResponse struct {
 	Hashed []byte `json:"hashed"`
 }
 
-// number os wasm queries called from a contract
+// number of wasm queries called from a contract
 var totalWasmQueryCounter int
 
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
