@@ -36,7 +36,7 @@ type replyer interface {
 	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error)
 }
 
-// MessageDispatcher coordinates message sending and submessage reply/ state commits
+// MessageDispatcher coordinates message sending and submessage reply/state commits
 type MessageDispatcher struct {
 	messenger Messenger
 	keeper    replyer
