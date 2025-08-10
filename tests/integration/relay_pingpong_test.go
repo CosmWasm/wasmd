@@ -33,7 +33,7 @@ func TestPingPong(t *testing.T) {
 	// custom IBC protocol example
 	// scenario: given two chains,
 	//           with a contract on chain A and chain B
-	//           when a ibc packet comes in, the contract responds with a new packet containing
+	//           when an ibc packet comes in, the contract responds with a new packet containing
 	//	         either ping or pong
 
 	pingContract := &player{t: t, actor: ping}
@@ -135,7 +135,7 @@ type player struct {
 }
 
 // Execute starts the ping pong game
-// Contracts finds all connected channels and broadcasts a ping message
+// Contract finds all connected channels and broadcasts a ping message
 func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 	p.execCalls++
 	// start game
