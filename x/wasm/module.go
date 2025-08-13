@@ -33,26 +33,37 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// Interface assertions to ensure AppModuleBasic and AppModule implement required interfaces
 var (
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// Module init related flags
+// Module initialization flags for configuring wasm module behavior
 const (
-	flagWasmMemoryCacheSize        = "wasm.memory_cache_size"
-	flagWasmQueryGasLimit          = "wasm.query_gas_limit"
-	flagWasmSimulationGasLimit     = "wasm.simulation_gas_limit"
+	// flagWasmMemoryCacheSize controls the size of in-memory cache for Wasm modules in MiB
+	flagWasmMemoryCacheSize = "wasm.memory_cache_size"
+	// flagWasmQueryGasLimit sets the maximum gas limit for smart contract queries
+	flagWasmQueryGasLimit = "wasm.query_gas_limit"
+	// flagWasmSimulationGasLimit sets the maximum gas limit for simulation transactions
+	flagWasmSimulationGasLimit = "wasm.simulation_gas_limit"
+	// flagWasmSkipWasmVMVersionCheck allows skipping the libwasmvm version compatibility check
 	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.
+// This struct implements the module.AppModuleBasic interface and provides
+// fundamental functionality like codec registration, CLI commands, and genesis handling.
 type AppModuleBasic struct{}
 
+// RegisterLegacyAminoCodec registers the wasm module's types with the legacy Amino codec.
+// This is required for backward compatibility with older clients.
 func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	types.RegisterLegacyAminoCodec(amino)
 }
 
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the wasm module.
+// This enables HTTP/JSON API access to the module's query endpoints.
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
 	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 	if err != nil {
@@ -60,13 +71,14 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serv
 	}
 }
 
-// Name returns the wasm module's name.
+// Name returns the wasm module's name as defined in the types package.
+// This name is used for routing and identification throughout the Cosmos SDK.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the wasm
-// module.
+// DefaultGenesis returns default genesis state as raw bytes for the wasm module.
+// This provides the initial state when a new blockchain is created.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(&types.GenesisState{
 		Params: types.DefaultParams(),
@@ -74,6 +86,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.
+// This ensures that the genesis state is valid before the blockchain starts.
 func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEncodingConfig, message json.RawMessage) error {
 	var data types.GenesisState
 	err := marshaler.UnmarshalJSON(message, &data)
@@ -83,38 +96,48 @@ func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEn
 	return types.ValidateGenesis(data)
 }
 
-// GetTxCmd returns the root tx command for the wasm module.
+// GetTxCmd returns the root transaction command for the wasm module.
+// This provides CLI commands for creating and managing wasm transactions.
 func (b AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns no root query command for the wasm module.
+// GetQueryCmd returns the root query command for the wasm module.
+// This provides CLI commands for querying wasm module state.
 func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// RegisterInterfaces implements InterfaceModule
+// RegisterInterfaces registers the wasm module's interfaces with the interface registry.
+// This enables proper serialization and deserialization of module types.
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
 // ____________________________________________________________________________
+// AppModule implementation
+
+// Interface assertion to ensure AppModule implements the appmodule.AppModule interface
 var _ appmodule.AppModule = AppModule{}
 
 // AppModule implements an application module for the wasm module.
+// This struct contains all the dependencies and state needed to run the wasm module
+// within a Cosmos SDK application.
 type AppModule struct {
 	AppModuleBasic
-	cdc                codec.Codec
-	keeper             *keeper.Keeper
-	validatorSetSource keeper.ValidatorSetSource
-	accountKeeper      types.AccountKeeper // for simulation
-	bankKeeper         simulation.BankKeeper
-	router             keeper.MessageRouter
+	cdc                codec.Codec               // Codec for serialization/deserialization
+	keeper             *keeper.Keeper            // Main keeper for wasm module state management
+	validatorSetSource keeper.ValidatorSetSource // Source for validator set information
+	accountKeeper      types.AccountKeeper       // Account keeper for simulation purposes
+	bankKeeper         simulation.BankKeeper     // Bank keeper for simulation purposes
+	router             keeper.MessageRouter      // Message router for handling wasm messages
 	// legacySubspace is used solely for migration of x/params managed parameters
+	// This field is deprecated and will be removed in future versions
 	legacySubspace exported.Subspace
 }
 
-// NewAppModule creates a new AppModule object
+// NewAppModule creates a new AppModule object with all required dependencies.
+// This constructor initializes the module with the necessary keepers and configuration.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper *keeper.Keeper,
@@ -137,23 +160,30 @@ func NewAppModule(
 }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+// This is a marker method that indicates this module should have only one instance per type.
 func (am AppModule) IsOnePerModuleType() { // marker
 }
 
 // IsAppModule implements the appmodule.AppModule interface.
+// This is a marker method that indicates this struct implements the AppModule interface.
 func (am AppModule) IsAppModule() { // marker
 }
 
-// ConsensusVersion is a sequence number for state-breaking change of the
-// module. It should be incremented on each consensus-breaking change
-// introduced by the module. To avoid wrong/empty versions, the initial version
-// should be set to 1.
+// ConsensusVersion is a sequence number for state-breaking changes of the module.
+// It should be incremented on each consensus-breaking change introduced by the module.
+// To avoid wrong/empty versions, the initial version should be set to 1.
+// Current version: 4 - indicates this module has had 4 major consensus-breaking changes.
 func (AppModule) ConsensusVersion() uint64 { return 4 }
 
+// RegisterServices registers the gRPC services for the wasm module.
+// This includes message server, query server, and migration handlers for state upgrades.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+	// Register message server for handling wasm transactions
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	// Register query server for handling wasm queries
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier(am.keeper))
 
+	// Register migration handlers for state upgrades
 	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
@@ -170,15 +200,19 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the wasm module invariants.
+// Currently, no invariants are registered for the wasm module.
+// Invariants are checks that should always be true and help detect state corruption.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {} // nolint: staticcheck // deprecated interface
 
 // QuerierRoute returns the wasm module's querier route name.
+// This is used for routing queries to the correct module handler.
 func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute
 }
 
-// InitGenesis performs genesis initialization for the wasm module. It returns
-// no validator updates.
+// InitGenesis performs genesis initialization for the wasm module.
+// This function is called when the blockchain starts and sets up the initial state.
+// It returns no validator updates as the wasm module doesn't manage validators.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
@@ -189,46 +223,64 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	return validators
 }
 
-// ExportGenesis returns the exported genesis state as raw bytes for the wasm
-// module.
+// ExportGenesis returns the exported genesis state as raw bytes for the wasm module.
+// This function is used to export the current state for genesis file generation.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	gs := keeper.ExportGenesis(ctx, am.keeper)
 	return cdc.MustMarshalJSON(gs)
 }
 
 // ____________________________________________________________________________
-
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the bank module.
+// GenerateGenesisState creates a randomized GenState of the wasm module.
+// This is used for simulation testing to generate random initial states.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
 }
 
 // ProposalMsgs returns msgs used for governance proposals for simulations.
+// This provides sample messages that can be used in governance proposal simulations.
 func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
 	return simulation.ProposalMsgs(am.bankKeeper, am.keeper)
 }
 
-// RegisterStoreDecoder registers a decoder for supply module's types
+// RegisterStoreDecoder registers a decoder for wasm module's types.
+// Currently, no store decoder is registered for the wasm module.
 func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {
 }
 
-// WeightedOperations returns the all the gov module operations with their respective weights.
+// WeightedOperations returns all the wasm module operations with their respective weights.
+// This is used for simulation testing to determine the frequency of different operations.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return simulation.WeightedOperations(simState.AppParams, am.accountKeeper, am.bankKeeper, am.keeper)
 }
 
 // ____________________________________________________________________________
+// Module initialization and configuration functions
 
 // AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
+// This function adds command-line flags for configuring the wasm module during node startup.
 func AddModuleInitFlags(startCmd *cobra.Command) {
 	defaults := types.DefaultNodeConfig()
-	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
-	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
-	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
-	startCmd.Flags().Bool(flagWasmSkipWasmVMVersionCheck, false, "Skip check that ensures that libwasmvm version (the Rust project) and wasmvm version (the Go project) match")
 
+	// Add flag for memory cache size configuration
+	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize,
+		"Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
+
+	// Add flag for query gas limit configuration
+	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit,
+		"Set the max gas that can be spent on executing a query with a Wasm contract")
+
+	// Add flag for simulation gas limit configuration
+	startCmd.Flags().String(flagWasmSimulationGasLimit, "",
+		"Set the max gas that can be spent when executing a simulation TX")
+
+	// Add flag to skip wasmvm version check
+	startCmd.Flags().Bool(flagWasmSkipWasmVMVersionCheck, false,
+		"Skip check that ensures that libwasmvm version (the Rust project) and wasmvm version (the Go project) match")
+
+	// Pre-run check function to validate wasmvm version compatibility
 	preCheck := func(cmd *cobra.Command, _ []string) error {
 		skip, err := cmd.Flags().GetBool(flagWasmSkipWasmVMVersionCheck)
 		if err != nil {
@@ -243,20 +295,27 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
 
-// ReadNodeConfig reads the node specific configuration
+// ReadNodeConfig reads the node-specific configuration from application options.
+// This function parses the command-line flags and environment variables to configure the wasm module.
 func ReadNodeConfig(opts servertypes.AppOptions) (types.NodeConfig, error) {
 	cfg := types.DefaultNodeConfig()
 	var err error
+
+	// Parse memory cache size configuration
 	if v := opts.Get(flagWasmMemoryCacheSize); v != nil {
 		if cfg.MemoryCacheSize, err = cast.ToUint32E(v); err != nil {
 			return cfg, err
 		}
 	}
+
+	// Parse query gas limit configuration
 	if v := opts.Get(flagWasmQueryGasLimit); v != nil {
 		if cfg.SmartQueryGasLimit, err = cast.ToUint64E(v); err != nil {
 			return cfg, err
 		}
 	}
+
+	// Parse simulation gas limit configuration
 	if v := opts.Get(flagWasmSimulationGasLimit); v != nil {
 		if raw, ok := v.(string); !ok || raw != "" {
 			limit, err := cast.ToUint64E(v) // non empty string set
@@ -266,7 +325,8 @@ func ReadNodeConfig(opts servertypes.AppOptions) (types.NodeConfig, error) {
 			cfg.SimulationGasLimit = &limit
 		}
 	}
-	// attach contract debugging to global "trace" flag
+
+	// Attach contract debugging to global "trace" flag
 	if v := opts.Get(server.FlagTrace); v != nil {
 		if cfg.ContractDebugMode, err = cast.ToBoolE(v); err != nil {
 			return cfg, err
@@ -275,6 +335,8 @@ func ReadNodeConfig(opts servertypes.AppOptions) (types.NodeConfig, error) {
 	return cfg, nil
 }
 
+// getExpectedLibwasmVersion retrieves the expected libwasmvm version from go.mod dependencies.
+// This function reads the build information to determine the expected version of the wasmvm library.
 func getExpectedLibwasmVersion() string {
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -293,7 +355,7 @@ func getExpectedLibwasmVersion() string {
 }
 
 // CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
-// of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
+// of the github.com/CosmWasm/wasmvm dependency in go.mod. This is useful when dealing with
 // shared libraries that are copied or moved from their default location, e.g. when building the node
 // on one machine and deploying it to other machines.
 //
@@ -317,8 +379,12 @@ func CheckLibwasmVersion(wasmExpectedVersion string) error {
 	return nil
 }
 
+// preRunFn defines the type for pre-run functions that can be chained together
 type preRunFn func(cmd *cobra.Command, args []string) error
 
+// chainPreRuns chains multiple pre-run functions together.
+// This function executes each pre-run function in sequence, stopping if any returns an error.
+// It's used to combine multiple validation or setup functions that need to run before command execution.
 func chainPreRuns(pfns ...preRunFn) preRunFn {
 	return func(cmd *cobra.Command, args []string) error {
 		for _, pfn := range pfns {
