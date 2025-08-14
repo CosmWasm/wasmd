@@ -23,7 +23,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// test handing of submessages, very closely related to the reflect_test
+// test handling of submessages, very closely related to the reflect_test
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
@@ -562,7 +562,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	var instanceLevel int
-	// mock wasvm to return new instantiate msgs with the response
+	// mock wasmvm to return new instantiate msgs with the response
 	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		if instanceLevel == 2 {
 			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 0, nil
