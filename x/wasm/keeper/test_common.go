@@ -442,7 +442,7 @@ func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgS
 	}
 
 	return &sdk.Result{
-		Data:   []byte(fmt.Sprintf("%d", codeID)),
+		Data:   fmt.Appendf(nil, "%d", codeID),
 		Events: ctx.EventManager().ABCIEvents(),
 	}, nil
 }

@@ -231,7 +231,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: &mockReplyer{
 				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
-					return []byte(fmt.Sprintf("myReplyData:%d", reply.ID)), nil
+					return fmt.Appendf(nil, "myReplyData:%d", reply.ID), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{

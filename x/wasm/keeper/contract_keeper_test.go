@@ -143,7 +143,7 @@ func TestInstantiate2(t *testing.T) {
 			codeID:  example.CodeID,
 			sender:  otherAddr,
 			salt:    []byte(mySalt),
-			initMsg: []byte(fmt.Sprintf(`{"foo":%q}`, strings.Repeat("b", math.MaxInt16+1))), // too long kills CI
+			initMsg: fmt.Appendf(nil, `{"foo":%q}`, strings.Repeat("b", math.MaxInt16+1)), // too long kills CI
 			fixMsg:  true,
 		},
 	}
