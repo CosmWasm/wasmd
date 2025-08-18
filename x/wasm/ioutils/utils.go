@@ -17,7 +17,7 @@ var (
 	wasmIdent = []byte("\x00\x61\x73\x6D")
 )
 
-// IsGzip returns checks if the file contents are gzip compressed
+// IsGzip checks if the file contents are gzip compressed
 func IsGzip(input []byte) bool {
 	return len(input) >= 3 && bytes.Equal(gzipIdent, input[0:3])
 }
