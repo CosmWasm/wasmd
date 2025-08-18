@@ -13,7 +13,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// newWasmModuleEvent creates with wasm module event for interacting with the given contract. Adds custom attributes
+// newWasmModuleEvent creates a wasm module event for interacting with the given contract. Adds custom attributes
 // to this event.
 func newWasmModuleEvent(customAttributes []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) (sdk.Events, error) {
 	attrs, err := contractSDKEventAttributes(customAttributes, contractAddr)
