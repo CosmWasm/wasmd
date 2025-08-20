@@ -545,7 +545,7 @@ func (u UndefinedLimit) ValidateBasic() error {
 
 // Accept always returns error
 func (u UndefinedLimit) Accept(_ sdk.Context, _ AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
-	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
+	return nil, sdkerrors.ErrNotFound.Wrapf("undefined limit")
 }
 
 // NewMaxCallsLimit constructor
