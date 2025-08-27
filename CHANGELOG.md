@@ -2,13 +2,19 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.2...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.3...HEAD)
 
-## [v0.61.2](https://github.com/CosmWasm/wasmd/tree/v0.61.2) (2025-08-27)
+## [v0.61.3](https://github.com/CosmWasm/wasmd/tree/v0.61.3) (2025-08-27)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.2...v0.61.3)
+
+- Bump wasmvm to v3.0.1 [\#2355](https://github.com/CosmWasm/wasmd/pull/2355)
+
+## [v0.61.2](https://github.com/CosmWasm/wasmd/tree/v0.61.2) (2025-07-29)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.1...v0.61.2)
 
-- Bump wasmvm to v3.0.1 [\#2355](https://github.com/CosmWasm/wasmd/pull/2355)
+- Bump cosmos-sdk to v0.53.4 [\#2334](https://github.com/CosmWasm/wasmd/pull/2334)
 
 ## [v0.61.1](https://github.com/CosmWasm/wasmd/tree/v0.61.1) (2025-07-08)
 
