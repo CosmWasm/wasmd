@@ -665,7 +665,7 @@ func parsePinCodesArgs(args []string) ([]uint64, error) {
 func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unpin-codes [code-ids] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a unpin code proposal for unpinning a code to cache",
+		Short: "Submit an unpin code proposal for unpinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, expedite, err := getProposalInfo(cmd)
@@ -768,7 +768,7 @@ func ProposalUpdateInstantiateConfigCmd() *cobra.Command {
 		Short: "Submit an update instantiate config proposal.",
 		Args:  cobra.MinimumNArgs(1),
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit an update instantiate config  proposal for multiple code ids.
+			fmt.Sprintf(`Submit an update instantiate config proposal for multiple code ids.
 
 Example:
 $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
