@@ -249,7 +249,7 @@ func (s *SystemUnderTest) AwaitUpgradeInfo(t *testing.T) {
 			case err == nil:
 				found = true
 			case !os.IsNotExist(err):
-				t.Fatalf(err.Error())
+				t.Fatalf("upgrade error: %v", err)
 			}
 		})
 		time.Sleep(s.blockTime / 2)

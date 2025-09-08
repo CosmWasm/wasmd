@@ -1,8 +1,6 @@
 module github.com/CosmWasm/wasmd
 
-go 1.23.8
-
-toolchain go1.24.3
+go 1.24
 
 require (
 	github.com/CosmWasm/wasmvm/v3 v3.0.2
