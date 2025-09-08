@@ -416,7 +416,7 @@ func isSubset(super, sub []string) bool {
 	if len(sub) == 0 {
 		return true
 	}
-	var matches int
+	matches := 0
 	for _, o := range sub {
 		if slices.Contains(super, o) {
 			matches++
