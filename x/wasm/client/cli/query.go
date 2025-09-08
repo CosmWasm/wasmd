@@ -366,7 +366,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "raw [bech32_address] [key]",
 		Short: "Prints out internal state for key of a contract given its address",
-		Long:  "Prints out internal state for of a contract given its address",
+		Long:  "Prints out internal state of a contract given its address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
