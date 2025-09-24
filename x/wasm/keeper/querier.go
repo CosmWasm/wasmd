@@ -422,6 +422,49 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	}, nil
 }
 
+func (q GrpcQuerier) ContractsByCodeAndCreator(c context.Context, req *types.QueryContractsByCodeAndCreatorRequest) (*types.QueryContractsByCodeAndCreatorResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	paginationParams, err := ensurePaginationParams(req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	contracts := make([]string, 0)
+
+	creatorAddress, err := sdk.AccAddressFromBech32(req.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	codeIdPrefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
+	creatorPrefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
+
+	// Find contracts that match both creator and code ID
+	pageRes, err := query.FilteredPaginate(codeIdPrefixStore, paginationParams, func(key, _ []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			// Extract contract address from creator store key
+			contractAddr := key[types.AbsoluteTxPositionLen:]
+
+			// Check if this contract exists in the code ID store
+			if creatorPrefixStore.Has(key) {
+				contracts = append(contracts, sdk.AccAddress(contractAddr).String())
+			}
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryContractsByCodeAndCreatorResponse{
+		ContractAddresses: contracts,
+		Pagination:        pageRes,
+	}, nil
+}
+
 // max limit to pagination queries
 const maxResultEntries = 100
 
