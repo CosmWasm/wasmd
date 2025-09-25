@@ -188,7 +188,7 @@ func BenchmarkUnpackAny(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.Logf("%s msg size %v", name, len(tc.msg.Value))
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				var msg sdk.Msg
 				err := cdc.UnpackAny(tc.msg, &msg)
 				if tc.expErr {

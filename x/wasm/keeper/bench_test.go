@@ -28,7 +28,7 @@ func BenchmarkGasNormalization(b *testing.B) {
 		b.Fatal(err)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		pub.VerifySignature(message, signature)
 	}
 }
@@ -58,7 +58,7 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 				require.NoError(b, keepers.ContractKeeper.PinCode(ctx, example.CodeID))
 			}
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, err := keepers.WasmKeeper.QuerySmart(ctx, example.Contract, []byte(`{"verifier":{}}`))
 				require.NoError(b, err)
 			}
@@ -95,7 +95,7 @@ func BenchmarkCompilation(b *testing.B) {
 			b.Logf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b(size: %d)  ", len(code))
 
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = StoreExampleContract(b, ctx, keepers, spec.wasmFile)
 			}
 		})
