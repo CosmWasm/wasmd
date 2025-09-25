@@ -1388,7 +1388,7 @@ var (
 
 	pattern_Query_WasmLimitsConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"cosmwasm", "wasm", "v1", "wasm-limits-config"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BuildAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"cosmwasm", "wasm", "v1", "contract", "build_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BuildAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"cosmwasm", "wasm", "v1", "build_address"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
