@@ -905,17 +905,7 @@ func NewWasmApp(
 	// upgrade.
 	app.setPostHandler()
 
-	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			panic(fmt.Errorf("error loading last version: %w", err))
-		}
-		ctx := app.NewUncachedContext(true, tmproto.Header{})
-
-		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
-		}
-	}
+	app.setPinnedCodes(loadLatest)
 
 	return app
 }
@@ -954,6 +944,20 @@ func (app *WasmApp) setPostHandler() {
 	}
 
 	app.SetPostHandler(postHandler)
+}
+
+func (app *WasmApp) setPinnedCodes(loadLatest bool) {
+	if loadLatest {
+		if err := app.LoadLatestVersion(); err != nil {
+			panic(fmt.Errorf("error loading last version: %w", err))
+		}
+		ctx := app.NewUncachedContext(true, tmproto.Header{})
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
+		}
+	}
 }
 
 // Name returns the name of the App
