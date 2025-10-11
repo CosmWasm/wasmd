@@ -79,7 +79,7 @@ type WasmVMResponseHandler interface {
 // list of account types that are accepted for wasm contracts. Chains importing wasmd
 // can overwrite this list with the WithAcceptedAccountTypesOnContractInstantiation option.
 var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
-	reflect.TypeOf(&authtypes.BaseAccount{}): {},
+	reflect.TypeFor[*authtypes.BaseAccount](): {},
 }
 
 // Keeper will have a reference to Wasm Engine with it's own data directory.
