@@ -898,7 +898,6 @@ func TestGRPCQuerier(t *testing.T) {
 	errorsCount := atomic.Uint64{}
 	for range 50 {
 		for _, denom := range []string{denom1, denom2} {
-			denom := denom // copy
 			eg.Go(func() error {
 				queryReq := &banktypes.QueryBalanceRequest{
 					Address: addr,
