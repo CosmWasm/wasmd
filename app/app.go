@@ -971,9 +971,6 @@ func (app *WasmApp) setPostHandler() {
 	app.SetPostHandler(postHandler)
 }
 
-// Name returns the name of the App
-func (app *WasmApp) Name() string { return app.Name() }
-
 // PreBlocker application updates every pre block
 func (app *WasmApp) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
 	return app.ModuleManager.PreBlock(ctx)
