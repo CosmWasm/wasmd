@@ -1,0 +1,47 @@
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  IMAGE_NAME: cosmwasm/wasmd
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          TAG=${{ github.ref_name }}
+          docker build --pull -t $IMAGE_NAME:$TAG .
+
+      - name: Push Docker image
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          TAG=${{ github.ref_name }}
+          echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+          docker push $IMAGE_NAME:$TAG
+          docker logout
+
+      - name: Draft GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ github.ref_name }}
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --draft \
+            --notes "See the [CHANGELOG](https://github.com/CosmWasm/wasmd/blob/$TAG/CHANGELOG.md) for details on the changes in this version."
