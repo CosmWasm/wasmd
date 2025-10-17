@@ -54,7 +54,6 @@ func (app *WasmApp) ExportAppStateAndValidators(forZeroHeight bool, jailAllowedA
 //
 //	in favor of export at a block height
 func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
-
 	applyAllowedAddrs := len(jailAllowedAddrs) > 0
 	allowedAddrsMap := make(map[string]bool)
 
