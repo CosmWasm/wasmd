@@ -153,6 +153,9 @@ func (m *IBCContractKeeperMock) StoreAsyncAckPacket(ctx context.Context, packet 
 }
 
 func (m *IBCContractKeeperMock) DeleteAsyncAckPacket(ctx context.Context, portID, channelID string, sequence uint64) {
+	if m.packets == nil {
+		return
+	}
 	key := portID + fmt.Sprint(len(channelID)) + channelID
 	delete(m.packets, key)
 }
