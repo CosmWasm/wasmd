@@ -93,7 +93,7 @@ func GetContractByCreatedSecondaryIndexKey(contractAddr sdk.AccAddress, c Contra
 	return r
 }
 
-// GetContractByCodeIDSecondaryIndexPrefix returns the prefix for the second index: `<prefix><codeID>`
+// GetContractByCodeIDSecondaryIndexPrefix returns the prefix for the secondary index: `<prefix><codeID>`
 func GetContractByCodeIDSecondaryIndexPrefix(codeID uint64) []byte {
 	prefixLen := len(ContractByCodeIDAndCreatedSecondaryIndexPrefix)
 	const codeIDLen = 8
@@ -116,7 +116,7 @@ func GetContractByCreatorSecondaryIndexKey(bz, position []byte, contractAddr sdk
 	return r
 }
 
-// GetContractCodeHistoryElementKey returns the key a contract code history entry: `<prefix><contractAddr><position>`
+// GetContractCodeHistoryElementKey returns the key for a contract code history entry: `<prefix><contractAddr><position>`
 func GetContractCodeHistoryElementKey(contractAddr sdk.AccAddress, pos uint64) []byte {
 	prefix := GetContractCodeHistoryElementPrefix(contractAddr)
 	prefixLen := len(prefix)
