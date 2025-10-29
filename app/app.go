@@ -239,6 +239,16 @@ func NewWasmApp(
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
+	// Validate critical input parameters
+	if logger == nil {
+		panic("logger is required for WasmApp")
+	}
+	if db == nil {
+		panic("database is required for WasmApp")
+	}
+	if appOpts == nil {
+		panic("app options are required for WasmApp")
+	}
 	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
