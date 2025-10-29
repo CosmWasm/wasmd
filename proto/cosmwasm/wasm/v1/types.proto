@@ -88,13 +88,14 @@ message ContractInfo {
   // Created Tx position when the contract was instantiated.
   AbsoluteTxPosition created = 5;
   string ibc_port_id = 6 [ (gogoproto.customname) = "IBCPortID" ];
-  string ibc2_port_id = 7 [ (gogoproto.customname) = "IBC2PortID" ];
 
   // Extension is an extension point to store custom metadata within the
   // persistence model.
-  google.protobuf.Any extension = 8
+  google.protobuf.Any extension = 7
       [ (cosmos_proto.accepts_interface) =
             "cosmwasm.wasm.v1.ContractInfoExtension" ];
+
+  string ibc2_port_id = 8 [ (gogoproto.customname) = "IBC2PortID" ];
 }
 
 // ContractCodeHistoryOperationType actions that caused a code change
