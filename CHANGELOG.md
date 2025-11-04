@@ -2,7 +2,14 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.4...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.5...HEAD)
+
+## [v0.61.5](https://github.com/CosmWasm/wasmd/tree/v0.61.5) (2025-11-04)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.4...v0.61.5)
+
+- Fix ContractInfo protobuf message [\#2390](https://github.com/CosmWasm/wasmd/pull/2390)
+- Retracted v0.61.0 v0.61.1 v0.61.2 v0.61.3 v0.61.4 because of unnecessary api breaking changes. See https://github.com/CosmWasm/wasmd/issues/2386 for more details.
 
 ## [v0.61.4](https://github.com/CosmWasm/wasmd/tree/v0.61.4) (2025-08-29)
 
