@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // Genesis-specific exports for custom genesis tooling and external integrations.
