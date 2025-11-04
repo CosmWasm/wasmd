@@ -245,6 +245,16 @@ replace (
 )
 
 retract (
+	// see https://github.com/CosmWasm/wasmd/issues/2386
+	v0.61.4
+	// see https://github.com/CosmWasm/wasmd/issues/2386
+	v0.61.3
+	// see https://github.com/CosmWasm/wasmd/issues/2386
+	v0.61.2
+	// see https://github.com/CosmWasm/wasmd/issues/2386
+	v0.61.1
+	// see https://github.com/CosmWasm/wasmd/issues/2386
+	v0.61.0
 	// see https://github.com/CosmWasm/wasmd/issues/1713
 	v0.44.0
 	// see https://github.com/CosmWasm/wasmd/issues/1713
