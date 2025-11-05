@@ -66,8 +66,6 @@ func NewKeeper(
 	for _, o := range preOpts {
 		o.apply(keeper)
 	}
-	// always wrap the messenger, even if it was replaced by an option
-	keeper.messenger = callDepthMessageHandler{keeper.messenger, keeper.maxCallDepth}
 	// only set the wasmvm if no one set this in the options
 	// NewVM does a lot, so better not to create it and silently drop it.
 	if keeper.wasmVM == nil {
