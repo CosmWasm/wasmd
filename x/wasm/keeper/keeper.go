@@ -1287,6 +1287,11 @@ func (k *Keeper) handleContractResponse(
 		}
 		ctx.EventManager().EmitEvents(customEvents)
 	}
+	// keep track of call depth
+	ctx, err := checkAndIncreaseCallDepth(ctx, k.maxCallDepth)
+	if err != nil {
+		return nil, err
+	}
 	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, ibcPort, msgs, data)
 }
 
