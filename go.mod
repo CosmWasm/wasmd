@@ -49,7 +49,7 @@ require (
 	github.com/distribution/reference v0.5.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.21.0
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a
 )
 
