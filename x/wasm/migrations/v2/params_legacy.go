@@ -38,7 +38,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
-func validateAccessConfig(i interface{}) error {
+func validateAccessConfig(i any) error {
 	v, ok := i.(AccessConfig)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -53,7 +53,7 @@ var AllAccessTypes = []AccessType{
 	AccessTypeEverybody,
 }
 
-func validateAccessType(i interface{}) error {
+func validateAccessType(i any) error {
 	a, ok := i.(AccessType)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

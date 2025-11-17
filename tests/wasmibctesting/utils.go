@@ -244,7 +244,7 @@ func (chain *WasmTestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.P
 // SmartQuery This will serialize the query message and submit it to the contract.
 // The response is parsed into the provided interface.
 // Usage: SmartQuery(addr, QueryMsg{Foo: 1}, &response)
-func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response interface{}) error {
+func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response any) error {
 	msg, err := json.Marshal(queryMsg)
 	if err != nil {
 		return err
