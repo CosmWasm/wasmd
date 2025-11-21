@@ -57,13 +57,13 @@ func must[t any](s t, err error) t {
 	return s
 }
 
-func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
+func mustUnmarshal(t *testing.T, data []byte, res any) {
 	t.Helper()
 	err := json.Unmarshal(data, res)
 	require.NoError(t, err)
 }
 
-func mustMarshal(t *testing.T, r interface{}) []byte {
+func mustMarshal(t *testing.T, r any) []byte {
 	t.Helper()
 	bz, err := json.Marshal(r)
 	require.NoError(t, err)

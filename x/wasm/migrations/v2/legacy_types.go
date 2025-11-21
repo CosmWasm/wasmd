@@ -316,7 +316,7 @@ var fileDescriptor_e6155d98fa173e02 = []byte{
 	0x00,
 }
 
-func (m *AccessTypeParam) Equal(that interface{}) bool {
+func (m *AccessTypeParam) Equal(that any) bool {
 	if that == nil {
 		return m == nil
 	}
@@ -341,7 +341,7 @@ func (m *AccessTypeParam) Equal(that interface{}) bool {
 	return true
 }
 
-func (m *AccessConfig) Equal(that interface{}) bool {
+func (m *AccessConfig) Equal(that any) bool {
 	if that == nil {
 		return m == nil
 	}
@@ -377,7 +377,7 @@ func (m *AccessConfig) Equal(that interface{}) bool {
 	return true
 }
 
-func (m *Params) Equal(that interface{}) bool {
+func (m *Params) Equal(that any) bool {
 	if that == nil {
 		return m == nil
 	}
@@ -405,7 +405,7 @@ func (m *Params) Equal(that interface{}) bool {
 	return true
 }
 
-func (m *CodeInfo) Equal(that interface{}) bool {
+func (m *CodeInfo) Equal(that any) bool {
 	if that == nil {
 		return m == nil
 	}

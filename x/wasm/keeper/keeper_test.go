@@ -1526,7 +1526,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	_, err = keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	type dict map[string]interface{}
+	type dict map[string]any
 	expEvents := []dict{
 		{
 			"Type": "migrate",
@@ -1746,7 +1746,7 @@ func prettyEvents(t *testing.T, events sdk.Events) string {
 	return string(mustMarshal(t, r))
 }
 
-func mustMarshal(t *testing.T, r interface{}) []byte {
+func mustMarshal(t *testing.T, r any) []byte {
 	t.Helper()
 	bz, err := json.Marshal(r)
 	require.NoError(t, err)

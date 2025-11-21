@@ -120,7 +120,7 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 		consumeGas  storetypes.Gas
 		maxBlockGas int64
 		simulation  bool
-		expErr      interface{}
+		expErr      any
 	}{
 		"custom limit set": {
 			customLimit: &hundred,
