@@ -29,7 +29,7 @@ var (
 	ReflectCapabilities   = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
 )
 
-func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
+func mustUnmarshal(t *testing.T, data []byte, res any) {
 	t.Helper()
 	err := json.Unmarshal(data, res)
 	require.NoError(t, err)

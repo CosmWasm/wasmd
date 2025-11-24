@@ -152,7 +152,7 @@ func (e WasmVMFlavouredError) Wrap(desc string) error { return errorsmod.Wrap(e,
 
 // Wrapf extends this error with additional information.
 // It's a handy function to call Wrapf with sdk errors.
-func (e WasmVMFlavouredError) Wrapf(desc string, args ...interface{}) error {
+func (e WasmVMFlavouredError) Wrapf(desc string, args ...any) error {
 	return errorsmod.Wrapf(e, desc, args...)
 }
 
