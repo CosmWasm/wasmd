@@ -73,7 +73,7 @@ Dependency resolution in Go is not obvious. In case of doubt, please use
 `go list -m github.com/CosmWasm/wasmvm` to get the dynamically calculated version of the wasmvm dependency. Also check
 
 ```sh
-# Replace <node> with you binary name
+# Replace <node> with your binary name
 <node> query wasm libwasmvm-version
 ```
 
