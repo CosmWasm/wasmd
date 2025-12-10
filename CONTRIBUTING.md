@@ -22,7 +22,7 @@ contributors, the general procedure for contributing has been established:
 5. To submit your work as a contribution to the repository follow standard GitHub best practices. See [pull request guideline](#pull-requests) below.
 
 **Note:** For very small or blatantly obvious problems such as typos, you are
-not required to an open issue to submit a PR, but be aware that for more complex
+not required to open an issue to submit a PR, but be aware that for more complex
 problems/features, if a PR is opened before an adequate design discussion has
 taken place in a GitHub issue, that PR runs a high likelihood of being rejected.
 
@@ -62,7 +62,7 @@ Then:
 2. When the code is complete, change your PR from `Draft` to `Ready for Review`.
 3. Be sure to include a relevant changelog entry in the `Unreleased` section of `CHANGELOG.md` (see file for log format). The entry should be on top of all others changes in the section.
 
-PRs name should start upper case.
+PR names should start with an uppercase letter.
 Additionally, each PR should only address a single issue.
 
 NOTE: when merging, GitHub will squash commits and rebase on top of the main.
