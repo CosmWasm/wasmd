@@ -25,7 +25,7 @@ like a module. It does lead to very long portIDs however. Pay special attention 
 (which should be compatible with standard ICS20 modules without changes on their part), as well
 as how contracts can properly identify their counterparty.
 
-(We considered on port for the `x/wasm` module and multiplexing on it, but [dismissed that idea](#rejected-ideas))
+(We considered one port for the `x/wasm` module and multiplexing on it, but [dismissed that idea](#rejected-ideas))
 
 * Upon `Instantiate`, if a contract is *IBC Enabled*, we dynamically 
   bind a port for this contract. The port name is `wasm.<contract address>`,
@@ -61,7 +61,7 @@ module and must be created by the same means as for `ibc-transfer`
 For mocks, all the Packet Handling and Channel Lifecycle Hooks are routed 
 to some Golang stub handler, but containing the contract address, so we
 can perform contract-specific actions for each packet. In a real setting,
-we route to the contract that owns the port/channel and call one of it's various
+we route to the contract that owns the port/channel and call one of its various
 entry points.
 
 Please refer to the CosmWasm repo for all 
