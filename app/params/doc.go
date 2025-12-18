@@ -1,7 +1,7 @@
 /*
 Package params defines the simulation parameters in the gaia.
 
-It contains the default weights used for each transactions used in the module's
+It contains the default weights used for each transaction used in the module's
 simulation. These weights define the chance for a transaction to be simulated at
 any given operation.
 
