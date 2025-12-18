@@ -59,7 +59,7 @@ was sent:
 }
 ```
 
-If any funds were transferred to the contract as part of the message, or if the contract released funds as part of it's executions,
+If any funds were transferred to the contract as part of the message, or if the contract released funds as part of its executions,
 it will receive the typical events associated with sending tokens from bank. In this case, we instantiate the contract and
 provide an initial balance in the same `MsgInstantiateContract`. We see the following events in addition to the above one:
 
