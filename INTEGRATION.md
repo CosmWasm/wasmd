@@ -42,8 +42,8 @@ hardware it runs on.
 
 We currently only support Intel/AMD64 CPUs and OSX or Linux. For Linux, the standard build
 commands work for `glibc` systems (Ubuntu, Debian, CentOS, etc). If you wish to compile
-for a `muslc` based system (like Alpine), you need to compile the static library `wasmvm` locally
-and compile go with the `muslc` build tag. Or just use the [Dockerfile](./Dockerfile),
+for a `musl` based system (like Alpine), you need to compile the static library `wasmvm` locally
+and compile go with the `musl` build tag. Or just use the [Dockerfile](./Dockerfile),
 which builds a static go binary in an Alpine system.
 
 This limit comes from the Rust dll we use to run the wasm code, which comes 
