@@ -29,7 +29,7 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 	}{
 		"simulation": {
 			gas:           "auto",
-			expErrMatcher: ErrOutOfGasMatcher,
+			expErrMatcher: ErrMaxCallDepthMatcher,
 		},
 	}
 	for name, spec := range specs {
