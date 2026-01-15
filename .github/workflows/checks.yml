@@ -87,7 +87,7 @@ jobs:
           done
 
       - name: Upload coverage and logs
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-${{ matrix.shard }}
           path: |
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload test system artifacts
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-system-artifacts
           path: /tmp/test-system-artifacts
