@@ -7,6 +7,7 @@ import (
 	v1 "github.com/CosmWasm/wasmd/x/wasm/migrations/v1"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	v3 "github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
+	v4_xion "github.com/CosmWasm/wasmd/x/wasm/migrations/v4_xion"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -35,4 +36,11 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 // version 3 to version 4.
 func (m Migrator) Migrate3to4(ctx sdk.Context) error {
 	return v3.NewMigrator(m.keeper, m.keeper.mustStoreCodeInfo).Migrate3to4(ctx, m.keeper.storeService, m.keeper.cdc)
+}
+
+// Migrate4to5 migrates the x/wasm module state from the consensus
+// version 4 to version 5. This migration fixes the ContractInfo field order
+// swap between v0.61.2 (incorrect) and v0.61.6 (correct).
+func (m Migrator) Migrate4to5(ctx sdk.Context) error {
+	return v4_xion.NewMigrator(m.keeper.mustStoreContractInfo).Migrate4to5(ctx, m.keeper.storeService, m.keeper.cdc)
 }
