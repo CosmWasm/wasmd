@@ -57,7 +57,7 @@ func parseMigrateContractArgs(args []string, sender string) (types.MsgMigrateCon
 	return msg, msg.ValidateBasic()
 }
 
-// UpdateContractAdminCmd sets an new admin for a contract
+// UpdateContractAdminCmd sets a new admin for a contract
 func UpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
@@ -158,7 +158,7 @@ func UpdateInstantiateConfigCmd() *cobra.Command {
 	return cmd
 }
 
-// UpdateContractLabelCmd sets an new label for a contract
+// UpdateContractLabelCmd sets a new label for a contract
 func UpdateContractLabelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-contract-label [contract_addr_bech32] [new_label]",
