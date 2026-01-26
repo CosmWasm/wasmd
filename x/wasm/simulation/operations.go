@@ -418,7 +418,7 @@ type MsgExecutePayloader func(msg *types.MsgExecuteContract) error
 // MsgExecuteSenderSelector extension point that returns the sender address
 type MsgExecuteSenderSelector func(wasmKeeper WasmKeeper, ctx sdk.Context, contractAddr sdk.AccAddress, accs []simtypes.Account) (simtypes.Account, error)
 
-// SimulateMsgExecuteContract create a execute message a reflect contract instance
+// SimulateMsgExecuteContract create an execute message a reflect contract instance
 func SimulateMsgExecuteContract(
 	ak types.AccountKeeper,
 	bk BankKeeper,
