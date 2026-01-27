@@ -177,7 +177,7 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 Available Commands:
   add-code-upload-params-addresses    Submit an add code upload params addresses proposal to add addresses to code upload config params
   clear-contract-admin                Submit a clear admin for a contract to prevent further migrations proposal
-  execute-contract                    Submit a execute wasm contract proposal (run by any address)
+  execute-contract                    Submit an execute wasm contract proposal (run by any address)
   instantiate-contract                Submit an instantiate wasm contract proposal
   instantiate-contract-2              Submit an instantiate wasm contract proposal with predictable address
   migrate-contract                    Submit a migrate wasm contract to a new code version proposal
@@ -186,7 +186,7 @@ Available Commands:
   set-contract-admin                  Submit a new admin for a contract proposal
   store-instantiate                   Submit and instantiate a wasm contract proposal
   sudo-contract                       Submit a sudo wasm contract proposal (to call privileged commands)
-  unpin-codes                         Submit a unpin code proposal for unpinning a code to cache
+  unpin-codes                         Submit an unpin code proposal for unpinning a code to cache
   update-instantiate-config           Submit an update instantiate config proposal.
   wasm-store                          Submit a wasm binary proposal
 ...
