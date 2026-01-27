@@ -425,7 +425,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 func ProposalExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "execute-contract [contract_addr_bech32] [json_encoded_execution_args] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a execute wasm contract proposal (run by any address)",
+		Short: "Submit an execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, expedite, err := getProposalInfo(cmd)
