@@ -82,7 +82,7 @@ func TestPinPong(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 	coordinator.SetupConnections(&path.Path)
-	coordinator.CreateChannels(&path.Path)
+	path.CreateChannels()
 
 	// trigger start game via execute
 	const startValue uint64 = 100
