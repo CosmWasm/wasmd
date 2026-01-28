@@ -65,7 +65,7 @@ func NewWasmTestChain(chain *ibctesting.TestChain) *WasmTestChain {
 }
 
 func (chain *WasmTestChain) CaptureIBCEvents(result *abci.ExecTxResult) {
-	toSend, _ := ibctesting.ParsePacketsFromEvents(channeltypes.EventTypeSendPacket, result.Events)
+	toSend, _ := ibctesting.ParseIBCV1Packets(channeltypes.EventTypeSendPacket, result.Events)
 	// require.NoError(chain, err)
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
