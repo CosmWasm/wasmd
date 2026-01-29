@@ -1567,7 +1567,7 @@ type msgDispatcher interface {
 }
 
 // DefaultWasmVMContractResponseHandler default implementation that first dispatches submessage then normal messages.
-// The Submessage execution may include an success/failure response handling by the contract that can overwrite the
+// The Submessage execution may include a success/failure response handling by the contract that can overwrite the
 // original
 type DefaultWasmVMContractResponseHandler struct {
 	md msgDispatcher
