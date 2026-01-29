@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.5...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...HEAD)
+
+## [v0.61.7](https://github.com/CosmWasm/wasmd/tree/v0.61.7) (2026-01-29)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.6...v0.61.7)
+
+- Bump cosmos-sdk to [v0.53.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.53.5)
+- Bump cometbft to [v0.38.21](https://github.com/cometbft/cometbft/releases/tag/v0.38.21)
+- Bump ibc-go to [v10.5.0](https://github.com/cosmos/ibc-go/releases/tag/v10.5.0)
 
 ## [v0.61.5](https://github.com/CosmWasm/wasmd/tree/v0.61.5) (2025-11-04)
 
