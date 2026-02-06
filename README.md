@@ -55,6 +55,7 @@ The following table shows
 
 | wasmd  | compatible | specified                                                         |
 | ------ | ---------- | ----------------------------------------------------------------- |
+| 0.61.x | 3.0.x      | [3.0.2](https://github.com/CosmWasm/wasmd/blob/v0.61.7/go.mod#L6) |
 | 0.55.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.55.0/go.mod#L6) |
 | 0.54.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.54.0/go.mod#L6) |
 | 0.53.2 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.2/go.mod#L6) |
@@ -82,7 +83,7 @@ for getting the libwasmvm version loaded at runtime.
 ## Supported Systems
 
 The supported systems are limited by the dlls created in [`wasmvm`](https://github.com/CosmWasm/wasmvm). In particular, **we only support MacOS and Linux**.
-However, **M1 macs are not fully supported.** (Experimental support was merged with wasmd 0.24)
+Apple Silicon (M1/M2/M3) Macs are supported.
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
 using glibc (CentOS 7 uses 2.12, obsolete Debian Jessie uses 2.19).
@@ -95,18 +96,16 @@ binary for `muslc`. (Or just use this Dockerfile for your production setup).
 
 ## Stability
 
-**This is beta software** It is run in some production systems, but we cannot yet provide a stability guarantee
-and have not yet gone through and audit of this codebase. Note that the
-[CosmWasm smart contract framework](https://github.com/CosmWasm/cosmwasm) used by `wasmd` is in a 1.0 release candidate
-as of March 2022, with stability guarantee and addressing audit results.
+Wasmd is production-ready software that is actively used in numerous production blockchain networks.
+The [CosmWasm smart contract framework](https://github.com/CosmWasm/cosmwasm) used by `wasmd` has been
+in stable release since 1.0 and has undergone multiple security audits.
 
-As of `wasmd` 0.22, we will work to provide upgrade paths _for this module_ for projects running a non-forked
-version on their live networks. If there are Cosmos SDK upgrades, you will have to run their migration code
-for their modules. If we change the internal storage of `x/wasm` we will provide a function to migrate state that
-can be called by an `x/upgrade` handler.
+We provide upgrade paths for projects running non-forked versions on their live networks.
+When there are Cosmos SDK upgrades, you will need to run their migration code for their modules.
+If we change the internal storage of `x/wasm`, we provide migration functions that can be called
+by an `x/upgrade` handler.
 
-The APIs are pretty stable, but we cannot guarantee their stability until we reach v1.0.
-However, we will provide a way for you to hard-fork your way to v1.0.
+The APIs are stable, and we maintain backwards compatibility within major versions.
 
 Thank you to all projects who have run this code in your mainnets and testnets and
 given feedback to improve stability.
