@@ -1889,8 +1889,8 @@ func TestPinCode(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)
@@ -1917,11 +1917,8 @@ func TestUnpinCode(t *testing.T) {
 
 	var capturedChecksums []wasmvm.Checksum
 	mock := wasmtesting.MockWasmEngine{
-		PinFn: func(checksum wasmvm.Checksum) error {
-			return nil
-		},
-		UnpinFn: func(checksum wasmvm.Checksum) error {
-			capturedChecksums = append(capturedChecksums, checksum)
+		SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+			capturedChecksums = append(capturedChecksums, checksums...)
 			return nil
 		},
 	}
@@ -1950,8 +1947,8 @@ func TestInitializePinnedCodes(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)
@@ -1978,8 +1975,8 @@ func TestInitializePinnedCodes(t *testing.T) {
 
 func TestPinnedContractLoops(t *testing.T) {
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)
