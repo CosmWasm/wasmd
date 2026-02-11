@@ -357,6 +357,8 @@ type WasmEngine interface {
 	// Unpin is idempotent.
 	Unpin(checksum wasmvm.Checksum) error
 
+	SyncPinnedCodes(checksums []wasmvm.Checksum) error
+
 	// GetMetrics some internal metrics for monitoring purposes.
 	GetMetrics() (*wasmvmtypes.Metrics, error)
 
