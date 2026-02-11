@@ -92,6 +92,9 @@ var (
 
 	// ErrExceedMaxCallDepth error if max message stack size is exceeded
 	ErrExceedMaxCallDepth = errorsmod.Register(DefaultCodespace, 30, "max call depth exceeded")
+
+	// ErrSyncPinnedCodesFailed error for syncing pinned codes failures
+	ErrSyncPinnedCodesFailed = errorsmod.Register(DefaultCodespace, 31, "syncing pinned codes failed")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted

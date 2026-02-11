@@ -15,10 +15,10 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v2.3.1/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v2.3.1/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
-RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 39f955e8c979dd07599936a5f8de537058a8247d0178546b44151d96be70b405
-RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 530d6bff5f89cbaef53b5ec8e772f67093444bfd564b0ec5996ec6c73724e8f6
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v2.3.2-rc.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v2.3.2-rc.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
+RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 082dd94038b13cdbfb7028e6cb526946a22d34f1ab091f4bc2a86f1109bd47b0
+RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep c830ce9dd79a311efa19167667982c95db43cb93206457fd079826ff6b607914
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
