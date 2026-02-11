@@ -14,6 +14,8 @@ type MockGasRegister struct {
 	ToWasmVMGasFn       func(source storetypes.Gas) uint64
 	FromWasmVMGasFn     func(source uint64) storetypes.Gas
 	UncompressCostsFn   func(byteLength int) storetypes.Gas
+	PinCodeCostFn       func() storetypes.Gas
+	UnpinCodeCostFn     func() storetypes.Gas
 }
 
 func (m MockGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
@@ -56,4 +58,18 @@ func (m MockGasRegister) FromWasmVMGas(source uint64) storetypes.Gas {
 		panic("not expected to be called")
 	}
 	return m.FromWasmVMGasFn(source)
+}
+
+func (m MockGasRegister) PinCodeCost() storetypes.Gas {
+	if m.PinCodeCostFn == nil {
+		panic("not expected to be called")
+	}
+	return m.PinCodeCostFn()
+}
+
+func (m MockGasRegister) UnpinCodeCost() storetypes.Gas {
+	if m.UnpinCodeCostFn == nil {
+		panic("not expected to be called")
+	}
+	return m.UnpinCodeCostFn()
 }
