@@ -1181,19 +1181,34 @@ func (k Keeper) GetByteCode(ctx context.Context, codeID uint64) ([]byte, error) 
 	return k.wasmVM.GetCode(codeInfo.CodeHash)
 }
 
-// PinCode pins the wasm contract in wasmvm cache
+// pinCode pins the wasm contract in wasmvm cache
 func (k Keeper) pinCode(ctx context.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
 		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 
-	if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
-		return errorsmod.Wrap(types.ErrPinContractFailed, err.Error())
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	pinCost := k.gasRegister.PinCodeCost()
+	sdkCtx.GasMeter().ConsumeGas(pinCost, "Loading CosmWasm module: pin code")
+
+	// Collect all currently pinned checksums
+	checksums, err := k.collectPinnedChecksums(ctx, nil)
+	if err != nil {
+		return err
 	}
-	store := k.storeService.OpenKVStore(ctx)
+
+	// Add the new code to pin
+	checksums = append(checksums, codeInfo.CodeHash)
+
+	err = k.wasmVM.SyncPinnedCodes(checksums)
+	if err != nil {
+		return errorsmod.Wrap(types.ErrSyncPinnedCodesFailed, err.Error())
+	}
+
+	kvStore := k.storeService.OpenKVStore(ctx)
 	// store 1 byte to not run into `nil` debugging issues
-	err := store.Set(types.GetPinnedCodeIndexPrefix(codeID), []byte{1})
+	err = kvStore.Set(types.GetPinnedCodeIndexPrefix(codeID), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -1205,18 +1220,30 @@ func (k Keeper) pinCode(ctx context.Context, codeID uint64) error {
 	return nil
 }
 
-// UnpinCode removes the wasm contract from wasmvm cache
+// unpinCode removes the wasm contract from wasmvm cache
 func (k Keeper) unpinCode(ctx context.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
 		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
-	if err := k.wasmVM.Unpin(codeInfo.CodeHash); err != nil {
-		return errorsmod.Wrap(types.ErrUnpinContractFailed, err.Error())
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	unpinCost := k.gasRegister.UnpinCodeCost()
+	sdkCtx.GasMeter().ConsumeGas(unpinCost, "Loading CosmWasm module: unpin code")
+
+	// Collect all pinned checksums except the one we're unpinning
+	checksums, err := k.collectPinnedChecksums(ctx, &codeID)
+	if err != nil {
+		return err
 	}
 
-	store := k.storeService.OpenKVStore(ctx)
-	err := store.Delete(types.GetPinnedCodeIndexPrefix(codeID))
+	err = k.wasmVM.SyncPinnedCodes(checksums)
+	if err != nil {
+		return errorsmod.Wrap(types.ErrSyncPinnedCodesFailed, err.Error())
+	}
+
+	kvStore := k.storeService.OpenKVStore(ctx)
+	err = kvStore.Delete(types.GetPinnedCodeIndexPrefix(codeID))
 	if err != nil {
 		return err
 	}
@@ -1226,6 +1253,31 @@ func (k Keeper) unpinCode(ctx context.Context, codeID uint64) error {
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
 	))
 	return nil
+}
+
+// collectPinnedChecksums collects checksums for all pinned codes, optionally excluding one
+func (k Keeper) collectPinnedChecksums(ctx context.Context, excludeCodeID *uint64) ([]wasmvm.Checksum, error) {
+	store := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.PinnedCodeIndexPrefix)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	checksums := make([]wasmvm.Checksum, 0)
+	for ; iter.Valid(); iter.Next() {
+		pinnedCodeID := types.ParsePinnedCodeIndex(iter.Key())
+
+		// Skip the excluded code ID if specified
+		if excludeCodeID != nil && pinnedCodeID == *excludeCodeID {
+			continue
+		}
+
+		codeInfo := k.GetCodeInfo(ctx, pinnedCodeID)
+		if codeInfo == nil {
+			return nil, types.ErrNoSuchCodeFn(pinnedCodeID).Wrapf("code id %d", pinnedCodeID)
+		}
+		checksums = append(checksums, codeInfo.CodeHash)
+	}
+
+	return checksums, nil
 }
 
 // IsPinnedCode returns true when codeID is pinned in wasmvm cache
@@ -1260,15 +1312,22 @@ func (k Keeper) InitializePinnedCodes(ctx context.Context) error {
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
+	checksums := make([]wasmvm.Checksum, 0)
 	for ; iter.Valid(); iter.Next() {
 		codeID := types.ParsePinnedCodeIndex(iter.Key())
 		codeInfo := k.GetCodeInfo(ctx, codeID)
 		if codeInfo == nil {
 			return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 		}
-		if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
-			return errorsmod.Wrap(types.ErrPinContractFailed, err.Error())
-		}
+		checksums = append(checksums, codeInfo.CodeHash)
+	}
+
+	if len(checksums) == 0 {
+		return nil
+	}
+
+	if err := k.wasmVM.SyncPinnedCodes(checksums); err != nil {
+		return errorsmod.Wrap(types.ErrPinContractFailed, err.Error())
 	}
 	return nil
 }

@@ -49,6 +49,7 @@ type MockWasmEngine struct {
 	IBC2PacketSendFn         func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBC2PacketSendMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error)
 	PinFn                    func(checksum wasmvm.Checksum) error
 	UnpinFn                  func(checksum wasmvm.Checksum) error
+	SyncPinnedCodesFn        func(checksums []wasmvm.Checksum) error
 	GetMetricsFn             func() (*wasmvmtypes.Metrics, error)
 	GetPinMetricsFn          func() (*wasmvmtypes.PinnedMetrics, error)
 }
@@ -240,6 +241,13 @@ func (m *MockWasmEngine) Unpin(checksum wasmvm.Checksum) error {
 		panic("not supposed to be called!")
 	}
 	return m.UnpinFn(checksum)
+}
+
+func (m *MockWasmEngine) SyncPinnedCodes(checksums []wasmvm.Checksum) error {
+	if m.SyncPinnedCodesFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.SyncPinnedCodesFn(checksums)
 }
 
 func (m *MockWasmEngine) GetMetrics() (*wasmvmtypes.Metrics, error) {
