@@ -19,7 +19,7 @@ transactions.
 
 The `log` field actually has the best data. It contains an array of array of events. The first array is one entry per incoming message.
 Transactions in the Cosmos SDK may consist of multiple messages that are executed atomically. Maybe we send tokens, then issue a swap
-on a DEX. Each action would return it's own list of Events and in the logs, these are separated. For each message, it maintains a list
+on a DEX. Each action would return its own list of Events and in the logs, these are separated. For each message, it maintains a list
 of Events, exactly in the order returned by the application. This is JSON encoded and can be parsed by a client. In fact this is
 how [CosmJS](https://github.com/cosmos/cosmjs) gets the events it shows to the client.
 
@@ -125,7 +125,7 @@ sdk.NewEvent(
 
 ## Usage in wasmd
 
-In `x/wasm` we also use Events system. On one hand, the Go implementation of `x/wasm` emits standard events for each 
+In `x/wasm` we also use the Events system. On one hand, the Go implementation of `x/wasm` emits standard events for each 
 message it processes, using the `distribution` module as an example. Furthermore, it allows contracts to
 emit custom events based on their execution state, so they can for example say "dex swap, BTC-ATOM, in 0.23, out 512"
 which require internal knowledge of the contract and is very useful for custom dApp UIs.
@@ -277,7 +277,7 @@ sdk.NewEvent(
 )
 ```
 
-If the Response contains neither `event` nor `attributes`, not `wasm*` events will be emitted, just the standard `message`
+If the Response contains neither `event` nor `attributes`, no `wasm*` events will be emitted, just the standard `message`
 type as well as the action-dependent event (like `execute` or `migrate`). This is a significant change from pre-0.18 versions
 where one could count on the `wasm` event to always be emitted. Now it is recommended to search for `execute._contract_address="foo"`
 to find all transactions related to the contract.
@@ -304,7 +304,7 @@ flatten that in a meaningful way to feed it into the event system.
 
 Furthermore, with the sub-message reply handlers, we end up with eg. "Contract A execute", "Contract B execute",
 "Contract A reply". If we return all events by all of these, we may end up with many repeated event types and
-a confusing results. However, we may use the standard "message" events to separate the sub-messages as it marks
+confusing results. However, we may use the standard "message" events to separate the sub-messages as it marks
 where the next one starts. With careful analysis of the "sender" field on these "message" markers, we may be able
 to reconstruct much of the tree execution path. We should ensure all this information is exposed in the most
 consistent way possible.

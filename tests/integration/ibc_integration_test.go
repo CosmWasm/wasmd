@@ -27,7 +27,7 @@ func TestIBCReflectContract(t *testing.T) {
 	//  chain A: ibc_reflect_send.wasm
 	//  chain B: reflect_1_5.wasm + ibc_reflect.wasm
 	//
-	//  Chain A "ibc_reflect_send" sends a IBC packet "on channel connect" event to chain B "ibc_reflect"
+	//  Chain A "ibc_reflect_send" sends an IBC packet "on channel connect" event to chain B "ibc_reflect"
 	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
 
 	var (

@@ -1526,7 +1526,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	_, err = keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	type dict map[string]interface{}
+	type dict map[string]any
 	expEvents := []dict{
 		{
 			"Type": "migrate",
@@ -1746,7 +1746,7 @@ func prettyEvents(t *testing.T, events sdk.Events) string {
 	return string(mustMarshal(t, r))
 }
 
-func mustMarshal(t *testing.T, r interface{}) []byte {
+func mustMarshal(t *testing.T, r any) []byte {
 	t.Helper()
 	bz, err := json.Marshal(r)
 	require.NoError(t, err)
@@ -1893,8 +1893,8 @@ func TestPinCode(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)
@@ -1921,11 +1921,8 @@ func TestUnpinCode(t *testing.T) {
 
 	var capturedChecksums []wasmvm.Checksum
 	mock := wasmtesting.MockWasmEngine{
-		PinFn: func(checksum wasmvm.Checksum) error {
-			return nil
-		},
-		UnpinFn: func(checksum wasmvm.Checksum) error {
-			capturedChecksums = append(capturedChecksums, checksum)
+		SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+			capturedChecksums = append(capturedChecksums, checksums...)
 			return nil
 		},
 	}
@@ -1954,8 +1951,8 @@ func TestInitializePinnedCodes(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)
@@ -1982,8 +1979,8 @@ func TestInitializePinnedCodes(t *testing.T) {
 
 func TestPinnedContractLoops(t *testing.T) {
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
-		capturedChecksums = append(capturedChecksums, checksum)
+	mock := wasmtesting.MockWasmEngine{SyncPinnedCodesFn: func(checksums []wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksums...)
 		return nil
 	}}
 	wasmtesting.MakeInstantiable(&mock)

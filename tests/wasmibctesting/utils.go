@@ -207,7 +207,7 @@ func (chain *WasmTestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 	require.NoError(chain.TB, err)
 }
 
-// GetTimeoutHeight is a convenience function which returns a IBC packet timeout height
+// GetTimeoutHeight is a convenience function which returns an IBC packet timeout height
 // to be used for testing. It returns the current IBC height + 100 blocks
 func (chain *WasmTestChain) GetTimeoutHeight() clienttypes.Height {
 	return clienttypes.NewHeight(clienttypes.ParseChainID(chain.ChainID), uint64(chain.GetContext().BlockHeight())+100)
@@ -244,7 +244,7 @@ func (chain *WasmTestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.P
 // SmartQuery This will serialize the query message and submit it to the contract.
 // The response is parsed into the provided interface.
 // Usage: SmartQuery(addr, QueryMsg{Foo: 1}, &response)
-func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response interface{}) error {
+func (chain *WasmTestChain) SmartQuery(contractAddr string, queryMsg, response any) error {
 	msg, err := json.Marshal(queryMsg)
 	if err != nil {
 		return err

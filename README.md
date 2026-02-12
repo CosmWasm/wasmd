@@ -14,7 +14,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.21+](https://golang.org/dl/)
+**Note**: Requires [Go 1.24+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 
@@ -73,7 +73,7 @@ Dependency resolution in Go is not obvious. In case of doubt, please use
 `go list -m github.com/CosmWasm/wasmvm` to get the dynamically calculated version of the wasmvm dependency. Also check
 
 ```sh
-# Replace <node> with you binary name
+# Replace <node> with your binary name
 <node> query wasm libwasmvm-version
 ```
 

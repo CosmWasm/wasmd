@@ -59,6 +59,10 @@ const (
 	DefaultPerCustomEventCost uint64 = 20
 	// DefaultEventAttributeDataFreeTier number of bytes of total attribute data we do not charge.
 	DefaultEventAttributeDataFreeTier = 100
+	// DefaultPinCodeCost costs to pin a code
+	DefaultPinCodeCost uint64 = 500_000
+	// DefaultUnpinCodeCost costs to unpin a code
+	DefaultUnpinCodeCost uint64 = 500_000
 )
 
 // default: 0.15 gas.
@@ -92,6 +96,10 @@ type GasRegister interface {
 	//
 	// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 	FromWasmVMGas(source uint64) storetypes.Gas
+	// PinCodeCost costs to pin a code
+	PinCodeCost() storetypes.Gas
+	// UnpinCodeCost costs to unpin a code
+	UnpinCodeCost() storetypes.Gas
 }
 
 // WasmGasRegisterConfig config type
@@ -126,6 +134,10 @@ type WasmGasRegisterConfig struct {
 	ContractMessageDataCost storetypes.Gas
 	// CustomEventCost cost per custom event
 	CustomEventCost uint64
+	// PinCodeCost costs to pin a code
+	PinCodeCost storetypes.Gas
+	// UnpinCodeCost costs to unpin a code
+	UnpinCodeCost storetypes.Gas
 }
 
 // DefaultGasRegisterConfig default values
@@ -141,6 +153,8 @@ func DefaultGasRegisterConfig() WasmGasRegisterConfig {
 		EventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 		ContractMessageDataCost:    DefaultContractMessageDataCost,
 		UncompressCost:             DefaultPerByteUncompressCost(),
+		PinCodeCost:                DefaultPinCodeCost,
+		UnpinCodeCost:              DefaultUnpinCodeCost,
 	}
 }
 
@@ -262,4 +276,14 @@ func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 // [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 func (g WasmGasRegister) FromWasmVMGas(source uint64) storetypes.Gas {
 	return source / g.c.GasMultiplier
+}
+
+// PinCodeCost costs to pin a code
+func (g WasmGasRegister) PinCodeCost() storetypes.Gas {
+	return g.c.PinCodeCost
+}
+
+// UnpinCodeCost costs to unpin a code
+func (g WasmGasRegister) UnpinCodeCost() storetypes.Gas {
+	return g.c.UnpinCodeCost
 }

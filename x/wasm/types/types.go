@@ -74,7 +74,7 @@ func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string,
 	}
 }
 
-// validatable is an optional interface that can be implemented by an ContractInfoExtension to enable validation
+// validatable is an optional interface that can be implemented by a ContractInfoExtension to enable validation
 type validatable interface {
 	ValidateBasic() error
 }

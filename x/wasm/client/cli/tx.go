@@ -406,7 +406,7 @@ func parseExecuteArgs(contractAddr, execMsg string, sender sdk.AccAddress, flags
 func GrantCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                "grant",
-		Short:              "Grant a authz permission",
+		Short:              "Grant an authz permission",
 		DisableFlagParsing: true,
 		SilenceUsage:       true,
 	}
