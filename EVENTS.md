@@ -287,12 +287,12 @@ to find all transactions related to the contract.
 While the `wasm` and `wasm-*` namespacing does sandbox the smart contract events and limits malicious activity they could
 undertake, we also perform a number of further validation checks on the contracts:
 
-* No attribute key may start with `_`. This is currently used for `_contract_address` and is reserved for a 
+* No attribute key may start with `_`. This is currently used for `_contract_address` and is reserved for a
   namespace for injecting more *trusted* attributes from the `x/wasm` module as opposed to the contract itself
 * Event types are trimmed of whitespace, and must have at least two characters prior to prepending `wasm-`. If the contract returns
   "  hello\n", the event type will look like `wasm-hello`. If it emits "  a  ", this will be rejected with an error (aborting execution!)
-* Attribute keys and values (both in `attributes` and under `events`) are trimmed of leading/trailing whitespace. If they are empty after
-  trimming, they are rejected as above (aborting the execution). Otherwise, they are passed verbatim.
+* Attribute keys (both in `attributes` and under `events`) are trimmed of leading/trailing whitespace. If they are empty after trimming, they are rejected as above (aborting the execution)
+* Attribute values (both in `attributes` and under `events`) are trimmed of leading/trailing whitespace. Empty values are allowed and will be stored as empty strings
 
 ## Event Details for wasmd
 
