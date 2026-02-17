@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/store/prefix"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -85,7 +86,10 @@ func (m Migrator) Migrate4to5(ctx sdk.Context, storeService corestoretypes.KVSto
 
 		// Copy Extension field - moved from field 8 to field 7
 		if legacyInfo.Extension != nil {
-			newInfo.Extension = legacyInfo.Extension
+			newInfo.Extension = &codectypes.Any{
+				TypeUrl: legacyInfo.Extension.TypeUrl,
+				Value:   legacyInfo.Extension.Value,
+			}
 		}
 
 		// Store with NEW schema
