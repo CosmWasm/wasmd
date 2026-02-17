@@ -87,16 +87,16 @@ For linux, the default is to build for glibc, and we cross-compile with CentOS 7
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
 using glibc (CentOS 7 uses 2.12, obsolete Debian Jessie uses 2.19).
 
-As of `0.9.0` we support `muslc` Linux systems, in particular **Alpine linux**,
+As of `0.9.0` we support `musl` Linux systems, in particular **Alpine linux**,
 which is popular in docker distributions. Note that we do **not** store the
-static `muslc` build in the repo, so you must compile this yourself, and pass `-tags muslc`.
+static `musl` build in the repo, so you must compile this yourself, and pass `-tags musl`.
 Please look at the [`Dockerfile`](./Dockerfile) for an example of how we build a static Go
 binary for `muslc`. (Or just use this Dockerfile for your production setup).
 
 ## Stability
 
 **This is beta software** It is run in some production systems, but we cannot yet provide a stability guarantee
-and have not yet gone through and audit of this codebase. Note that the
+and have not yet gone through an audit of this codebase. Note that the
 [CosmWasm smart contract framework](https://github.com/CosmWasm/cosmwasm) used by `wasmd` is in a 1.0 release candidate
 as of March 2022, with stability guarantee and addressing audit results.
 

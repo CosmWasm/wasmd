@@ -38,7 +38,7 @@ start the specified v2 version on the next block.
 ### Prepare binaries
 
 Let's get the two binaries we want to test, the pre-upgrade and the post-upgrade
-binaries. In this case the pre-release is already a published to docker hub and
+binaries. In this case the pre-release is already published to docker hub and
 can be downloaded simply via:
 
 `docker pull cosmwasm/wasmd:v0.14.0`
