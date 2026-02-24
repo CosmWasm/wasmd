@@ -277,7 +277,7 @@ func (m *CodeInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CodeInfo proto.InternalMessageInfo
 
-// ContractInfo stores a WASM contract instance
+// ContractInfo stores an instance of a WASM contract
 type ContractInfo struct {
 	// CodeID is the reference to the stored Wasm code
 	CodeID uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
@@ -382,7 +382,7 @@ func (m *ContractCodeHistoryEntry) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractCodeHistoryEntry proto.InternalMessageInfo
 
-// AbsoluteTxPosition is a unique transaction position that allows for global
+// AbsoluteTxPosition is an unique transaction position that allows for global
 // ordering of transactions.
 type AbsoluteTxPosition struct {
 	// BlockHeight is the block the contract was created at
