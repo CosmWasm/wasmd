@@ -6,10 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -113,15 +112,15 @@ func storeCode(ctx sdk.Context, wasmApp *app.WasmApp, instantiatePermission type
 	})
 	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 	if err != nil {
-		return
+		return codeID, err
 	}
 
 	var result types.MsgStoreCodeResponse
 	err = wasmApp.AppCodec().Unmarshal(rsp.Data, &result)
 	if err != nil {
-		return
+		return codeID, err
 	}
 
 	codeID = result.CodeID
-	return
+	return codeID, err
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	storetypes "cosmossdk.io/store/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
 )

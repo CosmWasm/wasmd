@@ -127,7 +127,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectGrpcQuery(t *testing.T) {
-	queryPlugins := (*reflectPlugins()).Merge(&wasmKeeper.QueryPlugins{
+	queryPlugins := reflectPlugins().Merge(&wasmKeeper.QueryPlugins{
 		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
 				return &banktypes.QueryAllBalancesResponse{

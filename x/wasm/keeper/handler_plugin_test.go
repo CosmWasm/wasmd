@@ -7,7 +7,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"github.com/cosmos/gogoproto/proto"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +39,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 	assertNotCalledHandler := &wasmtesting.MockMessageHandler{
 		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 			t.Fatal("not expected to be called")
-			return
+			return events, data, msgResponses, err
 		},
 	}
 
@@ -280,7 +280,8 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		TimeoutHeight:      clienttypes.Height{},
 		TimeoutTimestamp:   1720000000000000000,
 	}
-	contractKeeper.StoreAsyncAckPacket(ctx, ackPacket)
+	err := contractKeeper.StoreAsyncAckPacket(ctx, ackPacket)
+	require.NoError(t, err)
 
 	sendResponse := types.MsgIBCSendResponse{Sequence: 1}
 	ackResponse := types.MsgIBCWriteAcknowledgementResponse{}
@@ -336,7 +337,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 			// when
 			h := NewIBCRawPacketHandler(capturingICS4Mock, &contractKeeper)
-			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg}) //nolint:gosec
+			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &spec.srcMsg})
 
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
@@ -423,7 +424,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 				return &wasmvmtypes.ContractResult{
 					Ok: &wasmvmtypes.Response{
 						Messages: []wasmvmtypes.SubMsg{
-							{Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{Burn: &spec.msg}}, ReplyOn: wasmvmtypes.ReplyNever}, //nolint:gosec
+							{Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{Burn: &spec.msg}}, ReplyOn: wasmvmtypes.ReplyNever},
 						},
 					},
 				}, 0, nil
