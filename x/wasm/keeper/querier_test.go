@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

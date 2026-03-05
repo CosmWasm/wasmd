@@ -8,7 +8,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	snapshot "cosmossdk.io/store/snapshots/types"
 	storetypes "cosmossdk.io/store/types"
 

@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/tx/signing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

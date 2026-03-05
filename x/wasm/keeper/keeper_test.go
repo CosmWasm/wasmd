@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"

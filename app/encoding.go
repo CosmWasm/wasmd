@@ -5,7 +5,7 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 

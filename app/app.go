@@ -12,6 +12,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/contrib/x/nft"
 	"github.com/cosmos/gogoproto/proto"
 	ica "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller"
@@ -38,24 +39,18 @@ import (
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	storetypes "cosmossdk.io/store/types"
-	"cosmossdk.io/x/circuit"
-	circuitkeeper "cosmossdk.io/x/circuit/keeper"
-	circuittypes "cosmossdk.io/x/circuit/types"
-	"cosmossdk.io/x/evidence"
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	evidencetypes "cosmossdk.io/x/evidence/types"
-	"cosmossdk.io/x/feegrant"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
-	feegrantmodule "cosmossdk.io/x/feegrant/module"
-	"cosmossdk.io/x/nft"
-	nftkeeper "cosmossdk.io/x/nft/keeper"
-	nftmodule "cosmossdk.io/x/nft/module"
-	"cosmossdk.io/x/tx/signing"
-	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
+	"github.com/cosmos/cosmos-sdk/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -97,9 +92,6 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/epochs"
-	epochskeeper "github.com/cosmos/cosmos-sdk/x/epochs/keeper"
-	epochstypes "github.com/cosmos/cosmos-sdk/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -107,15 +99,9 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/group"
-	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
-	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/x/protocolpool"
-	protocolpoolkeeper "github.com/cosmos/cosmos-sdk/x/protocolpool/keeper"
-	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -159,15 +145,12 @@ var (
 
 // module account permissions
 var maccPerms = map[string][]string{
-	authtypes.FeeCollectorName:                  nil,
-	distrtypes.ModuleName:                       nil,
-	minttypes.ModuleName:                        {authtypes.Minter},
-	stakingtypes.BondedPoolName:                 {authtypes.Burner, authtypes.Staking},
-	stakingtypes.NotBondedPoolName:              {authtypes.Burner, authtypes.Staking},
-	govtypes.ModuleName:                         {authtypes.Burner},
-	nft.ModuleName:                              nil,
-	protocolpooltypes.ModuleName:                nil,
-	protocolpooltypes.ProtocolPoolEscrowAccount: nil,
+	authtypes.FeeCollectorName:     nil,
+	distrtypes.ModuleName:          nil,
+	minttypes.ModuleName:           {authtypes.Minter},
+	stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+	stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+	govtypes.ModuleName:            {authtypes.Burner},
 	// non sdk modules
 	ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	icatypes.ModuleName:         nil,
@@ -202,15 +185,10 @@ type WasmApp struct {
 	UpgradeKeeper         *upgradekeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	CircuitKeeper         circuitkeeper.Keeper
 
 	// supplementary keepers
-	FeeGrantKeeper     feegrantkeeper.Keeper
-	GroupKeeper        groupkeeper.Keeper
-	AuthzKeeper        authzkeeper.Keeper
-	NFTKeeper          nftkeeper.Keeper
-	EpochsKeeper       epochskeeper.Keeper
-	ProtocolPoolKeeper protocolpoolkeeper.Keeper
+	FeeGrantKeeper feegrantkeeper.Keeper
+	AuthzKeeper    authzkeeper.Keeper
 
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	ICAControllerKeeper icacontrollerkeeper.Keeper
@@ -311,12 +289,7 @@ func NewWasmApp(
 		upgradetypes.StoreKey,
 		feegrant.StoreKey,
 		evidencetypes.StoreKey,
-		circuittypes.StoreKey,
 		authzkeeper.StoreKey,
-		nftkeeper.StoreKey,
-		group.StoreKey,
-		epochstypes.StoreKey,
-		protocolpooltypes.StoreKey,
 		// non sdk store keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
@@ -400,14 +373,6 @@ func NewWasmApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	app.ProtocolPoolKeeper = protocolpoolkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[protocolpooltypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[distrtypes.StoreKey]),
@@ -416,7 +381,6 @@ func NewWasmApp(
 		app.StakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		distrkeeper.WithExternalCommunityPool(app.ProtocolPoolKeeper),
 	)
 
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
@@ -442,33 +406,11 @@ func NewWasmApp(
 		),
 	)
 
-	app.CircuitKeeper = circuitkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[circuittypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper.AddressCodec(),
-	)
-	app.SetCircuitBreaker(&app.CircuitKeeper)
-
 	app.AuthzKeeper = authzkeeper.NewKeeper(
 		runtime.NewKVStoreService(keys[authzkeeper.StoreKey]),
 		appCodec,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
-	)
-
-	groupConfig := group.DefaultConfig()
-	/*
-		Example of setting group params:
-		groupConfig.MaxMetadataLen = 1000
-	*/
-	app.GroupKeeper = groupkeeper.NewKeeper(
-		keys[group.StoreKey],
-		// runtime.NewKVStoreService(keys[group.StoreKey]),
-		appCodec,
-		app.MsgServiceRouter(),
-		app.AccountKeeper,
-		groupConfig,
 	)
 
 	// get skipUpgradeHeights from the app options
@@ -527,13 +469,6 @@ func NewWasmApp(
 		),
 	)
 
-	app.NFTKeeper = nftkeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[nftkeeper.StoreKey]),
-		appCodec,
-		app.AccountKeeper,
-		app.BankKeeper,
-	)
-
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -545,17 +480,6 @@ func NewWasmApp(
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
-
-	app.EpochsKeeper = epochskeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[epochstypes.StoreKey]),
-		appCodec,
-	)
-
-	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(
-		// insert epoch hooks receivers here
-		),
-	)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -695,12 +619,7 @@ func NewWasmApp(
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		groupmodule.NewAppModule(appCodec, app.GroupKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
-		circuit.NewAppModule(appCodec, app.CircuitKeeper),
-		epochs.NewAppModule(app.EpochsKeeper),
-		protocolpool.NewAppModule(app.ProtocolPoolKeeper, app.AccountKeeper, app.BankKeeper),
 		// non sdk modules
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
 		ibc.NewAppModule(app.IBCKeeper),
@@ -737,13 +656,11 @@ func NewWasmApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
-		protocolpooltypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 		authz.ModuleName,
-		epochstypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -756,8 +673,6 @@ func NewWasmApp(
 		stakingtypes.ModuleName,
 		genutiltypes.ModuleName,
 		feegrant.ModuleName,
-		group.ModuleName,
-		protocolpooltypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -787,13 +702,9 @@ func NewWasmApp(
 		authz.ModuleName,
 		feegrant.ModuleName,
 		nft.ModuleName,
-		group.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		circuittypes.ModuleName,
-		epochstypes.ModuleName,
-		protocolpooltypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -805,7 +716,6 @@ func NewWasmApp(
 	exportModuleOrder := []string{
 		consensusparamtypes.ModuleName,
 		authtypes.ModuleName,
-		protocolpooltypes.ModuleName, // Must be exported before bank
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -816,12 +726,8 @@ func NewWasmApp(
 		evidencetypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
-		nft.ModuleName,
-		group.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
-		circuittypes.ModuleName,
-		epochstypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -924,7 +830,6 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, nodeConfig wasmtype
 			NodeConfig:            &nodeConfig,
 			WasmKeeper:            &app.WasmKeeper,
 			TXCounterStoreService: runtime.NewKVStoreService(txCounterStoreKey),
-			CircuitKeeper:         &app.CircuitKeeper,
 		},
 	)
 	if err != nil {
@@ -1123,7 +1028,9 @@ func (app *WasmApp) RegisterTendermintService(clientCtx client.Context) {
 }
 
 func (app *WasmApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
-	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
+	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg, func() int64 {
+		return app.CommitMultiStore().LatestVersion() // todo fix
+	})
 }
 
 // GetMaccPerms returns a copy of the module account permissions

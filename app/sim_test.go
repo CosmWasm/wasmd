@@ -16,10 +16,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
-	"cosmossdk.io/x/feegrant"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"

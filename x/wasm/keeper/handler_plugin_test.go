@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"

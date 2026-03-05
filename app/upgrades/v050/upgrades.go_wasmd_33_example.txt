@@ -9,7 +9,6 @@ import (
 	ibctmmigrations "github.com/cosmos/ibc-go/v9/modules/light-clients/07-tendermint/migrations"
 
 	storetypes "cosmossdk.io/store/types"
-	circuittypes "cosmossdk.io/x/circuit/types"
 	"cosmossdk.io/x/nft"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
