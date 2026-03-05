@@ -8,6 +8,7 @@ require (
 	cosmossdk.io/collections v1.4.0
 	cosmossdk.io/core v1.1.0
 	cosmossdk.io/errors v1.1.0
+	cosmossdk.io/log/v2 v2.0.1
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/store v1.10.0-rc.2.0.20260217205615-0d33c2463b76
 	cosmossdk.io/tools/confix v0.1.2
@@ -42,8 +43,6 @@ require (
 	google.golang.org/grpc v1.79.1
 	gopkg.in/yaml.v2 v2.4.0
 )
-
-require cosmossdk.io/log/v2 v2.0.1
 
 require (
 	cel.dev/expr v0.25.1 // indirect
