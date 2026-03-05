@@ -35,7 +35,7 @@ require (
 	cosmossdk.io/core v1.1.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
 	cosmossdk.io/errors v1.1.0 // indirect
-	cosmossdk.io/log/v2 d80b9372049f // indirect
+	cosmossdk.io/log/v2 v2.0.2-0.20260305184348-d80b9372049f // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
 	cosmossdk.io/store v1.10.0-rc.2.0.20260305184348-d80b9372049f // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
