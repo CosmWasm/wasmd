@@ -140,7 +140,7 @@ func (k Keeper) OnAckIBC2Packet(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2AcknowledgeMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-ack-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-ack-packet") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -175,7 +175,7 @@ func (k Keeper) OnRecvIBC2Packet(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2PacketReceiveMsg,
 ) channeltypesv2.RecvPacketResult {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-recv-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-recv-packet") // nolint:staticcheck // TODO update to OTEL
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return channeltypesv2.RecvPacketResult{
@@ -242,7 +242,7 @@ func (k Keeper) OnTimeoutIBC2Packet(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2PacketTimeoutMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-timeout-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-timeout-packet") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -277,7 +277,7 @@ func (k Keeper) OnSendIBC2Packet(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBC2PacketSendMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-send-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc2-send-packet") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {

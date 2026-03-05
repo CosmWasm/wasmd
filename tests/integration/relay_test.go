@@ -13,7 +13,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/assert"
@@ -123,7 +123,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				Order:   channeltypes.UNORDERED,
 			}
 
-			coordinator.SetupConnections(&path.Path)
+			path.SetupConnections()
 			path.CreateChannels()
 
 			originalChainABalance := chainA.Balance(chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
@@ -195,7 +195,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 
 	// when contract is triggered to send IBCTransferMsg
@@ -267,7 +267,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 
 	// when contract is triggered to send the ibc package to chain B
@@ -342,7 +342,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 	coordinator.UpdateTime()
 
@@ -429,7 +429,7 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 
 	// when contract is triggered to send the ibc package to chain B
@@ -490,7 +490,7 @@ func TestContractHandlesChannelClose(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 	wasmibctesting.CloseChannel(coordinator, &path.Path)
 	assert.True(t, myContractB.closeCalled)
@@ -540,7 +540,7 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.UNORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 
 	closeIBCChannelMsg := &types.MsgExecuteContract{

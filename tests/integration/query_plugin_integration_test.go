@@ -127,7 +127,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectGrpcQuery(t *testing.T) {
-	queryPlugins := (*reflectPlugins()).Merge(&wasmKeeper.QueryPlugins{
+	queryPlugins := reflectPlugins().Merge(&wasmKeeper.QueryPlugins{
 		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
 				return &banktypes.QueryAllBalancesResponse{
@@ -971,7 +971,7 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 				Path: "/cosmos.auth.v1beta1.Query/Account",
 				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
 			},
-			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"1","sequence":"0"}}`, addrs[0].String()),
+			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"12771091728495718350","sequence":"0"}}`, addrs[0].String()),
 		},
 		"in accept list - error result": {
 			req: &wasmvmtypes.StargateQuery{

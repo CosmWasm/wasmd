@@ -7,7 +7,7 @@ import (
 	dbm "github.com/cosmos/iavl/db"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/iavl"
 )

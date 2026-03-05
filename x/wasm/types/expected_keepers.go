@@ -83,6 +83,9 @@ type ChannelKeeper interface {
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
+	SendPacket(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (sequence uint64, err error)
+	WriteAcknowledgement(ctx sdk.Context, packet ibcexported.PacketI, ack ibcexported.Acknowledgement) error
+	GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool)
 }
 
 // ChannelKeeperV2 defines the expected IBC2 channel keeper
@@ -92,30 +95,6 @@ type ChannelKeeperV2 interface {
 		clientID string,
 		sequence uint64,
 		ack channeltypesv2.Acknowledgement,
-	) error
-}
-
-// ICS4Wrapper defines the method for an IBC data package to be submitted.
-// The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
-// can add functionality on top of it. See ics4Wrapper in ibc-go.
-// It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
-type ICS4Wrapper interface {
-	// SendPacket is called by a module in order to send an IBC packet on a channel.
-	// The packet sequence generated for the packet to be sent is returned. An error
-	// is returned if one occurs.
-	SendPacket(
-		ctx sdk.Context,
-		sourcePort string,
-		sourceChannel string,
-		timeoutHeight clienttypes.Height,
-		timeoutTimestamp uint64,
-		data []byte,
-	) (uint64, error)
-
-	WriteAcknowledgement(
-		ctx sdk.Context,
-		packet ibcexported.PacketI,
-		acknowledgement ibcexported.Acknowledgement,
 	) error
 }
 

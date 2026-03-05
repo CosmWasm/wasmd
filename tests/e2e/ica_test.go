@@ -41,7 +41,7 @@ func TestICA(t *testing.T) {
 	controllerChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	path := wasmibctesting.NewWasmPath(controllerChain, hostChain)
-	coord.SetupConnections(&path.Path)
+	path.SetupConnections()
 
 	specs := map[string]struct {
 		icaVersion string
@@ -114,7 +114,8 @@ func TestICA(t *testing.T) {
 			_, err = controllerChain.SendNonDefaultSenderMsgs(icaControllerKey, msgSendTx)
 			require.NoError(t, err)
 
-			wasmibctesting.RelayAndAckPendingPackets(path)
+			err = wasmibctesting.RelayAndAckPendingPackets(path)
+			require.NoError(t, err)
 
 			gotBalance := hostChain.Balance(targetAddr, sdk.DefaultBondDenom)
 			assert.Equal(t, sendCoin.String(), gotBalance.String())

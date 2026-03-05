@@ -19,6 +19,7 @@ const (
 	// AccessTypeNobody forbidden
 	AccessTypeNobody AccessType = 1
 	// AccessTypeOnlyAddress restricted to a single address
+	//
 	// Deprecated: use AccessTypeAnyOfAddresses instead
 	AccessTypeOnlyAddress AccessType = 2
 	// AccessTypeEverybody unrestricted
@@ -94,6 +95,7 @@ var xxx_messageInfo_AccessTypeParam proto.InternalMessageInfo
 type AccessConfig struct {
 	Permission AccessType `protobuf:"varint,1,opt,name=permission,proto3,enum=cosmwasm.wasm.v1.AccessType" json:"permission,omitempty" yaml:"permission"`
 	// Address
+	//
 	// Deprecated: replaced by addresses
 	Address   string   `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
 	Addresses []string `protobuf:"bytes,3,rep,name=addresses,proto3" json:"addresses,omitempty" yaml:"addresses"`
