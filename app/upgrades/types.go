@@ -3,7 +3,7 @@ package upgrades
 import (
 	"context"
 
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	storetypes "cosmossdk.io/store/types"
 

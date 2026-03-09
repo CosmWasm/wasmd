@@ -8,7 +8,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
