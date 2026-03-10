@@ -20,7 +20,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/iavl v1.2.6
-	github.com/cosmos/ibc-go/v11 v11.0.0-20260304204640-9f835275a381
+	github.com/cosmos/ibc-go/v11 v11.0.0-20260309200450-ab565c1cbca0
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/distribution/reference v0.5.0
 	github.com/dvsekhvalnov/jose2go v1.8.0 // indirect
@@ -40,7 +40,7 @@ require (
 	golang.org/x/sync v0.19.0
 	google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.2
 	gopkg.in/yaml.v2 v2.4.0
 )
 
