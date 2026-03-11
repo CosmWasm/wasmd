@@ -11,7 +11,6 @@ import (
 
 	"cosmossdk.io/log/v2"
 	"cosmossdk.io/store"
-	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -25,7 +24,7 @@ import (
 func TestCountTxDecorator(t *testing.T) {
 	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t))
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100
@@ -190,7 +189,7 @@ func consumeGasAnteHandler(gasToConsume storetypes.Gas) sdk.AnteHandler {
 
 func TestGasRegisterDecorator(t *testing.T) {
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t))
 
 	specs := map[string]struct {
 		simulate       bool
@@ -235,7 +234,7 @@ func TestGasRegisterDecorator(t *testing.T) {
 
 func TestTxContractsDecorator(t *testing.T) {
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t))
 
 	specs := map[string]struct {
 		simulate       bool

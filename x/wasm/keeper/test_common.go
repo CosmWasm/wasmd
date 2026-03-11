@@ -25,7 +25,6 @@ import (
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
-	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -226,7 +225,7 @@ func createTestInput(
 		types.StoreKey,
 	)
 	logger := log.NewTestLogger(t)
-	ms := store.NewCommitMultiStore(db, logger, storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(db, logger)
 	for _, v := range keys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeIAVL, db)
 	}
