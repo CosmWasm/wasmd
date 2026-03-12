@@ -35,7 +35,7 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	pCtx, keepers := keeper.CreateTestInput(t, false, capabilities)
 	k := keepers.WasmKeeper
 	keepers.GovKeeper.SetLegacyRouter(v1beta1.NewRouter().
-		AddRoute(types.ModuleName, keeper.NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
+		AddRoute(types.ModuleName, keeper.NewLegacyWasmProposalHandler(k, types.EnableAllProposals)), // nolint:staticcheck // todo refactor
 	)
 	myAddress := keeper.RandomAccountAddress(t)
 	keepers.Faucet.Fund(pCtx, myAddress, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewIntFromUint64(100_000_000)))

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -182,7 +182,7 @@ func TestStoreCodeGrant(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			// setup grant
-			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission) //nolint:gosec
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)
@@ -270,7 +270,7 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			// setup grant
-			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission) //nolint:gosec
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
 			require.NoError(t, err)
 			authorization := types.NewStoreCodeAuthorization(*grant)
 			expiry := time.Now().Add(time.Hour)

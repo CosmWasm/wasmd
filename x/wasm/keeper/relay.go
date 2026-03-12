@@ -4,9 +4,9 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -28,7 +28,7 @@ func (k Keeper) OnOpenChannel(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCChannelOpenMsg,
 ) (string, error) {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-open-channel")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-open-channel") // nolint:staticcheck // TODO update to OTEL
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return "", err
@@ -77,7 +77,7 @@ func (k Keeper) OnConnectChannel(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCChannelConnectMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-connect-channel")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-connect-channel") // nolint:staticcheck // TODO update to OTEL
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (k Keeper) OnCloseChannel(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCChannelCloseMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-close-channel")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-close-channel") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -162,7 +162,7 @@ func (k Keeper) OnRecvPacket(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCPacketReceiveMsg,
 ) (ibcexported.Acknowledgement, error) {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-recv-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-recv-packet") // nolint:staticcheck // TODO update to OTEL
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (k Keeper) OnAckPacket(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCPacketAckMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-ack-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-ack-packet") // nolint:staticcheck // TODO update to OTEL
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return err
@@ -279,7 +279,7 @@ func (k Keeper) OnTimeoutPacket(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCPacketTimeoutMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-timeout-packet")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-timeout-packet") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -318,7 +318,7 @@ func (k Keeper) IBCSourceCallback(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCSourceCallbackMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-source-chain-callback")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-source-chain-callback") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -357,7 +357,7 @@ func (k Keeper) IBCDestinationCallback(
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCDestinationCallbackMsg,
 ) error {
-	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-destination-chain-callback")
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-destination-chain-callback") // nolint:staticcheck // TODO update to OTEL
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {

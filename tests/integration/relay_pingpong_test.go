@@ -7,10 +7,10 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -81,7 +81,7 @@ func TestPingPong(t *testing.T) {
 		Version: ibctransfertypes.V1,
 		Order:   channeltypes.ORDERED,
 	}
-	coordinator.SetupConnections(&path.Path)
+	path.SetupConnections()
 	path.CreateChannels()
 
 	// trigger start game via execute
@@ -105,7 +105,7 @@ func TestPingPong(t *testing.T) {
 		t.Logf("++ round: %d\n", i)
 
 		require.Len(t, *chainA.PendingSendPackets, 1)
-		wasmibctesting.RelayAndAckPendingPackets(path)
+		err = wasmibctesting.RelayAndAckPendingPackets(path)
 		require.NoError(t, err)
 	}
 
