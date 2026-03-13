@@ -231,9 +231,9 @@ func (m msgServer) UpdateParams(ctx context.Context, req *types.MsgUpdateParams)
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := sdkCtx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := m.keeper.SetParams(ctx, req.Params); err != nil {
@@ -249,9 +249,9 @@ func (m msgServer) PinCodes(ctx context.Context, req *types.MsgPinCodes) (*types
 		return nil, err
 	}
 
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := sdkCtx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	for _, codeID := range req.CodeIDs {
@@ -269,9 +269,9 @@ func (m msgServer) UnpinCodes(ctx context.Context, req *types.MsgUnpinCodes) (*t
 		return nil, err
 	}
 
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := sdkCtx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	for _, codeID := range req.CodeIDs {
@@ -288,9 +288,9 @@ func (m msgServer) SudoContract(ctx context.Context, req *types.MsgSudoContract)
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := sdkCtx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	contractAddr, err := sdk.AccAddressFromBech32(req.Contract)
@@ -348,12 +348,10 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ctx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
+	}
 
 	params := m.keeper.GetParams(ctx)
 	if params.CodeUploadAccess.Permission != types.AccessTypeAnyOfAddresses {
@@ -380,12 +378,10 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	authority := m.keeper.GetAuthority()
-	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ctx.ValidateAuthority(m.keeper.GetAuthority(), req.Authority); err != nil {
+		return nil, err
+	}
 
 	params := m.keeper.GetParams(ctx)
 	if params.CodeUploadAccess.Permission != types.AccessTypeAnyOfAddresses {
@@ -410,7 +406,8 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 }
 
 func (m msgServer) selectAuthorizationPolicy(ctx context.Context, actor string) types.AuthorizationPolicy {
-	if actor == m.keeper.GetAuthority() {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.ValidateAuthority(m.keeper.GetAuthority(), actor) == nil {
 		return newGovAuthorizationPolicy(m.keeper.propagateGovAuthorization)
 	}
 	if policy, ok := types.SubMsgAuthzPolicy(ctx); ok {

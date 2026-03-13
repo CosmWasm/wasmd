@@ -17,6 +17,7 @@ import (
 
 func TestSelectAuthorizationPolicy(t *testing.T) {
 	myGovAuthority := RandomAccountAddress(t)
+	overrideAuthority := RandomAccountAddress(t)
 	m := msgServer{keeper: &Keeper{
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionMigrateContract: {},
@@ -47,6 +48,20 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 			ctx:   ctx,
 			actor: RandomAccountAddress(t),
 			exp:   DefaultAuthorizationPolicy{},
+		},
+		"consensus params authority overrides keeper authority": {
+			ctx: ctx.WithConsensusParams(tmproto.ConsensusParams{
+				Authority: &tmproto.AuthorityParams{Authority: overrideAuthority.String()},
+			}),
+			actor: myGovAuthority,
+			exp:   DefaultAuthorizationPolicy{},
+		},
+		"consensus params authority gets gov policy": {
+			ctx: ctx.WithConsensusParams(tmproto.ConsensusParams{
+				Authority: &tmproto.AuthorityParams{Authority: overrideAuthority.String()},
+			}),
+			actor: overrideAuthority,
+			exp:   NewGovAuthorizationPolicy(types.AuthZActionMigrateContract, types.AuthZActionInstantiate),
 		},
 	}
 	for name, spec := range specs {
