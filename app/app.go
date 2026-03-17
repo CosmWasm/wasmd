@@ -313,11 +313,16 @@ func NewWasmApp(
 		keys:              keys,
 	}
 
+	// Compute the governance authority address once using MustBech32ifyAddressBytes
+	// to avoid the global address cache, which may have been poisoned with a
+	// "cosmos" prefix by package-level variable initialization in imported packages.
+	govAuthority := sdk.MustBech32ifyAddressBytes(sdk.GetConfig().GetBech32AccountAddrPrefix(), authtypes.NewModuleAddress(govtypes.ModuleName))
+
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		runtime.EventService{},
 	)
 	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
@@ -331,14 +336,14 @@ func NewWasmApp(
 		maccPerms,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		app.AccountKeeper,
 		BlockedAddresses(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		logger,
 	)
 
@@ -362,7 +367,7 @@ func NewWasmApp(
 		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
@@ -373,7 +378,7 @@ func NewWasmApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.ProtocolPoolKeeper = protocolpoolkeeper.NewKeeper(
@@ -381,7 +386,7 @@ func NewWasmApp(
 		runtime.NewKVStoreService(keys[protocolpooltypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.DistrKeeper = distrkeeper.NewKeeper(
@@ -391,7 +396,7 @@ func NewWasmApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		distrkeeper.WithExternalCommunityPool(app.ProtocolPoolKeeper),
 	)
 
@@ -400,7 +405,7 @@ func NewWasmApp(
 		legacyAmino,
 		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
 		app.StakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
@@ -438,14 +443,14 @@ func NewWasmApp(
 		appCodec,
 		homePath,
 		app.BaseApp,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
 		app.UpgradeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	// Register the proposal types
@@ -467,7 +472,7 @@ func NewWasmApp(
 		app.DistrKeeper,
 		app.MsgServiceRouter(),
 		govConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		govkeeper.NewDefaultCalculateVoteResultsAndVotingPower(app.StakingKeeper),
 	)
 
@@ -501,7 +506,7 @@ func NewWasmApp(
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
@@ -511,7 +516,7 @@ func NewWasmApp(
 		app.AccountKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(), // set grpc router for ica host
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
@@ -519,7 +524,7 @@ func NewWasmApp(
 		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 	)
 
 	wasmDir := filepath.Join(homePath, "wasm")
@@ -547,7 +552,7 @@ func NewWasmApp(
 		nodeConfig,
 		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govAuthority,
 		wasmOpts...,
 	)
 
@@ -1062,13 +1067,14 @@ func GetMaccPerms() map[string][]string {
 
 // BlockedAddresses returns all the app's blocked account addresses.
 func BlockedAddresses() map[string]bool {
+	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	modAccAddrs := make(map[string]bool)
 	for acc := range GetMaccPerms() {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+		modAccAddrs[sdk.MustBech32ifyAddressBytes(prefix, authtypes.NewModuleAddress(acc))] = true
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	delete(modAccAddrs, sdk.MustBech32ifyAddressBytes(prefix, authtypes.NewModuleAddress(govtypes.ModuleName)))
 
 	return modAccAddrs
 }
