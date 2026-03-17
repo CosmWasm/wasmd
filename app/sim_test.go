@@ -124,7 +124,7 @@ func TestAppImportExport(t *testing.T) {
 
 	appOptions[flags.FlagHome] = t.TempDir() // ensure a unique folder for the new app
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	initReq := &abci.RequestInitChain{
@@ -238,7 +238,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	_, err = newApp.InitChain(&abci.RequestInitChain{
@@ -279,7 +279,7 @@ func setupSimulationApp(t *testing.T, msg string) (simtypes.Config, dbm.DB, simt
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = dir // ensure a unique folder
 
-	app := NewWasmApp(logger, db, nil, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	app := NewWasmApp(logger, db, true, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", app.Name())
 	return config, db, appOptions, app
 }
@@ -325,7 +325,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			appOptions.SetDefault(flags.FlagHome, t.TempDir()) // ensure a unique folder per run
 
 			db := dbm.NewMemDB()
-			app := NewWasmApp(logger, db, nil, true, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
+			app := NewWasmApp(logger, db, true, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

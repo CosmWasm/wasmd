@@ -1235,7 +1235,7 @@ func TestUpdateParamsAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		_, err := msgServer.UpdateParams(ctx, &types.MsgUpdateParams{Authority: keeperAuthority, Params: types.DefaultParams()})
@@ -1275,7 +1275,7 @@ func TestPinCodesAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		_, err := msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
@@ -1315,7 +1315,7 @@ func TestUnpinCodesAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		// pin first
@@ -1387,7 +1387,7 @@ func TestSudoContractAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		_, err := msgServer.SudoContract(ctx, &types.MsgSudoContract{Authority: keeperAuthority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
@@ -1425,7 +1425,7 @@ func TestAddCodeUploadParamsAddressesAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		_, err := msgServer.AddCodeUploadParamsAddresses(ctx, &types.MsgAddCodeUploadParamsAddresses{Authority: keeperAuthority, Addresses: []string{otherAddr.String()}})
@@ -1457,7 +1457,7 @@ func TestRemoveCodeUploadParamsAddressesAuthority(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
 	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress("override_authority___").String()
+	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
 
 	t.Run("fallback to keeper authority", func(t *testing.T) {
 		err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
