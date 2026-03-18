@@ -16,8 +16,12 @@ func (m *MockCommitMultiStore) CacheMultiStore() storetypes.CacheMultiStore {
 }
 
 type mockCMS struct {
-	storetypes.CommitMultiStore
+	*MockCommitMultiStore
 	committed *bool
+}
+
+func (m *mockCMS) CacheMultiStore() storetypes.CacheMultiStore {
+	return m
 }
 
 func (m *mockCMS) Write() {

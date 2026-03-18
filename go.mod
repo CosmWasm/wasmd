@@ -10,17 +10,17 @@ require (
 	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/log/v2 v2.0.2-0.20260311165803-2c527014f3ee
 	cosmossdk.io/math v1.5.3
-	cosmossdk.io/store v1.10.0-rc.2.0.20260317003316-0e1104c385ce
+	cosmossdk.io/store v1.10.0-rc.2.0.20260317223938-8fc4c9f74a25
 	cosmossdk.io/tools/confix v0.1.2
 	github.com/CosmWasm/wasmvm/v3 v3.0.3
 	github.com/cometbft/cometbft v0.39.0-beta.4
 	github.com/cosmos/cosmos-db v1.1.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.54.0-rc.1.0.20260317003316-0e1104c385ce
+	github.com/cosmos/cosmos-sdk v0.54.0-rc.1.0.20260317223938-8fc4c9f74a25
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/iavl v1.2.6
-	github.com/cosmos/ibc-go/v11 v11.0.0-20260317204352-169fcc7bd000
+	github.com/cosmos/ibc-go/v11 v11.0.0-20260318172109-e7af074700b5
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/distribution/reference v0.5.0
 	github.com/dvsekhvalnov/jose2go v1.8.0 // indirect

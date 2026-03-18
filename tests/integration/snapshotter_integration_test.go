@@ -44,8 +44,12 @@ func TestSnapshotter(t *testing.T) {
 			// setup source app
 			srcWasmApp, genesisAddr := newWasmExampleApp(t)
 
+			// commit the setup block first
+			_, err := srcWasmApp.Commit()
+			require.NoError(t, err)
+
 			// store wasm codes on chain
-			ctx := srcWasmApp.NewUncachedContext(false, tmproto.Header{
+			ctx := srcWasmApp.NewNextBlockContext(tmproto.Header{
 				ChainID: "foo",
 				Height:  srcWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
@@ -63,7 +67,7 @@ func TestSnapshotter(t *testing.T) {
 				srcCodeIDToChecksum[codeID] = checksum
 			}
 			// create snapshot
-			_, err := srcWasmApp.Commit()
+			_, err = srcWasmApp.Commit()
 			require.NoError(t, err)
 
 			snapshotHeight := uint64(srcWasmApp.LastBlockHeight())
@@ -92,11 +96,11 @@ func TestSnapshotter(t *testing.T) {
 
 			// then all wasm contracts are imported
 			wasmKeeper = destWasmApp.WasmKeeper
-			ctx = destWasmApp.NewUncachedContext(false, tmproto.Header{
+			ctx = sdk.NewContext(destWasmApp.CommitMultiStore().RootCacheMultiStore(), tmproto.Header{
 				ChainID: "foo",
 				Height:  destWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
-			})
+			}, false, nil)
 
 			destCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			wasmKeeper.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {

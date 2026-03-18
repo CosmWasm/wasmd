@@ -945,7 +945,7 @@ func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
 
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
-	ctx := wasmApp.NewUncachedContext(false, cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
+	ctx := wasmApp.NewNextBlockContext(cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
 	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
 	require.NoError(t, err)
 
