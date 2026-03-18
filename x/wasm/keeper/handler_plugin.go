@@ -261,7 +261,7 @@ func NewIBC2RawPacketHandler(channelKeeperV2 types.ChannelKeeperV2) IBC2RawPacke
 
 // DispatchMsg publishes a raw IBC2 packet onto the channel.
 func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
-	contractAddr sdk.AccAddress, contractIBC2PortID string, msg wasmvmtypes.CosmosMsg,
+	contractAddr sdk.AccAddress, _ string, msg wasmvmtypes.CosmosMsg,
 ) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
 	if msg.IBC2 == nil {
 		return nil, nil, nil, types.ErrUnknownMsg
@@ -269,12 +269,25 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 	switch {
 	case msg.IBC2.WriteAcknowledgement != nil:
 		packet := msg.IBC2.WriteAcknowledgement
-		if contractIBC2PortID == "" {
-			return nil, nil, nil, errorsmod.Wrapf(types.ErrUnsupportedForContract, "ibc2 not supported")
-		}
 		sourceClient := msg.IBC2.WriteAcknowledgement.SourceClient
 		if sourceClient == "" {
 			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc2 channel")
+		}
+
+		contractIBC2PortID := PortIDForContractV2(contractAddr)
+		storedPacket, ok := h.channelKeeperV2.GetAsyncPacket(ctx, packet.SourceClient, packet.PacketSequence)
+		if !ok {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrInvalid, "no pending async packet for client %s sequence %d", packet.SourceClient, packet.PacketSequence)
+		}
+
+		if len(storedPacket.Payloads) != 1 {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrInvalid, "expected 1 payload, got %d", len(storedPacket.Payloads))
+		}
+
+		if storedPacket.Payloads[0].DestinationPort != contractIBC2PortID {
+			return nil, nil, nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized,
+				"contract port %s is not authorized to acknowledge packet addressed to port %s",
+				contractIBC2PortID, storedPacket.Payloads[0].DestinationPort)
 		}
 
 		err := h.channelKeeperV2.WriteAcknowledgement(

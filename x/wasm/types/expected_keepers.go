@@ -93,6 +93,12 @@ type ChannelKeeperV2 interface {
 		sequence uint64,
 		ack channeltypesv2.Acknowledgement,
 	) error
+
+	GetAsyncPacket(
+		ctx sdk.Context,
+		clientID string,
+		sequence uint64,
+	) (channeltypesv2.Packet, bool)
 }
 
 // ICS4Wrapper defines the method for an IBC data package to be submitted.
