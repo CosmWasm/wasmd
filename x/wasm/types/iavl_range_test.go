@@ -9,7 +9,7 @@ import (
 
 	"cosmossdk.io/log/v2"
 	"cosmossdk.io/store"
-	"cosmossdk.io/store/iavl"
+	"cosmossdk.io/store/legacy/iavl"
 )
 
 // This is modeled close to

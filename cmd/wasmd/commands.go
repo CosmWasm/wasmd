@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io"
 	"os"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -188,7 +187,6 @@ func txCommand() *cobra.Command {
 func newApp(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) servertypes.Application {
 	baseappOptions := server.DefaultBaseappOptions(appOpts)
@@ -199,7 +197,7 @@ func newApp(
 	}
 
 	return app.NewWasmApp(
-		logger, db, traceStore, true,
+		logger, db, true,
 		appOpts,
 		wasmOpts,
 		baseappOptions...,
@@ -210,7 +208,6 @@ func newApp(
 func appExport(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	height int64,
 	forZeroHeight bool,
 	jailAllowedAddrs []string,
@@ -238,7 +235,6 @@ func appExport(
 	wasmApp = app.NewWasmApp(
 		logger,
 		db,
-		traceStore,
 		height == -1,
 		appOpts,
 		emptyWasmOpts,
