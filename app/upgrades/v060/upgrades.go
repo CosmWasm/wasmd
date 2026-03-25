@@ -4,7 +4,6 @@ import (
 	"context"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
 	"github.com/cosmos/cosmos-sdk/types/module"
 	epochstypes "github.com/cosmos/cosmos-sdk/x/epochs/types"
 	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
