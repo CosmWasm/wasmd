@@ -1229,265 +1229,175 @@ func TestUpdateContractLabel(t *testing.T) {
 	}
 }
 
-func TestUpdateParamsAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContext(false)
+func TestAuthorityParams(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(t *testing.T, wasmApp *app.WasmApp) (func(ctx sdk.Context, authority string) error, sdk.Context)
+	}{
+		{
+			name: "UpdateParams",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.UpdateParams(ctx, &types.MsgUpdateParams{Authority: authority, Params: types.DefaultParams()})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "PinCodes",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = wasmContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var result types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
 
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: authority, CodeIDs: []uint64{result.CodeID}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "UnpinCodes",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = wasmContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var result types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
 
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		_, err := msgServer.UpdateParams(ctx, &types.MsgUpdateParams{Authority: keeperAuthority, Params: types.DefaultParams()})
-		require.NoError(t, err)
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.UnpinCodes(ctx, &types.MsgUnpinCodes{Authority: authority, CodeIDs: []uint64{result.CodeID}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "SudoContract",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
-		_, err = msgServer.UpdateParams(ctx, &types.MsgUpdateParams{Authority: overrideAuthority, Params: types.DefaultParams()})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = hackatomContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var storeCodeResponse types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeCodeResponse))
 
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				initMsg := keeper.HackatomExampleInitMsg{Verifier: sender, Beneficiary: myAddress}
+				initMsgBz, err := json.Marshal(initMsg)
+				require.NoError(t, err)
 
-		_, err := msgServer.UpdateParams(ctxOverride, &types.MsgUpdateParams{Authority: overrideAuthority, Params: types.DefaultParams()})
-		require.NoError(t, err)
+				msgInstantiate := &types.MsgInstantiateContract{
+					Sender: sender.String(),
+					Admin:  sender.String(),
+					CodeID: storeCodeResponse.CodeID,
+					Label:  "test",
+					Msg:    initMsgBz,
+					Funds:  sdk.Coins{},
+				}
+				rsp, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
+				require.NoError(t, err)
+				var instantiateResponse types.MsgInstantiateContractResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &instantiateResponse))
 
-		_, err = msgServer.UpdateParams(ctxOverride, &types.MsgUpdateParams{Authority: keeperAuthority, Params: types.DefaultParams()})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-}
+				type StealMsg struct {
+					Recipient string     `json:"recipient"`
+					Amount    []sdk.Coin `json:"amount"`
+				}
+				stealMsg := struct {
+					Steal StealMsg `json:"steal_funds"`
+				}{Steal: StealMsg{Recipient: myAddress.String(), Amount: []sdk.Coin{}}}
+				stealMsgBz, err := json.Marshal(stealMsg)
+				require.NoError(t, err)
 
-func TestPinCodesAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContext(false)
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.SudoContract(ctx, &types.MsgSudoContract{Authority: authority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "AddCodeUploadParamsAddresses",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				_, _, otherAddr := testdata.KeyTestPubAddr()
 
-	// Store a code first
-	_, _, sender := testdata.KeyTestPubAddr()
-	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
-		m.WASMByteCode = wasmContract
-		m.Sender = sender.String()
-	})
-	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
-	require.NoError(t, err)
-	var result types.MsgStoreCodeResponse
-	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+				err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+					CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress),
+					InstantiateDefaultPermission: types.AccessTypeEverybody,
+				})
+				require.NoError(t, err)
 
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.AddCodeUploadParamsAddresses(ctx, &types.MsgAddCodeUploadParamsAddresses{Authority: authority, Addresses: []string{otherAddr.String()}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "RemoveCodeUploadParamsAddresses",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				_, _, otherAddr := testdata.KeyTestPubAddr()
 
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		_, err := msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.NoError(t, err)
-
-		_, err = msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: overrideAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
-
-		_, err := msgServer.PinCodes(ctxOverride, &types.MsgPinCodes{Authority: overrideAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.NoError(t, err)
-
-		_, err = msgServer.PinCodes(ctxOverride, &types.MsgPinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-}
-
-func TestUnpinCodesAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContext(false)
-
-	// Store and pin a code first
-	_, _, sender := testdata.KeyTestPubAddr()
-	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
-		m.WASMByteCode = wasmContract
-		m.Sender = sender.String()
-	})
-	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
-	require.NoError(t, err)
-	var result types.MsgStoreCodeResponse
-	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
-
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
-
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		// pin first
-		_, err := msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.NoError(t, err)
-
-		_, err = msgServer.UnpinCodes(ctx, &types.MsgUnpinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.NoError(t, err)
-
-		_, err = msgServer.UnpinCodes(ctx, &types.MsgUnpinCodes{Authority: overrideAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
-
-		_, err := msgServer.UnpinCodes(ctxOverride, &types.MsgUnpinCodes{Authority: overrideAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.NoError(t, err)
-
-		_, err = msgServer.UnpinCodes(ctxOverride, &types.MsgUnpinCodes{Authority: keeperAuthority, CodeIDs: []uint64{result.CodeID}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-}
-
-func TestSudoContractAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
-
-	// Store and instantiate a contract
-	_, _, sender := testdata.KeyTestPubAddr()
-	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
-		m.WASMByteCode = hackatomContract
-		m.Sender = sender.String()
-	})
-	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
-	require.NoError(t, err)
-	var storeCodeResponse types.MsgStoreCodeResponse
-	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeCodeResponse))
-
-	myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
-	initMsg := keeper.HackatomExampleInitMsg{Verifier: sender, Beneficiary: myAddress}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	msgInstantiate := &types.MsgInstantiateContract{
-		Sender: sender.String(),
-		Admin:  sender.String(),
-		CodeID: storeCodeResponse.CodeID,
-		Label:  "test",
-		Msg:    initMsgBz,
-		Funds:  sdk.Coins{},
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					// Reset params before each call so otherAddr is always present to remove
+					require.NoError(t, wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+						CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+						InstantiateDefaultPermission: types.AccessTypeEverybody,
+					}))
+					_, err := msgServer.RemoveCodeUploadParamsAddresses(ctx, &types.MsgRemoveCodeUploadParamsAddresses{Authority: authority, Addresses: []string{otherAddr.String()}})
+					return err
+				}, ctx
+			},
+		},
 	}
-	rsp, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
-	require.NoError(t, err)
-	var instantiateResponse types.MsgInstantiateContractResponse
-	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &instantiateResponse))
 
-	type StealMsg struct {
-		Recipient string     `json:"recipient"`
-		Amount    []sdk.Coin `json:"amount"`
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			wasmApp := app.Setup(t)
+			execFn, ctx := tc.setup(t, wasmApp)
+
+			keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
+			overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
+
+			t.Run("fallback to keeper authority", func(t *testing.T) {
+				require.NoError(t, execFn(ctx, keeperAuthority))
+				require.ErrorIs(t, execFn(ctx, overrideAuthority), sdkerrors.ErrUnauthorized)
+			})
+
+			t.Run("consensus params authority takes precedence", func(t *testing.T) {
+				ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
+					Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
+				})
+				require.NoError(t, execFn(ctxOverride, overrideAuthority))
+				require.ErrorIs(t, execFn(ctxOverride, keeperAuthority), sdkerrors.ErrUnauthorized)
+			})
+		})
 	}
-	stealMsg := struct {
-		Steal StealMsg `json:"steal_funds"`
-	}{Steal: StealMsg{Recipient: myAddress.String(), Amount: []sdk.Coin{}}}
-	stealMsgBz, err := json.Marshal(stealMsg)
-	require.NoError(t, err)
-
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
-
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		_, err := msgServer.SudoContract(ctx, &types.MsgSudoContract{Authority: keeperAuthority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
-		require.NoError(t, err)
-
-		_, err = msgServer.SudoContract(ctx, &types.MsgSudoContract{Authority: overrideAuthority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
-
-		_, err := msgServer.SudoContract(ctxOverride, &types.MsgSudoContract{Authority: overrideAuthority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
-		require.NoError(t, err)
-
-		_, err = msgServer.SudoContract(ctxOverride, &types.MsgSudoContract{Authority: keeperAuthority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-}
-
-func TestAddCodeUploadParamsAddressesAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContext(false)
-
-	myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
-	_, _, otherAddr := testdata.KeyTestPubAddr()
-
-	err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
-		CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress),
-		InstantiateDefaultPermission: types.AccessTypeEverybody,
-	})
-	require.NoError(t, err)
-
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
-
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		_, err := msgServer.AddCodeUploadParamsAddresses(ctx, &types.MsgAddCodeUploadParamsAddresses{Authority: keeperAuthority, Addresses: []string{otherAddr.String()}})
-		require.NoError(t, err)
-
-		_, err = msgServer.AddCodeUploadParamsAddresses(ctx, &types.MsgAddCodeUploadParamsAddresses{Authority: overrideAuthority, Addresses: []string{otherAddr.String()}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
-
-		_, err := msgServer.AddCodeUploadParamsAddresses(ctxOverride, &types.MsgAddCodeUploadParamsAddresses{Authority: overrideAuthority, Addresses: []string{otherAddr.String()}})
-		require.NoError(t, err)
-
-		_, err = msgServer.AddCodeUploadParamsAddresses(ctxOverride, &types.MsgAddCodeUploadParamsAddresses{Authority: keeperAuthority, Addresses: []string{otherAddr.String()}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-}
-
-func TestRemoveCodeUploadParamsAddressesAuthority(t *testing.T) {
-	wasmApp := app.Setup(t)
-	ctx := wasmApp.NewContext(false)
-
-	myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
-	_, _, otherAddr := testdata.KeyTestPubAddr()
-
-	msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
-	keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
-	overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
-
-	t.Run("fallback to keeper authority", func(t *testing.T) {
-		err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
-			CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
-			InstantiateDefaultPermission: types.AccessTypeEverybody,
-		})
-		require.NoError(t, err)
-
-		_, err = msgServer.RemoveCodeUploadParamsAddresses(ctx, &types.MsgRemoveCodeUploadParamsAddresses{Authority: keeperAuthority, Addresses: []string{otherAddr.String()}})
-		require.NoError(t, err)
-
-		_, err = msgServer.RemoveCodeUploadParamsAddresses(ctx, &types.MsgRemoveCodeUploadParamsAddresses{Authority: overrideAuthority, Addresses: []string{otherAddr.String()}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
-
-	t.Run("consensus params authority takes precedence", func(t *testing.T) {
-		err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
-			CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
-			InstantiateDefaultPermission: types.AccessTypeEverybody,
-		})
-		require.NoError(t, err)
-
-		ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
-			Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
-		})
-
-		_, err = msgServer.RemoveCodeUploadParamsAddresses(ctxOverride, &types.MsgRemoveCodeUploadParamsAddresses{Authority: overrideAuthority, Addresses: []string{otherAddr.String()}})
-		require.NoError(t, err)
-
-		_, err = msgServer.RemoveCodeUploadParamsAddresses(ctxOverride, &types.MsgRemoveCodeUploadParamsAddresses{Authority: keeperAuthority, Addresses: []string{otherAddr.String()}})
-		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	})
 }
