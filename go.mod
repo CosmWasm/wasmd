@@ -20,7 +20,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/iavl v1.2.6
-	github.com/cosmos/ibc-go/v11 v11.0.0-20260319183356-4af8aa6a0c08
+	github.com/cosmos/ibc-go/v11 v11.0.0-20260325173357-652e00d1f8f0
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/distribution/reference v0.5.0
 	github.com/dvsekhvalnov/jose2go v1.8.0 // indirect
@@ -55,7 +55,6 @@ require (
 	cloud.google.com/go/storage v1.60.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
-	cosmossdk.io/store v1.10.0-rc.2.0.20260317184211-2c58078d0561 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
