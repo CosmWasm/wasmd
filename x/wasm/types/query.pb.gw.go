@@ -52,6 +52,7 @@ func request_Query_ContractInfo_0(ctx context.Context, marshaler runtime.Marshal
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -77,6 +78,7 @@ func local_request_Query_ContractInfo_0(ctx context.Context, marshaler runtime.M
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -104,6 +106,7 @@ func request_Query_ContractHistory_0(ctx context.Context, marshaler runtime.Mars
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -136,6 +139,7 @@ func local_request_Query_ContractHistory_0(ctx context.Context, marshaler runtim
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -170,6 +174,7 @@ func request_Query_ContractsByCode_0(ctx context.Context, marshaler runtime.Mars
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -202,6 +207,7 @@ func local_request_Query_ContractsByCode_0(ctx context.Context, marshaler runtim
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -236,6 +242,7 @@ func request_Query_AllContractState_0(ctx context.Context, marshaler runtime.Mar
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -268,6 +275,7 @@ func local_request_Query_AllContractState_0(ctx context.Context, marshaler runti
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -300,6 +308,7 @@ func request_Query_RawContractState_0(ctx context.Context, marshaler runtime.Mar
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -310,6 +319,7 @@ func request_Query_RawContractState_0(ctx context.Context, marshaler runtime.Mar
 	}
 
 	protoReq.QueryData, err = runtime.Bytes(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "query_data", err)
 	}
@@ -335,6 +345,7 @@ func local_request_Query_RawContractState_0(ctx context.Context, marshaler runti
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -345,6 +356,7 @@ func local_request_Query_RawContractState_0(ctx context.Context, marshaler runti
 	}
 
 	protoReq.QueryData, err = runtime.Bytes(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "query_data", err)
 	}
@@ -370,6 +382,7 @@ func request_Query_SmartContractState_0(ctx context.Context, marshaler runtime.M
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -380,6 +393,7 @@ func request_Query_SmartContractState_0(ctx context.Context, marshaler runtime.M
 	}
 
 	protoReq.QueryData, err = runtime.Bytes(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "query_data", err)
 	}
@@ -405,6 +419,7 @@ func local_request_Query_SmartContractState_0(ctx context.Context, marshaler run
 	}
 
 	protoReq.Address, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "address", err)
 	}
@@ -415,6 +430,7 @@ func local_request_Query_SmartContractState_0(ctx context.Context, marshaler run
 	}
 
 	protoReq.QueryData, err = runtime.Bytes(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "query_data", err)
 	}
@@ -440,6 +456,7 @@ func request_Query_Code_0(ctx context.Context, marshaler runtime.Marshaler, clie
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -465,6 +482,7 @@ func local_request_Query_Code_0(ctx context.Context, marshaler runtime.Marshaler
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -522,6 +540,7 @@ func request_Query_CodeInfo_0(ctx context.Context, marshaler runtime.Marshaler, 
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -547,6 +566,7 @@ func local_request_Query_CodeInfo_0(ctx context.Context, marshaler runtime.Marsh
 	}
 
 	protoReq.CodeId, err = runtime.Uint64(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code_id", err)
 	}
@@ -622,6 +642,7 @@ func request_Query_ContractsByCreator_0(ctx context.Context, marshaler runtime.M
 	}
 
 	protoReq.CreatorAddress, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "creator_address", err)
 	}
@@ -654,6 +675,7 @@ func local_request_Query_ContractsByCreator_0(ctx context.Context, marshaler run
 	}
 
 	protoReq.CreatorAddress, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "creator_address", err)
 	}
