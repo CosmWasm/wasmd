@@ -8,7 +8,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	"github.com/stretchr/testify/assert"
 
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 )
 
 func TestSetupContractCost(t *testing.T) {

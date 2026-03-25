@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"cosmossdk.io/log/v2"
-	"cosmossdk.io/store"
+	"github.com/cosmos/cosmos-sdk/store/v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

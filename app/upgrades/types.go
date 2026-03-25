@@ -5,7 +5,7 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"

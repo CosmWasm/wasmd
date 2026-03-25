@@ -12,7 +12,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

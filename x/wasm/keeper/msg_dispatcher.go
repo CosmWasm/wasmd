@@ -9,7 +9,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

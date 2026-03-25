@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
