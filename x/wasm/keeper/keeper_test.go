@@ -25,8 +25,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/store/v2"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -2916,7 +2916,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			isPinned: true,
 			checksum: []byte("pinned checksum"),
 			initCtx: func() sdk.Context {
-				ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+				ctx := sdk.NewContext(ms, cmtproto.Header{
 					Height: 100,
 					Time:   time.Now(),
 				}, false, log.NewNopLogger())
@@ -2929,7 +2929,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			isPinned: false,
 			checksum: []byte("unpinned checksum"),
 			initCtx: func() sdk.Context {
-				ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+				ctx := sdk.NewContext(ms, cmtproto.Header{
 					Height: 100,
 					Time:   time.Now(),
 				}, false, log.NewNopLogger())
@@ -2944,7 +2944,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			initCtx: func() sdk.Context {
 				txContracts := types.NewTxContracts()
 				txContracts.AddContract([]byte("unpinned checksum"))
-				ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+				ctx := sdk.NewContext(ms, cmtproto.Header{
 					Height: 100,
 					Time:   time.Now(),
 				}, false, log.NewNopLogger())
@@ -2957,7 +2957,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 			isPinned: false,
 			checksum: []byte("unpinned checksum"),
 			initCtx: func() sdk.Context {
-				ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+				ctx := sdk.NewContext(ms, cmtproto.Header{
 					Height: 100,
 					Time:   time.Now(),
 				}, false, log.NewNopLogger())

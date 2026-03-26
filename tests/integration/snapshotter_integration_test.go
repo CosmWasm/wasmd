@@ -7,6 +7,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/assert"
@@ -44,16 +45,14 @@ func TestSnapshotter(t *testing.T) {
 			// setup source app
 			srcWasmApp, genesisAddr := newWasmExampleApp(t)
 
-			// commit the setup block first
-			_, err := srcWasmApp.Commit()
-			require.NoError(t, err)
-
 			// store wasm codes on chain
+			height := srcWasmApp.LastBlockHeight() + 1
 			ctx := srcWasmApp.NewNextBlockContext(tmproto.Header{
 				ChainID: "foo",
-				Height:  srcWasmApp.LastBlockHeight() + 1,
+				Height:  height,
 				Time:    time.Now(),
 			})
+
 			wasmKeeper := srcWasmApp.WasmKeeper
 			contractKeeper := keeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
@@ -66,7 +65,11 @@ func TestSnapshotter(t *testing.T) {
 				require.Equal(t, uint64(i+1), codeID)
 				srcCodeIDToChecksum[codeID] = checksum
 			}
-			// create snapshot
+			// flush finalize state to CMS and commit
+			_, err := srcWasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{
+				Height: height,
+			})
+			require.NoError(t, err)
 			_, err = srcWasmApp.Commit()
 			require.NoError(t, err)
 
@@ -96,11 +99,11 @@ func TestSnapshotter(t *testing.T) {
 
 			// then all wasm contracts are imported
 			wasmKeeper = destWasmApp.WasmKeeper
-			ctx = sdk.NewContext(destWasmApp.CommitMultiStore().RootCacheMultiStore(), tmproto.Header{
+			ctx = destWasmApp.NewNextBlockContext(tmproto.Header{
 				ChainID: "foo",
 				Height:  destWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
-			}, false, nil)
+			})
 
 			destCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			wasmKeeper.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {

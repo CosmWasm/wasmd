@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log/v2"
-	"cosmossdk.io/store"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/store/v2"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,7 +93,7 @@ func TestCountTxDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.RootCacheMultiStore().CacheMultiStore(), cmtproto.Header{
+			ctx := sdk.NewContext(ms.CacheMultiStore(), cmtproto.Header{
 				Height: myCurrentBlockHeight,
 				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
 			}, false, log.NewNopLogger())
@@ -216,7 +216,7 @@ func TestGasRegisterDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+			ctx := sdk.NewContext(ms, cmtproto.Header{
 				Height: 100,
 				Time:   time.Now(),
 			}, false, log.NewNopLogger())
@@ -283,7 +283,7 @@ func TestTxContractsDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.RootCacheMultiStore(), cmtproto.Header{
+			ctx := sdk.NewContext(ms, cmtproto.Header{
 				Height: 100,
 				Time:   time.Now(),
 			}, false, log.NewNopLogger())
