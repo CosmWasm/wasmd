@@ -2148,70 +2148,73 @@ func _Query_BuildAddress_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Query_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "cosmwasm.wasm.v1.Query",
-	HandlerType: (*QueryServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ContractInfo",
-			Handler:    _Query_ContractInfo_Handler,
+var (
+	Query_serviceDesc  = _Query_serviceDesc
+	_Query_serviceDesc = grpc.ServiceDesc{
+		ServiceName: "cosmwasm.wasm.v1.Query",
+		HandlerType: (*QueryServer)(nil),
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "ContractInfo",
+				Handler:    _Query_ContractInfo_Handler,
+			},
+			{
+				MethodName: "ContractHistory",
+				Handler:    _Query_ContractHistory_Handler,
+			},
+			{
+				MethodName: "ContractsByCode",
+				Handler:    _Query_ContractsByCode_Handler,
+			},
+			{
+				MethodName: "AllContractState",
+				Handler:    _Query_AllContractState_Handler,
+			},
+			{
+				MethodName: "RawContractState",
+				Handler:    _Query_RawContractState_Handler,
+			},
+			{
+				MethodName: "SmartContractState",
+				Handler:    _Query_SmartContractState_Handler,
+			},
+			{
+				MethodName: "Code",
+				Handler:    _Query_Code_Handler,
+			},
+			{
+				MethodName: "Codes",
+				Handler:    _Query_Codes_Handler,
+			},
+			{
+				MethodName: "CodeInfo",
+				Handler:    _Query_CodeInfo_Handler,
+			},
+			{
+				MethodName: "PinnedCodes",
+				Handler:    _Query_PinnedCodes_Handler,
+			},
+			{
+				MethodName: "Params",
+				Handler:    _Query_Params_Handler,
+			},
+			{
+				MethodName: "ContractsByCreator",
+				Handler:    _Query_ContractsByCreator_Handler,
+			},
+			{
+				MethodName: "WasmLimitsConfig",
+				Handler:    _Query_WasmLimitsConfig_Handler,
+			},
+			{
+				MethodName: "BuildAddress",
+				Handler:    _Query_BuildAddress_Handler,
+			},
 		},
-		{
-			MethodName: "ContractHistory",
-			Handler:    _Query_ContractHistory_Handler,
-		},
-		{
-			MethodName: "ContractsByCode",
-			Handler:    _Query_ContractsByCode_Handler,
-		},
-		{
-			MethodName: "AllContractState",
-			Handler:    _Query_AllContractState_Handler,
-		},
-		{
-			MethodName: "RawContractState",
-			Handler:    _Query_RawContractState_Handler,
-		},
-		{
-			MethodName: "SmartContractState",
-			Handler:    _Query_SmartContractState_Handler,
-		},
-		{
-			MethodName: "Code",
-			Handler:    _Query_Code_Handler,
-		},
-		{
-			MethodName: "Codes",
-			Handler:    _Query_Codes_Handler,
-		},
-		{
-			MethodName: "CodeInfo",
-			Handler:    _Query_CodeInfo_Handler,
-		},
-		{
-			MethodName: "PinnedCodes",
-			Handler:    _Query_PinnedCodes_Handler,
-		},
-		{
-			MethodName: "Params",
-			Handler:    _Query_Params_Handler,
-		},
-		{
-			MethodName: "ContractsByCreator",
-			Handler:    _Query_ContractsByCreator_Handler,
-		},
-		{
-			MethodName: "WasmLimitsConfig",
-			Handler:    _Query_WasmLimitsConfig_Handler,
-		},
-		{
-			MethodName: "BuildAddress",
-			Handler:    _Query_BuildAddress_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "cosmwasm/wasm/v1/query.proto",
-}
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "cosmwasm/wasm/v1/query.proto",
+	}
+)
 
 func (m *QueryContractInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()

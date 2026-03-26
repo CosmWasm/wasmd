@@ -1049,7 +1049,7 @@ func (app *WasmApp) RegisterTendermintService(clientCtx client.Context) {
 
 func (app *WasmApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
 	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg, func() int64 {
-		return app.CommitMultiStore().LatestVersion() // todo fix
+		return app.CommitMultiStore().EarliestVersion()
 	})
 }
 
