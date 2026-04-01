@@ -24,6 +24,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// MaxAnyMsgValueSize is the maximum allowed size in bytes for an AnyMsg Value field.
+var MaxAnyMsgValueSize = 512 * 1024 // 512 KB
+
 type (
 	BankEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
 	CustomEncoder       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
@@ -207,6 +210,10 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 
 func EncodeAnyMsg(unpacker codectypes.AnyUnpacker) AnyEncoder {
 	return func(sender sdk.AccAddress, msg *wasmvmtypes.AnyMsg) ([]sdk.Msg, error) {
+		if len(msg.Value) > MaxAnyMsgValueSize {
+			return nil, errorsmod.Wrapf(types.ErrLimit, "AnyMsg value size %d exceeds limit %d", len(msg.Value), MaxAnyMsgValueSize)
+		}
+
 		codecAny := codectypes.Any{
 			TypeUrl: msg.TypeURL,
 			Value:   msg.Value,
