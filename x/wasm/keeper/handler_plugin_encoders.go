@@ -23,9 +23,14 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// anyMsgGasCost is the gas cost for unpacking an AnyMsg, in CosmWasm gas units (not SDK gas units).
-// With the default gas multiplier, this amounts to 5 SDK gas.
-const anyMsgGasCost = 700000
+var (
+	// MaxAnyMsgValueSize is the maximum allowed size in bytes for an AnyMsg Value field.
+	MaxAnyMsgValueSize = 512 * 1024 // 512 KB
+	// AnyMsgBaseGasCost is the base gas cost for unpacking an AnyMsg, in SDK gas units.
+	AnyMsgBaseGasCost uint64 = 5
+	// AnyMsgPerKBGasCost is the per-kilobyte gas cost for the AnyMsg Value field, in SDK gas units.
+	AnyMsgPerKBGasCost uint64 = 1
+)
 
 type (
 	BankEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
@@ -210,13 +215,17 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 
 func EncodeAnyMsg(unpacker codectypes.AnyUnpacker) AnyEncoder {
 	return func(ctx sdk.Context, sender sdk.AccAddress, msg *wasmvmtypes.AnyMsg) ([]sdk.Msg, error) {
+		if len(msg.Value) > MaxAnyMsgValueSize {
+			return nil, errorsmod.Wrapf(types.ErrLimit, "AnyMsg value size %d exceeds limit %d", len(msg.Value), MaxAnyMsgValueSize)
+		}
+
+		ctx.GasMeter().ConsumeGas(AnyMsgBaseGasCost+AnyMsgPerKBGasCost*uint64(len(msg.Value))/1024, "unpacking AnyMsg")
+
 		codecAny := codectypes.Any{
 			TypeUrl: msg.TypeURL,
 			Value:   msg.Value,
 		}
 		var sdkMsg sdk.Msg
-
-		ctx.GasMeter().ConsumeGas(anyMsgGasCost/types.DefaultGasMultiplier, "unpacking AnyMsg")
 		if err := unpacker.UnpackAny(&codecAny, &sdkMsg); err != nil {
 			return nil, errorsmod.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 		}
