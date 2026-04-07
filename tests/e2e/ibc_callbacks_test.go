@@ -7,9 +7,9 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,7 +67,7 @@ func TestIBCCallbacks(t *testing.T) {
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
-	coord.Setup(&path.Path)
+	path.Setup()
 
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 	ibcDenom := ibctransfertypes.NewDenom(
@@ -132,11 +132,13 @@ func TestIBCCallbacks(t *testing.T) {
 
 			if spec.expAck {
 				// and the packet is relayed
-				wasmibctesting.RelayAndAckPendingPackets(path)
+				err = wasmibctesting.RelayAndAckPendingPackets(path)
+				require.NoError(t, err)
 
 				// then the contract on chain B should receive a receive callback
 				var response queryResp
-				chainB.SmartQuery(contractAddrB.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				err = chainB.SmartQuery(contractAddrB.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Len(t, response.IBCDestinationCallbacks, 1)
@@ -157,7 +159,8 @@ func TestIBCCallbacks(t *testing.T) {
 				), balances)
 
 				// and the contract on chain A should receive a callback with the ack
-				chainA.SmartQuery(contractAddrA.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				err = chainA.SmartQuery(contractAddrA.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Len(t, response.IBCAckCallbacks, 1)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
@@ -170,13 +173,15 @@ func TestIBCCallbacks(t *testing.T) {
 
 				// then the contract on chain B should not receive anything
 				var response queryResp
-				chainB.SmartQuery(contractAddrB.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				err = chainB.SmartQuery(contractAddrB.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Empty(t, response.IBCTimeoutCallbacks)
 				assert.Empty(t, response.IBCDestinationCallbacks)
 
 				// and the contract on chain A should receive a callback with the timeout result
-				chainA.SmartQuery(contractAddrA.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				err = chainA.SmartQuery(contractAddrA.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+				require.NoError(t, err)
 				assert.Empty(t, response.IBCAckCallbacks)
 				assert.Len(t, response.IBCTimeoutCallbacks, 1)
 				assert.Empty(t, response.IBCDestinationCallbacks)
@@ -212,7 +217,7 @@ func TestIBCDestinationCallbackTransfer(t *testing.T) {
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
-	coord.Setup(&path.Path)
+	path.Setup()
 
 	oneToken := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1)))
 	ibcDenom := ibctransfertypes.NewDenom(
@@ -228,24 +233,30 @@ func TestIBCDestinationCallbackTransfer(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// when someone sends an ibc transfer to chain B
-	chainA.SendMsgs(
+	_, err := chainA.SendMsgs(
 		ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
 			oneToken[0], actorChainA.String(), actorChainB.String(), chainA.GetTimeoutHeight(), 0, ""),
 	)
+	require.NoError(t, err)
 
-	wasmibctesting.RelayAndAckPendingPackets(path)
+	err = wasmibctesting.RelayAndAckPendingPackets(path)
+	require.NoError(t, err)
 
 	// and it is transferred back to the contract on A
-	chainB.SendMsgs(
+	_, err = chainB.SendMsgs(
 		ibctransfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID,
 			ibcCoin, actorChainB.String(), contractAddr.String(), chainB.GetTimeoutHeight(), 0,
 			fmt.Sprintf(`{"dest_callback":{"address":"%s"}}`, contractAddr.String())),
 	)
-	wasmibctesting.RelayAndAckPendingPackets(path)
+	require.NoError(t, err)
+
+	err = wasmibctesting.RelayAndAckPendingPackets(path)
+	require.NoError(t, err)
 
 	// then the contract on A should receive a destination chain callback with correct funds
 	var response queryResp
-	chainA.SmartQuery(contractAddr.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+	err = chainA.SmartQuery(contractAddr.String(), queryMsg{CallbackStats: struct{}{}}, &response)
+	require.NoError(t, err)
 	assert.Empty(t, response.IBCAckCallbacks)
 	assert.Empty(t, response.IBCTimeoutCallbacks)
 	assert.Len(t, response.IBCDestinationCallbacks, 1)
@@ -285,7 +296,7 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
-	coord.Setup(&path.Path)
+	path.Setup()
 
 	// with a reflect contract deployed on chain A and B
 	contractAddrA := e2e.InstantiateReflectContract(t, chainA)
@@ -309,6 +320,7 @@ func TestIBCCallbacksWithoutEntrypoints(t *testing.T) {
 	})
 
 	// and the packet is relayed without problems
-	wasmibctesting.RelayAndAckPendingPackets(path)
+	err := wasmibctesting.RelayAndAckPendingPackets(path)
+	require.NoError(t, err)
 	assert.Empty(t, *chainA.PendingSendPackets)
 }

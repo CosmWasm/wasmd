@@ -14,7 +14,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -127,7 +127,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectGrpcQuery(t *testing.T) {
-	queryPlugins := (*reflectPlugins()).Merge(&wasmKeeper.QueryPlugins{
+	queryPlugins := reflectPlugins().Merge(&wasmKeeper.QueryPlugins{
 		Grpc: func(ctx sdk.Context, request *wasmvmtypes.GrpcQuery) (proto.Message, error) {
 			if request.Path == "cosmos.bank.v1beta1.Query/AllBalances" {
 				return &banktypes.QueryAllBalancesResponse{
@@ -945,7 +945,7 @@ func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
 
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
-	ctx := wasmApp.NewUncachedContext(false, cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
+	ctx := wasmApp.NewNextBlockContext(cmtproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
 	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
 	require.NoError(t, err)
 
@@ -971,7 +971,7 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 				Path: "/cosmos.auth.v1beta1.Query/Account",
 				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
 			},
-			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"1","sequence":"0"}}`, addrs[0].String()),
+			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"12771091728495718350","sequence":"0"}}`, addrs[0].String()),
 		},
 		"in accept list - error result": {
 			req: &wasmvmtypes.StargateQuery{

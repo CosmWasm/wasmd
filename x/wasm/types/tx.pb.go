@@ -2501,82 +2501,85 @@ func _Msg_UpdateContractLabel_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Msg_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "cosmwasm.wasm.v1.Msg",
-	HandlerType: (*MsgServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "StoreCode",
-			Handler:    _Msg_StoreCode_Handler,
+var (
+	Msg_serviceDesc  = _Msg_serviceDesc
+	_Msg_serviceDesc = grpc.ServiceDesc{
+		ServiceName: "cosmwasm.wasm.v1.Msg",
+		HandlerType: (*MsgServer)(nil),
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "StoreCode",
+				Handler:    _Msg_StoreCode_Handler,
+			},
+			{
+				MethodName: "InstantiateContract",
+				Handler:    _Msg_InstantiateContract_Handler,
+			},
+			{
+				MethodName: "InstantiateContract2",
+				Handler:    _Msg_InstantiateContract2_Handler,
+			},
+			{
+				MethodName: "ExecuteContract",
+				Handler:    _Msg_ExecuteContract_Handler,
+			},
+			{
+				MethodName: "MigrateContract",
+				Handler:    _Msg_MigrateContract_Handler,
+			},
+			{
+				MethodName: "UpdateAdmin",
+				Handler:    _Msg_UpdateAdmin_Handler,
+			},
+			{
+				MethodName: "ClearAdmin",
+				Handler:    _Msg_ClearAdmin_Handler,
+			},
+			{
+				MethodName: "UpdateInstantiateConfig",
+				Handler:    _Msg_UpdateInstantiateConfig_Handler,
+			},
+			{
+				MethodName: "UpdateParams",
+				Handler:    _Msg_UpdateParams_Handler,
+			},
+			{
+				MethodName: "SudoContract",
+				Handler:    _Msg_SudoContract_Handler,
+			},
+			{
+				MethodName: "PinCodes",
+				Handler:    _Msg_PinCodes_Handler,
+			},
+			{
+				MethodName: "UnpinCodes",
+				Handler:    _Msg_UnpinCodes_Handler,
+			},
+			{
+				MethodName: "StoreAndInstantiateContract",
+				Handler:    _Msg_StoreAndInstantiateContract_Handler,
+			},
+			{
+				MethodName: "RemoveCodeUploadParamsAddresses",
+				Handler:    _Msg_RemoveCodeUploadParamsAddresses_Handler,
+			},
+			{
+				MethodName: "AddCodeUploadParamsAddresses",
+				Handler:    _Msg_AddCodeUploadParamsAddresses_Handler,
+			},
+			{
+				MethodName: "StoreAndMigrateContract",
+				Handler:    _Msg_StoreAndMigrateContract_Handler,
+			},
+			{
+				MethodName: "UpdateContractLabel",
+				Handler:    _Msg_UpdateContractLabel_Handler,
+			},
 		},
-		{
-			MethodName: "InstantiateContract",
-			Handler:    _Msg_InstantiateContract_Handler,
-		},
-		{
-			MethodName: "InstantiateContract2",
-			Handler:    _Msg_InstantiateContract2_Handler,
-		},
-		{
-			MethodName: "ExecuteContract",
-			Handler:    _Msg_ExecuteContract_Handler,
-		},
-		{
-			MethodName: "MigrateContract",
-			Handler:    _Msg_MigrateContract_Handler,
-		},
-		{
-			MethodName: "UpdateAdmin",
-			Handler:    _Msg_UpdateAdmin_Handler,
-		},
-		{
-			MethodName: "ClearAdmin",
-			Handler:    _Msg_ClearAdmin_Handler,
-		},
-		{
-			MethodName: "UpdateInstantiateConfig",
-			Handler:    _Msg_UpdateInstantiateConfig_Handler,
-		},
-		{
-			MethodName: "UpdateParams",
-			Handler:    _Msg_UpdateParams_Handler,
-		},
-		{
-			MethodName: "SudoContract",
-			Handler:    _Msg_SudoContract_Handler,
-		},
-		{
-			MethodName: "PinCodes",
-			Handler:    _Msg_PinCodes_Handler,
-		},
-		{
-			MethodName: "UnpinCodes",
-			Handler:    _Msg_UnpinCodes_Handler,
-		},
-		{
-			MethodName: "StoreAndInstantiateContract",
-			Handler:    _Msg_StoreAndInstantiateContract_Handler,
-		},
-		{
-			MethodName: "RemoveCodeUploadParamsAddresses",
-			Handler:    _Msg_RemoveCodeUploadParamsAddresses_Handler,
-		},
-		{
-			MethodName: "AddCodeUploadParamsAddresses",
-			Handler:    _Msg_AddCodeUploadParamsAddresses_Handler,
-		},
-		{
-			MethodName: "StoreAndMigrateContract",
-			Handler:    _Msg_StoreAndMigrateContract_Handler,
-		},
-		{
-			MethodName: "UpdateContractLabel",
-			Handler:    _Msg_UpdateContractLabel_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "cosmwasm/wasm/v1/tx.proto",
-}
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "cosmwasm/wasm/v1/tx.proto",
+	}
+)
 
 func (m *MsgStoreCode) Marshal() (dAtA []byte, err error) {
 	size := m.Size()

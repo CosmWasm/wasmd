@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -28,7 +29,7 @@ var hackatomContract []byte
 
 func TestStoreCode(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
@@ -57,7 +58,7 @@ func TestStoreCode(t *testing.T) {
 
 func TestUpdateParams(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 
 	var (
 		myAddress              sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -132,7 +133,7 @@ func TestUpdateParams(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			require.NoError(t, err)
 			var result types.MsgUpdateParamsResponse
 			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
@@ -147,7 +148,7 @@ func TestUpdateParams(t *testing.T) {
 
 func TestAddCodeUploadParamsAddresses(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -223,7 +224,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			if spec.expErr {
 				require.Error(t, err)
 				require.Nil(t, rsp)
@@ -243,7 +244,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 
 func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -319,7 +320,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src) //nolint:gosec
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
 			if spec.expErr {
 				require.Error(t, err)
 				require.Nil(t, rsp)
@@ -339,7 +340,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 
 func TestPinCodes(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -396,7 +397,7 @@ func TestPinCodes(t *testing.T) {
 
 func TestUnpinCodes(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContext(false)
+	ctx := wasmApp.NewContext(false)
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -461,7 +462,7 @@ func TestUnpinCodes(t *testing.T) {
 
 func TestSudoContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -552,7 +553,7 @@ func TestSudoContract(t *testing.T) {
 
 func TestStoreAndInstantiateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -612,7 +613,7 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 
 func TestUpdateAdmin(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -677,7 +678,7 @@ func TestUpdateAdmin(t *testing.T) {
 
 func TestClearAdmin(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -739,7 +740,7 @@ func TestClearAdmin(t *testing.T) {
 
 func TestMigrateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -826,7 +827,7 @@ func TestMigrateContract(t *testing.T) {
 
 func TestInstantiateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -898,7 +899,7 @@ func TestInstantiateContract(t *testing.T) {
 
 func TestInstantiateContract2(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -977,7 +978,7 @@ func TestInstantiateContract2(t *testing.T) {
 
 func TestUpdateInstantiateConfig(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		creator   sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -1051,7 +1052,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 
 func TestStoreAndMigrateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	checksum, err := wasmvm.CreateChecksum(hackatomContract)
 	require.NoError(t, err)
@@ -1147,7 +1148,7 @@ func TestStoreAndMigrateContract(t *testing.T) {
 
 func TestUpdateContractLabel(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
@@ -1224,6 +1225,179 @@ func TestUpdateContractLabel(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, spec.newLabel, wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
 			}
+		})
+	}
+}
+
+func TestAuthorityParams(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(t *testing.T, wasmApp *app.WasmApp) (func(ctx sdk.Context, authority string) error, sdk.Context)
+	}{
+		{
+			name: "UpdateParams",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.UpdateParams(ctx, &types.MsgUpdateParams{Authority: authority, Params: types.DefaultParams()})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "PinCodes",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = wasmContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var result types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.PinCodes(ctx, &types.MsgPinCodes{Authority: authority, CodeIDs: []uint64{result.CodeID}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "UnpinCodes",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = wasmContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var result types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.UnpinCodes(ctx, &types.MsgUnpinCodes{Authority: authority, CodeIDs: []uint64{result.CodeID}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "SudoContract",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+
+				_, _, sender := testdata.KeyTestPubAddr()
+				msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+					m.WASMByteCode = hackatomContract
+					m.Sender = sender.String()
+				})
+				rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+				require.NoError(t, err)
+				var storeCodeResponse types.MsgStoreCodeResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeCodeResponse))
+
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				initMsg := keeper.HackatomExampleInitMsg{Verifier: sender, Beneficiary: myAddress}
+				initMsgBz, err := json.Marshal(initMsg)
+				require.NoError(t, err)
+
+				msgInstantiate := &types.MsgInstantiateContract{
+					Sender: sender.String(),
+					Admin:  sender.String(),
+					CodeID: storeCodeResponse.CodeID,
+					Label:  "test",
+					Msg:    initMsgBz,
+					Funds:  sdk.Coins{},
+				}
+				rsp, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
+				require.NoError(t, err)
+				var instantiateResponse types.MsgInstantiateContractResponse
+				require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &instantiateResponse))
+
+				type StealMsg struct {
+					Recipient string     `json:"recipient"`
+					Amount    []sdk.Coin `json:"amount"`
+				}
+				stealMsg := struct {
+					Steal StealMsg `json:"steal_funds"`
+				}{Steal: StealMsg{Recipient: myAddress.String(), Amount: []sdk.Coin{}}}
+				stealMsgBz, err := json.Marshal(stealMsg)
+				require.NoError(t, err)
+
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.SudoContract(ctx, &types.MsgSudoContract{Authority: authority, Contract: instantiateResponse.Address, Msg: stealMsgBz})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "AddCodeUploadParamsAddresses",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				_, _, otherAddr := testdata.KeyTestPubAddr()
+
+				err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+					CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress),
+					InstantiateDefaultPermission: types.AccessTypeEverybody,
+				})
+				require.NoError(t, err)
+
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					_, err := msgServer.AddCodeUploadParamsAddresses(ctx, &types.MsgAddCodeUploadParamsAddresses{Authority: authority, Addresses: []string{otherAddr.String()}})
+					return err
+				}, ctx
+			},
+		},
+		{
+			name: "RemoveCodeUploadParamsAddresses",
+			setup: func(t *testing.T, wasmApp *app.WasmApp) (func(sdk.Context, string) error, sdk.Context) {
+				ctx := wasmApp.NewContext(false)
+				myAddress := sdk.AccAddress(make([]byte, types.ContractAddrLen))
+				_, _, otherAddr := testdata.KeyTestPubAddr()
+
+				msgServer := keeper.NewMsgServerImpl(&wasmApp.WasmKeeper)
+				return func(ctx sdk.Context, authority string) error {
+					// Reset params before each call so otherAddr is always present to remove
+					require.NoError(t, wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+						CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+						InstantiateDefaultPermission: types.AccessTypeEverybody,
+					}))
+					_, err := msgServer.RemoveCodeUploadParamsAddresses(ctx, &types.MsgRemoveCodeUploadParamsAddresses{Authority: authority, Addresses: []string{otherAddr.String()}})
+					return err
+				}, ctx
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			wasmApp := app.Setup(t)
+			execFn, ctx := tc.setup(t, wasmApp)
+
+			keeperAuthority := wasmApp.WasmKeeper.GetAuthority()
+			overrideAuthority := sdk.AccAddress(make([]byte, 20)).String()
+
+			t.Run("fallback to keeper authority", func(t *testing.T) {
+				require.NoError(t, execFn(ctx, keeperAuthority))
+				require.ErrorIs(t, execFn(ctx, overrideAuthority), sdkerrors.ErrUnauthorized)
+			})
+
+			t.Run("consensus params authority takes precedence", func(t *testing.T) {
+				ctxOverride := ctx.WithConsensusParams(tmproto.ConsensusParams{
+					Authority: &tmproto.AuthorityParams{Authority: overrideAuthority},
+				})
+				require.NoError(t, execFn(ctxOverride, overrideAuthority))
+				require.ErrorIs(t, execFn(ctxOverride, keeperAuthority), sdkerrors.ErrUnauthorized)
+			})
 		})
 	}
 }

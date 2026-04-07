@@ -57,7 +57,7 @@ func (a *StoreCodeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz
 	if ioutils.IsGzip(code) {
 		gasRegister, ok := GasRegisterFromContext(ctx)
 		if !ok {
-			return authztypes.AcceptResponse{}, sdkerrors.ErrNotFound.Wrap("gas register")
+			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("gas register not found in context")
 		}
 		sdk.UnwrapSDKContext(ctx).GasMeter().
 			ConsumeGas(gasRegister.UncompressCosts(len(code)), "Uncompress gzip bytecode")

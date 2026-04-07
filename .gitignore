@@ -11,6 +11,7 @@
 # Build
 vendor
 build
+/wasmd
 tools/bin/*
 examples/build/*
 docs/_build

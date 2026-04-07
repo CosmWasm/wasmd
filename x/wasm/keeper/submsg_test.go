@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -243,7 +243,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(108_516, 112_000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -263,7 +263,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(110_000, 112_000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(108_622, 112_000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,

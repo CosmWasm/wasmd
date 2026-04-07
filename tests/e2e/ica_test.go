@@ -7,11 +7,11 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
-	hosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	icacontrollertypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/types"
+	hosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -41,7 +41,7 @@ func TestICA(t *testing.T) {
 	controllerChain := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
 
 	path := wasmibctesting.NewWasmPath(controllerChain, hostChain)
-	coord.SetupConnections(&path.Path)
+	path.SetupConnections()
 
 	specs := map[string]struct {
 		icaVersion string
@@ -114,7 +114,8 @@ func TestICA(t *testing.T) {
 			_, err = controllerChain.SendNonDefaultSenderMsgs(icaControllerKey, msgSendTx)
 			require.NoError(t, err)
 
-			wasmibctesting.RelayAndAckPendingPackets(path)
+			err = wasmibctesting.RelayAndAckPendingPackets(path)
+			require.NoError(t, err)
 
 			gotBalance := hostChain.Balance(targetAddr, sdk.DefaultBondDenom)
 			assert.Equal(t, sendCoin.String(), gotBalance.String())

@@ -7,9 +7,8 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/assert"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/store"
-	storemetrics "cosmossdk.io/store/metrics"
+	"cosmossdk.io/log/v2"
+	"github.com/cosmos/cosmos-sdk/store/v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,6 +17,7 @@ import (
 
 func TestSelectAuthorizationPolicy(t *testing.T) {
 	myGovAuthority := RandomAccountAddress(t)
+	overrideAuthority := RandomAccountAddress(t)
 	m := msgServer{keeper: &Keeper{
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionMigrateContract: {},
@@ -26,7 +26,7 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 		authority: myGovAuthority.String(),
 	}}
 
-	ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t))
 	ctx := sdk.NewContext(ms, tmproto.Header{}, false, log.NewNopLogger())
 
 	specs := map[string]struct {
@@ -48,6 +48,20 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 			ctx:   ctx,
 			actor: RandomAccountAddress(t),
 			exp:   DefaultAuthorizationPolicy{},
+		},
+		"consensus params authority overrides keeper authority": {
+			ctx: ctx.WithConsensusParams(tmproto.ConsensusParams{
+				Authority: &tmproto.AuthorityParams{Authority: overrideAuthority.String()},
+			}),
+			actor: myGovAuthority,
+			exp:   DefaultAuthorizationPolicy{},
+		},
+		"consensus params authority gets gov policy": {
+			ctx: ctx.WithConsensusParams(tmproto.ConsensusParams{
+				Authority: &tmproto.AuthorityParams{Authority: overrideAuthority.String()},
+			}),
+			actor: overrideAuthority,
+			exp:   NewGovAuthorizationPolicy(types.AuthZActionMigrateContract, types.AuthZActionInstantiate),
 		},
 	}
 	for name, spec := range specs {

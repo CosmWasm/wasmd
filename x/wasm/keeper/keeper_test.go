@@ -23,11 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store"
-	storemetrics "cosmossdk.io/store/metrics"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/store/v2"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -426,7 +425,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1c479), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1b8a6), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -556,7 +555,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
 			fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, deposit)
 
-			contractID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, &spec.srcPermission) //nolint:gosec
+			contractID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, &spec.srcPermission)
 			require.NoError(t, err)
 
 			_, _, err = keepers.ContractKeeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsgBz, "demo contract 1", nil)
@@ -577,7 +576,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	mySalt := []byte(`my salt`)
 	contractAddr := BuildContractAddressPredictable(example.Checksum, senderAddr, mySalt, []byte{})
 
-	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
+	accNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
 	specs := map[string]struct {
 		option      Option
@@ -591,7 +590,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 		"unused BaseAccount exists": {
 			account:     authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 			initBalance: sdk.NewInt64Coin("denom", 100000000),
-			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0), // +1 for next seq
 			expBalance:  sdk.NewCoins(sdk.NewInt64Coin("denom", 100000000)),
 		},
 		"BaseAccount with sequence exists": {
@@ -603,11 +602,11 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expErr:  types.ErrAccountExists,
 		},
 		"no account existed": {
-			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq,
+			expAccount: authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0), // +1 for next seq,
 			expBalance: sdk.NewCoins(),
 		},
 		"no account existed before create with deposit": {
-			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq
+			expAccount: authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0), // +1 for next seq
 			deposit:    sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))),
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))),
 		},
@@ -617,7 +616,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 				sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix())),
 			initBalance: sdk.NewCoin("denom", sdkmath.NewInt(1_000)),
 			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
-			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
 		},
 		"prunable ContinuousVestingAccount gets overwritten": {
@@ -626,7 +625,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 				sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix())),
 			initBalance: sdk.NewCoin("denom", sdkmath.NewInt(1_000)),
 			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
-			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
 		},
 		// "prunable account without balance gets overwritten": { // todo : can not initialize vesting with empty balance
@@ -651,7 +650,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 				sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix())),
 			initBalance: sdk.NewCoin("denom", sdkmath.NewInt(1_000)),
 			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
-			expAccount: must(vestingtypes.NewDelayedVestingAccount(authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0),
+			expAccount: must(vestingtypes.NewDelayedVestingAccount(authtypes.NewBaseAccount(contractAddr, nil, accNumber, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix())),
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1_001))),
 		},
@@ -693,6 +692,8 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			assert.Equal(t, contractAddr, gotAddr)
 			// and
 			gotAcc := keepers.AccountKeeper.GetAccount(ctx, contractAddr)
+			err := spec.expAccount.SetAccountNumber(authtypes.GenerateID(ctx, gotAcc))
+			require.NoError(t, err)
 			assert.Equal(t, spec.expAccount, gotAcc)
 			// and
 			gotBalance := keepers.BankKeeper.GetAllBalances(ctx, contractAddr)
@@ -964,7 +965,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1adb7), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1a21a), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -2901,7 +2902,7 @@ func TestCheckDiscountEligibility(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t))
 
 	specs := map[string]struct {
 		isPinned          bool
@@ -2996,6 +2997,7 @@ func TestQueryRawRange(t *testing.T) {
 	require.NoError(t, err)
 	initMsgBz := []byte("{}")
 	contractAddress, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "queue", nil)
+	require.NoError(t, err)
 
 	type EnqueueMsg struct {
 		Value int32 `json:"value"`

@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -39,7 +39,7 @@ func setup(db dbm.DB, withGenesis bool) (*app.WasmApp, app.GenesisState) {
 	// Disable prunning for testing purposes to prevent dangling background
 	// goroutines left between test scenarios
 	disablePrunning := baseapp.SetIAVLSyncPruning(true)
-	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil, disablePrunning)
+	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, true, simtestutil.EmptyAppOptions{}, nil, disablePrunning)
 
 	if withGenesis {
 		return wasmApp, wasmApp.DefaultGenesis()

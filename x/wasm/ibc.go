@@ -4,11 +4,11 @@ import (
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -33,14 +33,22 @@ type appVersionGetter interface {
 }
 
 type IBCHandler struct {
-	keeper           types.IBCContractKeeper
-	channelKeeper    types.ChannelKeeper
-	transferKeeper   types.ICS20TransferPortSource
-	appVersionGetter appVersionGetter
+	keeper         types.IBCContractKeeper
+	ics4Wrapper    porttypes.ICS4Wrapper
+	channelKeeper  types.ChannelKeeper
+	transferKeeper types.ICS20TransferPortSource
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, transferKeeper: tk, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, _ appVersionGetter) IBCHandler {
+	return IBCHandler{
+		keeper:         k,
+		ics4Wrapper:    ck,
+		channelKeeper:  ck,
+		transferKeeper: tk,
+	}
+}
+
+func (i IBCHandler) SetICS4Wrapper(_ porttypes.ICS4Wrapper) {
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -151,7 +159,7 @@ func (i IBCHandler) OnChanOpenAck(
 	}
 	channelInfo.Counterparty.ChannelId = counterpartyChannelID
 
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
@@ -175,7 +183,7 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
@@ -197,7 +205,7 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
@@ -225,7 +233,7 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	appVersion, ok := i.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}

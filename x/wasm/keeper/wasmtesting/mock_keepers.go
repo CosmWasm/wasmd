@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,6 +23,30 @@ type MockChannelKeeper struct {
 	GetAllChannelsFn               func(ctx sdk.Context) []channeltypes.IdentifiedChannel
 	SetChannelFn                   func(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 	GetAllChannelsWithPortPrefixFn func(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
+	SendPacketFn                   func(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (sequence uint64, err error)
+	WriteAcknowledgementFn         func(ctx sdk.Context, packet ibcexported.PacketI, ack ibcexported.Acknowledgement) error
+	GetAppVersionFn                func(ctx sdk.Context, portID, channelID string) (string, bool)
+}
+
+func (m *MockChannelKeeper) SendPacket(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (sequence uint64, err error) {
+	if m.SendPacketFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.SendPacketFn(ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+}
+
+func (m *MockChannelKeeper) WriteAcknowledgement(ctx sdk.Context, packet ibcexported.PacketI, ack ibcexported.Acknowledgement) error {
+	if m.WriteAcknowledgementFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.WriteAcknowledgementFn(ctx, packet, ack)
+}
+
+func (m *MockChannelKeeper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	if m.GetAppVersionFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.GetAppVersionFn(ctx, portID, channelID)
 }
 
 func (m *MockChannelKeeper) GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
@@ -66,11 +91,19 @@ func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string
 	m.SetChannelFn(ctx, portID, channelID, channel)
 }
 
-var _ types.ICS4Wrapper = &MockICS4Wrapper{}
+var _ porttypes.ICS4Wrapper = &MockICS4Wrapper{}
 
 type MockICS4Wrapper struct {
 	SendPacketFn           func(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
 	WriteAcknowledgementFn func(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
+	GetAppVersionFn        func(ctx sdk.Context, portID, channelID string) (string, bool)
+}
+
+func (m *MockICS4Wrapper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	if m.GetAppVersionFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.GetAppVersionFn(ctx, portID, channelID)
 }
 
 func (m *MockICS4Wrapper) SendPacket(ctx sdk.Context, sourcePort, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {

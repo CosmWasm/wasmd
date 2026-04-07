@@ -28,6 +28,7 @@ const (
 
 var (
 	// functions aliases
+	//
 	// Deprecated: Do not use.
 	RegisterCodec = types.RegisterLegacyAminoCodec
 	// Deprecated: Do not use.
@@ -96,6 +97,7 @@ var (
 	NewCountTXDecorator = keeper.NewCountTXDecorator
 
 	// variable aliases
+	//
 	// Deprecated: Do not use.
 	DefaultCodespace = types.DefaultCodespace
 	// Deprecated: Do not use.
