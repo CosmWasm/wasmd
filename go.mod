@@ -19,7 +19,7 @@ require (
 	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0-rc.0
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.2
-	github.com/cosmos/iavl v1.2.6
+	github.com/cosmos/iavl v1.2.8
 	github.com/cosmos/ibc-go/v11 v11.0.0-rc.0
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/distribution/reference v0.5.0
