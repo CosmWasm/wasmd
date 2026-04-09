@@ -15,6 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -42,6 +46,9 @@ jobs:
     needs: setup-dependencies
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Check go mod tidy
         run: |
           go mod tidy
@@ -52,6 +59,9 @@ jobs:
     needs: setup-dependencies
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -66,6 +76,10 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Restore Go modules cache
         uses: actions/cache@v4
@@ -127,6 +141,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -159,6 +177,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -181,6 +203,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Run simulations
         run: make test-sim-deterministic test-sim-multi-seed-short test-sim-import-export
 
@@ -191,6 +217,10 @@ jobs:
       IMAGE_NAME: cosmwasm/wasmd
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
