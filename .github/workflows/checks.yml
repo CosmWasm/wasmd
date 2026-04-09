@@ -92,7 +92,6 @@ jobs:
           set -euo pipefail
           mkdir -p profiles logs
           export GORACE=halt_on_error=1
-          export VERSION=$(git describe --tags --long | sed 's/v\(.*\)/\1/')
           export GO111MODULE=on
 
           FAILED=0
