@@ -75,16 +75,24 @@ jobs:
 
       - name: Run tests with coverage
         run: |
+          set -euo pipefail
           mkdir -p profiles logs
           export GORACE=halt_on_error=1
           export VERSION=$(git describe --tags --long | sed 's/v\(.*\)/\1/')
           export GO111MODULE=on
 
+          FAILED=0
           SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
-          go list ./... | grep -v '/simulation' | awk "NR % 4 == $SHARD_INDEX" | while read pkg; do
+          for pkg in $(go list ./... | grep -v '/simulation' | awk "NR % 4 == $SHARD_INDEX"); do
             id=$(echo "$pkg" | sed 's|[/.]|_|g')
-            go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" | tee logs/$id.log
+            if ! go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" 2>&1 | tee logs/$id.log; then
+              FAILED=1
+            fi
           done
+          if [ "$FAILED" -ne 0 ]; then
+            echo "::error::One or more test packages failed"
+            exit 1
+          fi
 
       - name: Upload coverage and logs
         uses: actions/upload-artifact@v5
