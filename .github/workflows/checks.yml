@@ -88,6 +88,12 @@ jobs:
           key: go-mod-${{ hashFiles('**/go.sum') }}
 
       - name: Run tests with coverage
+        # -ldflags=-checklinkname=0: disables the Go 1.24+ linker enforcement of
+        # go:linkname references to private runtime symbols. Required because the
+        # transitive dependency github.com/bytedance/sonic/loader (pulled in via
+        # cosmos-sdk v0.53.6) uses go:linkname to reference runtime.lastmoduledatap,
+        # which is rejected by the Go 1.24 linker. Remove once sonic stops using
+        # this linkname or cosmos-sdk is bumped to a version that no longer depends on it.
         run: |
           set -euo pipefail
           mkdir -p profiles logs
@@ -98,7 +104,7 @@ jobs:
           SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
           for pkg in $(go list ./... | grep -v '/simulation' | awk "NR % 4 == $SHARD_INDEX"); do
             id=$(echo "$pkg" | sed 's|[/.]|_|g')
-            if ! go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" 2>&1 | tee logs/$id.log; then
+            if ! go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -ldflags=-checklinkname=0 -tags='ledger test_ledger_mock' "$pkg" 2>&1 | tee logs/$id.log; then
               FAILED=1
             fi
           done
@@ -186,15 +192,16 @@ jobs:
           path: /go/pkg/mod
           key: go-mod-${{ hashFiles('**/go.sum') }}
 
+      # -ldflags=-checklinkname=0: see explanation in the test-cover job above.
       - name: Benchmarks for gas calculations
         run: |
           cd ./x/wasm/keeper
-          go test -bench .
+          go test -ldflags=-checklinkname=0 -bench .
 
       - name: Benchmarks to compare with native modules
         run: |
           cd ./benchmarks
-          go test -bench .
+          go test -ldflags=-checklinkname=0 -bench .
 
   simulations:
     runs-on: ubuntu-latest
