@@ -15,6 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -42,6 +46,9 @@ jobs:
     needs: setup-dependencies
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Check go mod tidy
         run: |
           go mod tidy
@@ -52,6 +59,9 @@ jobs:
     needs: setup-dependencies
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
@@ -67,6 +77,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -74,17 +88,30 @@ jobs:
           key: go-mod-${{ hashFiles('**/go.sum') }}
 
       - name: Run tests with coverage
+        # -ldflags=-checklinkname=0: disables the Go 1.24+ linker enforcement of
+        # go:linkname references to private runtime symbols. Required because the
+        # transitive dependency github.com/bytedance/sonic/loader (pulled in via
+        # cosmos-sdk v0.53.6) uses go:linkname to reference runtime.lastmoduledatap,
+        # which is rejected by the Go 1.24 linker. Remove once sonic stops using
+        # this linkname or cosmos-sdk is bumped to a version that no longer depends on it.
         run: |
+          set -euo pipefail
           mkdir -p profiles logs
           export GORACE=halt_on_error=1
-          export VERSION=$(git describe --tags --long | sed 's/v\(.*\)/\1/')
           export GO111MODULE=on
 
+          FAILED=0
           SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
-          go list ./... | grep -v '/simulation' | awk "NR % 4 == $SHARD_INDEX" | while read pkg; do
+          for pkg in $(go list ./... | grep -v '/simulation' | awk "NR % 4 == $SHARD_INDEX"); do
             id=$(echo "$pkg" | sed 's|[/.]|_|g')
-            go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" | tee logs/$id.log
+            if ! go test -mod=readonly -timeout 8m -race -coverprofile=profiles/$id.out -covermode=atomic -ldflags=-checklinkname=0 -tags='ledger test_ledger_mock' "$pkg" 2>&1 | tee logs/$id.log; then
+              FAILED=1
+            fi
           done
+          if [ "$FAILED" -ne 0 ]; then
+            echo "::error::One or more test packages failed"
+            exit 1
+          fi
 
       - name: Upload coverage and logs
         uses: actions/upload-artifact@v5
@@ -119,6 +146,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
@@ -151,27 +182,36 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Restore Go modules cache
         uses: actions/cache@v4
         with:
           path: /go/pkg/mod
           key: go-mod-${{ hashFiles('**/go.sum') }}
 
+      # -ldflags=-checklinkname=0: see explanation in the test-cover job above.
       - name: Benchmarks for gas calculations
         run: |
           cd ./x/wasm/keeper
-          go test -bench .
+          go test -ldflags=-checklinkname=0 -bench .
 
       - name: Benchmarks to compare with native modules
         run: |
           cd ./benchmarks
-          go test -bench .
+          go test -ldflags=-checklinkname=0 -bench .
 
   simulations:
     runs-on: ubuntu-latest
     needs: setup-dependencies
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Run simulations
         run: make test-sim-deterministic test-sim-multi-seed-short test-sim-import-export
@@ -183,6 +223,10 @@ jobs:
       IMAGE_NAME: cosmwasm/wasmd
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3

@@ -2,6 +2,8 @@ module github.com/CosmWasm/wasmd
 
 go 1.24.0
 
+toolchain go1.24.1
+
 require (
 	github.com/CosmWasm/wasmvm/v3 v3.0.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5

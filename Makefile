@@ -53,7 +53,14 @@ build_tags_comma_sep := $(subst $(empty),$(comma),$(build_tags))
 
 # process linker flags
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
+# -checklinkname=0: disables the Go 1.24+ linker enforcement of go:linkname
+# references to private runtime symbols. Required because the transitive
+# dependency github.com/bytedance/sonic/loader (pulled in via cosmos-sdk v0.53.6)
+# uses go:linkname to reference runtime.lastmoduledatap, which is rejected by
+# the Go 1.24 linker. Remove this flag once sonic stops using this linkname
+# or cosmos-sdk is bumped to a version that no longer depends on it.
+ldflags = -checklinkname=0 \
+		  -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=wasmd \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
@@ -118,17 +125,18 @@ distclean: clean
 test: test-unit
 test-all: test-race test-cover test-system
 
+# -ldflags=-checklinkname=0: see explanation next to the `ldflags` var above.
 test-unit:
-	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...
+	@VERSION=$(VERSION) go test -mod=readonly -ldflags=-checklinkname=0 -tags='ledger test_ledger_mock' ./...
 
 test-race:
-	@VERSION=$(VERSION) go test -mod=readonly -race -tags='ledger test_ledger_mock' ./...
+	@VERSION=$(VERSION) go test -mod=readonly -race -ldflags=-checklinkname=0 -tags='ledger test_ledger_mock' ./...
 
 test-cover:
-	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
+	@go test -mod=readonly -timeout 30m -race -ldflags=-checklinkname=0 -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
 benchmark:
-	@go test -mod=readonly -bench=. ./...
+	@go test -mod=readonly -ldflags=-checklinkname=0 -bench=. ./...
 
 test-sim-import-export: runsim
 	@echo "Running application import/export simulation. This may take several minutes..."
