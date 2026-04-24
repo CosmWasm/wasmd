@@ -8,10 +8,9 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...v0.61.11)
 
-- Bump ibc-go to [v11.0.0](https://github.com/cosmos/ibc-go/releases/tag/v11.0.0)
 - Bump wasmvm to [v3.0.4](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.4)
-- Fix IBC v2 async acknowledgements [\#2480](https://github.com/CosmWasm/wasmd/pull/2480)
-- Fix IBC v2 packet send [\#2478](https://github.com/CosmWasm/wasmd/pull/2478)
+- Fix IBC v2 async acknowledgements [\#2481](https://github.com/CosmWasm/wasmd/pull/2481)
+- Fix IBC v2 packet send [\#2479](https://github.com/CosmWasm/wasmd/pull/2479)
 
 ## [v0.61.7](https://github.com/CosmWasm/wasmd/tree/v0.61.7) (2026-01-29)
 
