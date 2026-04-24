@@ -269,15 +269,15 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 	switch {
 	case msg.IBC2.WriteAcknowledgement != nil:
 		packet := msg.IBC2.WriteAcknowledgement
-		sourceClient := msg.IBC2.WriteAcknowledgement.SourceClient
-		if sourceClient == "" {
-			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc2 channel")
+		destinationClient := msg.IBC2.WriteAcknowledgement.DestinationClient
+		if destinationClient == "" {
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrEmpty, "ibc2 destination client")
 		}
 
 		contractIBC2PortID := PortIDForContractV2(contractAddr)
-		storedPacket, ok := h.channelKeeperV2.GetAsyncPacket(ctx, packet.SourceClient, packet.PacketSequence)
+		storedPacket, ok := h.channelKeeperV2.GetAsyncPacket(ctx, destinationClient, packet.PacketSequence)
 		if !ok {
-			return nil, nil, nil, errorsmod.Wrapf(types.ErrInvalid, "no pending async packet for client %s sequence %d", packet.SourceClient, packet.PacketSequence)
+			return nil, nil, nil, errorsmod.Wrapf(types.ErrInvalid, "no pending async packet for client %s sequence %d", destinationClient, packet.PacketSequence)
 		}
 
 		if len(storedPacket.Payloads) != 1 {
@@ -292,7 +292,7 @@ func (h IBC2RawPacketHandler) DispatchMsg(ctx sdk.Context,
 
 		err := h.channelKeeperV2.WriteAcknowledgement(
 			ctx,
-			packet.SourceClient,
+			destinationClient,
 			packet.PacketSequence,
 			channeltypesv2.Acknowledgement{AppAcknowledgements: [][]byte{msg.IBC2.WriteAcknowledgement.Ack.Data}},
 		)

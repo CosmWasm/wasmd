@@ -76,7 +76,13 @@ func (module IBC2Handler) OnRecvPacket(
 	}
 
 	em := sdk.NewEventManager()
-	msg := wasmvmtypes.IBC2PacketReceiveMsg{Payload: newIBC2Payload(payload), Relayer: relayer.String(), SourceClient: sourceClient, PacketSequence: sequence}
+	msg := wasmvmtypes.IBC2PacketReceiveMsg{
+		Payload:           newIBC2Payload(payload),
+		Relayer:           relayer.String(),
+		SourceClient:      sourceClient,
+		DestinationClient: destinationClient,
+		PacketSequence:    sequence,
+	}
 
 	ack := module.keeper.OnRecvIBC2Packet(ctx.WithEventManager(em), contractAddr, msg)
 

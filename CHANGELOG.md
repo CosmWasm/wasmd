@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.11...HEAD)
+
+## [v0.61.11](https://github.com/CosmWasm/wasmd/tree/v0.61.11) (2026-04-24)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...v0.61.11)
+
+- Bump wasmvm to [v3.0.4](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.4)
+- Fix IBC v2 async acknowledgements [\#2481](https://github.com/CosmWasm/wasmd/pull/2481)
+- Fix IBC v2 packet send [\#2479](https://github.com/CosmWasm/wasmd/pull/2479)
 
 ## [v0.61.7](https://github.com/CosmWasm/wasmd/tree/v0.61.7) (2026-01-29)
 
