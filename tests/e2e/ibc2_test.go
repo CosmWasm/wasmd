@@ -8,6 +8,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	mockv2 "github.com/cosmos/ibc-go/v10/testing/mock/v2"
 	"github.com/stretchr/testify/require"
@@ -285,4 +286,95 @@ func TestIBC2RejectSpoofedSourcePort(t *testing.T) {
 	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unauthorized")
+}
+
+func TestIBC2AsyncAck(t *testing.T) {
+	coord := wasmibctesting.NewCoordinator(t, 2)
+	chainA := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(1)))
+	chainB := wasmibctesting.NewWasmTestChain(coord.GetChain(ibctesting.GetChainID(2)))
+
+	contractCodeA := chainA.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	contractAddrA := chainA.InstantiateContract(contractCodeA, []byte(`{}`))
+	contractPortA := wasmkeeper.PortIDForContractV2(contractAddrA)
+
+	contractCodeB := chainB.StoreCodeFile("./testdata/ibc2.wasm").CodeID
+	_ = chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractAddrB := chainB.InstantiateContract(contractCodeB, []byte(`{}`))
+	contractPortB := wasmkeeper.PortIDForContractV2(contractAddrB)
+
+	path := wasmibctesting.NewWasmPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{PortID: contractPortA, Version: "mock-version"}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{PortID: contractPortB, Version: "mock-version"}
+
+	// Burn one client sequence on chain A so the real A<->B path uses different
+	// client IDs on each side, which is the common case in production.
+	require.NoError(t, path.EndpointA.CreateClient())
+	dummyClientA := path.EndpointA.ClientID
+	require.NotEmpty(t, dummyClientA)
+
+	path.Path.SetupV2()
+	require.NotEqual(t, path.EndpointA.ClientID, path.EndpointB.ClientID,
+		"test requires asymmetric local and remote client IDs")
+
+	timeoutTimestamp := uint64(chainB.GetContext().BlockTime().Add(5 * time.Minute).Unix())
+
+	// First packet: contract returns no ack (async)
+	firstPayload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	firstPayload.Version = "mock-version"
+	firstPayload.Encoding = "application/x-protobuf"
+	firstPayload.Value, _ = json.Marshal(IbcPayload{ResponseWithoutAck: true})
+
+	packetToAck, err := wasmibctesting.MsgSendPacketV2(chainB, path.EndpointB, timeoutTimestamp, firstPayload)
+	require.NoError(t, err)
+	require.NoError(t, path.EndpointA.MsgRecvPacket(packetToAck))
+
+	// Verify async packet is stored under destination client ID
+	asyncPacket, found := chainA.GetWasmApp().IBCKeeper.ChannelKeeperV2.GetAsyncPacket(
+		chainA.GetContext(), path.EndpointA.ClientID, packetToAck.Sequence)
+	require.True(t, found, "async packet stored under destination client")
+	require.Equal(t, packetToAck.SourceClient, asyncPacket.SourceClient)
+	require.Equal(t, packetToAck.DestinationClient, asyncPacket.DestinationClient)
+
+	_, found = chainA.GetWasmApp().IBCKeeper.ChannelKeeperV2.GetAsyncPacket(
+		chainA.GetContext(), path.EndpointB.ClientID, packetToAck.Sequence)
+	require.False(t, found, "no async packet under source client")
+
+	// Second packet: triggers async ack for the first packet
+	secondPayload := mockv2.NewMockPayload(contractPortB, contractPortA)
+	secondPayload.Version = "mock-version"
+	secondPayload.Encoding = "application/x-protobuf"
+	secondPayload.Value, _ = json.Marshal(IbcPayload{SendAsyncAckForPrevMsg: true})
+
+	packetTriggeringAck, err := wasmibctesting.MsgSendPacketV2(chainB, path.EndpointB, timeoutTimestamp, secondPayload)
+	require.NoError(t, err)
+
+	res, err := wasmibctesting.MsgRecvPacketWithResultV2(path.EndpointA, packetTriggeringAck)
+	require.NoError(t, err)
+
+	ackBz, err := wasmibctesting.ParseAckFromEventsV2(res.Events)
+	require.NoError(t, err)
+
+	var triggerAck channeltypesv2.Acknowledgement
+	require.NoError(t, proto.Unmarshal(ackBz, &triggerAck))
+	require.True(t, triggerAck.Success(), "async ack write should succeed")
+
+	firstAckCommitment := chainA.GetWasmApp().IBCKeeper.ChannelKeeperV2.GetPacketAcknowledgement(
+		chainA.GetContext(), packetToAck.DestinationClient, packetToAck.Sequence)
+	require.NotEmpty(t, firstAckCommitment, "ack commitment written on chain A")
+
+	// Relay the ack back to chain B
+	firstPacketAck := channeltypesv2.Acknowledgement{
+		AppAcknowledgements: [][]byte{{1, 2, 3}},
+	}
+	err = path.EndpointB.MsgAcknowledgePacket(packetToAck, firstPacketAck)
+	require.NoError(t, err, "ack relay to source chain")
+
+	commitment := chainB.GetWasmApp().IBCKeeper.ChannelKeeperV2.GetPacketCommitment(
+		chainB.GetContext(), packetToAck.SourceClient, packetToAck.Sequence)
+	require.Empty(t, commitment, "source commitment cleared")
+
+	var sourceState State
+	err = chainB.SmartQuery(contractAddrB.String(), QueryMsg{QueryState: struct{}{}}, &sourceState)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), sourceState.IBC2PacketAckCounter, "source contract observed ack")
 }
