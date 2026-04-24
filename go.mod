@@ -22,7 +22,7 @@ require (
 	github.com/cosmos/iavl v1.2.8
 	github.com/cosmos/ibc-go/v11 v11.0.0
 	github.com/cosmos/ics23/go v0.11.0 // indirect
-	github.com/distribution/reference v0.5.0
+	github.com/distribution/reference v0.6.0
 	github.com/dvsekhvalnov/jose2go v1.8.0 // indirect
 	github.com/golang/protobuf v1.5.4
 	github.com/google/gofuzz v1.2.0
