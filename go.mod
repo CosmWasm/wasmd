@@ -11,7 +11,7 @@ require (
 	cosmossdk.io/log/v2 v2.1.0
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/tools/confix v0.1.2
-	github.com/CosmWasm/wasmvm/v3 v3.0.3
+	github.com/CosmWasm/wasmvm/v3 v3.0.4-rc.0
 	github.com/cometbft/cometbft v0.39.0
 	github.com/cosmos/cosmos-db v1.1.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
