@@ -104,7 +104,7 @@ func TestIBC2AckMsg(t *testing.T) {
 	// Message timeout
 	timeoutTimestamp := uint64(testEnv.chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
 
-	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test
@@ -131,7 +131,7 @@ func TestIBC2SendReceiveMsg(t *testing.T) {
 	// Message timeout
 	timeoutTimestamp := uint64(testEnv.chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
 
-	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test
@@ -173,7 +173,7 @@ func TestIBC2RAsyncAckSending(t *testing.T) {
 	payload := mockv2.NewMockPayload(testEnv.contractPortB, testEnv.contractPortA)
 	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: true})
 	require.NoError(t, err)
-	packetToAck, err := testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	packetToAck, err := wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 	err = testEnv.path.EndpointA.MsgRecvPacket(packetToAck)
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestIBC2RAsyncAckSending(t *testing.T) {
 	payload = mockv2.NewMockPayload(testEnv.contractPortB, testEnv.contractPortA)
 	payload.Value, err = json.Marshal(IbcPayload{SendAsyncAckForPrevMsg: true})
 	require.NoError(t, err)
-	packet, err := testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	packet, err := wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// Check that the ACK was not sent at this moment
@@ -213,7 +213,7 @@ func TestIBC2TimeoutMsg(t *testing.T) {
 	// Message timeout
 	timeoutTimestamp := uint64(testEnv.chainB.GetContext().BlockTime().Add(time.Minute).Unix())
 
-	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test.
@@ -244,7 +244,7 @@ func TestIBC2SendMsg(t *testing.T) {
 	// Message timeout
 	timeoutTimestamp := uint64(testEnv.chainB.GetContext().BlockTime().Add(time.Minute).Unix())
 
-	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	_, err = wasmibctesting.MsgSendPacketV2(testEnv.chainB, testEnv.path.EndpointB, timeoutTimestamp, payload)
 	require.NoError(t, err)
 
 	// First message send through test.
@@ -269,4 +269,20 @@ func TestIBC2SendMsg(t *testing.T) {
 		PacketSequence:    1,
 		Signer:            testEnv.contractAddrA.String(),
 	}, response.LastPacketSent)
+}
+
+func TestIBC2RejectSpoofedSourcePort(t *testing.T) {
+	testEnv := setup(t)
+
+	payload := mockv2.NewMockPayload(testEnv.contractPortB, testEnv.contractPortA)
+	var err error
+	payload.Value, err = json.Marshal(IbcPayload{ResponseWithoutAck: false, SendAsyncAckForPrevMsg: false})
+	require.NoError(t, err)
+
+	timeoutTimestamp := uint64(testEnv.chainB.GetContext().BlockTime().Add(time.Minute * 5).Unix())
+
+	// Wrong signer cannot send packets on a contract's port.
+	_, err = testEnv.path.EndpointB.MsgSendPacket(timeoutTimestamp, payload)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unauthorized")
 }

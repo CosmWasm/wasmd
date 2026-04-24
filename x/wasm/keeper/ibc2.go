@@ -6,6 +6,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -38,6 +39,12 @@ func (module IBC2Handler) OnSendPacket(
 	contractAddr, err := ContractFromPortID2(payload.SourcePort)
 	if err != nil {
 		panic(errorsmod.Wrapf(err, "Invalid contract port id"))
+	}
+
+	// According to the IBC2 spec, contracts are expected to verify the signer.
+	// As an extra check, we enforce that the signer matches the contract to prevent port spoofing.
+	if !signer.Equals(contractAddr) {
+		return errorsmod.Wrapf(ibcerrors.ErrUnauthorized, "signer %s is different from contract %s", signer, contractAddr)
 	}
 
 	msg := wasmvmtypes.IBC2PacketSendMsg{
@@ -301,7 +308,7 @@ func (k Keeper) OnSendIBC2Packet(
 		return types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok)
 }
 
 func newIBC2Payload(payload channeltypesv2.Payload) wasmvmtypes.IBC2Payload {
