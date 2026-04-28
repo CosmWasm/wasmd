@@ -6,13 +6,21 @@
 
 ## [v0.70.0](https://github.com/CosmWasm/wasmd/tree/v0.70.0) (2026-04-24)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...v0.70.0)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.11...v0.70.0)
 
 - Bump cosmos-sdk to [v0.54.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.54.0)
 - Bump ibc-go to [v11.0.0](https://github.com/cosmos/ibc-go/releases/tag/v11.0.0)
 - Bump wasmvm to [v3.0.4](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.4)
 - Fix IBC v2 async acknowledgements [\#2480](https://github.com/CosmWasm/wasmd/pull/2480)
 - Fix IBC v2 packet send [\#2478](https://github.com/CosmWasm/wasmd/pull/2478)
+
+## [v0.61.11](https://github.com/CosmWasm/wasmd/tree/v0.61.11) (2026-04-24)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.61.7...v0.61.11)
+
+- Bump wasmvm to [v3.0.4](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.4)
+- Fix IBC v2 async acknowledgements [\#2481](https://github.com/CosmWasm/wasmd/pull/2481)
+- Fix IBC v2 packet send [\#2479](https://github.com/CosmWasm/wasmd/pull/2479)
 
 ## [v0.61.7](https://github.com/CosmWasm/wasmd/tree/v0.61.7) (2026-01-29)
 
@@ -55,7 +63,7 @@
 
 ## [v0.61.0](https://github.com/CosmWasm/wasmd/tree/v0.61.0) (2025-06-24)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...v0.61.0)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.6...v0.61.0)
 
 - Update to wasmvm 3.0.0 [\#2304](https://github.com/CosmWasm/wasmd/pull/2304)
 - Add Transfer special handling to IBC destination callback if it's a transfer message [\#2267](https://github.com/CosmWasm/wasmd/pull/2267)
@@ -74,6 +82,38 @@
 - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
 - Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
 
+## [v0.60.6](https://github.com/CosmWasm/wasmd/tree/v0.60.6) (2026-04-01)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.5...v0.60.6)
+
+- Fix ([#94d881f])
+- Bump cosmos-sdk to v0.53.6 ([#2437])
+
+[#94d881f]: https://github.com/CosmWasm/wasmd/commit/94d881f555a5eb916a3b3ece31a1b10c93e3cdfb
+[#2437]: https://github.com/CosmWasm/wasmd/pull/2437
+
+## [v0.60.5](https://github.com/CosmWasm/wasmd/tree/v0.60.5) (2026-02-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.4...v0.60.5)
+
+- Prepare wasmd v0.60.5 ([#2433])
+
+[#2433]: https://github.com/CosmWasm/wasmd/pull/2433
+
+## [v0.60.4](https://github.com/CosmWasm/wasmd/tree/v0.60.4) (2026-01-29)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.3...v0.60.4)
+
+- Bump cosmos-sdk to [v0.53.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.53.5)
+- Bump cometbft to [v0.38.21](https://github.com/cometbft/cometbft/releases/tag/v0.38.21)
+- Bump ibc-go to [v10.5.0](https://github.com/cosmos/ibc-go/releases/tag/v10.5.0)
+
+## [v0.60.3](https://github.com/CosmWasm/wasmd/tree/v0.60.3) (2025-12-10)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.2...v0.60.3)
+
+- Bump wasmvm [v2.3.1](https://github.com/CosmWasm/wasmvm/releases/tag/v2.3.1)
+
 ## [v0.60.0](https://github.com/CosmWasm/wasmd/tree/v0.60.0) (2025-05-26)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.55.0...v0.60.0)
@@ -87,13 +127,49 @@
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.55.0)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.7...v0.55.0)
 
 - Bump ibc-go to v10.0.0 which removes IBC fees and capabilities [\#2157](https://github.com/CosmWasm/wasmd/pull/2157)
 - Add gas cost for UnpackAny [\#2115](https://github.com/CosmWasm/wasmd/pull/2115)
 - Make ContractAddrLen variable [\#2111](https://github.com/CosmWasm/wasmd/pull/2111)
 - Adjust SmartContractState query gas limit [\#2103](https://github.com/CosmWasm/wasmd/pull/2103)
 - Refactor build address command [\#2101](https://github.com/CosmWasm/wasmd/pull/2101)
+
+## [v0.54.7](https://github.com/CosmWasm/wasmd/tree/v0.54.7) (2026-04-01)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.6...v0.54.7)
+
+- Fix ([#1170077])
+
+[#1170077]: https://github.com/CosmWasm/wasmd/commit/1170077b428ae8ba259df770ff4ce4a750f37192
+
+## [v0.54.6](https://github.com/CosmWasm/wasmd/tree/v0.54.6) (2026-02-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.5...v0.54.6)
+
+- Prepare wasmd v0.54.6 ([#2432])
+
+[#2432]: https://github.com/CosmWasm/wasmd/pull/2432
+
+## [v0.54.5](https://github.com/CosmWasm/wasmd/tree/v0.54.5) (2026-01-29)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.4...v0.54.5)
+
+- Bump cosmos-sdk to [v0.50.15](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.15)
+- Bump cometbft to [v0.38.21](https://github.com/cometbft/cometbft/releases/tag/v0.38.21)
+- Bump ibc-go to [v8.8.0](https://github.com/cosmos/ibc-go/releases/tag/v8.8.0)
+
+## [v0.54.4](https://github.com/CosmWasm/wasmd/tree/v0.54.4) (2025-12-19)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.3...v0.54.4)
+
+- Bump wasmvm to [v2.2.5](https://github.com/CosmWasm/wasmvm/releases/tag/v2.2.5)
+
+## [v0.54.2](https://github.com/CosmWasm/wasmd/tree/v0.54.2) (2025-07-09)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.0...v0.54.2)
+
+- Bump cosmos-sdk to [v0.50.14](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.14) which includes a security fix to [ISA-2025-005](https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-p22h-3m2v-cmgh)
 
 ## [v0.54.0](https://github.com/CosmWasm/wasmd/tree/v0.54.0) (2025-01-08)
 
