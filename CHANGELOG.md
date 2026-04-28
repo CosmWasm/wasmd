@@ -2,7 +2,23 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.5...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.7...HEAD)
+
+## [v0.54.7](https://github.com/CosmWasm/wasmd/tree/v0.54.7) (2026-04-01)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.6...v0.54.7)
+
+- Fix ([#1170077])
+
+[#1170077]: https://github.com/CosmWasm/wasmd/commit/1170077b428ae8ba259df770ff4ce4a750f37192
+
+## [v0.54.6](https://github.com/CosmWasm/wasmd/tree/v0.54.6) (2026-02-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.5...v0.54.6)
+
+- Prepare wasmd v0.54.6 ([#2432])
+
+[#2432]: https://github.com/CosmWasm/wasmd/pull/2432
 
 ## [v0.54.5](https://github.com/CosmWasm/wasmd/tree/v0.54.5) (2026-01-29)
 
