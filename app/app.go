@@ -551,8 +551,9 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
+	wasmContractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 	// Create fee enabled wasm ibc Stack
-	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.TransferKeeper, app.IBCKeeper.ChannelKeeper)
+	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.TransferKeeper, app.IBCKeeper.ChannelKeeper, wasmContractKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
@@ -582,7 +583,7 @@ func NewWasmApp(
 	)
 
 	transferStack = transferStackBuilder.Build()
-	transferICS4Wrapper := transferStack.(porttypes.ICS4Wrapper)
+	transferICS4Wrapper := wasm.NewIBCCallbacksICS4Middleware(transferStack.(porttypes.ICS4Wrapper))
 
 	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
 	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
