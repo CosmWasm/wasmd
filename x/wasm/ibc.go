@@ -1,9 +1,13 @@
 package wasm
 
 import (
+	"encoding/json"
 	"math"
 
+	sdkmath "cosmossdk.io/math"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	callbackstypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -33,14 +37,24 @@ type appVersionGetter interface {
 }
 
 type IBCHandler struct {
-	keeper           types.IBCContractKeeper
-	channelKeeper    types.ChannelKeeper
-	transferKeeper   types.ICS20TransferPortSource
-	appVersionGetter appVersionGetter
+	keeper         types.IBCContractKeeper
+	ics4Wrapper    porttypes.ICS4Wrapper
+	channelKeeper  types.ChannelKeeper
+	transferKeeper types.ICS20TransferPortSource
+	contractKeeper types.ContractOpsKeeper
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, transferKeeper: tk, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, _ appVersionGetter, contractKeeper types.ContractOpsKeeper) IBCHandler {
+	return IBCHandler{
+		keeper:         k,
+		ics4Wrapper:    ck,
+		channelKeeper:  ck,
+		transferKeeper: tk,
+		contractKeeper: contractKeeper,
+	}
+}
+
+func (i IBCHandler) SetICS4Wrapper(_ porttypes.ICS4Wrapper) {
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -447,13 +461,43 @@ func (i IBCHandler) IBCReceivePacketCallback(
 			transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
 		}
 
+		denom := transferData.Token.GetDenom().IBCDenom()
+		amount := transferData.Token.GetAmount()
+
+		// dest_callback.calldata present: dispatch via Execute with the
+		// transferred funds. Otherwise fall through to ibc_destination_callback.
+		cbData, isCb, cbErr := callbackstypes.GetCallbackData(
+			transferData, version, packet.GetSourcePort(), 0,
+			DefaultMaxIBCCallbackGas, callbackstypes.DestinationCallbackKey,
+		)
+		if isCb && cbErr != nil {
+			return errorsmod.Wrap(cbErr, "parse dest_callback")
+		}
+		if isCb && len(cbData.Calldata) != 0 {
+			if !contractAddr.Equals(receiverAddr) {
+				return errorsmod.Wrapf(types.ErrInvalid,
+					"dest_callback address %s must match transfer receiver %s when using calldata",
+					contractAddr.String(), receiverAddr.String())
+			}
+			amountInt, ok := sdkmath.NewIntFromString(amount)
+			if !ok {
+				return errorsmod.Wrapf(types.ErrInvalid, "invalid token amount: %s", amount)
+			}
+			funds := sdk.NewCoins(sdk.NewCoin(denom, amountInt))
+			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, contractAddr, cbData.Calldata, funds)
+			if err != nil {
+				return errorsmod.Wrap(err, "execute contract via calldata")
+			}
+			return nil
+		}
+
 		transfer = &wasmvmtypes.IBCTransferCallback{
 			Receiver: receiverAddr.String(),
 			Sender:   transferData.Sender,
 			Funds: wasmvmtypes.Array[wasmvmtypes.Coin]{
 				{
-					Denom:  transferData.Token.GetDenom().IBCDenom(),
-					Amount: transferData.Token.GetAmount(),
+					Denom:  denom,
+					Amount: amount,
 				},
 			},
 		}
@@ -532,4 +576,26 @@ func ValidateChannelParams(channelID string) error {
 // See also https://github.com/CosmWasm/wasmd/issues/1740.
 func CreateErrorAcknowledgement(err error) ibcexported.Acknowledgement {
 	return channeltypes.NewErrorAcknowledgementWithCodespace(err)
+}
+
+// jsonStringHasKey parses the memo as a json object and checks if it contains the key.
+func jsonStringHasKey(memo, key string) (found bool, jsonObject map[string]interface{}) {
+	jsonObject = make(map[string]interface{})
+
+	// If there is no memo, the packet was either sent with an earlier version of IBC, or the memo was
+	// intentionally left blank. Nothing to do here. Ignore the packet and pass it down the stack.
+	if len(memo) == 0 {
+		return false, jsonObject
+	}
+
+	// the jsonObject must be a valid JSON object
+	err := json.Unmarshal([]byte(memo), &jsonObject)
+	if err != nil {
+		return false, jsonObject
+	}
+
+	// If the key doesn't exist, there's nothing to do on this hook. Continue by passing the packet
+	// down the stack
+	_, ok := jsonObject[key]
+	return ok, jsonObject
 }
