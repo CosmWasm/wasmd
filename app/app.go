@@ -21,6 +21,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
+	ibccallbacksv2 "github.com/cosmos/ibc-go/v11/modules/apps/callbacks/v2"
 	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
@@ -583,7 +584,7 @@ func NewWasmApp(
 	)
 
 	transferStack = transferStackBuilder.Build()
-	transferICS4Wrapper := wasm.NewIBCCallbacksICS4Middleware(transferStack.(porttypes.ICS4Wrapper))
+	transferICS4Wrapper := wasm.NewIBCV1CallbacksPlusMiddleware(transferStack.(porttypes.ICS4Wrapper))
 
 	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
 	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
@@ -601,8 +602,16 @@ func NewWasmApp(
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	ibcRouterV2 := ibcapi.NewRouter()
+	transferV2Stack := ibcapi.IBCModule(ibccallbacksv2.NewIBCMiddleware(
+		transferv2.NewIBCModule(app.TransferKeeper),
+		app.IBCKeeper.ChannelKeeperV2,
+		wasmStackIBCHandler,
+		app.IBCKeeper.ChannelKeeperV2,
+		wasm.DefaultMaxIBCCallbackGas,
+	))
+	transferV2Stack = wasm.NewIBCV2CallbacksPlusMiddleware(transferV2Stack)
 	ibcRouterV2 = ibcRouterV2.
-		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper)).
+		AddRoute(ibctransfertypes.PortID, transferV2Stack).
 		AddPrefixRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
 
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
