@@ -37,20 +37,20 @@ type appVersionGetter interface {
 }
 
 type IBCHandler struct {
-	keeper         types.IBCContractKeeper
-	ics4Wrapper    porttypes.ICS4Wrapper
-	channelKeeper  types.ChannelKeeper
-	transferKeeper types.ICS20TransferPortSource
-	contractKeeper types.ContractOpsKeeper
+	keeper           types.IBCContractKeeper
+	channelKeeper    types.ChannelKeeper
+	transferKeeper   types.ICS20TransferPortSource
+	appVersionGetter appVersionGetter
+	contractKeeper   types.ContractOpsKeeper
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, _ appVersionGetter, contractKeeper types.ContractOpsKeeper) IBCHandler {
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter, contractKeeper types.ContractOpsKeeper) IBCHandler {
 	return IBCHandler{
-		keeper:         k,
-		ics4Wrapper:    ck,
-		channelKeeper:  ck,
-		transferKeeper: tk,
-		contractKeeper: contractKeeper,
+		keeper:           k,
+		channelKeeper:    ck,
+		transferKeeper:   tk,
+		appVersionGetter: vg,
+		contractKeeper:   contractKeeper,
 	}
 }
 

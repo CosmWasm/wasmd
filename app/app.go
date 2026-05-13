@@ -646,13 +646,8 @@ func NewWasmApp(
 
 	// Create Transfer Stack
 	var transferStack porttypes.IBCModule
-	transferStackBuilder := porttypes.NewIBCStackBuilder(app.IBCKeeper.ChannelKeeper)
-	transferStackBuilder.Base(
-		transfer.NewIBCModule(app.TransferKeeper)).Next(
-		ibccallbacks.NewIBCMiddleware(wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas),
-	)
-
-	transferStack = transferStackBuilder.Build()
+	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = ibccallbacks.NewIBCMiddleware(transferStack, app.IBCKeeper.ChannelKeeper, wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas)
 	transferICS4Wrapper := wasm.NewIBCV1CallbacksPlusMiddleware(transferStack.(porttypes.ICS4Wrapper))
 
 	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
@@ -667,14 +662,7 @@ func NewWasmApp(
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	ibcRouterV2 := ibcapi.NewRouter()
-	transferV2Stack := ibcapi.IBCModule(ibccallbacksv2.NewIBCMiddleware(
-		transferv2.NewIBCModule(app.TransferKeeper),
-		app.IBCKeeper.ChannelKeeperV2,
-		wasmStackIBCHandler,
-		app.IBCKeeper.ChannelKeeperV2,
-		wasm.DefaultMaxIBCCallbackGas,
-	))
-	transferV2Stack = wasm.NewIBCV2CallbacksPlusMiddleware(transferV2Stack)
+	transferV2Stack := ibcapi.IBCModule(transferv2.NewIBCModule(app.TransferKeeper))
 	ibcRouterV2 = ibcRouterV2.
 		AddRoute(ibctransfertypes.PortID, transferV2Stack).
 		AddPrefixRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
