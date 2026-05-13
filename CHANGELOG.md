@@ -59,7 +59,7 @@
 
 ## [v0.61.0](https://github.com/CosmWasm/wasmd/tree/v0.61.0) (2025-06-24)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.6...v0.61.0)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.7...v0.61.0)
 
 - Update to wasmvm 3.0.0 [\#2304](https://github.com/CosmWasm/wasmd/pull/2304)
 - Add Transfer special handling to IBC destination callback if it's a transfer message [\#2267](https://github.com/CosmWasm/wasmd/pull/2267)
