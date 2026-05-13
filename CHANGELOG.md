@@ -78,6 +78,12 @@
 - Remove HRP from port ID to comply with the IBC port ID format [\#2266](https://github.com/CosmWasm/wasmd/pull/2266)
 - Add a transaction hash to TransactionInfo [\#2259](https://github.com/CosmWasm/wasmd/pull/2259)
 
+## [v0.60.7](https://github.com/CosmWasm/wasmd/tree/v0.60.7) (2026-05-13)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.6...v0.60.7)
+
+- Bump wasmvm to [v2.3.3](https://github.com/CosmWasm/wasmvm/releases/tag/v2.3.3)
+
 ## [v0.60.6](https://github.com/CosmWasm/wasmd/tree/v0.60.6) (2026-04-01)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.5...v0.60.6)
@@ -123,13 +129,19 @@
 
 ## [v0.55.0](https://github.com/CosmWasm/wasmd/tree/v0.55.0) (2025-03-11)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.7...v0.55.0)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.8...v0.55.0)
 
 - Bump ibc-go to v10.0.0 which removes IBC fees and capabilities [\#2157](https://github.com/CosmWasm/wasmd/pull/2157)
 - Add gas cost for UnpackAny [\#2115](https://github.com/CosmWasm/wasmd/pull/2115)
 - Make ContractAddrLen variable [\#2111](https://github.com/CosmWasm/wasmd/pull/2111)
 - Adjust SmartContractState query gas limit [\#2103](https://github.com/CosmWasm/wasmd/pull/2103)
 - Refactor build address command [\#2101](https://github.com/CosmWasm/wasmd/pull/2101)
+
+## [v0.54.8](https://github.com/CosmWasm/wasmd/tree/v0.54.8) (2026-05-13)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.7...v0.54.8)
+
+- Bump wasmvm to [v2.2.7](https://github.com/CosmWasm/wasmvm/releases/tag/v2.2.7)
 
 ## [v0.54.7](https://github.com/CosmWasm/wasmd/tree/v0.54.7) (2026-04-01)
 
