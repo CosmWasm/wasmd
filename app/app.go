@@ -22,6 +22,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
+	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -662,7 +663,14 @@ func NewWasmApp(
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	ibcRouterV2 := ibcapi.NewRouter()
-	transferV2Stack := ibcapi.IBCModule(transferv2.NewIBCModule(app.TransferKeeper))
+	transferV2Stack := ibcapi.IBCModule(ibccallbacksv2.NewIBCMiddleware(
+		transferv2.NewIBCModule(app.TransferKeeper),
+		app.IBCKeeper.ChannelKeeperV2,
+		wasmStackIBCHandler,
+		app.IBCKeeper.ChannelKeeperV2,
+		wasm.DefaultMaxIBCCallbackGas,
+	))
+	transferV2Stack = wasm.NewIBCV2CallbacksPlusMiddleware(transferV2Stack)
 	ibcRouterV2 = ibcRouterV2.
 		AddRoute(ibctransfertypes.PortID, transferV2Stack).
 		AddPrefixRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
