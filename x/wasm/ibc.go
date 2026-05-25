@@ -345,13 +345,28 @@ func (i IBCHandler) IBCSendPacketCallback(
 	packetSenderAddress string,
 	version string,
 ) error {
-	_, err := validateSender(contractAddress, packetSenderAddress)
-	if err != nil {
+	if _, err := validateSender(contractAddress, packetSenderAddress); err != nil {
 		return err
 	}
-
-	// no-op, since we are not interested in this callback
+	// reject src_callback.calldata
+	if srcCallbackHasCalldata(packetData) {
+		return errorsmod.Wrap(types.ErrInvalid, "src_callback must not contain a calldata field")
+	}
 	return nil
+}
+
+func srcCallbackHasCalldata(packetData []byte) bool {
+	var pd transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packetData, &pd); err != nil {
+		return false
+	}
+	_, obj := jsonStringHasKey(pd.Memo, "src_callback")
+	srcObj, ok := obj["src_callback"].(map[string]any)
+	if !ok {
+		return false
+	}
+	_, has := srcObj["calldata"]
+	return has
 }
 
 // IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
@@ -474,17 +489,13 @@ func (i IBCHandler) IBCReceivePacketCallback(
 			return errorsmod.Wrap(cbErr, "parse dest_callback")
 		}
 		if isCb && len(cbData.Calldata) != 0 {
-			if !contractAddr.Equals(receiverAddr) {
-				return errorsmod.Wrapf(types.ErrInvalid,
-					"dest_callback address %s must match transfer receiver %s when using calldata",
-					contractAddr.String(), receiverAddr.String())
-			}
 			amountInt, ok := sdkmath.NewIntFromString(amount)
 			if !ok {
 				return errorsmod.Wrapf(types.ErrInvalid, "invalid token amount: %s", amount)
 			}
 			funds := sdk.NewCoins(sdk.NewCoin(denom, amountInt))
-			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, contractAddr, cbData.Calldata, funds)
+			// receiverAddr is the intermediate sender
+			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, receiverAddr, cbData.Calldata, funds)
 			if err != nil {
 				return errorsmod.Wrap(err, "execute contract via calldata")
 			}
