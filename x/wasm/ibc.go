@@ -494,8 +494,21 @@ func (i IBCHandler) IBCReceivePacketCallback(
 				return errorsmod.Wrapf(types.ErrInvalid, "invalid token amount: %s", amount)
 			}
 			funds := sdk.NewCoins(sdk.NewCoin(denom, amountInt))
-			// receiverAddr is the intermediate sender
-			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, receiverAddr, cbData.Calldata, funds)
+			// Re-derive: ibccallbacks passes packet by value, so the
+			// rewriter's Receiver mutation doesn't reach this callback.
+			// https://github.com/cosmos/ibc-go/blob/v10.6.0/modules/apps/callbacks/ibc_middleware.go#L217
+			intermediateBech32, err := DeriveIntermediateSender(
+				packet.GetDestChannel(), transferData.Sender,
+				sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			)
+			if err != nil {
+				return errorsmod.Wrap(err, "derive intermediate sender")
+			}
+			intermediate, err := sdk.AccAddressFromBech32(intermediateBech32)
+			if err != nil {
+				return errorsmod.Wrap(err, "parse intermediate sender")
+			}
+			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, intermediate, cbData.Calldata, funds)
 			if err != nil {
 				return errorsmod.Wrap(err, "execute contract via calldata")
 			}
