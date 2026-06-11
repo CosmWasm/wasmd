@@ -32,10 +32,10 @@ type ViewKeeper interface {
 
 // ContractOpsKeeper contains mutable operations on a contract.
 type ContractOpsKeeper interface {
-	// Create uploads and compiles a WASM contract, returning a short identifier for the contract
+	// Create uploads and compiles a WASM contract, returning an identifier for the contract
 	Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *AccessConfig) (codeID uint64, checksum []byte, err error)
 
-	// Instantiate creates an instance of a WASM contract using the classic sequence based address generator
+	// Instantiate creates an instance of an WASM contract using the classic sequence based address generator
 	Instantiate(
 		ctx sdk.Context,
 		codeID uint64,
@@ -45,7 +45,7 @@ type ContractOpsKeeper interface {
 		deposit sdk.Coins,
 	) (sdk.AccAddress, []byte, error)
 
-	// Instantiate2 creates an instance of a WASM contract using the predictable address generator
+	// Instantiate2 creates an instance of an WASM contract using the predictable address generator
 	Instantiate2(
 		ctx sdk.Context,
 		codeID uint64,

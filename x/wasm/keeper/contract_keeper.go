@@ -57,7 +57,7 @@ func (p PermissionedKeeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasm
 	return p.nested.create(ctx, creator, wasmCode, instantiateAccess, p.authZPolicy)
 }
 
-// Instantiate creates an instance of a WASM contract using the classic sequence based address generator
+// Instantiate creates an instance of an WASM contract using the classic sequence based address generator
 func (p PermissionedKeeper) Instantiate(
 	ctx sdk.Context,
 	codeID uint64,
@@ -69,7 +69,7 @@ func (p PermissionedKeeper) Instantiate(
 	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
 }
 
-// Instantiate2 creates an instance of a WASM contract using the predictable address generator
+// Instantiate2 creates an instance of an WASM contract using the predictable address generator
 func (p PermissionedKeeper) Instantiate2(
 	ctx sdk.Context,
 	codeID uint64,

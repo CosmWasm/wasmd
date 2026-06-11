@@ -142,7 +142,7 @@
 <a name="cosmwasm.wasm.v1.AbsoluteTxPosition"></a>
 
 ### AbsoluteTxPosition
-AbsoluteTxPosition is a unique transaction position that allows for global
+AbsoluteTxPosition is an unique transaction position that allows for global
 ordering of transactions.
 
 
@@ -225,7 +225,7 @@ ContractCodeHistoryEntry metadata to a contract.
 <a name="cosmwasm.wasm.v1.ContractInfo"></a>
 
 ### ContractInfo
-ContractInfo stores a WASM contract instance
+ContractInfo stores an instance of a WASM contract
 
 
 | Field | Type | Label | Description |
