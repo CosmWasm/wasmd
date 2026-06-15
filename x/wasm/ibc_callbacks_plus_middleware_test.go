@@ -56,7 +56,10 @@ func TestIBCReceivePacketCallback(t *testing.T) {
 			"calldata": hex.EncodeToString(contractMsg),
 		},
 	})
-	intermediate := testIntermediateAddr(t, "channel-1", "cosmos1sender")
+	intermediateBech32, err := DeriveIntermediateSender("channel-1", "cosmos1sender", sdk.GetConfig().GetBech32AccountAddrPrefix())
+	require.NoError(t, err)
+	intermediate, err := sdk.AccAddressFromBech32(intermediateBech32)
+	require.NoError(t, err)
 	ibcDenom := transfertypes.Denom{
 		Base:  "uosmo",
 		Trace: []transfertypes.Hop{transfertypes.NewHop("transfer", "channel-1")},
@@ -227,20 +230,6 @@ func (r *recordingIBCModule) UnmarshalPacketData(_ sdk.Context, _, _ string, _ [
 	return nil, "", nil
 }
 
-func testIntermediateBech32(t *testing.T, channel, sender string) string {
-	t.Helper()
-	s, err := DeriveIntermediateSender(channel, sender, sdk.GetConfig().GetBech32AccountAddrPrefix())
-	require.NoError(t, err)
-	return s
-}
-
-func testIntermediateAddr(t *testing.T, channel, sender string) sdk.AccAddress {
-	t.Helper()
-	a, err := sdk.AccAddressFromBech32(testIntermediateBech32(t, channel, sender))
-	require.NoError(t, err)
-	return a
-}
-
 func TestIBCV1CallbacksPlusMiddleware(t *testing.T) {
 	calldataHex := hex.EncodeToString([]byte(`{"swap":{}}`))
 
@@ -283,7 +272,9 @@ func TestIBCV1CallbacksPlusMiddleware(t *testing.T) {
 			}
 			var gotData transfertypes.FungibleTokenPacketData
 			require.NoError(t, json.Unmarshal(inner.received, &gotData))
-			assert.Equal(t, testIntermediateBech32(t, "channel-1", "cosmos1sender"), gotData.Receiver)
+			wantReceiver, err := DeriveIntermediateSender("channel-1", "cosmos1sender", sdk.GetConfig().GetBech32AccountAddrPrefix())
+			require.NoError(t, err)
+			assert.Equal(t, wantReceiver, gotData.Receiver)
 			assert.Equal(t, "cosmos1sender", gotData.Sender)
 			assert.Equal(t, spec.memo, gotData.Memo)
 		})
@@ -343,7 +334,9 @@ func TestIBCV2CallbacksPlusMiddleware(t *testing.T) {
 			}
 			var gotData transfertypes.FungibleTokenPacketData
 			require.NoError(t, json.Unmarshal(gotPayload.Value, &gotData))
-			assert.Equal(t, testIntermediateBech32(t, "client-1", "cosmos1sender"), gotData.Receiver)
+			wantReceiver, err := DeriveIntermediateSender("client-1", "cosmos1sender", sdk.GetConfig().GetBech32AccountAddrPrefix())
+			require.NoError(t, err)
+			assert.Equal(t, wantReceiver, gotData.Receiver)
 		})
 	}
 }

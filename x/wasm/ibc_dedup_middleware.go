@@ -61,7 +61,7 @@ func (m *IBCDedupMiddleware) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
 	m.ICS4Wrapper = wrapper
 }
 
-func (m *IBCDedupMiddleware) UnmarshalPacketData(ctx sdk.Context, portID string, channelID string, bz []byte) (any, string, error) {
+func (m *IBCDedupMiddleware) UnmarshalPacketData(ctx sdk.Context, portID, channelID string, bz []byte) (any, string, error) {
 	if unmarshaler, ok := m.IBCModule.(porttypes.PacketDataUnmarshaler); ok {
 		return unmarshaler.UnmarshalPacketData(ctx, portID, channelID, bz)
 	}

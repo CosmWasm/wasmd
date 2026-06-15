@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"math"
 
-	sdkmath "cosmossdk.io/math"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
 	callbackstypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -15,6 +13,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
