@@ -3,7 +3,6 @@ package wasm
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 
 	callbackstypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -17,6 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
+var (
+	_ callbackstypes.CallbacksCompatibleModule   = (*IBCV1CallbacksPlusMiddleware)(nil)
+	_ callbackstypes.CallbacksCompatibleModuleV2 = (*IBCV2CallbacksPlusMiddleware)(nil)
+)
+
 // Verbatim from https://github.com/cosmos/ibc-apps/blob/main/modules/ibc-hooks/types/keys.go
 const SenderPrefix = "ibc-wasm-hook-intermediary"
 
@@ -28,14 +32,12 @@ func DeriveIntermediateSender(channel, originalSender, bech32Prefix string) (str
 	return sdk.Bech32ifyAddressBytes(bech32Prefix, sender)
 }
 
-// rewriteReceiverForCalldata replaces Receiver with the intermediate sender when memo has dest_callback.calldata.
-// Returns the data unchanged otherwise.
 func rewriteReceiverForCalldata(data []byte, destChannel string) []byte {
 	var pd transfertypes.FungibleTokenPacketData
 	if err := json.Unmarshal(data, &pd); err != nil {
 		return data
 	}
-	if !hasDestCalldata(pd) {
+	if calldata, _ := getCallbackCalldataFromKey(pd, callbackstypes.DestinationCallbackKey); len(calldata) == 0 {
 		return data
 	}
 	intermediate, err := DeriveIntermediateSender(destChannel, pd.Sender, sdk.GetConfig().GetBech32AccountAddrPrefix())
@@ -50,12 +52,14 @@ func rewriteReceiverForCalldata(data []byte, destChannel string) []byte {
 	return out
 }
 
-// hasDestCalldata returns whether the packet carries a valid, non-empty dest_callback.calldata.
-func hasDestCalldata(pd transfertypes.FungibleTokenPacketData) bool {
+func getCallbackCalldataFromKey(packetData any, key string) ([]byte, error) {
 	cbData, isCb, err := callbackstypes.GetCallbackData(
-		pd, "", "", 0, math.MaxUint64, callbackstypes.DestinationCallbackKey,
+		packetData, "", "", 0, DefaultMaxIBCCallbackGas, key,
 	)
-	return isCb && err == nil && len(cbData.Calldata) != 0
+	if isCb && err != nil {
+		return nil, err
+	}
+	return cbData.Calldata, nil
 }
 
 // IBCV1CallbacksPlusMiddleware rewrites the recv packet's Receiver to the
@@ -67,7 +71,7 @@ type IBCV1CallbacksPlusMiddleware struct {
 func NewIBCV1CallbacksPlusMiddleware(app porttypes.IBCModule) *IBCV1CallbacksPlusMiddleware {
 	compat, ok := app.(callbackstypes.CallbacksCompatibleModule)
 	if !ok {
-		panic(fmt.Errorf("wrapped app must implement %T", (*callbackstypes.CallbacksCompatibleModule)(nil)))
+		panic(fmt.Errorf("underlying application does not implement %T", (*callbackstypes.CallbacksCompatibleModule)(nil)))
 	}
 	return &IBCV1CallbacksPlusMiddleware{CallbacksCompatibleModule: compat}
 }
@@ -86,7 +90,7 @@ type IBCV2CallbacksPlusMiddleware struct {
 func NewIBCV2CallbacksPlusMiddleware(app ibcapi.IBCModule) *IBCV2CallbacksPlusMiddleware {
 	compat, ok := app.(callbackstypes.CallbacksCompatibleModuleV2)
 	if !ok {
-		panic(fmt.Errorf("wrapped app must implement %T", (*callbackstypes.CallbacksCompatibleModuleV2)(nil)))
+		panic(fmt.Errorf("underlying application does not implement %T", (*callbackstypes.CallbacksCompatibleModuleV2)(nil)))
 	}
 	return &IBCV2CallbacksPlusMiddleware{CallbacksCompatibleModuleV2: compat}
 }

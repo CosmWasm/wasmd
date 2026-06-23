@@ -79,3 +79,26 @@ func hasMemoCollision(data []byte, hooksKey, callbacksKey string) bool {
 	_, hasCallbacks := memo[callbacksKey]
 	return hasHooks && hasCallbacks
 }
+
+// Verbatim from https://github.com/cosmos/ibc-apps/blob/main/modules/ibc-hooks/wasm_hook.go
+// jsonStringHasKey parses the memo as a json object and checks if it contains the key.
+func jsonStringHasKey(memo, key string) (found bool, jsonObject map[string]interface{}) {
+	jsonObject = make(map[string]interface{})
+
+	// If there is no memo, the packet was either sent with an earlier version of IBC, or the memo was
+	// intentionally left blank. Nothing to do here. Ignore the packet and pass it down the stack.
+	if len(memo) == 0 {
+		return false, jsonObject
+	}
+
+	// the jsonObject must be a valid JSON object
+	err := json.Unmarshal([]byte(memo), &jsonObject)
+	if err != nil {
+		return false, jsonObject
+	}
+
+	// If the key doesn't exist, there's nothing to do on this hook. Continue by passing the packet
+	// down the stack
+	_, ok := jsonObject[key]
+	return ok, jsonObject
+}

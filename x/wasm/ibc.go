@@ -359,13 +359,8 @@ func srcCallbackHasCalldata(packetData []byte) bool {
 	if err := json.Unmarshal(packetData, &pd); err != nil {
 		return false
 	}
-	_, obj := jsonStringHasKey(pd.Memo, "src_callback")
-	srcObj, ok := obj["src_callback"].(map[string]any)
-	if !ok {
-		return false
-	}
-	_, has := srcObj["calldata"]
-	return has
+	calldata, _ := getCallbackCalldataFromKey(pd, callbackstypes.SourceCallbackKey)
+	return len(calldata) != 0
 }
 
 // IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
@@ -478,24 +473,20 @@ func (i IBCHandler) IBCReceivePacketCallback(
 		denom := transferData.Token.GetDenom().IBCDenom()
 		amount := transferData.Token.GetAmount()
 
-		// dest_callback.calldata present: dispatch via Execute with the
-		// transferred funds. Otherwise fall through to ibc_destination_callback.
-		cbData, isCb, cbErr := callbackstypes.GetCallbackData(
-			transferData, version, packet.GetSourcePort(), 0,
-			DefaultMaxIBCCallbackGas, callbackstypes.DestinationCallbackKey,
-		)
-		if isCb && cbErr != nil {
+		// dest_callback.calldata present: dispatch via Execute with the transferred funds.
+		// Otherwise fall through to ibc_destination_callback.
+		calldata, cbErr := getCallbackCalldataFromKey(transferData, callbackstypes.DestinationCallbackKey)
+		if cbErr != nil {
 			return errorsmod.Wrap(cbErr, "parse dest_callback")
 		}
-		if isCb && len(cbData.Calldata) != 0 {
-			amountInt, ok := sdkmath.NewIntFromString(amount)
-			if !ok {
+		if len(calldata) != 0 {
+			amountInt, valid := sdkmath.NewIntFromString(amount)
+			if !valid {
 				return errorsmod.Wrapf(types.ErrInvalid, "invalid token amount: %s", amount)
 			}
 			funds := sdk.NewCoins(sdk.NewCoin(denom, amountInt))
-			// Re-derive: ibccallbacks passes packet by value, so the
-			// rewriter's Receiver mutation doesn't reach this callback.
-			// https://github.com/cosmos/ibc-go/blob/v10.6.0/modules/apps/callbacks/ibc_middleware.go#L217
+			// ibccallbacks passes the packet by value, so the rewriter's Receiver change
+			// is not visible here. Re-derive the intermediate instead of reading it.
 			intermediateBech32, err := DeriveIntermediateSender(
 				packet.GetDestChannel(), transferData.Sender,
 				sdk.GetConfig().GetBech32AccountAddrPrefix(),
@@ -507,7 +498,7 @@ func (i IBCHandler) IBCReceivePacketCallback(
 			if err != nil {
 				return errorsmod.Wrap(err, "parse intermediate sender")
 			}
-			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, intermediate, cbData.Calldata, funds)
+			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, intermediate, calldata, funds)
 			if err != nil {
 				return errorsmod.Wrap(err, "execute contract via calldata")
 			}
@@ -599,26 +590,4 @@ func ValidateChannelParams(channelID string) error {
 // See also https://github.com/CosmWasm/wasmd/issues/1740.
 func CreateErrorAcknowledgement(err error) ibcexported.Acknowledgement {
 	return channeltypes.NewErrorAcknowledgementWithCodespace(err)
-}
-
-// jsonStringHasKey parses the memo as a json object and checks if it contains the key.
-func jsonStringHasKey(memo, key string) (found bool, jsonObject map[string]interface{}) {
-	jsonObject = make(map[string]interface{})
-
-	// If there is no memo, the packet was either sent with an earlier version of IBC, or the memo was
-	// intentionally left blank. Nothing to do here. Ignore the packet and pass it down the stack.
-	if len(memo) == 0 {
-		return false, jsonObject
-	}
-
-	// the jsonObject must be a valid JSON object
-	err := json.Unmarshal([]byte(memo), &jsonObject)
-	if err != nil {
-		return false, jsonObject
-	}
-
-	// If the key doesn't exist, there's nothing to do on this hook. Continue by passing the packet
-	// down the stack
-	_, ok := jsonObject[key]
-	return ok, jsonObject
 }
