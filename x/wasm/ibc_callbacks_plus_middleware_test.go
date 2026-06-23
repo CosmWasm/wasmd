@@ -47,6 +47,15 @@ func (m *mockDestCallbackKeeper) IBCDestinationCallback(ctx sdk.Context, contrac
 	return m.fn(ctx, contractAddr, msg)
 }
 
+type mockSourceCallbackKeeper struct {
+	types.IBCContractKeeper
+	fn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCSourceCallbackMsg) error
+}
+
+func (m *mockSourceCallbackKeeper) IBCSourceCallback(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCSourceCallbackMsg) error {
+	return m.fn(ctx, contractAddr, msg)
+}
+
 func TestIBCReceivePacketCallback(t *testing.T) {
 	myContractAddr := sdk.AccAddress(rand.Bytes(address.Len))
 	contractMsg := []byte(`{"swap":{"output_denom":"uatom","min_output":"1000"}}`)
@@ -73,23 +82,23 @@ func TestIBCReceivePacketCallback(t *testing.T) {
 		expExec   bool
 		expDestCB bool
 	}{
-		"rewritten receiver: execute with intermediate caller": {
+		"receiver is intermediate": {
 			memo:     calldataMemo,
 			receiver: intermediate.String(),
 			expExec:  true,
 		},
-		"untouched receiver: execute still derives intermediate locally": {
+		"receiver is contract address": {
 			memo:     calldataMemo,
 			receiver: myContractAddr.String(),
 			expExec:  true,
 		},
-		"execute returns error: callback wraps it": {
+		"execute returns error": {
 			memo:     calldataMemo,
 			receiver: myContractAddr.String(),
 			execErr:  types.ErrExecuteFailed.Wrap("contract reverted"),
 			expErr:   "execute contract via calldata",
 		},
-		"no calldata: falls through to ibc_destination_callback": {
+		"no calldata": {
 			memo:      "",
 			receiver:  myContractAddr.String(),
 			expDestCB: true,
@@ -113,16 +122,16 @@ func TestIBCReceivePacketCallback(t *testing.T) {
 
 			var gotExec, gotDestCB bool
 			executor := &mockContractOpsKeeper{
-				executeFn: func(_ sdk.Context, gotContract, gotCaller sdk.AccAddress, gotMsg []byte, gotCoins sdk.Coins) ([]byte, error) {
+				executeFn: func(_ sdk.Context, contract, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 					gotExec = true
-					assert.Equal(t, myContractAddr, gotContract)
-					assert.Equal(t, intermediate, gotCaller)
-					assert.JSONEq(t, string(contractMsg), string(gotMsg))
-					require.Len(t, gotCoins, 1)
-					assert.Equal(t, ibcDenom, gotCoins[0].Denom)
+					assert.Equal(t, myContractAddr, contract)
+					assert.Equal(t, intermediate, caller)
+					assert.JSONEq(t, string(contractMsg), string(msg))
+					require.Len(t, coins, 1)
+					assert.Equal(t, ibcDenom, coins[0].Denom)
 					expAmount, ok := sdkmath.NewIntFromString(amount)
 					require.True(t, ok)
-					assert.Equal(t, expAmount, gotCoins[0].Amount)
+					assert.Equal(t, expAmount, coins[0].Amount)
 					if spec.execErr != nil {
 						return nil, spec.execErr
 					}
@@ -133,9 +142,9 @@ func TestIBCReceivePacketCallback(t *testing.T) {
 			contractKeeper := &wasmtesting.IBCContractKeeperMock{}
 			if spec.expDestCB {
 				contractKeeper.IBCContractKeeper = &mockDestCallbackKeeper{
-					fn: func(_ sdk.Context, gotAddr sdk.AccAddress, msg wasmvmtypes.IBCDestinationCallbackMsg) error {
+					fn: func(_ sdk.Context, addr sdk.AccAddress, msg wasmvmtypes.IBCDestinationCallbackMsg) error {
 						gotDestCB = true
-						assert.Equal(t, myContractAddr, gotAddr)
+						assert.Equal(t, myContractAddr, addr)
 						require.NotNil(t, msg.Transfer)
 						assert.Equal(t, amount, msg.Transfer.Funds[0].Amount)
 						return nil
@@ -163,6 +172,56 @@ func TestIBCReceivePacketCallback(t *testing.T) {
 	}
 }
 
+func TestIBCReceivePacketCallbackDerivesFromDestChannel(t *testing.T) {
+	contractAddr := sdk.AccAddress(rand.Bytes(address.Len))
+	contractMsg := []byte(`{"go":{}}`)
+	memo := mustMarshalJSON(t, map[string]any{
+		"dest_callback": map[string]any{
+			"address":  contractAddr.String(),
+			"calldata": hex.EncodeToString(contractMsg),
+		},
+	})
+
+	for _, destChannel := range []string{"channel-7", "client-1"} {
+		t.Run(destChannel, func(t *testing.T) {
+			wantBech32, err := DeriveIntermediateSender(destChannel, "cosmos1sender", sdk.GetConfig().GetBech32AccountAddrPrefix())
+			require.NoError(t, err)
+			wantCaller, err := sdk.AccAddressFromBech32(wantBech32)
+			require.NoError(t, err)
+
+			pkt := channeltypes.Packet{
+				Sequence:           1,
+				SourcePort:         "transfer",
+				SourceChannel:      "channel-0",
+				DestinationPort:    "transfer",
+				DestinationChannel: destChannel,
+				Data: transfertypes.NewFungibleTokenPacketData(
+					"uosmo", "5000", "cosmos1sender", contractAddr.String(), memo,
+				).GetBytes(),
+				TimeoutHeight: clienttypes.Height{RevisionHeight: 100},
+			}
+
+			var gotCaller sdk.AccAddress
+			executor := &mockContractOpsKeeper{
+				executeFn: func(_ sdk.Context, _, caller sdk.AccAddress, _ []byte, _ sdk.Coins) ([]byte, error) {
+					gotCaller = caller
+					return []byte("ok"), nil
+				},
+			}
+			h := NewIBCHandler(
+				&wasmtesting.IBCContractKeeperMock{}, nil,
+				&wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string { return "transfer" }},
+				nil, executor,
+			)
+			ctx := sdk.Context{}.WithEventManager(&sdk.EventManager{})
+
+			gotErr := h.IBCReceivePacketCallback(ctx, pkt, channeltypes.NewResultAcknowledgement([]byte{1}), contractAddr.String(), "ics20-1")
+			require.NoError(t, gotErr)
+			assert.Equal(t, wantCaller, gotCaller)
+		})
+	}
+}
+
 func TestIBCSendPacketCallback(t *testing.T) {
 	myContractAddr := sdk.AccAddress(rand.Bytes(address.Len)).String()
 
@@ -179,6 +238,11 @@ func TestIBCSendPacketCallback(t *testing.T) {
 		"src_callback without calldata accepted": {
 			memo: mustMarshalJSON(t, map[string]any{
 				"src_callback": map[string]any{"address": myContractAddr},
+			}),
+		},
+		"src_callback with empty calldata accepted": {
+			memo: mustMarshalJSON(t, map[string]any{
+				"src_callback": map[string]any{"address": myContractAddr, "calldata": ""},
 			}),
 		},
 	}
@@ -205,6 +269,41 @@ func TestIBCSendPacketCallback(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestIBCOnAcknowledgementPacketCallbackForwardsAckBytes(t *testing.T) {
+	addr := sdk.AccAddress(rand.Bytes(address.Len))
+	specs := map[string][]byte{
+		"sentinel error ack": channeltypesv2.ErrorAcknowledgement[:],
+		"success ack":        []byte(`{"result":"AQ=="}`),
+	}
+	for name, ackBz := range specs {
+		t.Run(name, func(t *testing.T) {
+			var got wasmvmtypes.IBCSourceCallbackMsg
+			src := &mockSourceCallbackKeeper{
+				fn: func(_ sdk.Context, _ sdk.AccAddress, msg wasmvmtypes.IBCSourceCallbackMsg) error {
+					got = msg
+					return nil
+				},
+			}
+			h := NewIBCHandler(
+				&wasmtesting.IBCContractKeeperMock{IBCContractKeeper: src}, nil,
+				&wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string { return "transfer" }},
+				nil, nil,
+			)
+			pkt := channeltypes.Packet{
+				Sequence: 1, SourcePort: "transfer", SourceChannel: "channel-0",
+				DestinationPort: "transfer", DestinationChannel: "channel-1",
+			}
+
+			err := h.IBCOnAcknowledgementPacketCallback(
+				sdk.Context{}, pkt, ackBz, sdk.AccAddress("relayer"), addr.String(), addr.String(), "ics20-1",
+			)
+			require.NoError(t, err)
+			require.NotNil(t, got.Acknowledgement)
+			assert.Equal(t, ackBz, got.Acknowledgement.Acknowledgement.Data)
 		})
 	}
 }

@@ -42,7 +42,7 @@ func TestIBCDedupMiddlewareOnRecvPacket(t *testing.T) {
 				"src_callback": map[string]any{"address": "cosmos1ccc"},
 			},
 		},
-		"dest_callback alone passes through": {memo: map[string]any{"dest_callback": map[string]any{"address": "cosmos1ccc"}}},
+		"dest_callback alone passes through":  {memo: map[string]any{"dest_callback": map[string]any{"address": "cosmos1ccc"}}},
 		"non-transfer payload passes through": {rawData: []byte("not-a-transfer-packet")},
 	}
 
