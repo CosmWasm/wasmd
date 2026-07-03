@@ -22,6 +22,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
+	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -621,8 +622,9 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
+	wasmContractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 	// Create fee enabled wasm ibc Stack
-	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.TransferKeeper, app.IBCKeeper.ChannelKeeper)
+	wasmStackIBCHandler := wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.TransferKeeper, app.IBCKeeper.ChannelKeeper, wasmContractKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
@@ -646,10 +648,14 @@ func NewWasmApp(
 	// Create Transfer Stack
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = wasm.NewIBCV1CallbacksPlusMiddleware(transferStack)
 	transferStack = ibccallbacks.NewIBCMiddleware(transferStack, app.IBCKeeper.ChannelKeeper, wasmStackIBCHandler, wasm.DefaultMaxIBCCallbackGas)
-	transferICS4Wrapper := transferStack.(porttypes.ICS4Wrapper)
+	// Chains that also wire the IBC Hooks middleware should wrap the stack
+	// with IBCDedupMiddleware to reject Hooks/Callbacks same-side memo collisions.
+	// transferStack = wasm.NewIBCDedupMiddleware(transferStack, transferStack.(porttypes.ICS4Wrapper))
+
 	// Since the callbacks middleware itself is an ics4wrapper, it needs to be passed to the ica controller keeper
-	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
+	app.TransferKeeper.WithICS4Wrapper(transferStack.(porttypes.ICS4Wrapper))
 
 	// Create static IBC router, add app routes, then set and seal it
 	ibcRouter := porttypes.NewRouter().
@@ -660,8 +666,16 @@ func NewWasmApp(
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	ibcRouterV2 := ibcapi.NewRouter()
+	transferV2Stack := ibcapi.IBCModule(wasm.NewIBCV2CallbacksPlusMiddleware(transferv2.NewIBCModule(app.TransferKeeper)))
+	transferV2Stack = ibccallbacksv2.NewIBCMiddleware(
+		transferV2Stack,
+		app.IBCKeeper.ChannelKeeperV2,
+		wasmStackIBCHandler,
+		app.IBCKeeper.ChannelKeeperV2,
+		wasm.DefaultMaxIBCCallbackGas,
+	)
 	ibcRouterV2 = ibcRouterV2.
-		AddRoute(ibctransfertypes.PortID, transferv2.NewIBCModule(app.TransferKeeper)).
+		AddRoute(ibctransfertypes.PortID, transferV2Stack).
 		AddPrefixRoute(wasmkeeper.PortIDPrefixV2, wasmkeeper.NewIBC2Handler(app.WasmKeeper))
 
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
