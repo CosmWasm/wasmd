@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.8...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.9...HEAD)
+
+## [v0.54.9](https://github.com/CosmWasm/wasmd/tree/v0.54.9) (2026-07-01)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.54.8...v0.54.9)
+
+- Prepare v0.54.9 ([#2515])
+
+[#2515]: https://github.com/CosmWasm/wasmd/pull/2515
 
 ## [v0.54.8](https://github.com/CosmWasm/wasmd/tree/v0.54.8) (2026-05-13)
 
