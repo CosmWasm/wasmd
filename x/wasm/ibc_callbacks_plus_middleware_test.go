@@ -385,11 +385,20 @@ func TestIBCV2CallbacksPlusMiddleware(t *testing.T) {
 	calldataMemo := mustMarshalJSON(t, map[string]any{
 		"dest_callback": map[string]any{"address": "cosmos1contract", "calldata": calldataHex},
 	})
-	payloadValue := transfertypes.NewFungibleTokenPacketData("uosmo", "100", "cosmos1sender", "cosmos1receiver", calldataMemo).GetBytes()
+	packetData := transfertypes.NewFungibleTokenPacketData("uosmo", "100", "cosmos1sender", "cosmos1receiver", calldataMemo)
+	payloadValue := packetData.GetBytes()
+	protoValue, err := transfertypes.MarshalPacketData(packetData, transfertypes.V1, transfertypes.EncodingProtobuf)
+	require.NoError(t, err)
+	protoValueNoCalldata, err := transfertypes.MarshalPacketData(
+		transfertypes.NewFungibleTokenPacketData("uosmo", "100", "cosmos1sender", "cosmos1receiver", ""),
+		transfertypes.V1, transfertypes.EncodingProtobuf,
+	)
+	require.NoError(t, err)
 
 	specs := map[string]struct {
 		payload    channeltypesv2.Payload
 		expRewrite bool
+		expReject  bool
 	}{
 		"transfer port with dest_callback.calldata rewrites receiver": {
 			payload: channeltypesv2.Payload{
@@ -410,6 +419,25 @@ func TestIBCV2CallbacksPlusMiddleware(t *testing.T) {
 				Value:           payloadValue,
 			},
 		},
+		"proto encoding with dest_callback.calldata rejected": {
+			payload: channeltypesv2.Payload{
+				SourcePort:      transfertypes.PortID,
+				DestinationPort: transfertypes.PortID,
+				Version:         "ics20-1",
+				Encoding:        transfertypes.EncodingProtobuf,
+				Value:           protoValue,
+			},
+			expReject: true,
+		},
+		"proto encoding without calldata passes through unchanged": {
+			payload: channeltypesv2.Payload{
+				SourcePort:      transfertypes.PortID,
+				DestinationPort: transfertypes.PortID,
+				Version:         "ics20-1",
+				Encoding:        transfertypes.EncodingProtobuf,
+				Value:           protoValueNoCalldata,
+			},
+		},
 	}
 
 	for name, spec := range specs {
@@ -424,8 +452,13 @@ func TestIBCV2CallbacksPlusMiddleware(t *testing.T) {
 				return channeltypesv2.RecvPacketResult{Status: channeltypesv2.PacketStatus_Success, Acknowledgement: []byte{1}}
 			}
 			m := NewIBCV2CallbacksPlusMiddleware(inner)
-			_ = m.OnRecvPacket(sdk.Context{}, "client-0", "client-1", 1, spec.payload, sdk.AccAddress("relayer"))
+			res := m.OnRecvPacket(sdk.Context{}, "client-0", "client-1", 1, spec.payload, sdk.AccAddress("relayer"))
 
+			if spec.expReject {
+				assert.Equal(t, channeltypesv2.PacketStatus_Failure, res.Status)
+				assert.False(t, gotRecv, "rejected payloads must not reach the inner module")
+				return
+			}
 			require.True(t, gotRecv)
 			if !spec.expRewrite {
 				assert.Equal(t, origValue, gotPayload.Value)

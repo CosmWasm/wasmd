@@ -104,7 +104,24 @@ func (m *IBCV2CallbacksPlusMiddleware) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) channeltypesv2.RecvPacketResult {
 	if payload.SourcePort == transfertypes.PortID && payload.DestinationPort == transfertypes.PortID {
-		payload.Value = rewriteReceiverForCalldata(payload.Value, destinationClient)
+		switch payload.Encoding {
+		case "", transfertypes.EncodingJSON:
+			payload.Value = rewriteReceiverForCalldata(payload.Value, destinationClient)
+		default:
+			// calldata is only supported with JSON encoding; reject it on other encodings
+			if destCallbackHasCalldata(payload) {
+				return channeltypesv2.RecvPacketResult{Status: channeltypesv2.PacketStatus_Failure}
+			}
+		}
 	}
 	return m.CallbacksCompatibleModuleV2.OnRecvPacket(ctx, sourceClient, destinationClient, sequence, payload, relayer)
+}
+
+func destCallbackHasCalldata(payload channeltypesv2.Payload) bool {
+	pd, err := transfertypes.UnmarshalPacketData(payload.Value, payload.Version, payload.Encoding)
+	if err != nil {
+		return false
+	}
+	calldata, _ := getCallbackCalldataFromKey(pd, callbackstypes.DestinationCallbackKey)
+	return len(calldata) != 0
 }

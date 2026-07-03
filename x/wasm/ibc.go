@@ -53,9 +53,6 @@ func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.I
 	}
 }
 
-func (i IBCHandler) SetICS4Wrapper(_ porttypes.ICS4Wrapper) {
-}
-
 // OnChanOpenInit implements the IBCModule interface
 func (i IBCHandler) OnChanOpenInit(
 	ctx sdk.Context,
