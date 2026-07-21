@@ -14,7 +14,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.24+](https://golang.org/dl/)
+**Note**: Requires [Go 1.25+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 
@@ -53,24 +53,29 @@ The following table shows
 - **Specified wasmvm version:** the wasmvm dependency that wasmd specifies in its own go.mod
 - **Compatible wasmvm version:** the versions you can use by setting it in your project's go.mod
 
-| wasmd  | compatible | specified                                                         |
-| ------ | ---------- | ----------------------------------------------------------------- |
-| 0.55.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.55.0/go.mod#L6) |
-| 0.54.0 | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.54.0/go.mod#L6) |
-| 0.53.2 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.2/go.mod#L6) |
-| 0.53.1 | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.1/go.mod#L6) |
-| 0.53.0 | 2.1.x      | [2.1.2](https://github.com/CosmWasm/wasmd/blob/v0.53.0/go.mod#L6) |
-| 0.52.0 | 2.1.x      | [2.1.0](https://github.com/CosmWasm/wasmd/blob/v0.52.0/go.mod#L6) |
-| 0.51.0 | 2.0.x      | [2.0.0](https://github.com/CosmWasm/wasmd/blob/v0.51.0/go.mod#L6) |
-| 0.50.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6) |
-| 0.45.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6) |
-| 0.44.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.44.0/go.mod#L6) |
-| 0.43.0 | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.43.0/go.mod#L6) |
-| 0.42.0 | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.42.0/go.mod#L6) |
-| 0.41.0 | 1.3.x      | [1.3.0](https://github.com/CosmWasm/wasmd/blob/v0.41.0/go.mod#L6) |
+| wasmd   | compatible | specified                                                          |
+| ------- | ---------- | ------------------------------------------------------------------ |
+| 0.70.3  | 3.0.x      | [3.0.7](https://github.com/CosmWasm/wasmd/blob/v0.70.3/go.mod#L14)  |
+| 0.61.14 | 3.0.x      | [3.0.7](https://github.com/CosmWasm/wasmd/blob/v0.61.14/go.mod#L8) |
+| 0.60.8  | 2.3.x      | [2.3.4](https://github.com/CosmWasm/wasmd/blob/v0.60.8/go.mod#L8)  |
+| 0.60.0  | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.60.0/go.mod#L6)  |
+| 0.55.1  | 2.2.x      | [2.2.4](https://github.com/CosmWasm/wasmd/blob/v0.55.1/go.mod#L6)  |
+| 0.55.0  | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.55.0/go.mod#L6)  |
+| 0.54.0  | 2.2.x      | [2.2.1](https://github.com/CosmWasm/wasmd/blob/v0.54.0/go.mod#L6)  |
+| 0.53.2  | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.2/go.mod#L6)  |
+| 0.53.1  | 2.1.x      | [2.1.4](https://github.com/CosmWasm/wasmd/blob/v0.53.1/go.mod#L6)  |
+| 0.53.0  | 2.1.x      | [2.1.2](https://github.com/CosmWasm/wasmd/blob/v0.53.0/go.mod#L6)  |
+| 0.52.0  | 2.1.x      | [2.1.0](https://github.com/CosmWasm/wasmd/blob/v0.52.0/go.mod#L6)  |
+| 0.51.0  | 2.0.x      | [2.0.0](https://github.com/CosmWasm/wasmd/blob/v0.51.0/go.mod#L6)  |
+| 0.50.0  | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6)  |
+| 0.45.0  | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6)  |
+| 0.44.0  | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.44.0/go.mod#L6)  |
+| 0.43.0  | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.43.0/go.mod#L6)  |
+| 0.42.0  | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.42.0/go.mod#L6)  |
+| 0.41.0  | 1.3.x      | [1.3.0](https://github.com/CosmWasm/wasmd/blob/v0.41.0/go.mod#L6)  |
 
 Dependency resolution in Go is not obvious. In case of doubt, please use
-`go list -m github.com/CosmWasm/wasmvm` to get the dynamically calculated version of the wasmvm dependency. Also check
+`go list -m github.com/CosmWasm/wasmvm/v3` to get the dynamically calculated version of the wasmvm dependency. Also check
 
 ```sh
 # Replace <node> with your binary name
