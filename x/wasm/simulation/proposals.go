@@ -111,7 +111,7 @@ func ProposalMsgs(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedPropo
 	}
 }
 
-// simulate store code proposal (unused now)
+// SimulateStoreCodeProposal simulates a store-code proposal (unused now).
 // Current problem: out of gas (default gaswanted config of gov SimulateMsgSubmitProposal is 10_000_000)
 // but this proposal may need more than it
 func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.MsgSimulatorFn {
@@ -132,7 +132,7 @@ func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.MsgSimulatorFn {
 	}
 }
 
-// Simulate instantiate contract proposal
+// SimulateInstantiateContractProposal simulates an instantiate-contract proposal.
 func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -156,7 +156,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 	}
 }
 
-// Simulate execute contract proposal
+// SimulateExecuteContractProposal simulates an execute-contract proposal.
 func SimulateExecuteContractProposal(
 	_ BankKeeper,
 	wasmKeeper WasmKeeper,
@@ -206,7 +206,7 @@ func DefaultSimulateUpdateAdminProposalContractSelector(
 	return contractAddr, contractInfo
 }
 
-// Simulate update admin contract proposal
+// SimulateUpdateAdminProposal simulates an update-admin proposal.
 func SimulateUpdateAdminProposal(wasmKeeper WasmKeeper, contractSelector UpdateAdminContractSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -238,7 +238,7 @@ func DefaultSimulateContractSelector(
 	return contractAddr
 }
 
-// Simulate clear admin proposal
+// SimulateClearAdminProposal simulates a clear-admin proposal.
 func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdminContractSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -256,7 +256,7 @@ func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdm
 
 type MigrateContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
 
-// Simulate migrate contract proposal
+// SimulateMigrateContractProposal simulates a migrate-contract proposal.
 func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector MigrateContractProposalContractSelector, codeSelector CodeIDSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -282,7 +282,7 @@ func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector Mig
 
 type SudoContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
 
-// Simulate sudo contract proposal
+// SimulateSudoContractProposal simulates a sudo-contract proposal.
 func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoContractProposalContractSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -300,7 +300,7 @@ func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoCo
 	}
 }
 
-// Simulate pin contract proposal
+// SimulatePinContractProposal simulates a pin-contract proposal.
 func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -317,7 +317,7 @@ func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelec
 	}
 }
 
-// Simulate unpin contract proposal
+// SimulateUnpinContractProposal simulates an unpin-contract proposal.
 func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
@@ -334,7 +334,7 @@ func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSel
 	}
 }
 
-// Simulate update instantiate config proposal
+// SimulateUpdateInstantiateConfigProposal simulates an instantiate-config update proposal.
 func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.MsgSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) sdk.Msg {
 		authority := wasmKeeper.GetAuthority()
