@@ -195,6 +195,9 @@ func (k Keeper) OnRecvPacket(
 			Response: &channeltypes.Acknowledgement_Error{Error: res.Err},
 		}, nil
 	}
+	if res.Ok == nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
+	}
 	// note submessage reply results can overwrite the `Acknowledgement` data
 	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
 	if err != nil {
@@ -390,6 +393,9 @@ func (k Keeper) IBCDestinationCallback(
 }
 
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {
+	if res == nil {
+		return errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
+	}
 	_, err := k.handleContractResponse(ctx, addr, id, res.Messages, res.Attributes, nil, res.Events)
 	return err
 }
