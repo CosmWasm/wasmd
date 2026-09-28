@@ -10,6 +10,8 @@
 
 - Bump wasmvm to [v3.0.8](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.8)
 
+- Fix case-insensitive Bech32 address matching in wasm access allowlists
+
 ## [v0.70.2](https://github.com/CosmWasm/wasmd/tree/v0.70.2) (2026-05-22)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.1...v0.70.2)

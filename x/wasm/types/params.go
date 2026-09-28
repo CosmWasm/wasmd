@@ -142,7 +142,13 @@ func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
 	case AccessTypeEverybody:
 		return true
 	case AccessTypeAnyOfAddresses:
-		return slices.Contains(a.Addresses, actor.String())
+		for _, configured := range a.Addresses {
+			addr, err := sdk.AccAddressFromBech32(configured)
+			if err == nil && addr.Equals(actor) {
+				return true
+			}
+		}
+		return false
 	default:
 		panic("unknown type")
 	}
