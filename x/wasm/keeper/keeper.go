@@ -20,6 +20,7 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
@@ -362,6 +363,9 @@ func (k Keeper) instantiate(
 	if res.Err != "" {
 		return nil, nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrInstantiateFailed, res.Err))
 	}
+	if res.Ok == nil {
+		return nil, nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
+	}
 
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(sdkCtx)
@@ -450,6 +454,9 @@ func (k Keeper) execute(ctx context.Context, contractAddress, caller sdk.AccAddr
 	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+	if res.Ok == nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -658,6 +665,9 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
 	}
+	if res.Ok == nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
+	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeSudo,
@@ -700,6 +710,9 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrExecuteFailed, res.Err))
+	}
+	if res.Ok == nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
@@ -1610,7 +1623,11 @@ func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc s
 	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	coinsToBurn := sdk.NewCoins()
 	for _, orig := range v.GetOriginalVesting() { // focus on the coin denoms that were setup originally; getAllBalances has some issues
-		coinsToBurn = append(coinsToBurn, b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))
+		balance := b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom)
+		burnAmount := sdkmath.MinInt(balance.Amount, orig.Amount)
+		if burnAmount.IsPositive() {
+			coinsToBurn = coinsToBurn.Add(sdk.NewCoin(orig.Denom, burnAmount))
+		}
 	}
 	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
 		return false, errorsmod.Wrap(err, "prune account balance")
