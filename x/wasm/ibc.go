@@ -1,9 +1,11 @@
 package wasm
 
 import (
+	"encoding/json"
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
+	callbackstypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -11,6 +13,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -37,10 +40,17 @@ type IBCHandler struct {
 	channelKeeper    types.ChannelKeeper
 	transferKeeper   types.ICS20TransferPortSource
 	appVersionGetter appVersionGetter
+	contractKeeper   types.ContractOpsKeeper
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, transferKeeper: tk, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, tk types.ICS20TransferPortSource, vg appVersionGetter, contractKeeper types.ContractOpsKeeper) IBCHandler {
+	return IBCHandler{
+		keeper:           k,
+		channelKeeper:    ck,
+		transferKeeper:   tk,
+		appVersionGetter: vg,
+		contractKeeper:   contractKeeper,
+	}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -331,13 +341,23 @@ func (i IBCHandler) IBCSendPacketCallback(
 	packetSenderAddress string,
 	version string,
 ) error {
-	_, err := validateSender(contractAddress, packetSenderAddress)
-	if err != nil {
+	if _, err := validateSender(contractAddress, packetSenderAddress); err != nil {
 		return err
 	}
-
-	// no-op, since we are not interested in this callback
+	// reject src_callback.calldata
+	if srcCallbackHasCalldata(packetData) {
+		return errorsmod.Wrap(types.ErrInvalid, "src_callback must not contain a calldata field")
+	}
 	return nil
+}
+
+func srcCallbackHasCalldata(packetData []byte) bool {
+	var pd transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packetData, &pd); err != nil {
+		return false
+	}
+	calldata, _ := getCallbackCalldataFromKey(pd, callbackstypes.SourceCallbackKey)
+	return len(calldata) != 0
 }
 
 // IBCOnAcknowledgementPacketCallback implements the IBC Callbacks ContractKeeper interface
@@ -447,13 +467,48 @@ func (i IBCHandler) IBCReceivePacketCallback(
 			transferData.Token.Denom.Trace = append(trace, transferData.Token.Denom.Trace...)
 		}
 
+		denom := transferData.Token.GetDenom().IBCDenom()
+		amount := transferData.Token.GetAmount()
+
+		// dest_callback.calldata present: dispatch via Execute with the transferred funds.
+		// Otherwise fall through to ibc_destination_callback.
+		calldata, cbErr := getCallbackCalldataFromKey(transferData, callbackstypes.DestinationCallbackKey)
+		if cbErr != nil {
+			return errorsmod.Wrap(cbErr, "parse dest_callback")
+		}
+		if len(calldata) != 0 {
+			amountInt, valid := sdkmath.NewIntFromString(amount)
+			if !valid {
+				return errorsmod.Wrapf(types.ErrInvalid, "invalid token amount: %s", amount)
+			}
+			funds := sdk.NewCoins(sdk.NewCoin(denom, amountInt))
+			// ibccallbacks passes the packet by value, so the rewriter's Receiver change
+			// is not visible here. Re-derive the intermediate instead of reading it.
+			intermediateBech32, err := DeriveIntermediateSender(
+				packet.GetDestChannel(), transferData.Sender,
+				sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			)
+			if err != nil {
+				return errorsmod.Wrap(err, "derive intermediate sender")
+			}
+			intermediate, err := sdk.AccAddressFromBech32(intermediateBech32)
+			if err != nil {
+				return errorsmod.Wrap(err, "parse intermediate sender")
+			}
+			_, err = i.contractKeeper.Execute(cachedCtx, contractAddr, intermediate, calldata, funds)
+			if err != nil {
+				return errorsmod.Wrap(err, "execute contract via calldata")
+			}
+			return nil
+		}
+
 		transfer = &wasmvmtypes.IBCTransferCallback{
 			Receiver: receiverAddr.String(),
 			Sender:   transferData.Sender,
 			Funds: wasmvmtypes.Array[wasmvmtypes.Coin]{
 				{
-					Denom:  transferData.Token.GetDenom().IBCDenom(),
-					Amount: transferData.Token.GetAmount(),
+					Denom:  denom,
+					Amount: amount,
 				},
 			},
 		}
