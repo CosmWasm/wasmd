@@ -224,6 +224,13 @@ func (k Keeper) OnRecvIBC2Packet(
 		}
 	}
 
+	if res.Ok == nil {
+		return channeltypesv2.RecvPacketResult{
+			Status:          channeltypesv2.PacketStatus_Failure,
+			Acknowledgement: []byte(errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response").Error()),
+		}
+	}
+
 	// note submessage reply results can overwrite the `Acknowledgement` data
 	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBC2PortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
 	if err != nil {
