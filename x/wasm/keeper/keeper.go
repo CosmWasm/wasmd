@@ -748,7 +748,9 @@ func (k Keeper) addToContractCreatorSecondaryIndex(ctx context.Context, creatorA
 // IterateContractsByCreator iterates over all contracts with given creator address in order of creation time asc.
 func (k Keeper) IterateContractsByCreator(ctx context.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creator))
-	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
 		key := iter.Key()
 		if cb(key[types.AbsoluteTxPositionLen:]) {
 			return
