@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -117,7 +118,7 @@ func GetCmdListCode() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -162,7 +163,7 @@ func GetCmdListContractByCode() *cobra.Command {
 				return errors.New("empty code id")
 			}
 
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -337,7 +338,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -471,7 +472,7 @@ func GetCmdGetContractHistory() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -510,7 +511,7 @@ func GetCmdListPinnedCode() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -549,7 +550,7 @@ func GetCmdListContractsByCreator() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			pageReq, err := readPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -617,21 +618,23 @@ func asciiDecodeString(s string) ([]byte, error) {
 	return []byte(s), nil
 }
 
-// sdk ReadPageRequest expects binary but we encoded to base64 in our marshaller
-func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
+// readPageRequest decodes the base64 page key without changing the flag value.
+func readPageRequest(flagSet *flag.FlagSet) (*query.PageRequest, error) {
+	pageReq, err := client.ReadPageRequest(flagSet)
+	if err != nil {
+		return nil, err
+	}
+
 	encoded, err := flagSet.GetString(flags.FlagPageKey)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	raw, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		panic(err.Error())
+		return nil, fmt.Errorf("invalid --%s: %w", flags.FlagPageKey, err)
 	}
-	err = flagSet.Set(flags.FlagPageKey, string(raw))
-	if err != nil {
-		panic(err.Error())
-	}
-	return flagSet
+	pageReq.Key = raw
+	return pageReq, nil
 }
 
 // GetCmdQueryParams implements a command to return the current wasm
