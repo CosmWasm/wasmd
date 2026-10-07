@@ -28,18 +28,19 @@ Also CosmWasm 2.0 contracts remain compatible at the Wasm interface level.
 To extend the feature set over time, contracts can specify required [capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES.md) through cargo features in cosmwasm-std.
 The following table shows which of the [latest capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) are supported by certain wasmd versions.
 
-| capability   | >= 0.54 | >= 0.52 | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
-| ------------ | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ---- |
-| iterator     | x       | x       | x       | x       | x       | x       | x       | x    |
-| stargate     | x       | x       | x       | x       | x       | x       | x       | x    |
-| staking      | x       | x       | x       | x       | x       | x       | x       | x    |
-| cosmwasm_1_1 | x       | x       | x       | x       | x       | x       | x       |      |
-| cosmwasm_1_2 | x       | x       | x       | x       | x       | x       |         |      |
-| cosmwasm_1_3 | x       | x       | x       | x       | x       |         |         |      |
-| cosmwasm_1_4 | x       | x       | x       | x       |         |         |         |      |
-| cosmwasm_2_0 | x       | x       | x       |         |         |         |         |      |
-| cosmwasm_2_1 | x       | x       |         |         |         |         |         |      |
-| cosmwasm_2_2 | x       |         |         |         |         |         |         |      |
+| capability   | >= 0.61 | >= 0.54 | >= 0.52 | >= 0.51 | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
+| ------------ | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ---- |
+| iterator     | x       | x       | x       | x       | x       | x       | x       | x       | x    |
+| stargate     | x       | x       | x       | x       | x       | x       | x       | x       | x    |
+| staking      | x       | x       | x       | x       | x       | x       | x       | x       | x    |
+| cosmwasm_1_1 | x       | x       | x       | x       | x       | x       | x       | x       |      |
+| cosmwasm_1_2 | x       | x       | x       | x       | x       | x       | x       |         |      |
+| cosmwasm_1_3 | x       | x       | x       | x       | x       | x       |         |         |      |
+| cosmwasm_1_4 | x       | x       | x       | x       | x       |         |         |         |      |
+| cosmwasm_2_0 | x       | x       | x       | x       |         |         |         |         |      |
+| cosmwasm_2_1 | x       | x       | x       |         |         |         |         |         |      |
+| cosmwasm_2_2 | x       | x       |         |         |         |         |         |         |      |
+| ibc2         | x       |         |         |         |         |         |         |         |      |
 
 ### For node developers
 
@@ -198,7 +199,7 @@ docker run --rm -it \
 sudo chown -R $(id -u):$(id -g) ./template
 
 # FIRST TIME
-# bind to non-/root and pass an argument to run.sh to copy the template into /root
+# bind to non-/root and pass an argument to run_wasmd.sh to copy the template into /root
 # we need wasmd_data volume mount not just for restart, but also to view logs
 docker volume rm -f wasmd_data
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 9090:9090 \
@@ -225,7 +226,7 @@ Available flags:
 
 Examples:
 
-- [`wasmd`](./Makefile#L50-L55) is a generic, permissionless version using the `cosmos` bech32 prefix
+- [`wasmd`](./Makefile#L56-L61) is a generic, permissionless version using the `wasm` bech32 prefix
 
 ## Compile Time Parameters
 
