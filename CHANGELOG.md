@@ -2,7 +2,13 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.9...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.10...HEAD)
+
+## [v0.60.10](https://github.com/CosmWasm/wasmd/tree/v0.60.10) (2026-10-09)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.60.9...v0.60.10)
+
+- Bump wasmvm to [v2.3.6](https://github.com/CosmWasm/wasmvm/releases/tag/v2.3.6)
 
 ## [v0.60.9](https://github.com/CosmWasm/wasmd/tree/v0.60.9) (2026-09-28)
 
