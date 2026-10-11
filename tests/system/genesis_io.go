@@ -24,7 +24,7 @@ func SetConsensusMaxGas(t *testing.T, max int) GenesisMutator {
 	}
 }
 
-// GetGenesisBalance return the balance amount for an address from the given genesis json
+// GetGenesisBalance returns the balance for an address in the given genesis JSON
 func GetGenesisBalance(rawGenesis []byte, addr string) sdk.Coins {
 	var r []sdk.Coin
 	balances := gjson.GetBytes(rawGenesis, fmt.Sprintf(`app_state.bank.balances.#[address==%q]#.coins`, addr)).Array()
