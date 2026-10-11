@@ -147,9 +147,9 @@ func TestIBC2SendReceiveMsg(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), response.IBC2PacketReceiveCounter)
 
-	// The counters on both Chains are both incremented in every iteration of the loop,
-	// because once the first relaying loop in `RelayPendingPacketsV2` the array of
-	// pending packets on the other chain is updated with new packet send from the contract.
+	// The counters on both chains are incremented in every iteration of the loop,
+	// because the first call to `RelayPendingPacketsV2` updates the pending-packet
+	// array on the other chain with a packet sent by the contract.
 	for i := 1; i <= 100; i++ {
 		// Relay message sent by contract
 		err = wasmibctesting.RelayPendingPacketsV2(testEnv.path)

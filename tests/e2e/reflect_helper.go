@@ -35,7 +35,7 @@ func InstantiateReflectContract(t *testing.T, chain *wasmibctesting.WasmTestChai
 	return contractAddr
 }
 
-// MustExecViaReflectContract submit execute message to send payload to reflect contract
+// MustExecViaReflectContract submits an execute message to send a payload to the reflect contract
 func MustExecViaReflectContract(t *testing.T, chain *wasmibctesting.WasmTestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) *abci.ExecTxResult {
 	rsp, err := ExecViaReflectContract(t, chain, contractAddr, msgs)
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func MustExecViaAnyReflectContract[T sdkMessageType](t *testing.T, chain *wasmib
 	return rsp
 }
 
-// ExecViaReflectContract submit execute message to send payload to reflect contract
+// ExecViaReflectContract submits an execute message to send a payload to the reflect contract
 func ExecViaReflectContract(t *testing.T, chain *wasmibctesting.WasmTestChain, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) (*abci.ExecTxResult, error) {
 	require.NotEmpty(t, msgs)
 	reflectSend := testdata.ReflectHandleMsg{
