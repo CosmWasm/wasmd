@@ -10,6 +10,8 @@
 
 - Bump wasmvm to [v3.0.9](https://github.com/CosmWasm/wasmvm/releases/tag/v3.0.9)
 
+- Return an error instead of panicking on invalid `--page-key` values in wasm query commands
+
 ## [v0.70.4](https://github.com/CosmWasm/wasmd/tree/v0.70.4) (2026-09-28)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.3...v0.70.4)
