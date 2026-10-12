@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -245,6 +246,54 @@ func TestAccessTypeWith(t *testing.T) {
 			assert.Panics(t, func() {
 				spec.src.With(spec.addrs...)
 			})
+		})
+	}
+}
+
+func TestAccessConfigAllowedCaseInsensitiveBech32(t *testing.T) {
+	actor := sdk.AccAddress(randBytes(SDKAddrLen))
+	other := sdk.AccAddress(randBytes(SDKAddrLen))
+
+	tests := map[string]struct {
+		configured string
+		valid      bool
+		allowed    bool
+	}{
+		"lowercase configured address": {
+			configured: actor.String(),
+			valid:      true,
+			allowed:    true,
+		},
+		"uppercase configured address": {
+			configured: strings.ToUpper(actor.String()),
+			valid:      true,
+			allowed:    true,
+		},
+		"different address": {
+			configured: other.String(),
+			valid:      true,
+			allowed:    false,
+		},
+		"invalid address": {
+			configured: "invalid address",
+			valid:      false,
+			allowed:    false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			config := AccessConfig{
+				Permission: AccessTypeAnyOfAddresses,
+				Addresses:  []string{test.configured},
+			}
+			err := config.ValidateBasic()
+			if test.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			assert.Equal(t, test.allowed, config.Allowed(actor))
 		})
 	}
 }
