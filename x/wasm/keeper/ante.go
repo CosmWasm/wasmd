@@ -25,12 +25,16 @@ func NewCountTXDecorator(s corestoretypes.KVStoreService) *CountTXDecorator {
 // AnteHandle handler stores a tx counter with current height encoded in the store to let the app handle
 // global rollback behavior instead of keeping state in the handler itself.
 // The ante handler passes the counter value via sdk.Context upstream. See `types.TXCounter(ctx)` to read the value.
-// Simulations don't get a tx counter value assigned.
+// Simulations charge the same store operations in a discarded cache without
+// assigning a tx counter value or updating the parent store.
 func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	storeCtx := ctx
 	if simulate {
-		return next(ctx, tx, simulate)
+		// CacheContext shares the gas meter and gas configuration. Discard its
+		// writes, and pass the original context to the next decorator below.
+		storeCtx, _ = ctx.CacheContext()
 	}
-	store := a.storeService.OpenKVStore(ctx)
+	store := a.storeService.OpenKVStore(storeCtx)
 	currentHeight := ctx.BlockHeight()
 
 	var txCounter uint32 // start with 0
@@ -50,6 +54,9 @@ func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, 
 	err = store.Set(types.TXCounterPrefix, encodeHeightCounter(currentHeight, txCounter+1))
 	if err != nil {
 		return ctx, errorsmod.Wrap(err, "store tx counter")
+	}
+	if simulate {
+		return next(ctx, tx, simulate)
 	}
 	return next(types.WithTXCounter(ctx, txCounter), tx, simulate)
 }

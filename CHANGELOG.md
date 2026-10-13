@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.5...HEAD)
 
+- Charge transaction-counter store operations during simulation without persisting the counter or assigning a transaction index. [#2571](https://github.com/CosmWasm/wasmd/issues/2571)
+
 ## [v0.70.5](https://github.com/CosmWasm/wasmd/tree/v0.70.5) (2026-10-09)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.4...v0.70.5)
