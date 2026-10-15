@@ -268,7 +268,8 @@ func SimulateMsgClearAdmin(
 
 type MsgUpdateAdminContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
 
-// DefaultSimulationUpdateAdminContractSelector picks the first contract which Admin != ""
+// DefaultSimulationUpdateAdminContractSelector selects a contract administered by adminAddress,
+// if one exists.
 func DefaultSimulationUpdateAdminContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
 	var contractAddress sdk.AccAddress
 	var contractInfo types.ContractInfo
@@ -353,7 +354,8 @@ func SimulateMsgStoreCode(
 // CodeIDSelector returns code id to be used in simulations
 type CodeIDSelector = func(ctx sdk.Context, wasmKeeper WasmKeeper) uint64
 
-// DefaultSimulationCodeIDSelector picks the first code id
+// DefaultSimulationCodeIDSelector picks the first code ID whose instantiate permission is
+// AccessTypeEverybody.
 func DefaultSimulationCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uint64 {
 	var codeID uint64
 	wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
