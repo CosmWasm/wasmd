@@ -6,7 +6,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	epochstypes "github.com/cosmos/cosmos-sdk/x/epochs/types"
-	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
@@ -21,7 +20,6 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{
 		Added: []string{
 			epochstypes.ModuleName,
-			protocolpooltypes.ModuleName,
 		},
 		Deleted: []string{},
 	},

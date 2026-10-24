@@ -104,7 +104,7 @@ func TestMigrate3To4(t *testing.T) {
 	store.Set(types.ParamsKey, bz)
 
 	// when
-	err = keeper.NewMigrator(*wasmKeeper, nil).Migrate3to4(ctx)
+	err = keeper.NewMigrator(*wasmKeeper).Migrate3to4(ctx)
 
 	// then
 	require.NoError(t, err)

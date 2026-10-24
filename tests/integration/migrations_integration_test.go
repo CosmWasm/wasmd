@@ -56,6 +56,16 @@ func TestModuleMigrations(t *testing.T) {
 	}
 }
 
+func TestModuleMigrationRejectsLegacyParams(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
+	fromVM := wasmApp.ModuleManager.GetVersionMap()
+	fromVM[types.ModuleName] = 2
+
+	_, err := wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
+	require.ErrorContains(t, err, "x/wasm v2->v3 migration needs x/params; upgrade through wasmd v0.70.4-xion.1 first")
+}
+
 func TestAccessConfigMigrations(t *testing.T) {
 	addr := "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
 	address, err := sdk.AccAddressFromBech32(addr)

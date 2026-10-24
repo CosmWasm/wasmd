@@ -1,6 +1,6 @@
 module github.com/CosmWasm/wasmd/tests/system
 
-go 1.25.9
+go 1.25.14
 
 require (
 	cosmossdk.io/math v1.5.3

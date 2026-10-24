@@ -124,6 +124,15 @@ func (s *SystemUnderTest) SetupChain() {
 	s.Log(string(out))
 	s.nodesCount = s.initialNodesCount
 
+	// give each node its own pprof port; they would all share localhost:6060,
+	// which CometBFT v0.40 refuses at start-up. Also covers configs written
+	// by legacy binaries in upgrade tests.
+	s.withEachNodeHome(func(i int, home string) {
+		if err := setPprofPort(home, i); err != nil {
+			panic(err)
+		}
+	})
+
 	// modify genesis with system test defaults
 	src := filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json")
 	genesisBz, err := os.ReadFile(src)
@@ -586,6 +595,22 @@ func (s *SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
 	}
 }
 
+var pprofLaddrRegexp = regexp.MustCompile(`(?m)^pprof_laddr = ".*"$`)
+
+// setPprofPort points the node's pprof listener at localhost:6060+nodeNumber.
+func setPprofPort(nodePath string, nodeNumber int) error {
+	configFile := filepath.Join(WorkDir, nodePath, "config", "config.toml")
+	bz, err := os.ReadFile(configFile)
+	if err != nil {
+		return fmt.Errorf("read node config: %w", err)
+	}
+	if !pprofLaddrRegexp.Match(bz) {
+		return fmt.Errorf("no pprof_laddr in %s", configFile)
+	}
+	bz = pprofLaddrRegexp.ReplaceAll(bz, []byte(fmt.Sprintf(`pprof_laddr = "localhost:%d"`, 6060+nodeNumber)))
+	return os.WriteFile(configFile, bz, 0o600)
+}
+
 // nodePath returns the path of the node within the work dir. not absolute
 func (s *SystemUnderTest) nodePath(i int) string {
 	return fmt.Sprintf("%s/node%d/%s", s.outputDir, i, s.projectName)
@@ -661,6 +686,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 	_ = os.Remove(configFile)
 	_, err := copyFile(filepath.Join(WorkDir, s.nodePath(0), "config", "config.toml"), configFile)
 	require.NoError(t, err)
+	require.NoError(t, setPprofPort(nodePath, nodeNumber))
 
 	// start node
 	allNodes := s.AllNodes(t)

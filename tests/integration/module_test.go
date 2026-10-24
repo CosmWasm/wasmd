@@ -25,24 +25,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
-
-type mockSubspace struct {
-	ps v2.Params
-}
-
-func newMockSubspace(ps v2.Params) mockSubspace {
-	return mockSubspace{ps: ps}
-}
-
-func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
-	*ps.(*v2.Params) = ms.ps
-}
 
 type testData struct {
 	module           wasm.AppModule
@@ -59,11 +45,6 @@ type testData struct {
 
 func setupTest(t *testing.T) testData {
 	t.Helper()
-	DefaultParams := v2.Params{
-		CodeUploadAccess:             v2.AccessConfig{Permission: v2.AccessTypeEverybody},
-		InstantiateDefaultPermission: v2.AccessTypeEverybody,
-	}
-
 	ctx, keepers := keeper.CreateTestInput(t, false, []string{
 		"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3",
 		"cosmwasm_1_4", "cosmwasm_2_0", "cosmwasm_2_1", "cosmwasm_2_2", "ibc2",
@@ -74,7 +55,7 @@ func setupTest(t *testing.T) testData {
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           wasm.NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(DefaultParams)),
+		module:           wasm.NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,

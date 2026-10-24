@@ -450,6 +450,8 @@ func collectGenFiles(
 	rpcPortStart, p2pPortStart int,
 	singleMachine bool,
 ) error {
+	const pprofPortStart = 6060
+
 	var appState json.RawMessage
 	genTime := cmttime.Now()
 
@@ -457,6 +459,9 @@ func collectGenFiles(
 		var portOffset int
 		if singleMachine {
 			portOffset = i
+			// Every node otherwise inherits the SDK default pprof address
+			// localhost:6060; CometBFT v0.40 aborts start-up when it is taken.
+			nodeConfig.RPC.PprofListenAddress = fmt.Sprintf("localhost:%d", pprofPortStart+portOffset)
 		}
 
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
@@ -490,7 +495,7 @@ func collectGenFiles(
 		genFile := nodeConfig.GenesisFile()
 
 		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, chainID, nil, appState, genTime); err != nil {
+		if err := genutil.ExportGenesisFileWithTime(genFile, genutiltypes.NewAppGenesisWithVersion(chainID, appState), genTime); err != nil {
 			return err
 		}
 	}
