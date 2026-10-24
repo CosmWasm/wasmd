@@ -619,10 +619,13 @@ func (k Keeper) callMigrateEntrypoint(
 	}
 	if res == nil {
 		// If this gets executed, that's a bug in wasmvm
-		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error")
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil response")
 	}
 	if res.Err != "" {
 		return nil, types.MarkErrorDeterministic(errorsmod.Wrap(types.ErrMigrationFailed, res.Err))
+	}
+	if res.Ok == nil {
+		return nil, errorsmod.Wrap(types.ErrVMError, "internal wasmvm error: nil ok response")
 	}
 	return res.Ok, nil
 }
