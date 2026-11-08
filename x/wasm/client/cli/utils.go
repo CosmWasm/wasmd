@@ -22,7 +22,7 @@ func ExtendUnsafeResetAllCmd(rootCmd *cobra.Command) {
 				serverRunE := cmd.RunE
 				cmd.RunE = func(cmd *cobra.Command, args []string) error {
 					if err := serverRunE(cmd, args); err != nil {
-						return nil
+						return err
 					}
 					serverCtx := server.GetServerContextFromCmd(cmd)
 					return os.RemoveAll(filepath.Join(serverCtx.Config.RootDir, "wasm"))
