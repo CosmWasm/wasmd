@@ -35,6 +35,19 @@ func TestIsWasm(t *testing.T) {
 	require.True(t, IsWasm(wasmCode))
 }
 
+func TestIsWasmShortInput(t *testing.T) {
+	for n := 0; n < len(wasmIdent); n++ {
+		input := make([]byte, n)
+		copy(input, wasmIdent)
+		require.False(t, IsWasm(input))
+	}
+	// A slice may have spare capacity beyond its visible input.
+	short := wasmIdent[:1]
+	require.False(t, IsWasm(short))
+	require.False(t, IsWasm(nil))
+	require.True(t, IsWasm(wasmIdent))
+}
+
 func TestIsGzip(t *testing.T) {
 	wasmCode, someRandomStr, gzipData, err := GetTestData()
 	require.NoError(t, err)
