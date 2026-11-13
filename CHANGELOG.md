@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.5...HEAD)
 
+- Add `cosmwasm_3_0` to `BuiltInCapabilities()` so contracts using `WasmQuery::RawRange` can be stored [\#2578](https://github.com/CosmWasm/wasmd/issues/2578)
+
 ## [v0.70.5](https://github.com/CosmWasm/wasmd/tree/v0.70.5) (2026-10-09)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.4...v0.70.5)
