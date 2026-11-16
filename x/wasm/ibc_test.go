@@ -178,6 +178,38 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 	}
 }
 
+func TestValidateChannelParams(t *testing.T) {
+	specs := map[string]struct {
+		channelID string
+		expErr    bool
+	}{
+		"valid zero channel sequence": {
+			channelID: "channel-0",
+		},
+		"valid max uint32 channel sequence": {
+			channelID: "channel-4294967295",
+		},
+		"invalid channel sequence beyond uint32": {
+			channelID: "channel-4294967296",
+			expErr:    true,
+		},
+		"invalid channel ID format": {
+			channelID: "invalid-channel",
+			expErr:    true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateChannelParams(spec.channelID)
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func IBCPacketFixture(mutators ...func(p *channeltypes.Packet)) channeltypes.Packet {
 	r := channeltypes.Packet{
 		Sequence:           1,
