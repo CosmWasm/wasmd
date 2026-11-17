@@ -172,7 +172,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 			return true
 		}),
 	)
-	s.AwaitNextBlock(t, 4e9)
+	s.AwaitNextBlock(t)
 }
 
 // MarkDirty whole chain will be reset when marked dirty
@@ -282,11 +282,16 @@ func (s *SystemUnderTest) AwaitNodeUp(t *testing.T, rpcAddr string) {
 			result, err := con.Status(ctx)
 			if err != nil || result.SyncInfo.LatestBlockHeight < 1 {
 				con.Stop() //nolint:errcheck
+				if ctx.Err() != nil {
+					return
+				}
+				time.Sleep(time.Second)
 				continue
 			}
 			t.Logf("Node started. Current block: %d\n", result.SyncInfo.LatestBlockHeight)
 			con.Stop() //nolint:errcheck
 			started <- struct{}{}
+			return
 		}
 	}()
 	select {
@@ -382,7 +387,7 @@ func (s *SystemUnderTest) AwaitBlockHeight(t *testing.T, targetHeight int64, tim
 	if len(timeout) != 0 {
 		maxWaitTime = timeout[0]
 	} else {
-		maxWaitTime = time.Duration(targetHeight-s.currentHeight+10) * s.blockTime
+		maxWaitTime = time.Duration(targetHeight-s.currentHeight) * DefaultWaitTime
 	}
 	abort := time.NewTimer(maxWaitTime).C
 	for {
@@ -399,10 +404,11 @@ func (s *SystemUnderTest) AwaitBlockHeight(t *testing.T, targetHeight int64, tim
 }
 
 // AwaitNextBlock is a first class function that any caller can use to ensure a new block was minted.
-// Returns the new height
+// Returns the new height. Fails when no block is minted within DefaultWaitTime, or the optional timeout.
 func (s *SystemUnderTest) AwaitNextBlock(t *testing.T, timeout ...time.Duration) int64 {
 	t.Helper()
-	maxWaitTime := s.blockTime * 5
+	// a single failed consensus round already takes longer than a few block times
+	maxWaitTime := DefaultWaitTime
 	if len(timeout) != 0 { // optional argument to overwrite default timeout
 		maxWaitTime = timeout[0]
 	}
@@ -553,7 +559,7 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 // startNodesAsync runs the given app cli command for all cluster nodes and returns without waiting
 func (s *SystemUnderTest) startNodesAsync(t *testing.T, xargs ...string) {
 	s.withEachNodeHome(func(i int, home string) {
-		args := append(xargs, "--home", home)
+		args := append(xargs, "--home", home, pprofListenAddr(i))
 		s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 		cmd := exec.Command( //nolint:gosec
 			locateExecutable(s.ExecBinary),
@@ -679,6 +685,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		fmt.Sprintf("--rpc.laddr=tcp://localhost:%d", node.RPCPort),
 		fmt.Sprintf("--grpc.address=localhost:%d", 9090+nodeNumber),
 		fmt.Sprintf("--grpc-web.address=localhost:%d", 8090+nodeNumber),
+		pprofListenAddr(nodeNumber),
 		"--moniker=" + moniker,
 		"--log_level=info",
 		"--home", nodePath,
@@ -692,6 +699,12 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 	s.watchLogs(nodeNumber, cmd)
 	require.NoError(t, cmd.Start(), "node %d", nodeNumber)
 	return node
+}
+
+// pprofListenAddr returns a unique pprof address flag for the node, as CometBFT
+// does not start when the pprof port is already taken by another node
+func pprofListenAddr(nodeNumber int) string {
+	return fmt.Sprintf("--rpc.pprof_laddr=localhost:%d", 6060+nodeNumber)
 }
 
 // NewEventListener constructor for Eventlistener with system rpc address

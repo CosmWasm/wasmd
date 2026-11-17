@@ -57,7 +57,7 @@ func TestMigrate1To2(t *testing.T) {
 	ctx.KVStore(keepers.WasmStoreKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info3.Created.Bytes(), gotContractAddr3))
 
 	// migrator
-	err = keeper.NewMigrator(*wasmKeeper, nil).Migrate1to2(ctx)
+	err = keeper.NewMigrator(*wasmKeeper).Migrate1to2(ctx)
 	require.NoError(t, err)
 
 	// check new store

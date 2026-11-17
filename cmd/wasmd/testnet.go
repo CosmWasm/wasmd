@@ -443,6 +443,9 @@ func initGenFiles(
 	return nil
 }
 
+// pprofPortStart is the pprof port of the first node when all nodes run on a single host
+const pprofPortStart = 6060
+
 func collectGenFiles(
 	clientCtx client.Context, nodeConfig *cmtconfig.Config, chainID string,
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
@@ -457,6 +460,8 @@ func collectGenFiles(
 		var portOffset int
 		if singleMachine {
 			portOffset = i
+			// CometBFT does not start when the pprof port is already taken
+			nodeConfig.RPC.PprofListenAddress = fmt.Sprintf("localhost:%d", pprofPortStart+portOffset)
 		}
 
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
@@ -490,7 +495,13 @@ func collectGenFiles(
 		genFile := nodeConfig.GenesisFile()
 
 		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, chainID, nil, appState, genTime); err != nil {
+		// and app state, keeping the consensus params read from the file
+		appGenesis.ChainID = chainID
+		appGenesis.AppState = appState
+		if appGenesis.Consensus != nil {
+			appGenesis.Consensus.Validators = nil
+		}
+		if err := genutil.ExportGenesisFileWithTime(genFile, appGenesis, genTime); err != nil {
 			return err
 		}
 	}

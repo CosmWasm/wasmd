@@ -4,9 +4,9 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	channeltypesv2 "github.com/cosmos/ibc-go/v11/modules/core/04-channel/v2/types"
-	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
-	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
+	channeltypesv2 "github.com/lfdt-ibc/ibc-go/v11/modules/core/04-channel/v2/types"
+	ibcapi "github.com/lfdt-ibc/ibc-go/v11/modules/core/api"
+	ibcerrors "github.com/lfdt-ibc/ibc-go/v11/modules/core/errors"
 
 	errorsmod "cosmossdk.io/errors"
 

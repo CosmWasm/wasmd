@@ -287,6 +287,12 @@ func setupSimulationApp(t *testing.T, msg string) (simtypes.Config, dbm.DB, simt
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
 // and doesn't depend on the application.
 func TestAppStateDeterminism(t *testing.T) {
+	// A full run takes far longer than a unit test run allows.
+	// runsim (make test-sim-deterministic) passes -Enabled=true.
+	if !simcli.FlagEnabledValue {
+		t.Skip("skipping application simulation")
+	}
+
 	config := simcli.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
