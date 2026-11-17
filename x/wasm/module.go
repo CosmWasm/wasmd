@@ -27,7 +27,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -110,8 +109,6 @@ type AppModule struct {
 	accountKeeper      types.AccountKeeper // for simulation
 	bankKeeper         simulation.BankKeeper
 	router             keeper.MessageRouter
-	// legacySubspace is used solely for migration of x/params managed parameters
-	legacySubspace exported.Subspace
 }
 
 // NewAppModule creates a new AppModule object
@@ -122,7 +119,6 @@ func NewAppModule(
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
 	router *baseapp.MsgServiceRouter,
-	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic:     AppModuleBasic{},
@@ -132,7 +128,6 @@ func NewAppModule(
 		accountKeeper:      ak,
 		bankKeeper:         bk,
 		router:             router,
-		legacySubspace:     ss,
 	}
 }
 
@@ -154,15 +149,14 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier(am.keeper))
 
-	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
+	m := keeper.NewMigrator(*am.keeper)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
 		panic(err)
 	}
-	err = cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3)
-	if err != nil {
-		panic(err)
-	}
+	// The 2 to 3 migration moved params out of x/params. It was removed together
+	// with x/params in Cosmos SDK v0.55, so stores below version 3 cannot be
+	// migrated in place anymore.
 	err = cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4)
 	if err != nil {
 		panic(err)
