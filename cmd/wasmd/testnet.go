@@ -443,6 +443,9 @@ func initGenFiles(
 	return nil
 }
 
+// pprofPortStart is the pprof port of the first node when all nodes run on a single host
+const pprofPortStart = 6060
+
 func collectGenFiles(
 	clientCtx client.Context, nodeConfig *cmtconfig.Config, chainID string,
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
@@ -457,6 +460,8 @@ func collectGenFiles(
 		var portOffset int
 		if singleMachine {
 			portOffset = i
+			// CometBFT does not start when the pprof port is already taken
+			nodeConfig.RPC.PprofListenAddress = fmt.Sprintf("localhost:%d", pprofPortStart+portOffset)
 		}
 
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)

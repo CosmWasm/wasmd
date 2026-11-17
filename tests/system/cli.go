@@ -180,18 +180,22 @@ func (c WasmdCli) awaitTxCommitted(submitResp string, timeout ...time.Duration) 
 	RequireTxSuccess(c.t, submitResp)
 	txHash := gjson.Get(submitResp, "txhash")
 	require.True(c.t, txHash.Exists())
-	var txResult string
-	for i := 0; i < 3; i++ { // max blocks to wait for a commit
-		txResult = c.WithRunErrorsIgnored().CustomQuery("q", "tx", txHash.String())
+	const maxBlocks = 3 // max blocks to wait for a commit
+	for i := 0; ; i++ {
+		txResult := c.WithRunErrorsIgnored().CustomQuery("q", "tx", txHash.String())
 		if code := gjson.Get(txResult, "code"); code.Exists() {
 			if code.Int() != 0 { // 0 = success code
 				c.t.Logf("+++ got error response code: %s\n", txResult)
 			}
 			return txResult, true
 		}
+		// query again after the last block, too: the tx index is written
+		// asynchronously, after the new block event
+		if i == maxBlocks {
+			return "", false
+		}
 		c.awaitNextBlock(c.t, timeout...)
 	}
-	return "", false
 }
 
 // Keys wasmd keys CLI command
