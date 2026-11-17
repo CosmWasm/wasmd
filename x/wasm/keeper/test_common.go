@@ -14,11 +14,11 @@ import (
 	"github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v11/modules/core"
-	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	"github.com/lfdt-ibc/ibc-go/v11/modules/apps/transfer"
+	ibctransfertypes "github.com/lfdt-ibc/ibc-go/v11/modules/apps/transfer/types"
+	ibc "github.com/lfdt-ibc/ibc-go/v11/modules/core"
+	ibcexported "github.com/lfdt-ibc/ibc-go/v11/modules/core/exported"
+	ibckeeper "github.com/lfdt-ibc/ibc-go/v11/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
@@ -236,14 +236,15 @@ func createTestInput(
 	appCodec := encodingConfig.Codec
 
 	maccPerms := map[string][]string{ // module account permissions
-		authtypes.FeeCollectorName:     nil,
-		distributiontypes.ModuleName:   nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		types.ModuleName:               {authtypes.Burner},
+		authtypes.FeeCollectorName:          nil,
+		distributiontypes.ModuleName:        nil,
+		minttypes.ModuleName:                {authtypes.Minter},
+		stakingtypes.BondedPoolName:         {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:      {authtypes.Burner, authtypes.Staking},
+		stakingtypes.KeyRotationFeePoolName: {authtypes.Burner},
+		govtypes.ModuleName:                 {authtypes.Burner},
+		ibctransfertypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		types.ModuleName:                    {authtypes.Burner},
 	}
 
 	accountKeeper := authkeeper.NewAccountKeeper(
@@ -366,10 +367,10 @@ func createTestInput(
 	require.NoError(t, govKeeper.Params.Set(ctx, govv1.DefaultParams()))
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
-		bank.NewAppModule(appCodec, bankKeeper, accountKeeper, nil),
-		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper, nil),
-		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper, nil),
-		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper, nil),
+		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
+		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
+		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
+		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier)) //nolint:errcheck
 	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(&keeper))

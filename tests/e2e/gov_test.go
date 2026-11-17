@@ -5,7 +5,7 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v3/types"
-	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+	ibctesting "github.com/lfdt-ibc/ibc-go/v11/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,8 +13,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	protocolpooltypes "github.com/cosmos/cosmos-sdk/x/protocolpool/types"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	wasmibctesting "github.com/CosmWasm/wasmd/tests/wasmibctesting"
@@ -46,9 +46,10 @@ func TestGovVoteByContract(t *testing.T) {
 
 	signer := chain.SenderAccount.GetAddress().String()
 	app := chain.GetWasmApp()
-	govKeeper, accountKeeper := app.GovKeeper, app.AccountKeeper
-	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), protocolpooltypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
-	require.False(t, communityPoolBalance.IsZero())
+	govKeeper := app.GovKeeper
+	feePool, err := app.DistrKeeper.FeePool.Get(chain.GetContext())
+	require.NoError(t, err)
+	require.True(t, feePool.CommunityPool.AmountOf(sdk.DefaultBondDenom).IsPositive())
 
 	gParams, err := govKeeper.Params.Get(chain.GetContext())
 	require.NoError(t, err)
@@ -89,7 +90,7 @@ func TestGovVoteByContract(t *testing.T) {
 			// given a unique recipient
 			recipientAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
 			// and a new proposal
-			payloadMsg := &protocolpooltypes.MsgCommunityPoolSpend{
+			payloadMsg := &distributiontypes.MsgCommunityPoolSpend{
 				Authority: govAcctAddr.String(),
 				Recipient: recipientAddr.String(),
 				Amount:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
