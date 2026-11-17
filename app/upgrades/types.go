@@ -9,13 +9,17 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 type AppKeepers struct {
 	AccountKeeper         *authkeeper.AccountKeeper
+	BankKeeper            bankkeeper.Keeper
 	ConsensusParamsKeeper *consensusparamkeeper.Keeper
+	DistrKeeper           *distrkeeper.Keeper
 	Codec                 codec.Codec
 	GetStoreKey           func(storeKey string) *storetypes.KVStoreKey
 	IBCKeeper             *ibckeeper.Keeper

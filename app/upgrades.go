@@ -8,10 +8,11 @@ import (
 	"github.com/CosmWasm/wasmd/app/upgrades"
 	"github.com/CosmWasm/wasmd/app/upgrades/noop"
 	v060 "github.com/CosmWasm/wasmd/app/upgrades/v060"
+	v080 "github.com/CosmWasm/wasmd/app/upgrades/v080"
 )
 
 // Upgrades list of chain upgrades
-var Upgrades = []upgrades.Upgrade{v060.Upgrade}
+var Upgrades = []upgrades.Upgrade{v060.Upgrade, v080.Upgrade}
 
 // RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app *WasmApp) RegisterUpgradeHandlers() {
@@ -22,7 +23,9 @@ func (app *WasmApp) RegisterUpgradeHandlers() {
 
 	keepers := upgrades.AppKeepers{
 		AccountKeeper:         &app.AccountKeeper,
+		BankKeeper:            app.BankKeeper,
 		ConsensusParamsKeeper: &app.ConsensusParamsKeeper,
+		DistrKeeper:           &app.DistrKeeper,
 		IBCKeeper:             app.IBCKeeper,
 		Codec:                 app.appCodec,
 		GetStoreKey:           app.GetKey,
