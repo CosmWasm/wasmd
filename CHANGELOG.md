@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.5...HEAD)
 
+- Fix execute contract weight in simulation operations [\#2581](https://github.com/CosmWasm/wasmd/pull/2581)
+
 ## [v0.70.5](https://github.com/CosmWasm/wasmd/tree/v0.70.5) (2026-10-09)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.70.4...v0.70.5)
