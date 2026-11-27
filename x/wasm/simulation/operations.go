@@ -80,7 +80,7 @@ func WeightedOperations(
 	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
 		weightMsgInstantiateContract = DefaultWeightMsgInstantiateContract
 	})
-	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
+	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgExecuteContract, nil, func(_ *rand.Rand) {
 		weightMsgExecuteContract = DefaultWeightMsgExecuteContract
 	})
 	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *rand.Rand) {
